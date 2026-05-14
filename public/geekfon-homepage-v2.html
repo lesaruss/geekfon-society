@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeekFon Society</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { min-height: 100%; }
+    body {
+      min-height: 100%;
+      background: #080808;
+      color: #e8e8e8;
+      font-family: 'Montserrat', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ======== STICKY HEADER ======== */
+    .gfs-header {
+      position: sticky;
+      top: 0;
+      z-index: 400;
+      width: 100%;
+      background: rgba(8,8,8,0.97);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #1e1e1e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 9px 16px;
+      height: 48px;
+    }
+    .header-logo {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      flex-shrink: 0;
+      border-radius: 3px;
+    }
+    .header-title {
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      color: #fff;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .header-fon { transition: color 0.7s ease; }
+
+    /* ======== DAY NAV ======== */
+    .day-nav {
+      position: sticky;
+      top: 48px;
+      z-index: 300;
+      width: 100%;
+      background: rgba(10,10,10,0.99);
+      border-bottom: 2px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 64px;
+      gap: 8px;
+    }
+    .day-arrow {
+      width: 36px;
+      height: 36px;
+      background: #181818;
+      border: 1px solid #333;
+      border-radius: 9px;
+      color: #ccc;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: serif;
+      padding: 0 0 2px;
+      flex-shrink: 0;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .day-arrow:hover:not(:disabled) {
+      color: #F69820;
+      border-color: #F69820;
+      background: #1e1200;
+    }
+    .day-arrow:disabled { opacity: 0.2; cursor: not-allowed; }
+    .day-arrow:focus { outline: 2px solid #F69820; outline-offset: 2px; }
+
+    /* Clickable date label */
+    .day-name-label {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #fff;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Montserrat', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 7px;
+      transition: background 0.15s;
+    }
+    .day-name-label:hover { background: rgba(255,255,255,0.07); }
+    .day-name-label:focus { outline: 2px solid #F69820; outline-offset: 2px; border-radius: 7px; }
+    .cal-icon { opacity: 0.55; flex-shrink: 0; }
+
+    /* ======== CALENDAR PANEL ======== */
+    .cal-panel {
+      position: sticky;
+      top: calc(48px + 52px);
+      z-index: 250;
+      width: 100%;
+      background: #0a0a0a;
+      border-bottom: 1px solid #262626;
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.28s ease;
+    }
+    .cal-panel.open { max-height: 300px; }
+
+    .cal-month-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px 8px;
+    }
+    .cal-month-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .cal-nav-btn {
+      width: 30px;
+      height: 30px;
+      background: #181818;
+      border: 1px solid #2c2c2c;
+      border-radius: 7px;
+      color: #999;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: serif;
+      line-height: 1;
+      padding-bottom: 2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .cal-nav-btn:hover { color: #F69820; border-color: #F69820; }
+    .cal-nav-btn:focus { outline: 2px solid #F69820; outline-offset: 2px; }
+
+    .cal-dow-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 0 16px 4px;
+    }
+    .cal-dow {
+      text-align: center;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #888;
+      padding: 3px 0;
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      padding: 0 16px 16px;
+    }
+    .cal-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 400;
+      color: #383838;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      cursor: default;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .cal-cell.chat {
+      background: rgba(246,152,32,0.14);
+      color: #F69820;
+      cursor: pointer;
+      font-weight: 800;
+      border: none;
+      transition: background 0.15s;
+    }
+    .cal-cell.chat:hover { background: rgba(246,152,32,0.28); }
+    .cal-cell.chat:focus { outline: 2px solid #F69820; outline-offset: 1px; }
+    .cal-cell.chat.sel {
+      background: #F69820;
+      color: #000;
+    }
+    .cal-cell.chat.sel:hover { background: #e08818; }
+
+    /* ======== CONTENT WRAP ======== */
+    .content-wrap {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ======== DAY PANELS ======== */
+    .day-panel { display: none; }
+    .day-panel.active { display: block; }
+
+    /* ======== CHAT FEED ======== */
+    .chat-feed {
+      padding: 12px 50px 170px;
+    }
+
+    /* ======== MESSAGE ROW ======== */
+    .msg {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .msg.gap { margin-top: 16px; }
+
+    /* Avatar column: 25% of row */
+    .av-col {
+      width: 25%;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding-right: 10px;
+    }
+
+    /* Avatar: fills column, square */
+    .av {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 9px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      overflow: hidden;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      text-decoration: none;
+      background: #1e1e1e;
+    }
+    .av:hover { opacity: 0.8; }
+    .av img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+
+    /* Name: below avatar, centered, 2 sizes up from 9px */
+    .sname {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      display: block;
+      text-decoration: none;
+      text-align: center;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 2px;
+    }
+    .sname:hover { text-decoration: underline; }
+
+    /* Spacer for continuation messages */
+    .av-spacer { width: 25%; flex-shrink: 0; }
+
+    /* Bubble column: remaining 75% */
+    .bcol { flex: 1; min-width: 0; }
+
+    /* Bubble: slightly lighter than body */
+    .bubble {
+      background: #1c1c1c;
+      border-radius: 4px 10px 10px 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #d5d5d5;
+      display: inline-block;
+      max-width: 100%;
+      word-break: break-word;
+    }
+
+    /* Tags */
+    .tag {
+      color: #F69820;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .tag:hover { text-decoration: underline; }
+
+    /* Translate */
+    .tr-text { display: none; font-style: italic; color: #999; }
+    .bubble.translated .or-text { display: none; }
+    .bubble.translated .tr-text { display: inline; }
+    .tr-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 5px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #777;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+      transition: color 0.15s;
+    }
+    .tr-btn:hover { color: #aaa; }
+    .tr-btn.on { color: #F69820; }
+
+    /* Timestamp */
+    .ts {
+      font-size: 9px;
+      color: #888;
+      margin-top: 3px;
+      display: block;
+    }
+
+    /* Drop card */
+    .drop-card {
+      background: #141414;
+      border: 1px solid #252525;
+      border-radius: 10px;
+      overflow: hidden;
+      max-width: 100%;
+      margin-top: 7px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      display: block;
+      text-decoration: none;
+    }
+    .drop-card:hover { border-color: #e94f8a66; }
+    .drop-art {
+      width: 100%;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    .drop-info { padding: 8px 10px 10px; }
+    .drop-label {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 2px;
+    }
+    .drop-title { font-size: 12px; font-weight: 800; color: #fff; line-height: 1.2; }
+    .drop-artist { font-size: 10px; color: #999; margin-top: 2px; }
+    .drop-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 7px;
+      background: #e94f8a;
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      padding: 5px 12px;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: 'Montserrat', sans-serif;
+    }
+    @media (max-width: 480px) {
+      .chat-feed { padding-left: 60px; padding-right: 60px; padding-bottom: 170px; }
+    }
+
+    /* ======== BOTTOM TAB BAR ======== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 500;
+      background: rgba(8,8,8,0.97);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid #1e1e1e;
+      display: flex;
+      padding-top: 25px;
+      padding-bottom: 100px;
+    }
+    .tab-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      color: #444;
+      cursor: pointer;
+      font-family: 'Montserrat', sans-serif;
+      transition: color 0.18s;
+      padding: 0;
+    }
+    .tab-btn.active { color: #F69820; }
+    .tab-btn:focus { outline: 2px solid #F69820; outline-offset: -2px; }
+    .tab-icon { width: 20px; height: 20px; }
+    .tab-label {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    /* ======== RADIO SCREEN ======== */
+    .radio-view {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 20px 170px;
+      width: 100%;
+    }
+    .radio-view.active { display: flex; }
+
+    @keyframes pdot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Live Radio card */
+    .live-radio-card {
+      width: 100%;
+      background: #0d0d0d;
+      border: 1px solid #1e1e1e;
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s;
+      margin-bottom: 20px;
+    }
+    .live-radio-card:hover { border-color: #F69820; }
+    .live-radio-card:focus { outline: 2px solid #F69820; outline-offset: 3px; }
+    .live-card-dot {
+      width: 8px; height: 8px;
+      background: #4caf50;
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pdot 1.5s ease-in-out infinite;
+    }
+    .live-card-info { flex: 1; min-width: 0; }
+    .live-card-title { font-size: 13px; font-weight: 900; color: #fff; letter-spacing: 0.02em; }
+    .live-card-sub { font-size: 9px; color: #555; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+    .live-card-cta { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #F69820; white-space: nowrap; flex-shrink: 0; }
+
+    /* Section header */
+    .radio-section-hd { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .radio-section-title { font-size: 9px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #555; }
+    .radio-section-badge {
+      font-size: 7px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      background: rgba(246,152,32,0.1); color: #F69820; padding: 3px 8px;
+      border-radius: 100px; border: 1px solid rgba(246,152,32,0.2);
+    }
+
+    /* Track list */
+    .track-list { width: 100%; display: flex; flex-direction: column; gap: 1px; }
+    .track-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 8px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .track-row:hover { background: #111; }
+    .track-row.playing { background: #111; }
+    .track-row.locked { opacity: 0.4; cursor: default; }
+    .track-art {
+      width: 44px; height: 44px; border-radius: 7px; background: #1a1a1a;
+      flex-shrink: 0; overflow: hidden; display: flex; align-items: center;
+      justify-content: center; font-size: 18px;
+    }
+    .track-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .track-info { flex: 1; min-width: 0; }
+    .track-title { font-size: 11px; font-weight: 800; color: #e8e8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+    .track-artist { font-size: 9px; font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+    .track-dur { font-size: 9px; color: #555; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .track-lock-label { font-size: 7px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #444; }
+    .track-play-btn {
+      width: 30px; height: 30px; background: #1e1e1e; border: none;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #888; transition: background 0.15s, color 0.15s; flex-shrink: 0;
+    }
+    .track-play-btn:hover { background: #252525; color: #F69820; }
+    .track-row.playing .track-play-btn { background: #F69820; color: #fff; }
+    .track-play-btn:focus { outline: 2px solid #F69820; outline-offset: 2px; }
+
+    /* PLACEHOLDER to satisfy old CSS reference (kept inline)
+       radio-tap-pill was here — removed with static mock */
+    .radio-tap-pill {
+      background: #F69820; color: #fff; font-size: 9px; font-weight: 800;
+      letter-spacing: 0.14em; text-transform: uppercase; padding: 8px 18px;
+      border-radius: 100px;
+    }
+
+    /* Player UI inside card */
+    .rp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .rp-brand {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .rp-fon { color: #F69820; }
+    .rp-live {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #4caf50;
+    }
+    .rp-live-dot {
+      width: 6px; height: 6px;
+      background: #4caf50;
+      border-radius: 50%;
+      animation: pdot 1.5s ease-in-out infinite;
+    }
+
+    .rp-art-wrap {
+      padding: 20px 24px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .rp-art {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0a1a10 0%, #0d2a1a 40%, #1a0a08 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .rp-art-glow {
+      position: absolute;
+      inset: -20%;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(0,200,80,0.15) 0%, transparent 70%);
+    }
+    .rp-art-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.22);
+      z-index: 1;
+      text-align: center;
+    }
+
+    .rp-track {
+      width: 100%;
+      text-align: center;
+    }
+    .rp-track-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rp-track-artist {
+      font-size: 11px;
+      color: #777;
+      margin-top: 3px;
+    }
+
+    .rp-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 0 24px 20px;
+    }
+    .rp-ctrl-btn {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      color: #555;
+    }
+    .rp-play-btn {
+      width: 52px; height: 52px;
+      background: #F69820;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .rp-progress {
+      padding: 0 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .rp-bar-track {
+      width: 100%;
+      height: 3px;
+      background: #1e1e1e;
+      border-radius: 100px;
+      position: relative;
+    }
+    .rp-bar-fill {
+      width: 38%;
+      height: 100%;
+      background: #F69820;
+      border-radius: 100px;
+    }
+    .rp-times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      color: #555;
+      font-weight: 700;
+    }
+
+    /* App download section */
+    .app-download-wrap {
+      margin-top: 24px;
+      width: 100%;
+      text-align: center;
+    }
+    .app-download-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 12px;
+    }
+    .app-btns-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .app-store-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 9px 14px;
+      text-decoration: none;
+      color: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      flex: 1;
+      max-width: 140px;
+      justify-content: center;
+    }
+    .app-store-btn:hover { border-color: #F69820; }
+    .app-store-btn:focus { outline: 2px solid #F69820; outline-offset: 2px; }
+    .app-store-icon { width: 18px; height: 18px; flex-shrink: 0; }
+    .app-store-text { display: flex; flex-direction: column; align-items: flex-start; }
+    .app-store-sub { font-size: 7px; font-weight: 400; color: #888; letter-spacing: 0.04em; line-height: 1; }
+    .app-store-name { font-size: 10px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.2; }
+  </style>
+</head>
+<body>
+
+  <!-- STICKY HEADER -->
+  <header class="gfs-header" role="banner">
+    <img class="header-logo" src="geekfon-logo.png" alt="GeekFon Society" onerror="this.style.display='none'">
+    <span class="header-title" aria-label="GeekFon Society">Geek<span class="header-fon" id="fon">Fon</span></span>
+  </header>
+
+  <!-- CONTENT WRAP -->
+  <div class="content-wrap" id="cw">
+
+    <!-- CHAT VIEW -->
+    <div id="chatView">
+
+    <!-- DAY NAV -->
+    <nav class="day-nav" aria-label="Chat day navigation">
+      <button class="day-arrow" id="dayPrev" onclick="prevDay()" aria-label="Previous day" disabled>&#8249;</button>
+      <button
+        class="day-name-label"
+        id="dayLabel"
+        onclick="toggleCal()"
+        aria-expanded="false"
+        aria-haspopup="dialog"
+        aria-label="Open calendar — Monday, May 4"
+      >
+        <svg class="cal-icon" width="11" height="11" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+          <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.1" fill="none"/>
+          <path d="M4 1v2M8 1v2M1 5h10" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+          <rect x="3" y="7" width="1.5" height="1.5" rx=".3" fill="currentColor"/>
+          <rect x="5.25" y="7" width="1.5" height="1.5" rx=".3" fill="currentColor"/>
+          <rect x="7.5" y="7" width="1.5" height="1.5" rx=".3" fill="currentColor"/>
+        </svg>
+        <span id="dayLabelText">Mon, May 4</span>
+      </button>
+      <button class="day-arrow" id="dayNext" onclick="nextDay()" aria-label="Next day">&#8250;</button>
+    </nav>
+
+    <!-- CALENDAR PANEL -->
+    <div class="cal-panel" id="calPanel" role="dialog" aria-label="Date picker" aria-hidden="true">
+      <div id="calContent"></div>
+    </div>
+
+    <main role="main" aria-label="GFS group chat">
+
+      <!-- ===== MONDAY ===== -->
+      <div class="day-panel active" id="dp0">
+        <div class="chat-feed">
+
+          <div class="msg gap" role="article" aria-label="V">
+            <div class="av-col">
+              <a href="#" class="av" style="background:#c8922a"><span aria-hidden="true">V</span></a>
+              <a href="#" class="sname" style="color:#c8922a">V</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">Good morning GFS. New week. <a href="#" class="tag">@Lex</a> — what are we running?</div>
+              <span class="ts">9:14 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Lex">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w200-h200" alt="Lex" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F';this.onerror=function(){this.parentElement.style.background='#e84d1a';this.parentElement.innerHTML='<span>L</span>'}"></a>
+              <a href="#" class="sname" style="color:#e84d1a">Lex</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">mandem's alive. already cooked something last night not gonna lie 💀</div>
+              <span class="ts">9:17 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Roxanne">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w200-h200" alt="Roxanne" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o';this.onerror=function(){this.parentElement.style.background='#e94f8a';this.parentElement.innerHTML='<span>R</span>'}"></a>
+              <a href="#" class="sname" style="color:#e94f8a">Roxanne</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble" id="m-mon-rox">
+                <span class="or-text">おはようございます！新しい週、楽しみにしてた！✨</span>
+                <span class="tr-text">Good morning! I've been waiting for this new week! ✨</span>
+              </div>
+              <button class="tr-btn" onclick="toggleTr('m-mon-rox',this)">⟳ Translate</button>
+              <span class="ts">9:22 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="V continuation">
+            <div class="av-spacer"></div>
+            <div class="bcol">
+              <div class="bubble"><a href="#" class="tag">@Riku</a> we see you online. say something.</div>
+              <span class="ts">9:23 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Riku">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w200-h200" alt="Riku" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC';this.onerror=function(){this.parentElement.style.background='#7fb069';this.parentElement.innerHTML='<span>RK</span>'}"></a>
+              <a href="#" class="sname" style="color:#7fb069">Riku</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">👀</div>
+              <span class="ts">9:41 AM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== TUESDAY ===== -->
+      <div class="day-panel" id="dp1">
+        <div class="chat-feed">
+
+          <div class="msg gap" role="article" aria-label="Lickle Sis">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w200-h200" alt="Lickle Sis" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3';this.onerror=function(){this.parentElement.style.background='#ff6eb4';this.parentElement.innerHTML='<span>LS</span>'}"></a>
+              <a href="#" class="sname" style="color:#ff6eb4">Lickle Sis</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">dropped a new verse. 2am energy is undefeated</div>
+              <span class="ts">2:03 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="V">
+            <div class="av-col">
+              <a href="#" class="av" style="background:#c8922a"><span>V</span></a>
+              <a href="#" class="sname" style="color:#c8922a">V</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">I woke up to this and it's good. send it when you're ready</div>
+              <span class="ts">10:31 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Lickle Bro">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w200-h200" alt="Lickle Bro" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1';this.onerror=function(){this.parentElement.style.background='#9b6bcc';this.parentElement.innerHTML='<span>LB</span>'}"></a>
+              <a href="#" class="sname" style="color:#9b6bcc">Lickle Bro</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">bro that bridge was cold though</div>
+              <span class="ts">10:45 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Lex">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w200-h200" alt="Lex" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F';this.onerror=function(){this.parentElement.style.background='#e84d1a';this.parentElement.innerHTML='<span>L</span>'}"></a>
+              <a href="#" class="sname" style="color:#e84d1a">Lex</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble"><a href="#" class="tag">@Lickle Sis</a> always cooking at 2am lmaooo 👨‍🍳</div>
+              <span class="ts">11:02 AM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== WEDNESDAY ===== -->
+      <div class="day-panel" id="dp2">
+        <div class="chat-feed">
+
+          <div class="msg gap" role="article" aria-label="Vira">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1eBWin2Fuz3RxC4kPVkT5MTKdnq21rbja&sz=w200-h200" alt="Vira" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1eBWin2Fuz3RxC4kPVkT5MTKdnq21rbja';this.onerror=function(){this.parentElement.style.background='#00cfe8';this.parentElement.innerHTML='<span>Vi</span>'}"></a>
+              <a href="#" class="sname" style="color:#00cfe8">Vira</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble" id="m-wed-vira">
+                <span class="or-text">오늘 스튜디오에서 새 트랙 작업했어요 🎶</span>
+                <span class="tr-text">worked on a new track in the studio today 🎶</span>
+              </div>
+              <button class="tr-btn" onclick="toggleTr('m-wed-vira',this)">⟳ Translate</button>
+              <span class="ts">3:17 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Roxanne">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w200-h200" alt="Roxanne" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o';this.onerror=function(){this.parentElement.style.background='#e94f8a';this.parentElement.innerHTML='<span>R</span>'}"></a>
+              <a href="#" class="sname" style="color:#e94f8a">Roxanne</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble" id="m-wed-rox">
+                <span class="or-text">聴きたい！早く出して！🙏</span>
+                <span class="tr-text">I want to hear it! Drop it soon! 🙏</span>
+              </div>
+              <button class="tr-btn" onclick="toggleTr('m-wed-rox',this)">⟳ Translate</button>
+              <span class="ts">3:24 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Straight">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=10yEQJX53ZnWBHB8LNs46VmnBHvgOq73x&sz=w200-h200" alt="Straight" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=10yEQJX53ZnWBHB8LNs46VmnBHvgOq73x';this.onerror=function(){this.parentElement.style.background='#2ec4b6';this.parentElement.innerHTML='<span>ST</span>'}"></a>
+              <a href="#" class="sname" style="color:#2ec4b6">Straight</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">both of you are always cooking at the same time lol</div>
+              <span class="ts">3:31 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Narrow">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1R6z1HS-Kxt8gltJ3sUg_QVytRWKnAMzC&sz=w200-h200" alt="Narrow" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1R6z1HS-Kxt8gltJ3sUg_QVytRWKnAMzC';this.onerror=function(){this.parentElement.style.background='#ff9f1c';this.parentElement.innerHTML='<span>N</span>'}"></a>
+              <a href="#" class="sname" style="color:#ff9f1c">Narrow</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">it's alignment bro</div>
+              <span class="ts">3:33 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="V">
+            <div class="av-col">
+              <a href="#" class="av" style="background:#c8922a"><span>V</span></a>
+              <a href="#" class="sname" style="color:#c8922a">V</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">when the universe moves together you feel it</div>
+              <span class="ts">3:40 PM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== THURSDAY ===== -->
+      <div class="day-panel" id="dp3">
+        <div class="chat-feed">
+
+          <div class="msg gap" role="article" aria-label="Lex">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w200-h200" alt="Lex" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F';this.onerror=function(){this.parentElement.style.background='#e84d1a';this.parentElement.innerHTML='<span>L</span>'}"></a>
+              <a href="#" class="sname" style="color:#e84d1a">Lex</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">can we talk about how <a href="#" class="tag">@Riku</a> has been online for 3 hours and said nothing</div>
+              <span class="ts">1:12 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Lickle Sis">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w200-h200" alt="Lickle Sis" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3';this.onerror=function(){this.parentElement.style.background='#ff6eb4';this.parentElement.innerHTML='<span>LS</span>'}"></a>
+              <a href="#" class="sname" style="color:#ff6eb4">Lickle Sis</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble"><a href="#" class="tag">@Riku</a> lurker behavior 😭</div>
+              <span class="ts">1:13 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Riku">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w200-h200" alt="Riku" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC';this.onerror=function(){this.parentElement.style.background='#7fb069';this.parentElement.innerHTML='<span>RK</span>'}"></a>
+              <a href="#" class="sname" style="color:#7fb069">Riku</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">😐</div>
+              <span class="ts">1:28 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="V">
+            <div class="av-col">
+              <a href="#" class="av" style="background:#c8922a"><span>V</span></a>
+              <a href="#" class="sname" style="color:#c8922a">V</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">leave them alone lmaooo they're processing</div>
+              <span class="ts">1:30 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Roxanne">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w200-h200" alt="Roxanne" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o';this.onerror=function(){this.parentElement.style.background='#e94f8a';this.parentElement.innerHTML='<span>R</span>'}"></a>
+              <a href="#" class="sname" style="color:#e94f8a">Roxanne</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble" id="m-thu-rox">
+                <span class="or-text">りくちゃんはいつも見てるだけ笑笑</span>
+                <span class="tr-text">Riku is always just watching lol</span>
+              </div>
+              <button class="tr-btn" onclick="toggleTr('m-thu-rox',this)">⟳ Translate</button>
+              <span class="ts">1:35 PM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== FRIDAY ===== -->
+      <div class="day-panel" id="dp4">
+        <div class="chat-feed">
+
+          <div class="msg gap" role="article" aria-label="V">
+            <div class="av-col">
+              <a href="#" class="av" style="background:#c8922a"><span>V</span></a>
+              <a href="#" class="sname" style="color:#c8922a">V</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">ANNOUNCEMENT — <a href="#" class="tag">@Roxanne</a>'s single drops next Friday. GFS fam hears it first.</div>
+              <span class="ts">11:00 AM</span>
+            </div>
+          </div>
+
+          <div class="msg" role="article" aria-label="Song drop">
+            <div class="av-spacer"></div>
+            <div class="bcol">
+              <a class="drop-card" href="#" tabindex="0" aria-label="Preview Hanamachi by Roxanne">
+                <div class="drop-art" style="background:linear-gradient(135deg,#1a0a10,#3d1228,#e94f8a18);">🌸</div>
+                <div class="drop-info">
+                  <div class="drop-label">Dropping Next Friday</div>
+                  <div class="drop-title">Hanamachi</div>
+                  <div class="drop-artist">Roxanne</div>
+                  <div class="drop-cta">
+                    <svg width="7" height="7" viewBox="0 0 10 10" fill="currentColor"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg>
+                    Preview
+                  </div>
+                </div>
+              </a>
+              <span class="ts">11:00 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Lex">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w200-h200" alt="Lex" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F';this.onerror=function(){this.parentElement.style.background='#e84d1a';this.parentElement.innerHTML='<span>L</span>'}"></a>
+              <a href="#" class="sname" style="color:#e84d1a">Lex</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">LET'S GO 🔥🔥🔥</div>
+              <span class="ts">11:02 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Lickle Sis">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w200-h200" alt="Lickle Sis" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3';this.onerror=function(){this.parentElement.style.background='#ff6eb4';this.parentElement.innerHTML='<span>LS</span>'}"></a>
+              <a href="#" class="sname" style="color:#ff6eb4">Lickle Sis</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">I've been waiting for this one</div>
+              <span class="ts">11:03 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Vira">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1eBWin2Fuz3RxC4kPVkT5MTKdnq21rbja&sz=w200-h200" alt="Vira" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1eBWin2Fuz3RxC4kPVkT5MTKdnq21rbja';this.onerror=function(){this.parentElement.style.background='#00cfe8';this.parentElement.innerHTML='<span>Vi</span>'}"></a>
+              <a href="#" class="sname" style="color:#00cfe8">Vira</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble" id="m-fri-vira">
+                <span class="or-text">로잔 화이팅!!! 🎉</span>
+                <span class="tr-text">Go Roxanne!!! 🎉</span>
+              </div>
+              <button class="tr-btn" onclick="toggleTr('m-fri-vira',this)">⟳ Translate</button>
+              <span class="ts">11:07 AM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Roxanne">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w200-h200" alt="Roxanne" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o';this.onerror=function(){this.parentElement.style.background='#e94f8a';this.parentElement.innerHTML='<span>R</span>'}"></a>
+              <a href="#" class="sname" style="color:#e94f8a">Roxanne</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble" id="m-fri-rox">
+                <span class="or-text">みんなありがとう 😭💕 もうすぐ！</span>
+                <span class="tr-text">Thank you everyone 😭💕 Coming soon!</span>
+              </div>
+              <button class="tr-btn" onclick="toggleTr('m-fri-rox',this)">⟳ Translate</button>
+              <span class="ts">11:14 AM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== SATURDAY ===== -->
+      <div class="day-panel" id="dp5">
+        <div class="chat-feed">
+
+          <div class="msg gap" role="article" aria-label="Narrow">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1R6z1HS-Kxt8gltJ3sUg_QVytRWKnAMzC&sz=w200-h200" alt="Narrow" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1R6z1HS-Kxt8gltJ3sUg_QVytRWKnAMzC';this.onerror=function(){this.parentElement.style.background='#ff9f1c';this.parentElement.innerHTML='<span>N</span>'}"></a>
+              <a href="#" class="sname" style="color:#ff9f1c">Narrow</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">weekend energy. anyone in the studio?</div>
+              <span class="ts">1:55 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="A">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=125DWWXEP411PDV_Dgsy1XvDCocCOKGRh&sz=w200-h200" alt="A" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=125DWWXEP411PDV_Dgsy1XvDCocCOKGRh';this.onerror=function(){this.parentElement.style.background='#c0392b';this.parentElement.innerHTML='<span>A</span>'}"></a>
+              <a href="#" class="sname" style="color:#c0392b">A</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">always</div>
+              <span class="ts">2:11 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="One">
+            <div class="av-col">
+              <a href="#" class="av" style="background:#8e44ad"><span>1</span></a>
+              <a href="#" class="sname" style="color:#8e44ad">One</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">tracking vocals right now actually</div>
+              <span class="ts">2:12 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Lickle Bro">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w200-h200" alt="Lickle Bro" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1';this.onerror=function(){this.parentElement.style.background='#9b6bcc';this.parentElement.innerHTML='<span>LB</span>'}"></a>
+              <a href="#" class="sname" style="color:#9b6bcc">Lickle Bro</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">rustblood never sleeps lol</div>
+              <span class="ts">2:20 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="V">
+            <div class="av-col">
+              <a href="#" class="av" style="background:#c8922a"><span>V</span></a>
+              <a href="#" class="sname" style="color:#c8922a">V</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">this is why I love this group</div>
+              <span class="ts">2:28 PM</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== SUNDAY ===== -->
+      <div class="day-panel" id="dp6">
+        <div class="chat-feed">
+
+          <div class="msg gap" role="article" aria-label="V">
+            <div class="av-col">
+              <a href="#" class="av" style="background:#c8922a"><span>V</span></a>
+              <a href="#" class="sname" style="color:#c8922a">V</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">week one down. this is just the beginning.</div>
+              <span class="ts">7:03 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Lex">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w200-h200" alt="Lex" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F';this.onerror=function(){this.parentElement.style.background='#e84d1a';this.parentElement.innerHTML='<span>L</span>'}"></a>
+              <a href="#" class="sname" style="color:#e84d1a">Lex</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">GFS up 🤝</div>
+              <span class="ts">7:11 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Roxanne">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w200-h200" alt="Roxanne" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o';this.onerror=function(){this.parentElement.style.background='#e94f8a';this.parentElement.innerHTML='<span>R</span>'}"></a>
+              <a href="#" class="sname" style="color:#e94f8a">Roxanne</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble" id="m-sun-rox">
+                <span class="or-text">来週も楽しみにしてます！❤</span>
+                <span class="tr-text">Looking forward to next week too! ❤</span>
+              </div>
+              <button class="tr-btn" onclick="toggleTr('m-sun-rox',this)">⟳ Translate</button>
+              <span class="ts">7:15 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="Riku">
+            <div class="av-col">
+              <a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w200-h200" alt="Riku" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC';this.onerror=function(){this.parentElement.style.background='#7fb069';this.parentElement.innerHTML='<span>RK</span>'}"></a>
+              <a href="#" class="sname" style="color:#7fb069">Riku</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble">❤️</div>
+              <span class="ts">8:42 PM</span>
+            </div>
+          </div>
+
+          <div class="msg gap" role="article" aria-label="V">
+            <div class="av-col">
+              <a href="#" class="av" style="background:#c8922a"><span>V</span></a>
+              <a href="#" class="sname" style="color:#c8922a">V</a>
+            </div>
+            <div class="bcol">
+              <div class="bubble"><a href="#" class="tag">@Riku</a> and they speak 💛</div>
+              <span class="ts">8:43 PM</span>
+            </div>
+          </div>
+
+          <div style="height:40px"></div>
+        </div>
+      </div>
+
+    </main>
+    </div><!-- /chatView -->
+
+    <!-- RADIO VIEW -->
+    <div id="radioView" class="radio-view">
+
+      <!-- Live Radio card -->
+      <a class="live-radio-card" href="https://lesaruss.ai/geekfon" target="_blank" rel="noopener" aria-label="Open GeekFon Radio live player">
+        <span class="live-card-dot"></span>
+        <div class="live-card-info">
+          <div class="live-card-title">Geek<span style="color:#F69820">Fon</span> Radio</div>
+          <div class="live-card-sub">Live Stream</div>
+        </div>
+        <span class="live-card-cta">Tune In &rsaquo;</span>
+      </a>
+
+      <!-- Free Tier header -->
+      <div class="radio-section-hd">
+        <span class="radio-section-title">Free Tier</span>
+        <span class="radio-section-badge">One Per Artist</span>
+      </div>
+
+      <!-- Track list -->
+      <div class="track-list" role="list" aria-label="Free tier tracks">
+
+        <div class="track-row" role="listitem" id="tr0" onclick="playTrack(0)">
+          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/riku-hayasaka/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+          <div class="track-info">
+            <div class="track-title">Lottery of Love</div>
+            <div class="track-artist" style="color:#7fb069">Riku Hayasaka</div>
+          </div>
+          <div class="track-meta">
+            <span class="track-dur">2:28</span>
+            <button class="track-play-btn" aria-label="Play Lottery of Love"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="track-row" role="listitem" id="tr1" onclick="playTrack(1)">
+          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lickle-bro/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+          <div class="track-info">
+            <div class="track-title">Awake from the Matrix</div>
+            <div class="track-artist" style="color:#9b6bcc">Lickle Bro</div>
+          </div>
+          <div class="track-meta">
+            <span class="track-dur">2:39</span>
+            <button class="track-play-btn" aria-label="Play Awake from the Matrix"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="track-row" role="listitem" id="tr2" onclick="playTrack(2)">
+          <div class="track-art" style="background:#1a0a10; color:#e94f8a; font-size:22px">&#9835;</div>
+          <div class="track-info">
+            <div class="track-title">Life's Tough</div>
+            <div class="track-artist" style="color:#e94f8a">Roxanne</div>
+          </div>
+          <div class="track-meta">
+            <button class="track-play-btn" aria-label="Play Life's Tough"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="track-row" role="listitem" id="tr3" onclick="playTrack(3)">
+          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lickle-sis/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+          <div class="track-info">
+            <div class="track-title">Not Impressed</div>
+            <div class="track-artist" style="color:#ff6eb4">Lickle Sis</div>
+          </div>
+          <div class="track-meta">
+            <span class="track-dur">2:57</span>
+            <button class="track-play-btn" aria-label="Play Not Impressed"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="track-row" role="listitem" id="tr4" onclick="playTrack(4)">
+          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/rustblood-prophets/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+          <div class="track-info">
+            <div class="track-title">Beyond Space and Time</div>
+            <div class="track-artist" style="color:#8888ff">Rustblood Prophets</div>
+          </div>
+          <div class="track-meta">
+            <button class="track-play-btn" aria-label="Play Beyond Space and Time"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="track-row" role="listitem" id="tr5" onclick="playTrack(5)">
+          <div class="track-art" style="background:#120a00; color:#F69820; font-size:22px">&#9835;</div>
+          <div class="track-info">
+            <div class="track-title">Super Nintendo, Sega Genesis</div>
+            <div class="track-artist" style="color:#F69820">Mr. Russell</div>
+          </div>
+          <div class="track-meta">
+            <button class="track-play-btn" aria-label="Play Super Nintendo, Sega Genesis"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="track-row" role="listitem" id="tr6" onclick="playTrack(6)">
+          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/shamanic-resin/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+          <div class="track-info">
+            <div class="track-title">Real Dream</div>
+            <div class="track-artist" style="color:#b548c6">Shamanic Resin</div>
+          </div>
+          <div class="track-meta">
+            <button class="track-play-btn" aria-label="Play Real Dream"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="track-row" role="listitem" id="tr7" onclick="playTrack(7)">
+          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lex-from-brixton/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+          <div class="track-info">
+            <div class="track-title">Be Yourself</div>
+            <div class="track-artist" style="color:#e84d1a">Lex from Brixton</div>
+          </div>
+          <div class="track-meta">
+            <button class="track-play-btn" aria-label="Play Be Yourself"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="track-row" role="listitem" id="tr8" onclick="playTrack(8)">
+          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/mad-tings/d17155c8-fda6-4c49-843a-6481dddd561f.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+          <div class="track-info">
+            <div class="track-title">Never Broke Us</div>
+            <div class="track-artist" style="color:#F69820">Mad Tings</div>
+          </div>
+          <div class="track-meta">
+            <span class="track-dur">3:29</span>
+            <button class="track-play-btn" aria-label="Play Never Broke Us"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="track-row" role="listitem" id="tr9" onclick="playTrack(9)">
+          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/straight-and-narrow/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+          <div class="track-info">
+            <div class="track-title">Dead Broke</div>
+            <div class="track-artist" style="color:#2ec4b6">Straight &amp; Narrow</div>
+          </div>
+          <div class="track-meta">
+            <span class="track-dur">3:39</span>
+            <button class="track-play-btn" aria-label="Play Dead Broke"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Nilo Wave - coming soon -->
+        <div class="track-row locked" role="listitem" id="tr10" aria-label="Spice it Up by Nilo Wave - coming soon">
+          <div class="track-art" style="background:#111; color:#333; font-size:22px">&#9835;</div>
+          <div class="track-info">
+            <div class="track-title" style="color:#555">Spice it Up</div>
+            <div class="track-artist" style="color:#444">Nilo Wave</div>
+          </div>
+          <div class="track-meta">
+            <span class="track-lock-label">Coming Soon</span>
+          </div>
+        </div>
+
+      </div><!-- /track-list -->
+
+      <!-- App download -->
+      <div class="app-download-wrap">
+        <div class="app-download-label">Unlock all tracks</div>
+        <div class="app-btns-row">
+          <a href="#" class="app-store-btn" aria-label="Download on the App Store">
+            <svg class="app-store-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.18 1.27-2.16 3.8.03 3.02 2.65 4.03 2.68 4.04l-.07.28zM13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            <div class="app-store-text">
+              <span class="app-store-sub">Download on the</span>
+              <span class="app-store-name">App Store</span>
+            </div>
+          </a>
+          <a href="#" class="app-store-btn" aria-label="Get it on Google Play">
+            <svg class="app-store-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.18 23.76c.3.17.63.24.97.2l12.44-12.44-2.65-2.65-10.76 14.89zm16.4-11.9L16.77 10 3.6.47a1.3 1.3 0 0 0-1.37-.05L14.9 12l4.68-.14zM21.4 9.84l-3.05-1.76-3.04 3.04 3.04 3.04 3.06-1.77c.87-.51.87-2.04-.01-2.55zM3.18.24 13.94 11l-2.65 2.65L.74 1.21A1.3 1.3 0 0 1 3.18.24z"/></svg>
+            <div class="app-store-text">
+              <span class="app-store-sub">Get it on</span>
+              <span class="app-store-name">Google Play</span>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Hidden audio element -->
+      <audio id="gfsAudio" preload="none"></audio>
+
+    </div><!-- /radioView -->
+
+  </div><!-- /content-wrap -->
+
+  <!-- BOTTOM TAB NAV -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button class="tab-btn active" id="tabChat" onclick="switchTab('chat')" aria-label="Chat">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span class="tab-label">Chat</span>
+    </button>
+    <button class="tab-btn" id="tabRadio" onclick="switchTab('radio')" aria-label="Radio">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="2"/>
+        <path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/>
+      </svg>
+      <span class="tab-label">Radio</span>
+    </button>
+  </nav>
+
+  <script>
+    /* ============================================================
+       DATE / DAY CONFIG
+       Week 1: May 4 (Mon) – May 10 (Sun), 2026
+    ============================================================ */
+    const CHAT_WEEK_START = new Date(2026, 4, 4); // May 4, 2026
+    const MONTH_NAMES  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const MONTH_SHORT  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const DAY_SHORT    = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const DOW_LABELS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+    let cur = 0;
+    let calOpen = false;
+    let calYear = 2026, calMonthIdx = 4; // May 2026
+
+    function getChatDate(i) {
+      const d = new Date(CHAT_WEEK_START);
+      d.setDate(d.getDate() + i);
+      return d;
+    }
+
+    function formatLabel(i) {
+      const d = getChatDate(i);
+      return DAY_SHORT[i] + ', ' + MONTH_SHORT[d.getMonth()] + ' ' + d.getDate();
+    }
+
+    /* ---- Day navigation ---- */
+    function showDay(i) {
+      document.querySelectorAll('.day-panel').forEach((p, j) => p.classList.toggle('active', j === i));
+      cur = i;
+      const lbl = document.getElementById('dayLabelText');
+      lbl.textContent = formatLabel(i);
+      const btn = document.getElementById('dayLabel');
+      btn.setAttribute('aria-label', 'Open calendar — ' + formatLabel(i));
+      document.getElementById('dayPrev').disabled = (i === 0);
+      document.getElementById('dayNext').disabled = (i === 6);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (calOpen) renderCal(); // refresh selection
+    }
+    function prevDay() { if (cur > 0) showDay(cur - 1); }
+    function nextDay() { if (cur < 6) showDay(cur + 1); }
+
+    /* ---- Arrow key + swipe ---- */
+    document.addEventListener('keydown', e => {
+      if (calOpen && e.key === 'Escape') { closeCal(); return; }
+      if (!calOpen && e.key === 'ArrowLeft') prevDay();
+      if (!calOpen && e.key === 'ArrowRight') nextDay();
+    });
+    let tx = 0;
+    document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - tx;
+      if (!calOpen && Math.abs(dx) > 44) { dx < 0 ? nextDay() : prevDay(); }
+    }, { passive: true });
+
+    /* ---- Calendar ---- */
+    function toggleCal() {
+      calOpen ? closeCal() : openCal();
+    }
+    function openCal() {
+      calOpen = true;
+      const panel = document.getElementById('calPanel');
+      panel.classList.add('open');
+      panel.setAttribute('aria-hidden', 'false');
+      document.getElementById('dayLabel').setAttribute('aria-expanded', 'true');
+      renderCal();
+    }
+    function closeCal() {
+      calOpen = false;
+      const panel = document.getElementById('calPanel');
+      panel.classList.remove('open');
+      panel.setAttribute('aria-hidden', 'true');
+      document.getElementById('dayLabel').setAttribute('aria-expanded', 'false');
+    }
+
+    /* Build the chat date set for fast lookup */
+    function buildChatMap() {
+      const map = {};
+      for (let i = 0; i < 7; i++) {
+        const d = getChatDate(i);
+        map[d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate()] = i;
+      }
+      return map;
+    }
+
+    function renderCal() {
+      const chatMap = buildChatMap();
+      const firstDay = new Date(calYear, calMonthIdx, 1);
+      const startDow = firstDay.getDay(); // 0=Sun
+      const daysInMonth = new Date(calYear, calMonthIdx + 1, 0).getDate();
+      const selDate = getChatDate(cur);
+
+      let html = `
+        <div class="cal-month-row">
+          <button class="cal-nav-btn" onclick="calShift(-1)" aria-label="Previous month">&#8249;</button>
+          <span class="cal-month-label">${MONTH_NAMES[calMonthIdx]} ${calYear}</span>
+          <button class="cal-nav-btn" onclick="calShift(1)" aria-label="Next month">&#8250;</button>
+        </div>
+        <div class="cal-dow-row">
+          ${DOW_LABELS.map(d => `<span class="cal-dow">${d}</span>`).join('')}
+        </div>
+        <div class="cal-grid">
+      `;
+
+      for (let i = 0; i < startDow; i++) {
+        html += `<span class="cal-cell"></span>`;
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = calYear + '-' + calMonthIdx + '-' + d;
+        const dayIdx = chatMap[key];
+        const isChat = dayIdx !== undefined;
+        const isSel = isChat && dayIdx === cur;
+        if (isChat) {
+          html += `<button class="cal-cell chat${isSel ? ' sel' : ''}" onclick="pickDate(${dayIdx})" aria-label="${MONTH_NAMES[calMonthIdx]} ${d}" aria-pressed="${isSel}">${d}</button>`;
+        } else {
+          html += `<span class="cal-cell">${d}</span>`;
+        }
+      }
+
+      html += `</div>`;
+      document.getElementById('calContent').innerHTML = html;
+    }
+
+    function calShift(dir) {
+      calMonthIdx += dir;
+      if (calMonthIdx < 0)  { calMonthIdx = 11; calYear--; }
+      if (calMonthIdx > 11) { calMonthIdx = 0;  calYear++; }
+      renderCal();
+    }
+
+    function pickDate(idx) {
+      showDay(idx);
+      closeCal();
+    }
+
+    /* Close calendar when clicking outside */
+    document.addEventListener('click', e => {
+      if (!calOpen) return;
+      const panel = document.getElementById('calPanel');
+      const btn   = document.getElementById('dayLabel');
+      if (!panel.contains(e.target) && !btn.contains(e.target)) closeCal();
+    });
+
+    /* ---- Tab switching ---- */
+    function switchTab(tab) {
+      const isChat = tab === 'chat';
+      document.getElementById('chatView').style.display = isChat ? '' : 'none';
+      document.getElementById('radioView').classList.toggle('active', !isChat);
+      document.getElementById('tabChat').classList.toggle('active', isChat);
+      document.getElementById('tabRadio').classList.toggle('active', !isChat);
+      if (isChat && calOpen) closeCal();
+    }
+
+    /* ---- Radio Player ---- */
+    const AUDIO_BASE = 'https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/';
+    const TRACKS = [
+      { title: 'Lottery of Love',             src: 'riku-hayasaka/lottery-of-love.mp3' },
+      { title: 'Awake from the Matrix',       src: 'lickle-bro/awake-from-the-matrix.mp3' },
+      { title: "Life's Tough",                src: 'roxanne/lifes-tough.mp3' },
+      { title: 'Not Impressed',               src: 'lickle-sis/not-impressed.mp3' },
+      { title: 'Beyond Space and Time',       src: 'rustblood-prophets/beyond-space-and-time.mp3' },
+      { title: 'Super Nintendo, Sega Genesis',src: 'mr-russell/super-nintendo-sega-genesis.mp3' },
+      { title: 'Real Dream',                  src: 'shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3' },
+      { title: 'Be Yourself',                 src: 'lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3' },
+      { title: 'Never Broke Us',              src: 'mad-tings/never-broke-us.mp3' },
+      { title: 'Dead Broke',                  src: 'straight-and-narrow/dead-broke.mp3' },
+      { locked: true, title: 'Spice it Up' }
+    ];
+
+    const PLAY_ICON  = '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg>';
+    const PAUSE_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1" width="3" height="8" rx=".5"/><rect x="5.5" y="1" width="3" height="8" rx=".5"/></svg>';
+
+    let curTrack = -1;
+    let gfsPlaying = false;
+
+    function playTrack(idx) {
+      if (TRACKS[idx] && TRACKS[idx].locked) return;
+      const audio = document.getElementById('gfsAudio');
+
+      if (curTrack === idx) {
+        if (gfsPlaying) {
+          audio.pause();
+          gfsPlaying = false;
+          setTrackState(idx, false);
+        } else {
+          audio.play().catch(() => {});
+          gfsPlaying = true;
+          setTrackState(idx, true);
+        }
+        return;
+      }
+
+      if (curTrack >= 0) setTrackState(curTrack, false);
+      curTrack = idx;
+      audio.src = AUDIO_BASE + TRACKS[idx].src;
+      audio.play().catch(() => {});
+      gfsPlaying = true;
+      setTrackState(idx, true);
+
+      audio.onended = () => {
+        gfsPlaying = false;
+        setTrackState(idx, false);
+        curTrack = -1;
+      };
+    }
+
+    function setTrackState(idx, playing) {
+      const row = document.getElementById('tr' + idx);
+      if (!row) return;
+      row.classList.toggle('playing', playing);
+      const btn = row.querySelector('.track-play-btn');
+      if (!btn) return;
+      btn.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+      btn.setAttribute('aria-label', (playing ? 'Pause' : 'Play ') + (TRACKS[idx].title || ''));
+    }
+
+    /* ---- Fon color cycling ---- */
+    const fonColors = ['#e84d1a','#ff6eb4','#e94f8a','#00cfe8','#2ec4b6','#ff9f1c','#7fb069','#c0392b','#8e44ad','#c8922a'];
+    let fi = 0;
+    const fonEl = document.getElementById('fon');
+    fonEl.style.color = fonColors[0];
+    setInterval(() => { fi = (fi + 1) % fonColors.length; fonEl.style.color = fonColors[fi]; }, 1600);
+
+    /* ---- Translate ---- */
+    function toggleTr(id, btn) {
+      const b = document.getElementById(id);
+      const on = b.classList.toggle('translated');
+      btn.textContent = on ? '⟳ Original' : '⟳ Translate';
+      btn.classList.toggle('on', on);
+    }
+  </script>
+</body>
+</html>
