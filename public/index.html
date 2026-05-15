@@ -403,92 +403,6 @@
     /* ============================================================
        FULLSCREEN OVERLAY
     ============================================================ */
-    .fs-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9000;
-      background: #080808;
-      display: flex;
-      align-items: stretch;
-      justify-content: center;
-      padding-top: 25px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.28s ease;
-    }
-    .fs-overlay.open {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    /* Close button */
-    .fs-close {
-      position: fixed;
-      top: 18px;
-      right: 18px;
-      z-index: 9100;
-      width: 48px;
-      height: 48px;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 50%;
-      color: #fff;
-      font-size: 17px;
-      line-height: 1;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Montserrat', sans-serif;
-      font-weight: 800;
-      transition: background 0.15s, transform 0.1s;
-      opacity: 0;
-      transform: scale(0.85);
-      transition: opacity 0.28s 0.1s ease, transform 0.28s 0.1s ease, background 0.15s;
-    }
-    .fs-overlay.open .fs-close {
-      opacity: 1;
-      transform: scale(1);
-    }
-    .fs-close:hover {
-      background: rgba(255,255,255,0.2);
-      transform: scale(1.05) !important;
-    }
-    .fs-close:focus { outline: 3px solid #F69820; outline-offset: 3px; }
-
-    /* Swipe hint */
-    .fs-hint {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9100;
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.18);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      opacity: 0;
-      transition: opacity 0.5s 0.4s ease;
-      pointer-events: none;
-      white-space: nowrap;
-    }
-    .fs-overlay.open .fs-hint { opacity: 1; }
-
-    /* Fullscreen iframe */
-    .fs-iframe {
-      width: 100%;
-      max-width: 560px;
-      height: 100%;
-      border: none;
-      display: block;
-      flex-shrink: 0;
-    }
 
     /* ============================================================
        MOBILE LAYOUT
@@ -608,7 +522,7 @@
             </a>
           </div>
           <div class="hero-cta-row">
-            <button class="btn-enter" aria-label="Enter GeekFon Society">Enter GFS</button>
+            <a href="geekfon-homepage-v2.html" target="_blank" rel="noopener" class="btn-enter" role="button" aria-label="Enter GeekFon Society">Enter GFS</a>
             <button class="btn-listen" aria-label="Listen to GeekFon Radio" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Listen Now</button>
           </div>
         </div>
@@ -618,16 +532,6 @@
     </div>
   </div>
 
-  <!-- ============================================================
-       FULLSCREEN OVERLAY
-  ============================================================ -->
-  <div class="fs-overlay" id="fsOverlay" aria-hidden="true" role="dialog" aria-label="GeekFon Society chat — fullscreen">
-    <button class="fs-close" id="fsClose" aria-label="Close fullscreen view">&#x2715;</button>
-    <div class="fs-hint" aria-hidden="true">
-      <svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor"><path d="M0 5h10M6 1l4 4-4 4"/></svg>
-      Swipe or use arrow keys to change days
-      <svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor" style="transform:scaleX(-1)"><path d="M0 5h10M6 1l4 4-4 4"/></svg>
-    </div>
     <iframe
       class="fs-iframe"
       id="fsIframe"
@@ -644,37 +548,10 @@
     heroFon.style.color = fonColors[0];
     setInterval(() => { fi = (fi+1) % fonColors.length; heroFon.style.color = fonColors[fi]; }, 1600);
 
-    /* ---- Fullscreen ---- */
+    /* ---- Phone bezel: open full page ---- */
     const phoneBez = document.getElementById('phoneBez');
-    const overlay  = document.getElementById('fsOverlay');
-    const closeBtn = document.getElementById('fsClose');
-
-    function openFS() {
-      overlay.classList.add('open');
-      overlay.removeAttribute('aria-hidden');
-      document.body.style.overflow = 'hidden';
-      // small delay so iframe is ready before focusing
-      setTimeout(() => closeBtn.focus(), 300);
-    }
-
-    function closeFS() {
-      overlay.classList.remove('open');
-      overlay.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-      phoneBez.focus();
-    }
-
-    phoneBez.addEventListener('click', openFS);
-    phoneBez.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFS(); } });
-    closeBtn.addEventListener('click', closeFS);
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && overlay.classList.contains('open')) closeFS();
-    });
-
-    /* Clicking the overlay bg (outside iframe) also closes */
-    overlay.addEventListener('click', e => {
-      if (e.target === overlay) closeFS();
-    });
+    phoneBez.addEventListener('click', () => window.open('geekfon-homepage-v2.html', '_blank', 'noopener'));
+    phoneBez.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.open('geekfon-homepage-v2.html', '_blank', 'noopener'); } });
   </script>
 </body>
 </html>
