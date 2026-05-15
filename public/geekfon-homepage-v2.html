@@ -480,6 +480,7 @@
       transition: border-color 0.2s;
       margin-bottom: 20px;
     }
+    .live-radio-card { cursor: pointer; }
     .live-radio-card:hover { border-color: #F69820; }
     .live-radio-card:focus { outline: 2px solid #F69820; outline-offset: 3px; }
     .live-card-dot {
@@ -489,6 +490,27 @@
       flex-shrink: 0;
       animation: pdot 1.5s ease-in-out infinite;
     }
+    .live-card-dot--off {
+      background: #444;
+      animation: none;
+    }
+    .live-card-dot--playing {
+      background: #F69820;
+      animation: pdot 0.8s ease-in-out infinite;
+    }
+    .live-vol-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .live-vol-icon { width: 16px; height: 16px; color: #F69820; flex-shrink: 0; }
+    .live-vol-slider {
+      -webkit-appearance: none;
+      width: 72px; height: 3px;
+      background: #333; border-radius: 2px; outline: none; cursor: pointer;
+    }
+    .live-vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px; height: 12px;
+      border-radius: 50%; background: #F69820; cursor: pointer;
+    }
+    .live-vol-slider:focus { outline: 2px solid #F69820; outline-offset: 2px; }
     .live-card-info { flex: 1; min-width: 0; }
     .live-card-title { font-size: 13px; font-weight: 900; color: #fff; letter-spacing: 0.02em; }
     .live-card-sub { font-size: 9px; color: #555; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
@@ -1237,15 +1259,19 @@
     <!-- RADIO VIEW -->
     <div id="radioView" class="radio-view">
 
-      <!-- Live Radio card -->
-      <a class="live-radio-card" href="https://lesaruss.ai/geekfon" target="_blank" rel="noopener" aria-label="Open GeekFon Radio live player">
-        <span class="live-card-dot"></span>
+      <!-- Live Radio card: volume-only player -->
+      <div id="liveCard" class="live-radio-card" aria-label="GeekFon Radio live stream">
+        <span id="liveCardDot" class="live-card-dot live-card-dot--off"></span>
         <div class="live-card-info">
           <div class="live-card-title">Geek<span style="color:#F69820">Fon</span> Radio</div>
-          <div class="live-card-sub">Live Stream</div>
+          <div id="liveCardSub" class="live-card-sub">Checking status...</div>
         </div>
-        <span class="live-card-cta">Tune In &rsaquo;</span>
-      </a>
+        <div class="live-vol-wrap" id="liveVolWrap" style="display:none">
+          <svg class="live-vol-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3L5 7H2v6h3l4 4V3zm5.07 1.93a9 9 0 010 10.14M12.54 6.46a5 5 0 010 7.08"/></svg>
+          <input id="liveVolSlider" type="range" min="0" max="1" step="0.02" value="0.8" class="live-vol-slider" aria-label="Volume">
+        </div>
+        <span id="liveCardCta" class="live-card-cta" aria-live="polite"></span>
+      </div>
 
       <!-- Free Tier header -->
       <div class="radio-section-hd">
@@ -1408,6 +1434,7 @@
 
       <!-- Hidden audio element -->
       <audio id="gfsAudio" preload="none"></audio>
+      <audio id="liveAudio" preload="none"></audio>
 
     </div><!-- /radioView -->
 
@@ -1653,6 +1680,86 @@
     const fonEl = document.getElementById('fon');
     fonEl.style.color = fonColors[0];
     setInterval(() => { fi = (fi + 1) % fonColors.length; fonEl.style.color = fonColors[fi]; }, 1600);
+
+    /* ---- Live Radio Card (Azuracast) - volume only, auto-connect ---- */
+    const LIVE_STREAM_URL = 'http://2.24.99.251/listen/geekfon_radio/radio.mp3';
+    const LIVE_API_URL    = 'http://2.24.99.251/api/nowplaying/geekfon_radio';
+    let liveIsOn      = false;
+    let liveConnected = false;
+    let liveGestured  = false;
+
+    function setLiveCard(isOn, trackTitle) {
+      const dot  = document.getElementById('liveCardDot');
+      const sub  = document.getElementById('liveCardSub');
+      const cta  = document.getElementById('liveCardCta');
+      const vol  = document.getElementById('liveVolWrap');
+      const card = document.getElementById('liveCard');
+      liveIsOn = isOn;
+      if (!isOn) {
+        dot.className = 'live-card-dot live-card-dot--off';
+        sub.textContent = 'OFFLINE';
+        cta.textContent = '';
+        card.style.opacity = '0.5';
+        card.style.cursor = 'default';
+        vol.style.display = 'none';
+      } else {
+        dot.className = liveConnected ? 'live-card-dot live-card-dot--playing' : 'live-card-dot';
+        sub.textContent = trackTitle ? trackTitle : 'Live 24/7';
+        cta.textContent = liveGestured ? '' : 'Tap to listen';
+        cta.style.color = '#F69820';
+        card.style.opacity = '1';
+        card.style.cursor = liveGestured ? 'default' : 'pointer';
+        vol.style.display = liveGestured ? 'flex' : 'none';
+      }
+    }
+
+    /* Auto-connect on first user tap anywhere on the card */
+    document.getElementById('liveCard').addEventListener('click', function() {
+      if (!liveIsOn || liveGestured) return;
+      liveGestured = true;
+      startLiveStream();
+    });
+
+    function startLiveStream() {
+      const audio = document.getElementById('liveAudio');
+      const gfs   = document.getElementById('gfsAudio');
+      gfs.pause();
+      gfsPlaying = false;
+      if (curTrack >= 0) { setTrackState(curTrack, false); curTrack = -1; }
+      audio.volume = parseFloat(document.getElementById('liveVolSlider').value);
+      audio.src = LIVE_STREAM_URL + '?t=' + Date.now();
+      audio.play().catch(() => {});
+      liveConnected = true;
+      setLiveCard(true, document.getElementById('liveCardSub').textContent);
+    }
+
+    /* Auto-connect when Radio tab becomes active (after first gesture) */
+    const _origSwitchTab = switchTab;
+    function switchTab(tab) {
+      _origSwitchTab(tab);
+      if (tab === 'radio' && liveIsOn && liveGestured && !liveConnected) startLiveStream();
+    }
+
+    /* Volume slider */
+    document.getElementById('liveVolSlider').addEventListener('input', function() {
+      const audio = document.getElementById('liveAudio');
+      audio.volume = parseFloat(this.value);
+    });
+
+    function pollLiveStation() {
+      fetch(LIVE_API_URL, { cache: 'no-store' })
+        .then(r => r.json())
+        .then(d => {
+          const on    = d.is_online === true;
+          const title = on && d.now_playing && d.now_playing.song ? d.now_playing.song.title : null;
+          const host  = (d.live && d.live.is_live) ? (d.live.streamer_name || 'Lord Zorlot') : null;
+          setLiveCard(on, host || title);
+        })
+        .catch(() => setLiveCard(false, null));
+    }
+
+    pollLiveStation();
+    setInterval(pollLiveStation, 30000);
 
     /* ---- Translate ---- */
     function toggleTr(id, btn) {
