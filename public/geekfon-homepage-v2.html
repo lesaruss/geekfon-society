@@ -517,6 +517,18 @@
     .live-card-sub { font-size: 9px; color: #555; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
     .live-card-cta { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #F69820; white-space: nowrap; flex-shrink: 0; }
 
+    /* Lord Zorlot host avatar in live card */
+    .live-host-avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: #0d0012; overflow: hidden;
+      border: 2px solid rgba(123,82,171,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 900; color: #7b52ab;
+      box-shadow: 0 0 10px rgba(123,82,171,0.25);
+    }
+    .live-host-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .live-host-avatar--off { border-color: rgba(80,80,80,0.3); box-shadow: none; opacity: 0.4; }
+
     /* Section header */
     .radio-section-hd { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .radio-section-title { font-size: 9px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #555; }
@@ -525,6 +537,83 @@
       background: rgba(246,152,32,0.1); color: #F69820; padding: 3px 8px;
       border-radius: 100px; border: 1px solid rgba(246,152,32,0.2);
     }
+
+    /* Tier badge variants */
+    .radio-section-badge--full {
+      background: rgba(123,82,171,0.12); color: #9b6bcc;
+      border-color: rgba(123,82,171,0.25);
+    }
+    .radio-section-badge--preview {
+      background: rgba(246,152,32,0.08); color: #d97c10;
+      border-color: rgba(246,152,32,0.15);
+    }
+
+    /* Tier section wrappers */
+    .tier-block { width: 100%; margin-bottom: 24px; }
+
+    /* Full-tier lock overlay on tracks */
+    .track-row.tier-full-locked {
+      opacity: 0.45; cursor: default;
+      border: 1px solid rgba(123,82,171,0.1);
+      border-radius: 10px;
+    }
+    .track-row.tier-full-locked:hover { background: transparent; }
+
+    /* Preview-tier track — playable but visually distinct */
+    .track-row.tier-preview { border: 1px solid rgba(246,152,32,0.08); border-radius: 10px; }
+    .track-row.tier-preview:hover { background: #111; }
+    .preview-badge {
+      font-size: 7px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #d97c10; background: rgba(246,152,32,0.08);
+      border: 1px solid rgba(246,152,32,0.18);
+      padding: 2px 6px; border-radius: 100px;
+    }
+
+    /* Preview stop overlay (shows after 30s) */
+    .preview-end-wrap {
+      display: none; position: absolute; inset: 0; border-radius: 10px;
+      background: rgba(0,0,0,0.82);
+      align-items: center; justify-content: center; flex-direction: column;
+      gap: 6px; z-index: 2;
+    }
+    .preview-end-wrap.show { display: flex; }
+    .preview-end-label {
+      font-size: 9px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #fff;
+    }
+    .preview-end-cta {
+      font-size: 8px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #F69820; text-decoration: none;
+    }
+    .track-row.tier-preview { position: relative; overflow: hidden; }
+
+    /* Join pill (bottom of Full tier) */
+    .tier-join-pill {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; margin-top: 10px;
+      background: rgba(123,82,171,0.12);
+      border: 1px solid rgba(123,82,171,0.25);
+      border-radius: 100px; padding: 9px 0;
+      font-size: 9px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+      color: #9b6bcc; text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .tier-join-pill:hover { background: rgba(123,82,171,0.2); color: #b88de0; }
+    .tier-join-pill:focus { outline: 2px solid #9b6bcc; outline-offset: 3px; }
+
+    /* Unlock pill (bottom of Preview tier) */
+    .tier-unlock-pill {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; margin-top: 10px;
+      background: transparent;
+      border: 1px solid rgba(246,152,32,0.2);
+      border-radius: 100px; padding: 9px 0;
+      font-size: 9px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+      color: #d97c10; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .tier-unlock-pill:hover { background: rgba(246,152,32,0.07); }
+    .tier-unlock-pill:focus { outline: 2px solid #F69820; outline-offset: 3px; }
 
     /* Track list */
     .track-list { width: 100%; display: flex; flex-direction: column; gap: 1px; }
@@ -1263,6 +1352,12 @@
       <!-- Live Radio card: volume-only player -->
       <div id="liveCard" class="live-radio-card" aria-label="GeekFon Radio live stream">
         <span id="liveCardDot" class="live-card-dot live-card-dot--off"></span>
+        <div id="liveHostAvatar" class="live-host-avatar live-host-avatar--off" aria-hidden="true">
+          <img id="liveHostImg"
+               src="https://drive.google.com/thumbnail?id=1aEpkvZbQd6ViIvQmi2wteY0WdwCr4cem&sz=w80-h80"
+               alt="Lord Zorlot"
+               onerror="this.style.display='none';this.parentElement.textContent='Z'">
+        </div>
         <div class="live-card-info">
           <div class="live-card-title">Geek<span style="color:#F69820">Fon</span> Radio</div>
           <div id="liveCardSub" class="live-card-sub">Checking status...</div>
@@ -1274,6 +1369,97 @@
         <span id="liveCardCta" class="live-card-cta" aria-live="polite"></span>
       </div>
 
+      <!-- ── FULL LIBRARY tier ── -->
+      <div class="tier-block">
+        <div class="radio-section-hd">
+          <span class="radio-section-title">Full Library</span>
+          <span class="radio-section-badge radio-section-badge--full">Members Only</span>
+        </div>
+        <div class="track-list" role="list" aria-label="Members-only tracks">
+
+          <div class="track-row tier-full-locked" role="listitem" aria-label="Ctrl Plus Feel by Vira - members only">
+            <div class="track-art" style="background:#00101a; color:#00cfe8; font-size:20px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title" style="color:#666">Ctrl + Feel</div>
+              <div class="track-artist" style="color:#444">Vira</div>
+            </div>
+            <div class="track-meta">
+              <span class="track-lock-label">Members Only</span>
+            </div>
+          </div>
+
+          <div class="track-row tier-full-locked" role="listitem" aria-label="Before the Helmet by Lord Zorlot - members only">
+            <div class="track-art" style="background:#0d0012; color:#7b52ab; font-size:20px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title" style="color:#666">Before the Helmet</div>
+              <div class="track-artist" style="color:#444">Lord Zorlot</div>
+            </div>
+            <div class="track-meta">
+              <span class="track-lock-label">Members Only</span>
+            </div>
+          </div>
+
+          <div class="track-row tier-full-locked" role="listitem" aria-label="For the Record by V - members only">
+            <div class="track-art" style="background:#120e00; color:#c8922a; font-size:20px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title" style="color:#666">For the Record</div>
+              <div class="track-artist" style="color:#444">V</div>
+            </div>
+            <div class="track-meta">
+              <span class="track-lock-label">Members Only</span>
+            </div>
+          </div>
+
+        </div>
+        <a href="#" class="tier-join-pill" aria-label="Join GeekFon Society">Join GeekFon Society &nbsp;&#8250;</a>
+      </div>
+
+      <!-- ── PARTIAL / PREVIEW tier ── -->
+      <div class="tier-block">
+        <div class="radio-section-hd">
+          <span class="radio-section-title">Previews</span>
+          <span class="radio-section-badge radio-section-badge--preview">30s Sample</span>
+        </div>
+        <div class="track-list" role="list" aria-label="30-second preview tracks">
+
+          <div class="track-row tier-preview" role="listitem" id="trP0" onclick="playPreview(0)" aria-label="Spice it Up by Nilo Wave - 30 second preview">
+            <div class="preview-end-wrap" id="previewEnd0" role="status" aria-live="polite">
+              <span class="preview-end-label">Preview Ended</span>
+              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
+            </div>
+            <div class="track-art" style="background:#0d0800; color:#e8a020; font-size:20px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title">Spice it Up</div>
+              <div class="track-artist" style="color:#e8a020">Nilo Wave</div>
+            </div>
+            <div class="track-meta">
+              <span class="preview-badge">30s</span>
+              <button class="track-play-btn" id="trP0Btn" aria-label="Play 30-second preview of Spice it Up"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row tier-preview" role="listitem" id="trP1" onclick="playPreview(1)" aria-label="Signal in the Noise by Riku Hayasaka - 30 second preview">
+            <div class="preview-end-wrap" id="previewEnd1" role="status" aria-live="polite">
+              <span class="preview-end-label">Preview Ended</span>
+              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
+            </div>
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/riku-hayasaka/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Signal in the Noise</div>
+              <div class="track-artist" style="color:#7fb069">Riku Hayasaka</div>
+            </div>
+            <div class="track-meta">
+              <span class="preview-badge">30s</span>
+              <button class="track-play-btn" id="trP1Btn" aria-label="Play 30-second preview of Signal in the Noise"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+        </div>
+        <a href="#" class="tier-unlock-pill" aria-label="Unlock full tracks">Unlock All Tracks &nbsp;&#8250;</a>
+      </div>
+
+      <!-- ── FREE tier ── -->
+      <div class="tier-block">
       <!-- Free Tier header -->
       <div class="radio-section-hd">
         <span class="radio-section-title">Free Tier</span>
@@ -1411,6 +1597,7 @@
         </div>
 
       </div><!-- /track-list -->
+      </div><!-- /tier-block free -->
 
       <!-- App download -->
       <div class="app-download-wrap">
@@ -1628,6 +1815,71 @@
       { locked: true, title: 'Spice it Up' }
     ];
 
+    const PREVIEW_TRACKS = [
+      { title: 'Spice it Up',          src: null },  // audio pending upload
+      { title: 'Signal in the Noise',  src: null }   // audio pending upload
+    ];
+    const PREVIEW_LIMIT_S = 30;
+    let curPreview = -1;
+    let previewPlaying = false;
+    let previewTimer  = null;
+
+    function playPreview(idx) {
+      const audio = document.getElementById('gfsAudio');
+      const track = PREVIEW_TRACKS[idx];
+      if (!track || !track.src) {
+        // No audio uploaded yet - show the "coming soon" end-card briefly
+        showPreviewEnd(idx);
+        return;
+      }
+
+      // Stop any playing free track
+      if (curTrack >= 0) { audio.pause(); gfsPlaying = false; setTrackState(curTrack, false); curTrack = -1; }
+
+      const btn = document.getElementById('trP' + idx + 'Btn');
+      if (curPreview === idx && previewPlaying) {
+        audio.pause();
+        previewPlaying = false;
+        clearTimeout(previewTimer);
+        if (btn) btn.innerHTML = PLAY_ICON;
+        return;
+      }
+
+      // Stop previous preview
+      if (curPreview >= 0) resetPreview(curPreview);
+      clearTimeout(previewTimer);
+
+      curPreview = idx;
+      audio.src = AUDIO_BASE + track.src;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+      previewPlaying = true;
+      if (btn) btn.innerHTML = PAUSE_ICON;
+
+      previewTimer = setTimeout(() => {
+        audio.pause();
+        previewPlaying = false;
+        if (btn) btn.innerHTML = PLAY_ICON;
+        showPreviewEnd(idx);
+      }, PREVIEW_LIMIT_S * 1000);
+
+      audio.onended = () => { resetPreview(idx); };
+    }
+
+    function showPreviewEnd(idx) {
+      const endEl = document.getElementById('previewEnd' + idx);
+      if (endEl) endEl.classList.add('show');
+      setTimeout(() => { if (endEl) endEl.classList.remove('show'); }, 4000);
+    }
+
+    function resetPreview(idx) {
+      previewPlaying = false;
+      clearTimeout(previewTimer);
+      const btn = document.getElementById('trP' + idx + 'Btn');
+      if (btn) btn.innerHTML = PLAY_ICON;
+      curPreview = -1;
+    }
+
     const PLAY_ICON  = '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg>';
     const PAUSE_ICON = '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1" width="3" height="8" rx=".5"/><rect x="5.5" y="1" width="3" height="8" rx=".5"/></svg>';
 
@@ -1690,12 +1942,14 @@
     let liveGestured  = false;
 
     function setLiveCard(isOn, trackTitle) {
-      const dot  = document.getElementById('liveCardDot');
-      const sub  = document.getElementById('liveCardSub');
-      const cta  = document.getElementById('liveCardCta');
-      const vol  = document.getElementById('liveVolWrap');
-      const card = document.getElementById('liveCard');
+      const dot    = document.getElementById('liveCardDot');
+      const sub    = document.getElementById('liveCardSub');
+      const cta    = document.getElementById('liveCardCta');
+      const vol    = document.getElementById('liveVolWrap');
+      const card   = document.getElementById('liveCard');
+      const avatar = document.getElementById('liveHostAvatar');
       liveIsOn = isOn;
+      if (avatar) avatar.classList.toggle('live-host-avatar--off', !isOn);
       if (!isOn) {
         dot.className = 'live-card-dot live-card-dot--off';
         sub.textContent = 'OFFLINE';
