@@ -480,9 +480,9 @@
       transition: border-color 0.2s;
       margin-bottom: 20px;
     }
-    .live-radio-card { cursor: pointer; }
-    .live-radio-card:hover { border-color: #F69820; }
-    .live-radio-card:focus { outline: 2px solid #F69820; outline-offset: 3px; }
+    .live-radio-card--on { cursor: pointer; }
+    .live-radio-card--on:hover { border-color: #F69820; }
+    .live-radio-card--on:focus { outline: 2px solid #F69820; outline-offset: 3px; }
     .live-card-dot {
       width: 8px; height: 8px;
       background: #4caf50;
@@ -1700,7 +1700,7 @@
         sub.textContent = 'OFFLINE';
         cta.textContent = '';
         card.style.opacity = '0.5';
-        card.style.cursor = 'default';
+        card.classList.remove('live-radio-card--on');
         vol.style.display = 'none';
       } else {
         dot.className = liveConnected ? 'live-card-dot live-card-dot--playing' : 'live-card-dot';
@@ -1708,7 +1708,7 @@
         cta.textContent = liveGestured ? '' : 'Tap to listen';
         cta.style.color = '#F69820';
         card.style.opacity = '1';
-        card.style.cursor = liveGestured ? 'default' : 'pointer';
+        card.classList.toggle('live-radio-card--on', !liveGestured);
         vol.style.display = liveGestured ? 'flex' : 'none';
       }
     }
@@ -1731,13 +1731,6 @@
       audio.play().catch(() => {});
       liveConnected = true;
       setLiveCard(true, document.getElementById('liveCardSub').textContent);
-    }
-
-    /* Auto-connect when Radio tab becomes active (after first gesture) */
-    const _origSwitchTab = switchTab;
-    function switchTab(tab) {
-      _origSwitchTab(tab);
-      if (tab === 'radio' && liveIsOn && liveGestured && !liveConnected) startLiveStream();
     }
 
     /* Volume slider */
