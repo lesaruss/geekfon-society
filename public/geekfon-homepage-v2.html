@@ -484,6 +484,10 @@
     .live-radio-card--on { cursor: pointer; }
     .live-radio-card--on:hover { border-color: #F69820; }
     .live-radio-card--on:focus { outline: 2px solid #F69820; outline-offset: 3px; }
+    .live-radio-card--live {
+      border-color: rgba(246,152,32,0.45) !important;
+      box-shadow: 0 0 18px rgba(246,152,32,0.12), 0 0 0 1px rgba(246,152,32,0.2);
+    }
     .live-card-dot {
       width: 8px; height: 8px;
       background: #4caf50;
@@ -514,38 +518,55 @@
     .live-vol-slider:focus { outline: 2px solid #F69820; outline-offset: 2px; }
     .live-card-info { flex: 1; min-width: 0; }
     .live-card-title { font-size: 13px; font-weight: 900; color: #fff; letter-spacing: 0.02em; }
-    .live-card-sub { font-size: 9px; color: #555; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+    .live-card-sub { font-size: 9px; color: #999; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+    .live-card-sub--off { color: #555; }
     .live-card-cta { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #F69820; white-space: nowrap; flex-shrink: 0; }
 
     /* Lord Zorlot host avatar in live card */
     .live-host-avatar {
-      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
       background: #0d0012; overflow: hidden;
       border: 2px solid rgba(123,82,171,0.5);
       display: flex; align-items: center; justify-content: center;
       font-size: 14px; font-weight: 900; color: #7b52ab;
       box-shadow: 0 0 10px rgba(123,82,171,0.25);
     }
-    .live-host-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .live-host-avatar--off { border-color: rgba(80,80,80,0.3); box-shadow: none; opacity: 0.4; }
+    .live-host-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; display: block; }
+    .live-host-avatar--off { border-color: rgba(80,80,80,0.3); box-shadow: none; opacity: 0.5; }
+
+    /* Library tabs */
+    .lib-tabs {
+      display: flex; width: 100%;
+      background: #0a0a0a; border-radius: 10px; padding: 3px; gap: 3px;
+      margin-bottom: 16px;
+    }
+    .lib-tab {
+      flex: 1; padding: 8px 0;
+      font-size: 10px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #999; background: transparent; border: none; border-radius: 8px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .lib-tab.active { background: #1e1e1e; color: #fff; }
+    .lib-tab:focus-visible { outline: 3px solid #F69820; outline-offset: 2px; }
+    .lib-panel { width: 100%; }
 
     /* Section header */
-    .radio-section-hd { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .radio-section-title { font-size: 9px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #555; }
+    .radio-section-hd { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; margin-top: 8px; }
+    .radio-section-title { font-size: 10px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #999; }
     .radio-section-badge {
-      font-size: 7px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      font-size: 8px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
       background: rgba(246,152,32,0.1); color: #F69820; padding: 3px 8px;
       border-radius: 100px; border: 1px solid rgba(246,152,32,0.2);
     }
 
-    /* Tier badge variants */
+    /* Tier badge variants — contrast-corrected */
     .radio-section-badge--full {
-      background: rgba(123,82,171,0.12); color: #9b6bcc;
-      border-color: rgba(123,82,171,0.25);
+      background: rgba(123,82,171,0.15); color: #c4a0e8;
+      border-color: rgba(123,82,171,0.3);
     }
     .radio-section-badge--preview {
-      background: rgba(246,152,32,0.08); color: #d97c10;
-      border-color: rgba(246,152,32,0.15);
+      background: rgba(246,152,32,0.1); color: #F69820;
+      border-color: rgba(246,152,32,0.2);
     }
 
     /* Tier section wrappers */
@@ -564,8 +585,8 @@
     .track-row.tier-preview:hover { background: #111; }
     .preview-badge {
       font-size: 7px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-      color: #d97c10; background: rgba(246,152,32,0.08);
-      border: 1px solid rgba(246,152,32,0.18);
+      color: #F69820; background: rgba(246,152,32,0.1);
+      border: 1px solid rgba(246,152,32,0.22);
       padding: 2px 6px; border-radius: 100px;
     }
 
@@ -595,10 +616,10 @@
       border: 1px solid rgba(123,82,171,0.25);
       border-radius: 100px; padding: 9px 0;
       font-size: 9px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
-      color: #9b6bcc; text-decoration: none;
+      color: #c4a0e8; text-decoration: none;
       transition: background 0.2s, color 0.2s;
     }
-    .tier-join-pill:hover { background: rgba(123,82,171,0.2); color: #b88de0; }
+    .tier-join-pill:hover { background: rgba(123,82,171,0.2); color: #d4bdf0; }
     .tier-join-pill:focus { outline: 2px solid #9b6bcc; outline-offset: 3px; }
 
     /* Unlock pill (bottom of Preview tier) */
@@ -609,7 +630,7 @@
       border: 1px solid rgba(246,152,32,0.2);
       border-radius: 100px; padding: 9px 0;
       font-size: 9px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
-      color: #d97c10; text-decoration: none;
+      color: #F69820; text-decoration: none;
       transition: background 0.2s;
     }
     .tier-unlock-pill:hover { background: rgba(246,152,32,0.07); }
@@ -632,11 +653,11 @@
     }
     .track-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .track-info { flex: 1; min-width: 0; }
-    .track-title { font-size: 11px; font-weight: 800; color: #e8e8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
-    .track-artist { font-size: 9px; font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-title { font-size: 13px; font-weight: 800; color: #e8e8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+    .track-artist { font-size: 11px; font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .track-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
-    .track-dur { font-size: 9px; color: #555; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .track-lock-label { font-size: 7px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #444; }
+    .track-dur { font-size: 10px; color: #999; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .track-lock-label { font-size: 8px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #888; }
     .track-play-btn {
       width: 30px; height: 30px; background: #1e1e1e; border: none;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -645,6 +666,15 @@
     .track-play-btn:hover { background: #252525; color: #F69820; }
     .track-row.playing .track-play-btn { background: #F69820; color: #fff; }
     .track-play-btn:focus { outline: 2px solid #F69820; outline-offset: 2px; }
+
+    /* Reduce motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
 
     /* PLACEHOLDER to satisfy old CSS reference (kept inline)
        radio-tap-pill was here — removed with static mock */
@@ -1349,18 +1379,18 @@
     <!-- RADIO VIEW -->
     <div id="radioView" class="radio-view">
 
-      <!-- Live Radio card: volume-only player -->
+      <!-- ── Live Radio card ── -->
       <div id="liveCard" class="live-radio-card" aria-label="GeekFon Radio live stream">
-        <span id="liveCardDot" class="live-card-dot live-card-dot--off"></span>
+        <span id="liveCardDot" class="live-card-dot live-card-dot--off" aria-hidden="true"></span>
         <div id="liveHostAvatar" class="live-host-avatar live-host-avatar--off" aria-hidden="true">
           <img id="liveHostImg"
-               src="https://drive.google.com/thumbnail?id=1aEpkvZbQd6ViIvQmi2wteY0WdwCr4cem&sz=w80-h80"
-               alt="Lord Zorlot"
+               src="https://drive.google.com/thumbnail?id=1aEpkvZbQd6ViIvQmi2wteY0WdwCr4cem&sz=w120-h120"
+               alt=""
                onerror="this.style.display='none';this.parentElement.textContent='Z'">
         </div>
         <div class="live-card-info">
           <div class="live-card-title">Geek<span style="color:#F69820">Fon</span> Radio</div>
-          <div id="liveCardSub" class="live-card-sub">Checking status...</div>
+          <div id="liveCardSub" class="live-card-sub live-card-sub--off">Checking status...</div>
         </div>
         <div class="live-vol-wrap" id="liveVolWrap" style="display:none">
           <svg class="live-vol-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3L5 7H2v6h3l4 4V3zm5.07 1.93a9 9 0 010 10.14M12.54 6.46a5 5 0 010 7.08"/></svg>
@@ -1369,7 +1399,226 @@
         <span id="liveCardCta" class="live-card-cta" aria-live="polite"></span>
       </div>
 
-      <!-- ── FULL LIBRARY tier ── -->
+      <!-- ── Library tabs ── -->
+      <div class="lib-tabs" role="tablist" aria-label="Music library">
+        <button class="lib-tab active" id="libTabPreview" onclick="libSwitchTab('preview')"
+                role="tab" aria-selected="true" aria-controls="libPanelPreview">Preview</button>
+        <button class="lib-tab" id="libTabSample" onclick="libSwitchTab('sample')"
+                role="tab" aria-selected="false" aria-controls="libPanelSample">Sample</button>
+      </div>
+
+      <!-- ── Preview panel (renamed from Free Tier) ── -->
+      <div id="libPanelPreview" class="lib-panel" role="tabpanel" aria-labelledby="libTabPreview">
+        <div class="track-list" role="list" aria-label="Preview tracks">
+
+          <!-- NEW songs (top of preview) -->
+          <div class="track-row" role="listitem" id="tr11" onclick="playTrack(11)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(11)">
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lickle-bro/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">High Vibe Life</div>
+              <div class="track-artist" style="color:#9b6bcc">Lickle Bro</div>
+            </div>
+            <div class="track-meta">
+              <button class="track-play-btn" aria-label="Play High Vibe Life"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr12" onclick="playTrack(12)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(12)">
+            <div class="track-art" style="background:#1a0a10; color:#e94f8a; font-size:22px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title">Being You, Being Me</div>
+              <div class="track-artist" style="color:#e94f8a">Roxanne</div>
+            </div>
+            <div class="track-meta">
+              <button class="track-play-btn" aria-label="Play Being You, Being Me"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Existing 10 free tracks -->
+          <div class="track-row" role="listitem" id="tr0" onclick="playTrack(0)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(0)">
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/riku-hayasaka/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Lottery of Love</div>
+              <div class="track-artist" style="color:#7fb069">Riku Hayasaka</div>
+            </div>
+            <div class="track-meta">
+              <span class="track-dur">2:28</span>
+              <button class="track-play-btn" aria-label="Play Lottery of Love"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr1" onclick="playTrack(1)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(1)">
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lickle-bro/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Awake from the Matrix</div>
+              <div class="track-artist" style="color:#9b6bcc">Lickle Bro</div>
+            </div>
+            <div class="track-meta">
+              <span class="track-dur">2:39</span>
+              <button class="track-play-btn" aria-label="Play Awake from the Matrix"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr2" onclick="playTrack(2)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(2)">
+            <div class="track-art" style="background:#1a0a10; color:#e94f8a; font-size:22px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title">Life's Tough</div>
+              <div class="track-artist" style="color:#e94f8a">Roxanne</div>
+            </div>
+            <div class="track-meta">
+              <button class="track-play-btn" aria-label="Play Life's Tough"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr3" onclick="playTrack(3)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(3)">
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lickle-sis/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Not Impressed</div>
+              <div class="track-artist" style="color:#ff6eb4">Lickle Sis</div>
+            </div>
+            <div class="track-meta">
+              <span class="track-dur">2:57</span>
+              <button class="track-play-btn" aria-label="Play Not Impressed"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr4" onclick="playTrack(4)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(4)">
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/rustblood-prophets/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Beyond Space and Time</div>
+              <div class="track-artist" style="color:#8888ff">Rustblood Prophets</div>
+            </div>
+            <div class="track-meta">
+              <button class="track-play-btn" aria-label="Play Beyond Space and Time"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr5" onclick="playTrack(5)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(5)">
+            <div class="track-art" style="background:#120a00; color:#F69820; font-size:22px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title">Super Nintendo, Sega Genesis</div>
+              <div class="track-artist" style="color:#F69820">Mr. Russell</div>
+            </div>
+            <div class="track-meta">
+              <button class="track-play-btn" aria-label="Play Super Nintendo, Sega Genesis"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr6" onclick="playTrack(6)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(6)">
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/shamanic-resin/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Real Dream</div>
+              <div class="track-artist" style="color:#b548c6">Shamanic Resin</div>
+            </div>
+            <div class="track-meta">
+              <button class="track-play-btn" aria-label="Play Real Dream"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr7" onclick="playTrack(7)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(7)">
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lex-from-brixton/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Be Yourself</div>
+              <div class="track-artist" style="color:#e84d1a">Lex from Brixton</div>
+            </div>
+            <div class="track-meta">
+              <button class="track-play-btn" aria-label="Play Be Yourself"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr8" onclick="playTrack(8)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(8)">
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/mad-tings/d17155c8-fda6-4c49-843a-6481dddd561f.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Never Broke Us</div>
+              <div class="track-artist" style="color:#F69820">Mad Tings</div>
+            </div>
+            <div class="track-meta">
+              <span class="track-dur">3:29</span>
+              <button class="track-play-btn" aria-label="Play Never Broke Us"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row" role="listitem" id="tr9" onclick="playTrack(9)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(9)">
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/straight-and-narrow/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Dead Broke</div>
+              <div class="track-artist" style="color:#2ec4b6">Straight &amp; Narrow</div>
+            </div>
+            <div class="track-meta">
+              <span class="track-dur">3:39</span>
+              <button class="track-play-btn" aria-label="Play Dead Broke"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+        </div><!-- /track-list -->
+
+        <!-- App download (inside Preview panel) -->
+        <div class="app-download-wrap">
+          <div class="app-download-label">Get the full experience</div>
+          <div class="app-btns-row">
+            <a href="#" class="app-store-btn" aria-label="Download on the App Store">
+              <svg class="app-store-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.18 1.27-2.16 3.8.03 3.02 2.65 4.03 2.68 4.04l-.07.28zM13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              <div class="app-store-text">
+                <span class="app-store-sub">Download on the</span>
+                <span class="app-store-name">App Store</span>
+              </div>
+            </a>
+            <a href="#" class="app-store-btn" aria-label="Get it on Google Play">
+              <svg class="app-store-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.954 11.549l2.152-2.151-9.26-5.197 7.108 7.348zm-3.246 1.95L7.29 16.3c.61.344 9.418 5.28 9.418 5.28l-7.001-8.08zM3.08 5.017a1.27 1.27 0 0 0-.08.445v13.073c0 .155.025.298.08.445l7.01-6.98-7.01-6.983zm15.855 6.255-2.161-1.21-2.37 2.37 2.37 2.37 2.161-1.21a1.27 1.27 0 0 0 0-2.32z"/></svg>
+              <div class="app-store-text">
+                <span class="app-store-sub">Get it on</span>
+                <span class="app-store-name">Google Play</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+      </div><!-- /libPanelPreview -->
+
+      <!-- ── Sample panel (30s previews) ── -->
+      <div id="libPanelSample" class="lib-panel" role="tabpanel" aria-labelledby="libTabSample" style="display:none">
+
+        <div class="track-list" role="list" aria-label="Sample tracks — 30 second previews">
+
+          <div class="track-row tier-preview" role="listitem" id="trP0" onclick="playPreview(0)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(0)" aria-label="Spice it Up by Nilo Wave — 30 second sample">
+            <div class="preview-end-wrap" id="previewEnd0" role="status" aria-live="polite">
+              <span class="preview-end-label">Sample Ended</span>
+              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
+            </div>
+            <div class="track-art" style="background:#0d0800; color:#e8a020; font-size:20px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title">Spice it Up</div>
+              <div class="track-artist" style="color:#e8a020">Nilo Wave</div>
+            </div>
+            <div class="track-meta">
+              <span class="preview-badge">30s</span>
+              <button class="track-play-btn" id="trP0Btn" aria-label="Play 30-second sample of Spice it Up"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row tier-preview" role="listitem" id="trP1" onclick="playPreview(1)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(1)" aria-label="Signal in the Noise by Riku Hayasaka — 30 second sample">
+            <div class="preview-end-wrap" id="previewEnd1" role="status" aria-live="polite">
+              <span class="preview-end-label">Sample Ended</span>
+              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
+            </div>
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/riku-hayasaka/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">Signal in the Noise</div>
+              <div class="track-artist" style="color:#7fb069">Riku Hayasaka</div>
+            </div>
+            <div class="track-meta">
+              <span class="preview-badge">30s</span>
+              <button class="track-play-btn" id="trP1Btn" aria-label="Play 30-second sample of Signal in the Noise"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+        </div>
+
+        <a href="#" class="tier-unlock-pill" aria-label="Unlock full tracks">Unlock All Tracks &nbsp;&#8250;</a>
+
+      </div><!-- /libPanelSample -->
+
+      <!-- ── Full Library (always shown, members-only) ── -->
       <div class="tier-block">
         <div class="radio-section-hd">
           <span class="radio-section-title">Full Library</span>
@@ -1377,33 +1626,33 @@
         </div>
         <div class="track-list" role="list" aria-label="Members-only tracks">
 
-          <div class="track-row tier-full-locked" role="listitem" aria-label="Ctrl Plus Feel by Vira - members only">
-            <div class="track-art" style="background:#00101a; color:#00cfe8; font-size:20px">&#9835;</div>
+          <div class="track-row tier-full-locked" role="listitem" aria-label="Ctrl Plus Feel by Vira — members only">
+            <div class="track-art" style="background:#00101a; color:#00cfe8; font-size:20px" aria-hidden="true">&#9835;</div>
             <div class="track-info">
-              <div class="track-title" style="color:#666">Ctrl + Feel</div>
-              <div class="track-artist" style="color:#444">Vira</div>
+              <div class="track-title" style="color:#888">Ctrl + Feel</div>
+              <div class="track-artist" style="color:#888">Vira</div>
             </div>
             <div class="track-meta">
               <span class="track-lock-label">Members Only</span>
             </div>
           </div>
 
-          <div class="track-row tier-full-locked" role="listitem" aria-label="Before the Helmet by Lord Zorlot - members only">
-            <div class="track-art" style="background:#0d0012; color:#7b52ab; font-size:20px">&#9835;</div>
+          <div class="track-row tier-full-locked" role="listitem" aria-label="Before the Helmet by Lord Zorlot — members only">
+            <div class="track-art" style="background:#0d0012; color:#7b52ab; font-size:20px" aria-hidden="true">&#9835;</div>
             <div class="track-info">
-              <div class="track-title" style="color:#666">Before the Helmet</div>
-              <div class="track-artist" style="color:#444">Lord Zorlot</div>
+              <div class="track-title" style="color:#888">Before the Helmet</div>
+              <div class="track-artist" style="color:#888">Lord Zorlot</div>
             </div>
             <div class="track-meta">
               <span class="track-lock-label">Members Only</span>
             </div>
           </div>
 
-          <div class="track-row tier-full-locked" role="listitem" aria-label="For the Record by V - members only">
-            <div class="track-art" style="background:#120e00; color:#c8922a; font-size:20px">&#9835;</div>
+          <div class="track-row tier-full-locked" role="listitem" aria-label="For the Record by V — members only">
+            <div class="track-art" style="background:#120e00; color:#c8922a; font-size:20px" aria-hidden="true">&#9835;</div>
             <div class="track-info">
-              <div class="track-title" style="color:#666">For the Record</div>
-              <div class="track-artist" style="color:#444">V</div>
+              <div class="track-title" style="color:#888">For the Record</div>
+              <div class="track-artist" style="color:#888">V</div>
             </div>
             <div class="track-meta">
               <span class="track-lock-label">Members Only</span>
@@ -1414,213 +1663,7 @@
         <a href="#" class="tier-join-pill" aria-label="Join GeekFon Society">Join GeekFon Society &nbsp;&#8250;</a>
       </div>
 
-      <!-- ── PARTIAL / PREVIEW tier ── -->
-      <div class="tier-block">
-        <div class="radio-section-hd">
-          <span class="radio-section-title">Previews</span>
-          <span class="radio-section-badge radio-section-badge--preview">30s Sample</span>
-        </div>
-        <div class="track-list" role="list" aria-label="30-second preview tracks">
-
-          <div class="track-row tier-preview" role="listitem" id="trP0" onclick="playPreview(0)" aria-label="Spice it Up by Nilo Wave - 30 second preview">
-            <div class="preview-end-wrap" id="previewEnd0" role="status" aria-live="polite">
-              <span class="preview-end-label">Preview Ended</span>
-              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
-            </div>
-            <div class="track-art" style="background:#0d0800; color:#e8a020; font-size:20px">&#9835;</div>
-            <div class="track-info">
-              <div class="track-title">Spice it Up</div>
-              <div class="track-artist" style="color:#e8a020">Nilo Wave</div>
-            </div>
-            <div class="track-meta">
-              <span class="preview-badge">30s</span>
-              <button class="track-play-btn" id="trP0Btn" aria-label="Play 30-second preview of Spice it Up"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-            </div>
-          </div>
-
-          <div class="track-row tier-preview" role="listitem" id="trP1" onclick="playPreview(1)" aria-label="Signal in the Noise by Riku Hayasaka - 30 second preview">
-            <div class="preview-end-wrap" id="previewEnd1" role="status" aria-live="polite">
-              <span class="preview-end-label">Preview Ended</span>
-              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
-            </div>
-            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/riku-hayasaka/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-            <div class="track-info">
-              <div class="track-title">Signal in the Noise</div>
-              <div class="track-artist" style="color:#7fb069">Riku Hayasaka</div>
-            </div>
-            <div class="track-meta">
-              <span class="preview-badge">30s</span>
-              <button class="track-play-btn" id="trP1Btn" aria-label="Play 30-second preview of Signal in the Noise"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-            </div>
-          </div>
-
-        </div>
-        <a href="#" class="tier-unlock-pill" aria-label="Unlock full tracks">Unlock All Tracks &nbsp;&#8250;</a>
-      </div>
-
-      <!-- ── FREE tier ── -->
-      <div class="tier-block">
-      <!-- Free Tier header -->
-      <div class="radio-section-hd">
-        <span class="radio-section-title">Free Tier</span>
-        <span class="radio-section-badge">One Per Artist</span>
-      </div>
-
-      <!-- Track list -->
-      <div class="track-list" role="list" aria-label="Free tier tracks">
-
-        <div class="track-row" role="listitem" id="tr0" onclick="playTrack(0)">
-          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/riku-hayasaka/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-          <div class="track-info">
-            <div class="track-title">Lottery of Love</div>
-            <div class="track-artist" style="color:#7fb069">Riku Hayasaka</div>
-          </div>
-          <div class="track-meta">
-            <span class="track-dur">2:28</span>
-            <button class="track-play-btn" aria-label="Play Lottery of Love"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <div class="track-row" role="listitem" id="tr1" onclick="playTrack(1)">
-          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lickle-bro/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-          <div class="track-info">
-            <div class="track-title">Awake from the Matrix</div>
-            <div class="track-artist" style="color:#9b6bcc">Lickle Bro</div>
-          </div>
-          <div class="track-meta">
-            <span class="track-dur">2:39</span>
-            <button class="track-play-btn" aria-label="Play Awake from the Matrix"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <div class="track-row" role="listitem" id="tr2" onclick="playTrack(2)">
-          <div class="track-art" style="background:#1a0a10; color:#e94f8a; font-size:22px">&#9835;</div>
-          <div class="track-info">
-            <div class="track-title">Life's Tough</div>
-            <div class="track-artist" style="color:#e94f8a">Roxanne</div>
-          </div>
-          <div class="track-meta">
-            <button class="track-play-btn" aria-label="Play Life's Tough"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <div class="track-row" role="listitem" id="tr3" onclick="playTrack(3)">
-          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lickle-sis/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-          <div class="track-info">
-            <div class="track-title">Not Impressed</div>
-            <div class="track-artist" style="color:#ff6eb4">Lickle Sis</div>
-          </div>
-          <div class="track-meta">
-            <span class="track-dur">2:57</span>
-            <button class="track-play-btn" aria-label="Play Not Impressed"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <div class="track-row" role="listitem" id="tr4" onclick="playTrack(4)">
-          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/rustblood-prophets/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-          <div class="track-info">
-            <div class="track-title">Beyond Space and Time</div>
-            <div class="track-artist" style="color:#8888ff">Rustblood Prophets</div>
-          </div>
-          <div class="track-meta">
-            <button class="track-play-btn" aria-label="Play Beyond Space and Time"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <div class="track-row" role="listitem" id="tr5" onclick="playTrack(5)">
-          <div class="track-art" style="background:#120a00; color:#F69820; font-size:22px">&#9835;</div>
-          <div class="track-info">
-            <div class="track-title">Super Nintendo, Sega Genesis</div>
-            <div class="track-artist" style="color:#F69820">Mr. Russell</div>
-          </div>
-          <div class="track-meta">
-            <button class="track-play-btn" aria-label="Play Super Nintendo, Sega Genesis"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <div class="track-row" role="listitem" id="tr6" onclick="playTrack(6)">
-          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/shamanic-resin/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-          <div class="track-info">
-            <div class="track-title">Real Dream</div>
-            <div class="track-artist" style="color:#b548c6">Shamanic Resin</div>
-          </div>
-          <div class="track-meta">
-            <button class="track-play-btn" aria-label="Play Real Dream"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <div class="track-row" role="listitem" id="tr7" onclick="playTrack(7)">
-          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lex-from-brixton/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-          <div class="track-info">
-            <div class="track-title">Be Yourself</div>
-            <div class="track-artist" style="color:#e84d1a">Lex from Brixton</div>
-          </div>
-          <div class="track-meta">
-            <button class="track-play-btn" aria-label="Play Be Yourself"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <div class="track-row" role="listitem" id="tr8" onclick="playTrack(8)">
-          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/mad-tings/d17155c8-fda6-4c49-843a-6481dddd561f.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-          <div class="track-info">
-            <div class="track-title">Never Broke Us</div>
-            <div class="track-artist" style="color:#F69820">Mad Tings</div>
-          </div>
-          <div class="track-meta">
-            <span class="track-dur">3:29</span>
-            <button class="track-play-btn" aria-label="Play Never Broke Us"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <div class="track-row" role="listitem" id="tr9" onclick="playTrack(9)">
-          <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/straight-and-narrow/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-          <div class="track-info">
-            <div class="track-title">Dead Broke</div>
-            <div class="track-artist" style="color:#2ec4b6">Straight &amp; Narrow</div>
-          </div>
-          <div class="track-meta">
-            <span class="track-dur">3:39</span>
-            <button class="track-play-btn" aria-label="Play Dead Broke"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-          </div>
-        </div>
-
-        <!-- Nilo Wave - coming soon -->
-        <div class="track-row locked" role="listitem" id="tr10" aria-label="Spice it Up by Nilo Wave - coming soon">
-          <div class="track-art" style="background:#111; color:#333; font-size:22px">&#9835;</div>
-          <div class="track-info">
-            <div class="track-title" style="color:#555">Spice it Up</div>
-            <div class="track-artist" style="color:#444">Nilo Wave</div>
-          </div>
-          <div class="track-meta">
-            <span class="track-lock-label">Coming Soon</span>
-          </div>
-        </div>
-
-      </div><!-- /track-list -->
-      </div><!-- /tier-block free -->
-
-      <!-- App download -->
-      <div class="app-download-wrap">
-        <div class="app-download-label">Unlock all tracks</div>
-        <div class="app-btns-row">
-          <a href="#" class="app-store-btn" aria-label="Download on the App Store">
-            <svg class="app-store-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.18 1.27-2.16 3.8.03 3.02 2.65 4.03 2.68 4.04l-.07.28zM13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            <div class="app-store-text">
-              <span class="app-store-sub">Download on the</span>
-              <span class="app-store-name">App Store</span>
-            </div>
-          </a>
-          <a href="#" class="app-store-btn" aria-label="Get it on Google Play">
-            <svg class="app-store-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.18 23.76c.3.17.63.24.97.2l12.44-12.44-2.65-2.65-10.76 14.89zm16.4-11.9L16.77 10 3.6.47a1.3 1.3 0 0 0-1.37-.05L14.9 12l4.68-.14zM21.4 9.84l-3.05-1.76-3.04 3.04 3.04 3.04 3.06-1.77c.87-.51.87-2.04-.01-2.55zM3.18.24 13.94 11l-2.65 2.65L.74 1.21A1.3 1.3 0 0 1 3.18.24z"/></svg>
-            <div class="app-store-text">
-              <span class="app-store-sub">Get it on</span>
-              <span class="app-store-name">Google Play</span>
-            </div>
-          </a>
-        </div>
-      </div>
-
-      <!-- Hidden audio element -->
+      <!-- Hidden audio elements -->
       <audio id="gfsAudio" preload="none"></audio>
       <audio id="liveAudio" preload="none"></audio>
 
@@ -1799,6 +1842,24 @@
       if (isChat && calOpen) closeCal();
     }
 
+    /* ---- Library tab switching ---- */
+    function libSwitchTab(tab) {
+      const isPreview = tab === 'preview';
+      document.getElementById('libPanelPreview').style.display = isPreview ? '' : 'none';
+      document.getElementById('libPanelSample').style.display  = isPreview ? 'none' : '';
+      const tPreview = document.getElementById('libTabPreview');
+      const tSample  = document.getElementById('libTabSample');
+      tPreview.classList.toggle('active', isPreview);
+      tSample.classList.toggle('active', !isPreview);
+      tPreview.setAttribute('aria-selected', isPreview.toString());
+      tSample.setAttribute('aria-selected', (!isPreview).toString());
+      // stop any playing preview when switching away from Sample
+      if (isPreview && typeof curPreview !== 'undefined' && curPreview >= 0) {
+        resetPreview(curPreview);
+        document.getElementById('gfsAudio').pause();
+      }
+    }
+
     /* ---- Radio Player ---- */
     const AUDIO_BASE = 'https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/';
     const TRACKS = [
@@ -1812,7 +1873,9 @@
       { title: 'Be Yourself',                 src: 'lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3' },
       { title: 'Never Broke Us',              src: 'mad-tings/never-broke-us.mp3' },
       { title: 'Dead Broke',                  src: 'straight-and-narrow/dead-broke.mp3' },
-      { locked: true, title: 'Spice it Up' }
+      { locked: true, title: 'Spice it Up' },
+      { title: 'High Vibe Life',      src: 'lickle-bro/high-vibe-life.mp3' },
+      { title: 'Being You, Being Me', src: 'roxanne/being-you-being-me.mp3' }
     ];
 
     const PREVIEW_TRACKS = [
@@ -1953,16 +2016,17 @@
       if (!isOn) {
         dot.className = 'live-card-dot live-card-dot--off';
         sub.textContent = 'OFFLINE';
+        sub.className   = 'live-card-sub live-card-sub--off';
         cta.textContent = '';
-        card.style.opacity = '0.5';
-        card.classList.remove('live-radio-card--on');
+        card.classList.remove('live-radio-card--on', 'live-radio-card--live');
         vol.style.display = 'none';
       } else {
         dot.className = liveConnected ? 'live-card-dot live-card-dot--playing' : 'live-card-dot';
-        sub.textContent = trackTitle ? trackTitle : 'Live 24/7';
+        sub.textContent = trackTitle ? trackTitle : 'Live 24\/7';
+        sub.className   = 'live-card-sub';
         cta.textContent = liveGestured ? '' : 'Tap to listen';
         cta.style.color = '#F69820';
-        card.style.opacity = '1';
+        card.classList.add('live-radio-card--live');
         card.classList.toggle('live-radio-card--on', !liveGestured);
         vol.style.display = liveGestured ? 'flex' : 'none';
       }
