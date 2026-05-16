@@ -609,6 +609,8 @@
     .track-row.tier-preview { position: relative; overflow: hidden; }
 
     /* Join pill (bottom of Full tier) */
+    .radio-join-wrap { width: 100%; padding: 8px 0 18px; text-align: center; }
+    .radio-available-count { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #aaaaaa; margin: 0 0 10px; }
     .tier-join-pill {
       display: flex; align-items: center; justify-content: center;
       width: 100%; margin-top: 10px;
@@ -1527,6 +1529,17 @@
             </div>
           </div>
 
+          <div class="track-row" role="listitem" id="tr10" onclick="playTrack(10)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(10)">
+            <div class="track-art" style="background:#0d0800; color:#e8a020; font-size:20px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title">Spice it Up</div>
+              <div class="track-artist" style="color:#e8a020">Nilo Wave</div>
+            </div>
+            <div class="track-meta">
+              <button class="track-play-btn" aria-label="Play Spice it Up"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
         </div><!-- /track-list -->
 
         <!-- App download (inside Preview panel) -->
@@ -1557,41 +1570,8 @@
 
         <div class="track-list" role="list" aria-label="Sample tracks — 30 second previews">
 
-          <div class="track-row tier-preview" role="listitem" id="trP0" onclick="playPreview(0)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(0)" aria-label="Spice it Up by Nilo Wave — 30 second sample">
+          <div class="track-row tier-preview" role="listitem" id="trP0" onclick="playPreview(0)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(0)" aria-label="High Vibe Life by Lickle Bro — 30 second sample">
             <div class="preview-end-wrap" id="previewEnd0" role="status" aria-live="polite">
-              <span class="preview-end-label">Sample Ended</span>
-              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
-            </div>
-            <div class="track-art" style="background:#0d0800; color:#e8a020; font-size:20px">&#9835;</div>
-            <div class="track-info">
-              <div class="track-title">Spice it Up</div>
-              <div class="track-artist" style="color:#e8a020">Nilo Wave</div>
-            </div>
-            <div class="track-meta">
-              <span class="preview-badge">30s</span>
-              <button class="track-play-btn" id="trP0Btn" aria-label="Play 30-second sample of Spice it Up"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-            </div>
-          </div>
-
-          <div class="track-row tier-preview" role="listitem" id="trP1" onclick="playPreview(1)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(1)" aria-label="Signal in the Noise by Riku Hayasaka — 30 second sample">
-            <div class="preview-end-wrap" id="previewEnd1" role="status" aria-live="polite">
-              <span class="preview-end-label">Sample Ended</span>
-              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
-            </div>
-            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/riku-hayasaka/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-            <div class="track-info">
-              <div class="track-title">Signal in the Noise</div>
-              <div class="track-artist" style="color:#7fb069">Riku Hayasaka</div>
-            </div>
-            <div class="track-meta">
-              <span class="preview-badge">30s</span>
-              <button class="track-play-btn" id="trP1Btn" aria-label="Play 30-second sample of Signal in the Noise"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-            </div>
-          </div>
-
-
-          <div class="track-row tier-preview" role="listitem" id="trP2" onclick="playPreview(2)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(2)" aria-label="High Vibe Life by Lickle Bro — 30 second sample">
-            <div class="preview-end-wrap" id="previewEnd2" role="status" aria-live="polite">
               <span class="preview-end-label">Sample Ended</span>
               <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
             </div>
@@ -1602,12 +1582,12 @@
             </div>
             <div class="track-meta">
               <span class="preview-badge">30s</span>
-              <button class="track-play-btn" id="trP2Btn" aria-label="Play 30-second sample of High Vibe Life"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+              <button class="track-play-btn" id="trP0Btn" aria-label="Play 30-second sample of High Vibe Life"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
             </div>
           </div>
 
-          <div class="track-row tier-preview" role="listitem" id="trP3" onclick="playPreview(3)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(3)" aria-label="Being You, Being Me by Roxanne — 30 second sample">
-            <div class="preview-end-wrap" id="previewEnd3" role="status" aria-live="polite">
+          <div class="track-row tier-preview" role="listitem" id="trP1" onclick="playPreview(1)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(1)" aria-label="Being You, Being Me by Roxanne — 30 second sample">
+            <div class="preview-end-wrap" id="previewEnd1" role="status" aria-live="polite">
               <span class="preview-end-label">Sample Ended</span>
               <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
             </div>
@@ -1618,7 +1598,7 @@
             </div>
             <div class="track-meta">
               <span class="preview-badge">30s</span>
-              <button class="track-play-btn" id="trP3Btn" aria-label="Play 30-second sample of Being You, Being Me"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+              <button class="track-play-btn" id="trP1Btn" aria-label="Play 30-second sample of Being You, Being Me"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
             </div>
           </div>
 
@@ -1628,48 +1608,9 @@
 
       </div><!-- /libPanelSample -->
 
-      <!-- ── Full Library (always shown, members-only) ── -->
-      <div class="tier-block">
-        <div class="radio-section-hd">
-          <span class="radio-section-title">Full Library</span>
-          <span class="radio-section-badge radio-section-badge--full">Members Only</span>
-        </div>
-        <div class="track-list" role="list" aria-label="Members-only tracks">
-
-          <div class="track-row tier-full-locked" role="listitem" aria-label="Ctrl Plus Feel by Vira — members only">
-            <div class="track-art" style="background:#00101a; color:#00cfe8; font-size:20px" aria-hidden="true">&#9835;</div>
-            <div class="track-info">
-              <div class="track-title" style="color:#888">Ctrl + Feel</div>
-              <div class="track-artist" style="color:#888">Vira</div>
-            </div>
-            <div class="track-meta">
-              <span class="track-lock-label">Members Only</span>
-            </div>
-          </div>
-
-          <div class="track-row tier-full-locked" role="listitem" aria-label="Before the Helmet by Lord Zorlot — members only">
-            <div class="track-art" style="background:#0d0012; color:#7b52ab; font-size:20px" aria-hidden="true">&#9835;</div>
-            <div class="track-info">
-              <div class="track-title" style="color:#888">Before the Helmet</div>
-              <div class="track-artist" style="color:#888">Lord Zorlot</div>
-            </div>
-            <div class="track-meta">
-              <span class="track-lock-label">Members Only</span>
-            </div>
-          </div>
-
-          <div class="track-row tier-full-locked" role="listitem" aria-label="For the Record by V — members only">
-            <div class="track-art" style="background:#120e00; color:#c8922a; font-size:20px" aria-hidden="true">&#9835;</div>
-            <div class="track-info">
-              <div class="track-title" style="color:#888">For the Record</div>
-              <div class="track-artist" style="color:#888">V</div>
-            </div>
-            <div class="track-meta">
-              <span class="track-lock-label">Members Only</span>
-            </div>
-          </div>
-
-        </div>
+      <!-- ── Track count + Join CTA ── -->
+      <div class="radio-join-wrap">
+        <p class="radio-available-count" id="radioTrackCount"></p>
         <a href="#" class="tier-join-pill" aria-label="Join GeekFon Society">Join GeekFon Society &nbsp;&#8250;</a>
       </div>
 
@@ -1883,16 +1824,19 @@
       { title: 'Be Yourself',                 src: 'lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3' },
       { title: 'Never Broke Us',              src: 'mad-tings/never-broke-us.mp3' },
       { title: 'Dead Broke',                  src: 'straight-and-narrow/dead-broke.mp3' },
-      { locked: true, title: 'Spice it Up' }
+      { title: 'Spice it Up', src: 'nilo-wave/spice-it-up.mp3' }
     ];
 
     const PREVIEW_TRACKS = [
-      { title: 'Spice it Up',          src: null },                                     // audio pending upload
-      { title: 'Signal in the Noise',  src: null },                                     // audio pending upload
-      { title: 'High Vibe Life',       src: 'lickle-bro/high-vibe-life.mp3',       art: 'lickle-bro/hero.png',       color: '#9b6bcc', artist: 'Lickle Bro' },
-      { title: 'Being You, Being Me',  src: 'roxanne/being-you-being-me.mp3',       art: null,                        color: '#e94f8a', artist: 'Roxanne'    }
+      { title: 'High Vibe Life',       src: 'lickle-bro/high-vibe-life.mp3',  art: 'lickle-bro/hero.png', color: '#9b6bcc', artist: 'Lickle Bro' },
+      { title: 'Being You, Being Me',  src: 'roxanne/being-you-being-me.mp3', art: null,                  color: '#e94f8a', artist: 'Roxanne'    }
     ];
     const PREVIEW_LIMIT_S = 30;
+    (function() {
+      var playable = TRACKS.filter(function(t){ return !t.locked; }).length + PREVIEW_TRACKS.length;
+      var el = document.getElementById('radioTrackCount');
+      if (el) el.textContent = playable + ' Tracks Available';
+    })();
     let curPreview = -1;
     let previewPlaying = false;
     let previewTimer  = null;
@@ -1925,7 +1869,12 @@
       curPreview = idx;
       audio.src = AUDIO_BASE + track.src;
       audio.currentTime = 0;
-      audio.play().catch(() => {});
+      audio.onerror = () => {
+        previewPlaying = false; clearTimeout(previewTimer);
+        if (btn) btn.innerHTML = PLAY_ICON;
+        showPreviewEnd(idx);
+      };
+      audio.play().catch(() => { audio.onerror && audio.onerror(); });
       previewPlaying = true;
       if (btn) btn.innerHTML = PAUSE_ICON;
 
