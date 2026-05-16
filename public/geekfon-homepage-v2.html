@@ -1411,30 +1411,7 @@
       <div id="libPanelPreview" class="lib-panel" role="tabpanel" aria-labelledby="libTabPreview">
         <div class="track-list" role="list" aria-label="Preview tracks">
 
-          <!-- NEW songs (top of preview) -->
-          <div class="track-row" role="listitem" id="tr11" onclick="playTrack(11)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(11)">
-            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lickle-bro/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
-            <div class="track-info">
-              <div class="track-title">High Vibe Life</div>
-              <div class="track-artist" style="color:#9b6bcc">Lickle Bro</div>
-            </div>
-            <div class="track-meta">
-              <button class="track-play-btn" aria-label="Play High Vibe Life"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-            </div>
-          </div>
-
-          <div class="track-row" role="listitem" id="tr12" onclick="playTrack(12)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(12)">
-            <div class="track-art" style="background:#1a0a10; color:#e94f8a; font-size:22px">&#9835;</div>
-            <div class="track-info">
-              <div class="track-title">Being You, Being Me</div>
-              <div class="track-artist" style="color:#e94f8a">Roxanne</div>
-            </div>
-            <div class="track-meta">
-              <button class="track-play-btn" aria-label="Play Being You, Being Me"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
-            </div>
-          </div>
-
-          <!-- Existing 10 free tracks -->
+          <!-- One per artist — full tracks -->
           <div class="track-row" role="listitem" id="tr0" onclick="playTrack(0)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playTrack(0)">
             <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/riku-hayasaka/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
             <div class="track-info">
@@ -1609,6 +1586,39 @@
             <div class="track-meta">
               <span class="preview-badge">30s</span>
               <button class="track-play-btn" id="trP1Btn" aria-label="Play 30-second sample of Signal in the Noise"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+
+          <div class="track-row tier-preview" role="listitem" id="trP2" onclick="playPreview(2)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(2)" aria-label="High Vibe Life by Lickle Bro — 30 second sample">
+            <div class="preview-end-wrap" id="previewEnd2" role="status" aria-live="polite">
+              <span class="preview-end-label">Sample Ended</span>
+              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
+            </div>
+            <div class="track-art"><img src="https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/lickle-bro/hero.png" alt="" onerror="this.parentElement.innerHTML='&#127925;'"></div>
+            <div class="track-info">
+              <div class="track-title">High Vibe Life</div>
+              <div class="track-artist" style="color:#9b6bcc">Lickle Bro</div>
+            </div>
+            <div class="track-meta">
+              <span class="preview-badge">30s</span>
+              <button class="track-play-btn" id="trP2Btn" aria-label="Play 30-second sample of High Vibe Life"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="track-row tier-preview" role="listitem" id="trP3" onclick="playPreview(3)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')playPreview(3)" aria-label="Being You, Being Me by Roxanne — 30 second sample">
+            <div class="preview-end-wrap" id="previewEnd3" role="status" aria-live="polite">
+              <span class="preview-end-label">Sample Ended</span>
+              <a href="#" class="preview-end-cta">Join to Unlock &#8250;</a>
+            </div>
+            <div class="track-art" style="background:#1a0a10; color:#e94f8a; font-size:20px">&#9835;</div>
+            <div class="track-info">
+              <div class="track-title">Being You, Being Me</div>
+              <div class="track-artist" style="color:#e94f8a">Roxanne</div>
+            </div>
+            <div class="track-meta">
+              <span class="preview-badge">30s</span>
+              <button class="track-play-btn" id="trP3Btn" aria-label="Play 30-second sample of Being You, Being Me"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg></button>
             </div>
           </div>
 
@@ -1873,14 +1883,14 @@
       { title: 'Be Yourself',                 src: 'lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3' },
       { title: 'Never Broke Us',              src: 'mad-tings/never-broke-us.mp3' },
       { title: 'Dead Broke',                  src: 'straight-and-narrow/dead-broke.mp3' },
-      { locked: true, title: 'Spice it Up' },
-      { title: 'High Vibe Life',      src: 'lickle-bro/high-vibe-life.mp3' },
-      { title: 'Being You, Being Me', src: 'roxanne/being-you-being-me.mp3' }
+      { locked: true, title: 'Spice it Up' }
     ];
 
     const PREVIEW_TRACKS = [
-      { title: 'Spice it Up',          src: null },  // audio pending upload
-      { title: 'Signal in the Noise',  src: null }   // audio pending upload
+      { title: 'Spice it Up',          src: null },                                     // audio pending upload
+      { title: 'Signal in the Noise',  src: null },                                     // audio pending upload
+      { title: 'High Vibe Life',       src: 'lickle-bro/high-vibe-life.mp3',       art: 'lickle-bro/hero.png',       color: '#9b6bcc', artist: 'Lickle Bro' },
+      { title: 'Being You, Being Me',  src: 'roxanne/being-you-being-me.mp3',       art: null,                        color: '#e94f8a', artist: 'Roxanne'    }
     ];
     const PREVIEW_LIMIT_S = 30;
     let curPreview = -1;
