@@ -1,0 +1,8 @@
+{
+  "name": "geekfon-society",
+  "version": "1.0.0",
+  "description": "GeekFon Society",
+  "dependencies": {
+    "stripe": "^16.0.0"
+  }
+}
