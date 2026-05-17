@@ -768,6 +768,7 @@ a{color:inherit;text-decoration:none;}
   </div>
 </main>
 
+<audio id="gfsAudio" preload="none"></audio>
 <script>
 /* ---- SLIDER ---- */
 var SCREEN_W = 335;
@@ -795,14 +796,14 @@ piViewport.addEventListener('touchend', function(e) {
 
 /* ---- PLAYER ---- */
 var TRACKS = [
-  { title: "Life's Tough",        dur: "3:18", totalSec: 198, free: true    },
-  { title: "Being You, Being Me", dur: "2:54", totalSec: 174, free: false   }
+  { title: "Life's Tough",        dur: "3:18", totalSec: 198, src: "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/roxanne/lifes-tough.mp3",       free: true  },
+  { title: "Being You, Being Me", dur: "2:54", totalSec: 174, src: "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/roxanne/being-you-being-me.mp3", free: false }
 ];
+var audio = document.getElementById('gfsAudio');
 var curTrack = 0;
 var isPlaying = false;
 var elapsed = 0;
 var timer = null;
-var PREVIEW_LIMIT = 30;
 
 function loadTrack(idx) {
   if (idx >= TRACKS.length) return;
@@ -810,6 +811,8 @@ function loadTrack(idx) {
   elapsed = 0;
   curTrack = idx;
   var t = TRACKS[idx];
+  audio.src = t.src;
+  audio.load();
   document.getElementById('npTitle').textContent = t.title;
   document.getElementById('miniTitle').textContent = t.title;
   document.getElementById('npDuration').textContent = t.dur;
@@ -830,27 +833,25 @@ function setPlaying(play) {
   document.getElementById('miniPauseIcon').style.display = play ? 'block' : 'none';
   document.getElementById('btnPlay').setAttribute('aria-label', play ? 'Pause' : 'Play');
   document.getElementById('miniPlayBtn').setAttribute('aria-label', play ? 'Pause' : 'Play');
-  if (play) { timer = setInterval(tick, 1000); } else stopTimer();
+  if (play) { audio.play().catch(function(){}); } else { audio.pause(); stopTimer(); }
 }
 
 function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
 function togglePlay() { setPlaying(!isPlaying); }
 
-function tick() {
-  elapsed++;
-  var t = TRACKS[curTrack];
-  var pct = Math.min(100, (elapsed / t.totalSec) * 100);
+audio.addEventListener('timeupdate', function() {
+  if (!audio.duration) return;
+  var pct = (audio.currentTime / audio.duration) * 100;
   document.getElementById('npFill').style.width = pct + '%';
   document.getElementById('npProg').setAttribute('aria-valuenow', Math.round(pct));
-  var m = Math.floor(elapsed / 60), s = elapsed % 60;
+  var s = Math.floor(audio.currentTime);
+  var m = Math.floor(s / 60); s = s % 60;
   document.getElementById('npElapsed').textContent = m + ':' + (s < 10 ? '0' : '') + s;
-  /* preview limit removed — both released tracks play in full */
-  if (elapsed >= t.totalSec) {
-    var next = curTrack + 1;
-    if (next < TRACKS.length) loadTrack(next);
-    else setPlaying(false);
-  }
-}
+});
+audio.addEventListener('ended', function() {
+  var next = curTrack + 1;
+  if (next < TRACKS.length) loadTrack(next); else setPlaying(false);
+});
 
 document.getElementById('btnPlay').addEventListener('click', togglePlay);
 document.getElementById('btnPrev').addEventListener('click', function() {
@@ -868,11 +869,6 @@ document.querySelectorAll('.track-item:not(.locked-item)').forEach(function(row,
   });
 });
 
-/* Listen Free (right column) */
-document.getElementById('btnListenFree').addEventListener('click', function() {
-  goTo(1);
-  setTimeout(function() { loadTrack(0); }, 420);
-});
 
 /* ---- MODE TOGGLE ---- */
 var btnMusicMode = document.getElementById('btnMusicMode');
