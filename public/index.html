@@ -115,7 +115,7 @@
       flex-shrink: 0;
     }
 
-    /* Phone bezel — sized to fill ~88% of viewport height */
+    /* Phone bezel â sized to fill ~88% of viewport height */
     .phone-bezel {
       --ph: min(88vh, 680px);
       --pw: calc(var(--ph) * 0.495);
@@ -170,7 +170,7 @@
       padding-top: 26px; /* clears the notch visually */
     }
 
-    /* Iframe scaled to fit — centered via flex + top-center transform origin */
+    /* Iframe scaled to fit â centered via flex + top-center transform origin */
     .phone-screen iframe {
       flex-shrink: 0;
       width: 375px;
@@ -254,7 +254,7 @@
       width: min(400px, min(44vw, 72vh));
       height: min(400px, min(44vw, 72vh));
     }
-    /* Soft aurora glow ring — no hard border */
+    /* Soft aurora glow ring â no hard border */
     .hero-circle-wrap::before {
       content: '';
       position: absolute;
@@ -273,7 +273,7 @@
     .hero-logo-img {
       width: 100%;
       height: 100%;
-      object-fit: contain; /* full logo — nothing cut off */
+      object-fit: contain; /* full logo â nothing cut off */
       object-position: center;
       display: block;
     }
@@ -460,7 +460,7 @@
           <div class="pb l3" aria-hidden="true"></div>
           <div class="phone-screen">
             <iframe
-              src="geekfon-homepage-v2.html"
+              src="geekfon-homepage-v3.html"
               title="GeekFon chat preview"
               aria-hidden="true"
               tabindex="-1"
@@ -498,7 +498,7 @@
             <div class="hero-title">Geek<span class="hero-fon" id="heroFon">Fon</span></div>
             <div class="hero-tagline">The Society Chat</div>
           </div>
-          <h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">GeekFon Society — The Society Chat</h1>
+          <h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">GeekFon Society â The Society Chat</h1>
         </div>
 
         <div class="hero-sub">
@@ -522,7 +522,7 @@
             </a>
           </div>
           <div class="hero-cta-row">
-            <a href="geekfon-homepage-v2.html" target="_blank" rel="noopener" class="btn-enter" role="button" aria-label="Enter GeekFon Society">Enter GFS</a>
+            <a href="geekfon-homepage-v3.html" target="_blank" rel="noopener" class="btn-enter" role="button" aria-label="Enter GeekFon Society">Enter GFS</a>
             <button class="btn-listen" aria-label="Listen to GeekFon Radio" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Listen Now</button>
           </div>
         </div>
@@ -535,8 +535,8 @@
     <iframe
       class="fs-iframe"
       id="fsIframe"
-      src="geekfon-homepage-v2.html"
-      title="GeekFon Society — full view"
+      src="geekfon-homepage-v3.html"
+      title="GeekFon Society â full view"
     ></iframe>
   </div>
 
@@ -550,8 +550,8 @@
 
     /* ---- Phone bezel: open full page ---- */
     const phoneBez = document.getElementById('phoneBez');
-    phoneBez.addEventListener('click', () => window.open('geekfon-homepage-v2.html', '_blank', 'noopener'));
-    phoneBez.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.open('geekfon-homepage-v2.html', '_blank', 'noopener'); } });
+    phoneBez.addEventListener('click', () => window.open('geekfon-homepage-v3.html', '_blank', 'noopener'));
+    phoneBez.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.open('geekfon-homepage-v3.html', '_blank', 'noopener'); } });
   </script>
 </body>
 </html>
