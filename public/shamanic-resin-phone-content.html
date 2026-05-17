@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>Shamanic Resin -- GFS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:375px;height:820px;overflow:hidden;background:#0a0a0a;font-family:'Montserrat',sans-serif;color:#fff;display:flex;flex-direction:column;padding:0 60px 0 20px;}
+a{color:inherit;text-decoration:none;}
+button{font-family:'Montserrat',sans-serif;}
+*:focus-visible{outline:2px solid #b548c6;outline-offset:2px;}
+.main-content{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.main-content::-webkit-scrollbar{display:none;}
+.music-hero{margin:16px 16px 0;border-radius:16px;overflow:hidden;aspect-ratio:1/1;background:#1a1a1a;display:flex;align-items:center;justify-content:center;position:relative;}
+.music-hero img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
+.hero-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:rgba(10,10,10,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,transform .15s;flex-shrink:0;}
+.hero-play:hover{background:rgba(10,10,10,.9);transform:translate(-50%,-50%) scale(1.06);}
+.hero-play svg{width:22px;height:22px;fill:#fff;}
+.hero-scrub{margin:12px 16px 0;height:3px;background:rgba(255,255,255,.12);border-radius:2px;cursor:pointer;}
+.hero-scrub-fill{height:100%;border-radius:2px;background:#b548c6;width:0%;transition:width .5s linear;pointer-events:none;}
+.music-artist-name{padding:14px 20px 0;font-size:20px;font-weight:900;letter-spacing:.02em;color:#fff;}
+.artist-bio-card{margin:14px 0 0;padding:14px 16px;background:rgba(255,255,255,.04);border-radius:14px;border:1px solid rgba(255,255,255,.06);}
+.bio-text{font-size:11px;font-weight:400;color:rgba(255,255,255,.65);line-height:1.65;}
+.track-list{padding:6px 0 32px;}
+.track-label{padding:16px 18px 6px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.3);}
+.track-item{display:flex;align-items:center;gap:11px;padding:11px 18px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .15s;}
+.track-item:hover{background:rgba(255,255,255,.03);}
+.track-item.active{background:rgba(255,255,255,.04);}
+.t-num{width:18px;font-size:12px;font-weight:700;color:rgba(255,255,255,.3);text-align:center;flex-shrink:0;}
+.track-item.active .t-num{color:#b548c6;}
+.t-info{flex:1;min-width:0;}
+.t-name{font-size:13px;font-weight:700;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-item.active .t-name{color:#fff;}
+.t-artist{font-size:10px;font-weight:400;color:rgba(255,255,255,.3);margin-top:1px;}
+.tag-free{font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 6px;border-radius:100px;background:rgba(76,175,80,.12);color:#4caf50;flex-shrink:0;}
+.passport-gate{margin:8px 16px 20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;text-align:center;}
+.gate-txt{font-size:10px;font-weight:400;color:rgba(255,255,255,.45);line-height:1.65;margin-bottom:10px;}
+.gate-btn{background:#b548c6;color:#0a0a0a;border:none;border-radius:100px;padding:9px 22px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;transition:opacity .15s;}
+.gate-btn:hover{opacity:.85;}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;}}
+body.unlocked .track-item > svg{display:none!important;}
+</style>
+</head>
+<body>
+<div class="main-content">
+  <div class="music-hero">
+    <img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w600-h600" alt="Shamanic Resin">
+    <button class="hero-play" id="heroPlay" onclick="heroPlayClick()" aria-label="Play">
+      <svg id="heroIcon" viewBox="0 0 24 24" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    </button>
+  </div>
+  <div class="hero-scrub" id="heroScrub"
+       role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+       aria-label="Playback progress" onclick="heroScrubClick(event)">
+    <div class="hero-scrub-fill" id="heroScrubFill"></div>
+  </div>
+  <div class="music-artist-name">Shamanic Resin</div>
+  <div class="artist-bio-card">
+    <p class="bio-text">K-pop energy with a mystical edge. Shamanic Resin fuses ritual and rhythm into something that pulls you in and holds on.</p>
+  </div>
+  <div class="track-list">
+    <div class="track-label">Tracks</div>
+    <div class="track-item" id="ti0"
+         onclick="loadTrack()" role="button" tabindex="0"
+         aria-label="Real Dream by Shamanic Resin">
+      <div class="t-num" id="tnum0">1</div>
+      <div class="t-info">
+        <div class="t-name">Real Dream</div>
+        <div class="t-artist">Shamanic Resin</div>
+      </div>
+      <span class="tag-free">Free</span>
+    </div>
+  </div>
+  <div class="passport-gate" id="passportGate" style="display:none">
+    <div class="gate-txt">Get a GFS Passport to unlock Shamanic Resin's full catalog and every artist in the Society.</div>
+    <button class="gate-btn" onclick="window.open('https://lesaruss.ai/geekfon','_top')">Get Passport - $11</button>
+  </div>
+</div>
+<audio id="audioEl" preload="none"></audio>
+<script>
+const TIER = 0;
+const AUDIO_SRC = 'https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3';
+let loaded = false, loggedIn = false;
+const audio = document.getElementById('audioEl');
+
+function showGate() {
+  document.getElementById('passportGate').style.display = '';
+}
+
+function loadTrack() {
+  if (TIER > 0 && !loggedIn) { showGate(); return; }
+  if (!AUDIO_SRC) { showGate(); return; }
+  if (!loaded) { audio.src = AUDIO_SRC; audio.load(); loaded = true; }
+  audio.play().catch(() => {});
+  document.getElementById('ti0').classList.add('active');
+  document.getElementById('tnum0').textContent = '\u25b6';
+}
+
+function heroPlayClick() {
+  if (TIER > 0 && !loggedIn) { showGate(); return; }
+  if (!AUDIO_SRC) { showGate(); return; }
+  if (!loaded) { loadTrack(); return; }
+  togglePlay();
+}
+
+function heroScrubClick(e) {
+  if (!audio.duration) return;
+  audio.currentTime = (e.offsetX / e.currentTarget.offsetWidth) * audio.duration;
+}
+
+function togglePlay() {
+  if (audio.paused) { audio.play().catch(() => {}); }
+  else { audio.pause(); }
+}
+
+function updatePlayIcon(playing) {
+  const icon = playing
+    ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
+    : '<polygon points="5 3 19 12 5 21 5 3"/>';
+  document.getElementById('heroIcon').innerHTML = icon;
+  document.getElementById('heroPlay').setAttribute('aria-label', playing ? 'Pause' : 'Play');
+}
+
+audio.addEventListener('play',  () => updatePlayIcon(true));
+audio.addEventListener('pause', () => updatePlayIcon(false));
+audio.addEventListener('ended', () => {
+  updatePlayIcon(false);
+  document.getElementById('tnum0').textContent = '1';
+  document.getElementById('ti0').classList.remove('active');
+});
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  document.getElementById('heroScrubFill').style.width = pct + '%';
+  document.getElementById('heroScrub').setAttribute('aria-valuenow', Math.round(pct));
+});
+
+window.addEventListener('message', function(e) {
+  if (!e.data || typeof e.data.loggedIn === 'undefined') return;
+  loggedIn = e.data.loggedIn;
+  document.body.classList.toggle('unlocked', loggedIn);
+  if (loggedIn) document.getElementById('passportGate').style.display = 'none';
+});
+</script>
+</body>
+</html>
