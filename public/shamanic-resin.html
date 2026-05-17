@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shamanic Resin - GeekFon Society</title>
+<meta name="description" content="Shamanic Resin. R&B, Dancehall. Mad Tings. GeekFon Society original artist. Stream free.">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow-x:hidden;font-family:'Montserrat',sans-serif;background:#020c0a;color:#e8e8e8;}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+a{color:inherit;text-decoration:none;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+/* ======== AURORA (identical to geekfon.ai homepage) ======== */
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.stars{position:absolute;inset:0;background-image:
+  radial-gradient(1px 1px at 9% 6%,rgba(255,255,255,.55) 0%,transparent 100%),
+  radial-gradient(1px 1px at 24% 12%,rgba(255,255,255,.35) 0%,transparent 100%),
+  radial-gradient(1px 1px at 44% 4%,rgba(255,255,255,.48) 0%,transparent 100%),
+  radial-gradient(1px 1px at 60% 10%,rgba(255,255,255,.30) 0%,transparent 100%),
+  radial-gradient(1px 1px at 76% 7%,rgba(255,255,255,.52) 0%,transparent 100%),
+  radial-gradient(1px 1px at 90% 3%,rgba(255,255,255,.42) 0%,transparent 100%),
+  radial-gradient(1.5px 1.5px at 18% 4%,rgba(255,255,255,.65) 0%,transparent 100%),
+  radial-gradient(1.5px 1.5px at 66% 2%,rgba(255,255,255,.55) 0%,transparent 100%);}
+.a{position:absolute;border-radius:50%;filter:blur(90px);}
+.a1{width:85vw;height:48vh;top:-20vh;left:4vw;background:radial-gradient(ellipse at center,rgba(0,215,95,.24) 0%,transparent 70%);animation:d1 18s ease-in-out infinite alternate;}
+.a2{width:62vw;height:40vh;top:-14vh;right:-6vw;background:radial-gradient(ellipse at center,rgba(0,155,255,.18) 0%,transparent 70%);animation:d2 24s ease-in-out infinite alternate;}
+.a3{width:52vw;height:34vh;top:0;left:24vw;background:radial-gradient(ellipse at center,rgba(120,0,255,.13) 0%,transparent 70%);animation:d3 20s ease-in-out infinite alternate;}
+.a4{width:40vw;height:24vh;top:-8vh;left:46vw;background:radial-gradient(ellipse at center,rgba(0,255,185,.15) 0%,transparent 70%);animation:d4 28s ease-in-out infinite alternate;}
+.a5{width:28vw;height:20vh;top:4vh;left:62vw;background:radial-gradient(ellipse at center,rgba(190,70,255,.09) 0%,transparent 70%);animation:d5 22s ease-in-out infinite alternate;}
+.aurora-ground{position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to top,rgba(2,12,10,.97) 0%,transparent 100%);}
+@keyframes d1{from{transform:translate(0,0) scaleX(1)}to{transform:translate(4vw,5vh) scaleX(1.1)}}
+@keyframes d2{from{transform:translate(0,0) scaleY(1)}to{transform:translate(-5vw,3vh) scaleY(1.18)}}
+@keyframes d3{from{transform:translate(0,0) rotate(0)}to{transform:translate(3vw,-4vh) rotate(7deg)}}
+@keyframes d4{from{transform:translate(0,0)}to{transform:translate(-4vw,6vh)}}
+@keyframes d5{from{transform:translate(0,0) scale(1)}to{transform:translate(5vw,-5vh) scale(1.3)}}
+
+/* ======== NAV ======== */
+.gfs-nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 28px;background:rgba(2,12,10,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.06);}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.5);transition:color .15s;justify-self:start;}
+.nav-back:hover{color:#fff;}
+.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;}
+.nav-wordmark{font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#fff;justify-self:center;}
+.nav-wordmark span{color:#F69820;transition:color .7s ease;}
+.nav-join{background:#F69820;color:#fff;border:none;border-radius:100px;padding:9px 22px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;transition:background .15s;justify-self:end;}
+.nav-join:hover{background:#e08818;}
+
+/* ======== PAGE ======== */
+.page{position:relative;z-index:1;height:100vh;padding-top:56px;display:flex;align-items:center;justify-content:center;}
+.layout{display:flex;align-items:flex-start;justify-content:center;gap:clamp(32px,5vw,72px);width:100%;max-width:1280px;padding:0 40px;height:100%;}
+
+/* ======== PHONE BEZEL (identical to geekfon.ai) ======== */
+.phone-col{display:flex;flex-direction:column;align-items:center;gap:14px;flex-shrink:0;}
+.phone-bezel{
+  --ph:min(88vh,680px);
+  --pw:calc(var(--ph) * 0.495);
+  width:var(--pw);height:var(--ph);
+  background:rgba(18,20,20,.92);
+  border-radius:min(46px,calc(var(--pw) * 0.14));
+  padding:min(13px,calc(var(--ph) * 0.018));
+  box-shadow:0 0 0 1px rgba(255,255,255,.07),0 0 0 3px rgba(0,0,0,.55),0 30px 90px rgba(0,0,0,.85),0 0 60px rgba(0,200,100,.05);
+  position:relative;backdrop-filter:blur(4px);
+}
+.phone-notch{width:min(98px,calc(var(--pw)*0.34));height:min(20px,calc(var(--ph)*0.029));background:#0a0c0b;border-radius:0 0 14px 14px;position:absolute;top:min(13px,calc(var(--ph)*0.018));left:50%;transform:translateX(-50%);z-index:4;}
+.phone-screen{width:100%;height:100%;background:#080808;border-radius:min(36px,calc(var(--pw)*0.11));overflow:hidden;position:relative;display:flex;justify-content:center;align-items:flex-start;}
+.pb{position:absolute;background:rgba(255,255,255,.07);border-radius:2px;}
+.pb.r{right:-3px;top:16%;width:3px;height:12%;border-radius:0 2px 2px 0;}
+.pb.l1{left:-3px;top:13%;width:3px;height:6%;border-radius:2px 0 0 2px;}
+.pb.l2{left:-3px;top:21%;width:3px;height:10%;border-radius:2px 0 0 2px;}
+.pb.l3{left:-3px;top:34%;width:3px;height:10%;border-radius:2px 0 0 2px;}
+.phone-home{position:absolute;bottom:min(14px,2.5%);left:50%;transform:translateX(-50%);width:30%;height:4px;background:rgba(255,255,255,.12);border-radius:100px;z-index:4;}
+
+/* ======== PHONE INNER ======== */
+.phone-inner{
+  flex-shrink:0;width:375px;height:820px;
+  transform-origin:top center;
+  transform:scale(calc((var(--pw) - 26px) / 375));
+  display:flex;flex-direction:column;
+  background:#161616;color:#fff;
+  font-family:'Montserrat',sans-serif;
+  position:relative;overflow:hidden;
+}
+
+/* ======== BOARD WRAPPER ======== */
+.p-board{
+  margin:20px;
+  border-radius:20px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  background:#0d0d0d;
+  border:1px solid rgba(255,255,255,0.08);
+}
+
+/* ======== SLIDER ======== */
+.pi-viewport{flex:1;overflow:hidden;position:relative;}
+.pi-track{display:flex;width:1005px;height:100%;transition:transform .38s cubic-bezier(.4,0,.2,1);}
+.pi-screen{width:335px;height:100%;overflow-y:auto;flex-shrink:0;scrollbar-width:none;}
+.pi-screen::-webkit-scrollbar{display:none;}
+
+/* ======== DOTS ======== */
+.pi-dots-bar{height:34px;display:flex;align-items:center;justify-content:center;gap:8px;background:#0d0d0d;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;}
+.pi-dot{width:7px;height:7px;border-radius:50%;border:none;padding:0;cursor:pointer;background:rgba(255,255,255,.2);transition:background .2s,transform .2s;}
+.pi-dot.active{background:#F69820;transform:scale(1.3);}
+
+/* ======== MINI-PLAYER (sticky bar matching GFS Radio) ======== */
+.mini-player{height:54px;background:#0d0d0d;border-top:2px solid #F69820;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;cursor:pointer;}
+.mini-info{flex:1;min-width:0;}
+.mini-title{font-size:12px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mini-artist{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px;}
+.mini-play-btn{width:36px;height:36px;border-radius:50%;background:#F69820;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
+.mini-play-btn:hover{background:#e08818;}
+.mini-play-btn svg{width:14px;height:14px;fill:#fff;}
+.mini-up{background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;}
+.mini-up svg{width:16px;height:16px;stroke:rgba(255,255,255,.35);fill:none;stroke-width:2;}
+
+/* ======== SCREEN 1: ARTIST PHOTO ======== */
+.s1-wrap{padding:24px 20px 14px;}
+.s1-img-card{width:100%;border-radius:16px;overflow:hidden;aspect-ratio:3/4;background:#1a0a2e;display:flex;align-items:center;justify-content:center;position:relative;}
+.s1-artist-bar{margin-top:14px;}
+.s1-artist-name{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#fff;}
+.s1-artist-tags{font-size:10px;font-weight:400;letter-spacing:.14em;color:rgba(255,255,255,.45);margin-top:4px;}
+.s1-live-pill{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:rgba(246,152,32,.1);border:1px solid rgba(246,152,32,.22);border-radius:100px;padding:6px 14px;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#F69820;}
+@keyframes ldot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.live-dot-sm{width:6px;height:6px;border-radius:50%;background:#4caf50;animation:ldot 1.5s ease-in-out infinite;display:inline-block;flex-shrink:0;}
+
+/* ======== SCREEN 2: GFS RADIO STYLE PLAYER ======== */
+.s2-art-photo{padding:24px 20px 0;}
+.s2-art-img{width:100%;border-radius:16px;overflow:hidden;aspect-ratio:1/1;background:#1a0a2e;display:flex;align-items:center;justify-content:center;position:relative;}
+.s2-art-name{padding:14px 20px 0;font-size:20px;font-weight:900;letter-spacing:.02em;color:#fff;}
+
+/* Compact player card - matches GFS Radio reference */
+.s2-player-card{margin:14px 16px 0;background:rgba(255,255,255,.05);border-radius:16px;padding:16px 18px;}
+.s2-np-title{font-size:14px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.s2-np-artist{font-size:11px;font-weight:400;color:#F69820;margin-top:3px;}
+.s2-prog-bar{height:3px;background:rgba(255,255,255,.12);border-radius:2px;margin-top:14px;position:relative;}
+.s2-prog-fill{height:100%;border-radius:2px;background:#F69820;width:0%;transition:width .5s linear;}
+.s2-time-row{display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,.35);font-weight:700;margin-top:6px;}
+.s2-ctrl-row{display:flex;align-items:center;justify-content:center;gap:34px;margin-top:14px;}
+.s2-skip-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;}
+.s2-skip-btn svg{width:26px;height:26px;stroke:rgba(255,255,255,.55);fill:rgba(255,255,255,.55);stroke-width:1.5;}
+.s2-skip-btn:hover svg{stroke:#fff;fill:#fff;}
+.s2-play-btn{width:52px;height:52px;border-radius:50%;background:#F69820;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
+.s2-play-btn:hover{background:#e08818;}
+.s2-play-btn svg{width:20px;height:20px;fill:#fff;}
+
+/* Track list - numbered, clean, GFS Radio style */
+.s2-tracks{padding:6px 0 20px;}
+.track-item{display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .15s;}
+.track-item:hover{background:rgba(255,255,255,.03);}
+.track-item.active{background:rgba(246,152,32,.06);}
+.t-num{width:20px;font-size:13px;font-weight:700;color:rgba(255,255,255,.3);text-align:center;flex-shrink:0;}
+.track-item.active .t-num{color:#F69820;}
+.t-name{flex:1;font-size:14px;font-weight:700;color:rgba(255,255,255,.6);}
+.track-item.active .t-name{color:#fff;}
+.t-dur{font-size:11px;color:rgba(255,255,255,.28);font-weight:600;flex-shrink:0;}
+.t-tag{font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 7px;border-radius:100px;flex-shrink:0;}
+.tag-free{background:rgba(76,175,80,.12);color:#4caf50;}
+.tag-preview{background:rgba(246,152,32,.1);color:#F69820;}
+.tag-locked{background:rgba(255,255,255,.05);color:rgba(255,255,255,.28);}
+.track-item.locked-item{opacity:.5;cursor:default;}
+.track-item.locked-item:hover{background:none;}
+
+/* ======== SCREEN 3: DAILY FEED ======== */
+.s3-hdr{padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;}
+.s3-date-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.4);}
+.s3-live-tag{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(100,220,110,.8);}
+.s3-post{padding:14px 16px 4px;}
+.s3-user-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.s3-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#8e44ad,#c0392b);border:2px solid rgba(246,152,32,.4);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;}
+.s3-post-name{font-size:12px;font-weight:800;color:#fff;}
+.s3-post-time{font-size:9px;color:rgba(255,255,255,.4);margin-top:1px;}
+.s3-photo{width:calc(100% - 8px);margin:0 4px 10px;border-radius:14px;overflow:hidden;aspect-ratio:1;background:linear-gradient(135deg,#1a0a2e 0%,#4a1942 50%,#1a0a2e 100%);display:flex;align-items:center;justify-content:center;}
+.s3-ph-txt{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.22);}
+.s3-caption{font-size:12px;color:rgba(255,255,255,.72);line-height:1.65;margin-bottom:10px;}
+.s3-caption strong{color:#fff;}
+.s3-actions{display:flex;gap:18px;margin-top:4px;}
+.s3-act-btn{display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,.42);transition:color .15s;padding:4px 0;}
+.s3-act-btn:hover{color:#fff;}
+.s3-act-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+.s3-gate-sect{padding:12px 16px 0;}
+.s3-gate-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.22);margin-bottom:10px;}
+.s3-gate-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.06);margin-bottom:8px;}
+.s3-gate-date{font-size:10px;font-weight:700;color:rgba(255,255,255,.28);}
+.s3-gate-sub{font-size:11px;color:rgba(255,255,255,.16);font-style:italic;margin-top:2px;}
+.s3-lock-ic{display:flex;align-items:center;justify-content:center;opacity:.3;}
+.s3-lock-ic svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;}
+.s3-join-strip{margin:14px 16px 24px;background:rgba(246,152,32,.07);border:1px solid rgba(246,152,32,.15);border-radius:12px;padding:16px;text-align:center;}
+.s3-join-strip p{font-size:11px;font-weight:200;color:rgba(255,255,255,.55);line-height:1.65;margin-bottom:12px;}
+.s3-join-btn{background:#F69820;color:#fff;border:none;border-radius:100px;padding:10px 26px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;transition:background .15s;}
+.s3-join-btn:hover{background:#e08818;}
+
+/* ======== ARTIST COLUMN (right side) ======== */
+.artist-col{display:flex;flex-direction:column;gap:14px;flex-shrink:0;max-width:500px;width:clamp(320px,42vw,500px);}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.live-dot{width:7px;height:7px;background:#4caf50;border-radius:50%;animation:pdot 1.5s ease-in-out infinite;display:inline-block;}
+.artist-live-badge{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(100,220,110,.75);}
+.genre-row{display:flex;gap:8px;flex-wrap:wrap;}
+.genre-pill{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;padding:5px 14px;border:1px solid rgba(255,255,255,.14);border-radius:100px;color:rgba(255,255,255,.52);}
+.artist-name-h{font-size:clamp(42px,8vw,68px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;line-height:1;}
+.artist-bio-p{font-size:13px;font-weight:200;letter-spacing:.06em;color:rgba(255,255,255,.6);line-height:1.9;max-width:380px;}
+.rank-badge{display:flex;align-items:center;gap:16px;background:rgba(246,152,32,.07);border:1px solid rgba(246,152,32,.18);border-radius:14px;padding:14px 20px;}
+.rank-num{font-size:32px;font-weight:900;color:#F69820;line-height:1;}
+.rank-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#fff;}
+.rank-trend{font-size:10px;color:rgba(255,255,255,.38);margin-top:3px;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px 16px;}
+.stat-num{font-size:22px;font-weight:900;color:#fff;line-height:1;}
+.stat-val{font-size:13px;font-weight:700;color:#fff;line-height:1.3;}
+.stat-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,.32);margin-top:4px;}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;}
+.btn-join-main{background:#F69820;color:#fff;border:none;border-radius:100px;padding:14px 32px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;transition:background .15s,transform .1s;}
+.btn-join-main:hover{background:#e08818;transform:translateY(-1px);}
+.btn-join-fixed{width:100%;background:#F69820;color:#020c0a;border:none;border-radius:100px;padding:15px 32px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;transition:background .15s,transform .1s;margin-top:12px;flex-shrink:0;}
+.btn-join-fixed:hover{background:#e08818;transform:translateY(-1px);}
+
+/* ======== MODE TOGGLE (Music / Chat) ======== */
+.mode-toggle{display:flex;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:4px;}
+.mode-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:7px 18px;border-radius:100px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.38);transition:all .18s;}
+.mode-btn.active{background:rgba(246,152,32,.14);color:#F69820;}
+.mode-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+
+/* ======== MUSIC / CHAT VIEWS inside phone ======== */
+.music-view{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+.music-view.hidden{display:none;}
+.chat-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
+.chat-view.visible{display:flex;}
+.chat-hdr{padding:12px 16px 10px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.chat-hdr-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#fff;}
+.chat-hdr-sub{font-size:9px;color:rgba(255,255,255,.32);margin-top:2px;font-weight:400;}
+.chat-feed{flex:1;overflow-y:auto;scrollbar-width:none;}
+.chat-feed::-webkit-scrollbar{display:none;}
+.chat-msg{padding:12px 16px 6px;}
+.chat-msg-row{display:flex;align-items:flex-start;gap:10px;}
+.chat-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8e44ad,#c0392b);border:2px solid rgba(246,152,32,.4);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;overflow:hidden;}
+.chat-avatar img{width:100%;height:100%;object-fit:cover;}
+.chat-body{flex:1;min-width:0;}
+.chat-meta{display:flex;align-items:baseline;gap:6px;}
+.chat-name{font-size:11px;font-weight:800;color:#F69820;}
+.chat-time{font-size:9px;color:rgba(255,255,255,.28);}
+.chat-text{font-size:12px;color:rgba(255,255,255,.72);line-height:1.65;margin-top:4px;}
+.chat-actions{display:flex;gap:14px;margin-top:7px;}
+.chat-act-btn{display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);transition:color .15s;padding:3px 0;}
+.chat-act-btn.liked{color:#F69820;}
+.chat-act-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
+.chat-act-btn.liked svg{fill:#F69820;stroke:#F69820;}
+.chat-divider{height:1px;background:rgba(255,255,255,.04);margin:0 16px;}
+.chat-gate{margin:12px 16px 20px;background:rgba(246,152,32,.06);border:1px solid rgba(246,152,32,.12);border-radius:12px;padding:14px;text-align:center;}
+.chat-gate-txt{font-size:10px;font-weight:200;color:rgba(255,255,255,.45);line-height:1.65;margin-bottom:10px;}
+.chat-gate-btn{background:#F69820;color:#fff;border:none;border-radius:100px;padding:8px 20px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;transition:background .15s;}
+.chat-gate-btn:hover{background:#e08818;}
+
+/* ======== STATS - 5 items ======== */
+.stat-full{grid-column:1/-1;background:rgba(246,152,32,.05);border-color:rgba(246,152,32,.15);}
+.stat-release{font-size:14px;font-weight:800;color:#F69820;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ======== ARTIST PANEL (sliding pages) ======== */
+.artist-panel{height:var(--ph);overflow:hidden;position:relative;width:100%;}
+.artist-track-outer{display:flex;width:200%;height:100%;transition:transform .38s cubic-bezier(.4,0,.2,1);}
+.artist-page{width:50%;height:100%;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;gap:20px;padding:28px 0 32px;box-sizing:border-box;}
+.artist-page::-webkit-scrollbar{display:none;}
+.artist-dots-bar{display:flex;align-items:center;justify-content:center;gap:8px;height:34px;}
+.artist-dot{width:7px;height:7px;border-radius:50%;border:none;padding:0;cursor:pointer;background:rgba(255,255,255,.2);transition:background .2s,transform .2s;}
+.artist-dot.active{background:#F69820;transform:scale(1.3);}
+
+/* ======== SONG MATRIX ======== */
+.matrix-wrap{padding-bottom:8px;}
+.matrix-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.28);margin-bottom:10px;}
+.matrix-table{width:100%;border-collapse:collapse;}
+.matrix-table th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);padding:6px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.07);}
+.matrix-table th:first-child{text-align:left;padding-left:0;}
+.matrix-table td{font-size:11px;padding:10px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.5);vertical-align:middle;}
+.matrix-table td:first-child{text-align:left;padding-left:0;font-size:12px;font-weight:700;color:#fff;}
+.matrix-table tr:last-child td{border-bottom:none;}
+.mx-free{color:#4caf50;font-size:11px;font-weight:700;}
+.mx-preview{color:#F69820;font-size:10px;font-weight:700;}
+.mx-full{color:#4caf50;font-size:11px;font-weight:700;}
+.mx-lock{color:rgba(255,255,255,.2);font-size:10px;}
+
+/* ======== TRANSLATE BUTTON ======== */
+.translate-btn{background:none;border:1px solid rgba(255,255,255,.22);border-radius:100px;padding:3px 10px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.62);cursor:pointer;transition:color .15s,border-color .15s;margin:5px 0 0;}
+.translate-btn:hover{color:#F69820;border-color:rgba(246,152,32,.4);}
+.hidden-lang{display:none;}
+
+/* ======== MATRIX DATE CELL ======== */
+.mx-date{color:#F69820;font-size:10px;font-weight:700;}
+
+/* ======== FON COLOR CYCLE ======== */
+.fon-cycle{transition:color .7s ease;}
+
+/* ======== FOOTER ======== */
+.gfs-footer{position:relative;z-index:2;background:rgba(2,12,10,.98);border-top:1px solid rgba(255,255,255,.07);padding:56px 60px 0;}
+.gfs-footer-inner{max-width:1280px;margin:0 auto;display:flex;gap:clamp(40px,6vw,96px);align-items:flex-start;flex-wrap:wrap;padding-bottom:48px;}
+/* Brand column */
+.gfs-footer-brand{flex:0 0 240px;display:flex;flex-direction:column;gap:18px;}
+.gfs-footer-wordmark{font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#fff;}
+.gfs-footer-tagline{font-size:12px;font-weight:400;color:rgba(255,255,255,.52);line-height:1.8;max-width:210px;}
+.gfs-footer-apps{display:flex;flex-direction:column;gap:10px;}
+.gfs-app-btn{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 16px;color:#fff;text-decoration:none;transition:border-color .15s,background .15s;}
+.gfs-app-btn:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.22);}
+.gfs-app-btn svg{width:22px;height:22px;fill:#fff;flex-shrink:0;}
+.gfs-app-btn-text{display:flex;flex-direction:column;line-height:1.2;}
+.gfs-app-btn-text small{font-size:8px;font-weight:400;color:rgba(255,255,255,.52);letter-spacing:.06em;text-transform:uppercase;}
+.gfs-app-btn-text strong{font-size:13px;font-weight:800;letter-spacing:.01em;}
+/* Sitemap */
+.gfs-footer-nav{flex:0 0 auto;display:flex;gap:clamp(28px,4vw,56px);flex-wrap:wrap;}
+.gfs-footer-col{display:flex;flex-direction:column;gap:12px;min-width:110px;}
+.gfs-footer-col-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.22em;color:rgba(255,255,255,.52);padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.07);}
+.gfs-footer-col a{font-size:12px;font-weight:400;color:rgba(255,255,255,.62);transition:color .15s;text-decoration:none;}
+.gfs-footer-col a:hover{color:#F69820;}
+.gfs-footer-col .highlight{color:#F69820;font-weight:700;}
+/* Subscription column */
+.gfs-footer-sub{flex:0 0 220px;display:flex;flex-direction:column;gap:10px;margin-left:auto;}
+.gfs-footer-sub-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.22em;color:rgba(255,255,255,.52);padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:2px;}
+.gfs-sub-tier{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;gap:10px;text-decoration:none;transition:border-color .15s,background .15s;}
+.gfs-sub-tier:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);}
+.gfs-sub-tier.featured{border-color:rgba(246,152,32,.45);background:rgba(246,152,32,.06);}
+.gfs-sub-tier.featured:hover{background:rgba(246,152,32,.12);border-color:#F69820;}
+.gfs-sub-tier-info{display:flex;flex-direction:column;gap:2px;}
+.gfs-sub-tier-name{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#fff;}
+.gfs-sub-tier-desc{font-size:10px;color:rgba(255,255,255,.48);font-weight:400;}
+.gfs-sub-tier-price{font-size:13px;font-weight:900;color:#F69820;white-space:nowrap;flex-shrink:0;}
+.gfs-sub-tier-price small{font-size:8px;font-weight:400;color:rgba(246,152,32,.7);display:block;text-align:right;}
+.gfs-sub-cta{margin-top:4px;display:block;text-align:center;background:#F69820;color:#020c0a;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;padding:10px;border-radius:10px;text-decoration:none;transition:opacity .15s;}
+.gfs-sub-cta:hover{opacity:.88;}
+/* Bottom bar */
+.gfs-footer-bottom{max-width:1280px;margin:0 auto;padding:20px 0 32px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+.gfs-footer-copy{font-size:10px;font-weight:400;color:rgba(255,255,255,.48);letter-spacing:.04em;}
+.gfs-footer-legal{display:flex;gap:20px;}
+.gfs-footer-legal a{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.48);transition:color .15s;text-decoration:none;}
+.gfs-footer-legal a:hover{color:rgba(255,255,255,.8);}
+.gfs-footer-social{display:flex;gap:12px;}
+.gfs-footer-social a{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.52);transition:border-color .15s,color .15s;text-decoration:none;}
+.gfs-footer-social a:hover{border-color:#F69820;color:#F69820;}
+.gfs-footer-social a svg{width:14px;height:14px;fill:currentColor;}
+
+/* ======== MOBILE ======== */
+@media(max-width:820px){
+  html,body{overflow-y:auto;}
+  .page{height:auto;min-height:100vh;padding:76px 0 60px;}
+  .layout{flex-direction:column;align-items:center;gap:32px;height:auto;padding:0 20px;}
+  .artist-col{order:1;max-width:100%;width:100%;}
+  .phone-col{order:2;}
+  .phone-bezel{--ph:580px;--pw:calc(var(--ph)*0.495);}
+  .artist-panel{--ph:580px;}
+  .gfs-footer{padding:40px 24px 0;}
+  .gfs-footer-inner{flex-direction:column;gap:36px;}
+  .gfs-footer-brand{flex:none;width:100%;}
+  .gfs-footer-sub{flex:none;width:100%;}
+  .gfs-footer-bottom{flex-direction:column;align-items:flex-start;gap:16px;}
+}
+</style>
+</head>
+<body>
+<div style="padding:50px;box-sizing:border-box;min-height:100vh;">
+
+<a href="#main-content" class="sr-only" style="position:absolute;top:8px;left:8px;z-index:9999;background:#F69820;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;transform:translateY(-200%);transition:transform .2s;" onfocus="this.style.transform='translateY(0)'" onblur="this.style.transform='translateY(-200%)'">Skip to main content</a>
+
+<!-- AURORA -->
+<div class="aurora" aria-hidden="true">
+  <div class="stars"></div>
+  <div class="a a1"></div><div class="a a2"></div><div class="a a3"></div><div class="a a4"></div><div class="a a5"></div>
+  <div class="aurora-ground"></div>
+</div>
+
+<!-- NAV -->
+<nav class="gfs-nav" aria-label="GeekFon Society navigation">
+  <a href="/" class="nav-back" aria-label="Back to artist roster">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+    Artists
+  </a>
+  <div class="nav-wordmark" aria-hidden="true">Geek<span id="navFon">Fon</span> Society</div>
+  <button class="nav-join" onclick="window.open('https://lesaruss.ai/geekfon','_blank')" aria-label="Join GeekFon Society">Join GFS</button>
+</nav>
+
+<!-- MAIN -->
+<main class="page" id="main-content">
+  <div class="layout">
+
+    <!-- LEFT: PHONE -->
+    <div class="phone-col">
+      <div class="phone-bezel">
+        <div class="phone-notch" aria-hidden="true"></div>
+        <div class="pb r" aria-hidden="true"></div>
+        <div class="pb l1" aria-hidden="true"></div>
+        <div class="pb l2" aria-hidden="true"></div>
+        <div class="pb l3" aria-hidden="true"></div>
+        <div class="phone-screen">
+          <div class="phone-inner">
+
+            <!-- BOARD WRAPPER -->
+            <div class="p-board">
+
+            <!-- MUSIC VIEW -->
+            <div class="music-view" id="musicView">
+
+            <!-- SLIDER -->
+            <div class="pi-viewport" id="piViewport">
+              <div class="pi-track" id="piTrack">
+
+                <!-- SCREEN 1: PHOTO -->
+                <div class="pi-screen" id="s1" role="tabpanel" aria-label="Artist photo">
+                  <div class="s1-wrap">
+                    <div class="s1-img-card" aria-label="Shamanic Resin artist photo">
+                      <img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w800" alt="Shamanic Resin" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:16px;">
+                    </div>
+                    <div class="s1-artist-bar">
+                      <div class="s1-artist-name">Shamanic Resin</div>
+                      <div class="s1-artist-tags">R&amp;B &middot; Dancehall</div>
+                      <div class="s1-live-pill">
+                        <span class="live-dot-sm" aria-hidden="true"></span>
+                        Daily Feed Active
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SCREEN 2: MUSIC PLAYER (GFS Radio style) -->
+                <div class="pi-screen" id="s2" role="tabpanel" aria-label="Music player">
+
+                  <!-- Artist photo (square, no paragraph) -->
+                  <div class="s2-art-photo">
+                    <div class="s2-art-img" aria-label="Shamanic Resin profile photo">
+                      <img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w600" alt="Shamanic Resin" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:16px;">
+                    </div>
+                  </div>
+                  <div class="s2-art-name">Shamanic Resin</div>
+
+                  <!-- Compact player card -->
+                  <div class="s2-player-card">
+                    <div class="s2-np-title" id="npTitle">Awake from the Matrix</div>
+                    <div class="s2-np-artist" id="npArtist">Shamanic Resin</div>
+                    <div class="s2-prog-bar" id="npProg" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Playback progress">
+                      <div class="s2-prog-fill" id="npFill"></div>
+                    </div>
+                    <div class="s2-time-row">
+                      <span id="npElapsed">0:00</span>
+                      <span id="npDuration">2:39</span>
+                    </div>
+                    <div class="s2-ctrl-row">
+                      <button class="s2-skip-btn" id="btnPrev" aria-label="Previous track">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                      </button>
+                      <button class="s2-play-btn" id="btnPlay" aria-label="Play">
+                        <svg viewBox="0 0 24 24" id="playIcon" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <svg viewBox="0 0 24 24" id="pauseIcon" style="display:none" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                      </button>
+                      <button class="s2-skip-btn" id="btnNext" aria-label="Next track">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Track list: free first, then previews -->
+                  <div class="s2-tracks" aria-label="Track list">
+                    <div class="track-item active" id="t0" onclick="loadTrack(0)" role="button" tabindex="0" aria-label="Play Awake from the Matrix - free track">
+                      <div class="t-num">1</div>
+                      <div class="t-name">Awake from the Matrix</div>
+                      <div class="t-dur">2:39</div>
+                      <div class="t-tag tag-free">Free</div>
+                    </div>
+                    <div class="track-item" id="t1" onclick="loadTrack(1)" role="button" tabindex="0" aria-label="Play High Vibe Life">
+                      <div class="t-num">2</div>
+                      <div class="t-name">High Vibe Life</div>
+                      <div class="t-dur">2:48</div>
+                      <div class="t-tag tag-preview">Preview</div>
+                    </div>
+                    <div class="track-item locked-item" tabindex="0" aria-label="Full library - join to unlock" aria-disabled="true">
+                      <div class="t-num" style="color:rgba(255,255,255,.18);">+</div>
+                      <div class="t-name" style="color:rgba(255,255,255,.25);">Full Library</div>
+                      <div class="t-tag tag-locked">Locked</div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- SCREEN 3: DAILY FEED -->
+                <div class="pi-screen" id="s3" role="tabpanel" aria-label="Daily social feed">
+                  <div class="s3-hdr">
+                    <div class="s3-date-lbl" id="s3Date">Today</div>
+                    <div class="s3-live-tag">
+                      <span class="live-dot-sm" aria-hidden="true"></span>
+                      Live Feed
+                    </div>
+                  </div>
+                  <div class="s3-post">
+                    <div class="s3-user-row">
+                      <div class="s3-avatar" aria-hidden="true">L</div>
+                      <div>
+                        <div class="s3-post-name">Shamanic Resin</div>
+                        <div class="s3-post-time" id="s3Time">Just now</div>
+                      </div>
+                    </div>
+                    <div class="s3-photo" aria-label="Today's post - photo placeholder">
+                      <span class="s3-ph-txt">Photo Placeholder</span>
+                    </div>
+                    <p class="s3-caption">
+                      <strong>Rehearsal day.</strong> Me and Lickle Sis in the studio getting the harmonies right. Something big cooking. <span style="color:#F69820;">#MadTings #GeekFonSociety</span>
+                    </p>
+                    <div class="s3-actions">
+                      <button class="s3-act-btn" aria-label="Like this post" onclick="this.style.color='#F69820'">
+                        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        197
+                      </button>
+                      <button class="s3-act-btn" aria-label="Comment on this post">
+                        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        31
+                      </button>
+                      <button class="s3-act-btn" aria-label="Shared to at geekfonsociety">
+                        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        @geekfonsociety
+                      </button>
+                    </div>
+                  </div>
+                  <div class="s3-gate-sect">
+                    <div class="s3-gate-lbl">Past Posts - Members Only</div>
+                    <div class="s3-gate-row">
+                      <div>
+                        <div class="s3-gate-date">Yesterday</div>
+                        <div class="s3-gate-sub">Mad Tings backstage - before the show...</div>
+                      </div>
+                      <div class="s3-lock-ic"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                    </div>
+                    <div class="s3-gate-row">
+                      <div>
+                        <div class="s3-gate-date">2 days ago</div>
+                        <div class="s3-gate-sub">111 tattoo close-up...</div>
+                      </div>
+                      <div class="s3-lock-ic"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                    </div>
+                  </div>
+                  <div class="s3-join-strip">
+                    <p>Join GeekFon Society to access Shamanic Resin's full archive and all artist feeds.</p>
+                    <button class="s3-join-btn" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Join for $11/month</button>
+                  </div>
+                </div>
+
+              </div><!-- /pi-track -->
+            </div><!-- /pi-viewport -->
+
+            <!-- DOTS NAV -->
+            <div class="pi-dots-bar" role="tablist" aria-label="Phone screens">
+              <button class="pi-dot" role="tab" aria-selected="false" aria-controls="s1" aria-label="Screen 1: Photo" onclick="goTo(0)"></button>
+              <button class="pi-dot active" role="tab" aria-selected="true" aria-controls="s2" aria-label="Screen 2: Music" onclick="goTo(1)"></button>
+              <button class="pi-dot" role="tab" aria-selected="false" aria-controls="s3" aria-label="Screen 3: Feed" onclick="goTo(2)"></button>
+            </div>
+
+            <!-- MINI-PLAYER (sticky bottom bar, GFS Radio style) -->
+            <div class="mini-player" onclick="goTo(1)" role="button" aria-label="Now playing - tap to open player">
+              <div class="mini-info">
+                <div class="mini-title" id="miniTitle">Awake from the Matrix</div>
+                <div class="mini-artist">Shamanic Resin</div>
+              </div>
+              <button class="mini-play-btn" id="miniPlayBtn" onclick="event.stopPropagation();togglePlay()" aria-label="Play">
+                <svg viewBox="0 0 24 24" id="miniPlayIcon" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg viewBox="0 0 24 24" id="miniPauseIcon" style="display:none" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              </button>
+              <button class="mini-up" onclick="event.stopPropagation();goTo(1)" aria-label="Open player">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+              </button>
+            </div>
+
+            </div><!-- /music-view -->
+
+            <!-- CHAT VIEW -->
+            <div class="chat-view" id="chatView">
+              <div class="chat-hdr">
+                <div>
+                  <div class="chat-hdr-title">Fan Chat</div>
+                  <div class="chat-hdr-sub">Shamanic Resin posts here. Passport+ can like and comment.</div>
+                </div>
+                <span class="live-dot-sm" aria-hidden="true"></span>
+              </div>
+              <div class="chat-feed" id="chatFeed">
+
+                <div class="chat-msg">
+                  <div class="chat-msg-row">
+                    <div class="chat-avatar" aria-hidden="true">L</div>
+                    <div class="chat-body">
+                      <div class="chat-meta">
+                        <span class="chat-name">Shamanic Resin</span>
+                        <span class="chat-time">3 hours ago</span>
+                      </div>
+                      <div class="chat-text chat-text-jp" lang="ja">ã5æ22æ¥ã«æ°æ²"High Vibe Life"ãæ¥ãããããããã¡ã°ãæ°æã¡ããæ²ãæºåãã¦ãã</div>
+                      <div class="chat-text chat-text-en hidden-lang">"New one dropping May 22nd. High Vibe Life. The most feel-good track I've made. Get ready."</div>
+                      <button class="translate-btn" onclick="toggleTranslate(this)" aria-label="Toggle message translation">Translate</button>
+                      <div class="chat-actions">
+                        <button class="chat-act-btn" data-like="true" aria-label="Like this message">
+                          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                          <span class="like-cnt">118</span>
+                        </button>
+                        <button class="chat-act-btn" aria-label="Reply to this message">
+                          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          Reply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="chat-divider"></div>
+                <div class="chat-msg">
+                  <div class="chat-msg-row">
+                    <div class="chat-avatar" aria-hidden="true">L</div>
+                    <div class="chat-body">
+                      <div class="chat-meta">
+                        <span class="chat-name">Shamanic Resin</span>
+                        <span class="chat-time">Yesterday</span>
+                      </div>
+                      <div class="chat-text chat-text-jp" lang="ja">ã111ã®ã¿ãã¥ã¼ãè¦ãäººãããã¨æããããã¯æ°å­ãããªããå²å­¦ã ããã</div>
+                      <div class="chat-text chat-text-en hidden-lang">"Some of you noticed the 111 tattoo. It's not just a number. It's a philosophy."</div>
+                      <button class="translate-btn" onclick="toggleTranslate(this)" aria-label="Toggle message translation">Translate</button>
+                      <div class="chat-actions">
+                        <button class="chat-act-btn" data-like="true" aria-label="Like this message">
+                          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                          <span class="like-cnt">203</span>
+                        </button>
+                        <button class="chat-act-btn" aria-label="Reply to this message">
+                          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          Reply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="chat-divider"></div>
+                <div class="chat-msg">
+                  <div class="chat-msg-row">
+                    <div class="chat-avatar" aria-hidden="true">L</div>
+                    <div class="chat-body">
+                      <div class="chat-meta">
+                        <span class="chat-name">Shamanic Resin</span>
+                        <span class="chat-time">Apr 20</span>
+                      </div>
+                      <div class="chat-text chat-text-jp" lang="ja">ãAwake from the Matrixãã¹ããªã¼ãã³ã°éå§ãMad Tingsãããã«ãããæãã¦ããã</div>
+                      <div class="chat-text chat-text-en hidden-lang">"Awake from the Matrix is live. Mad Tings is here. Love you all."</div>
+                      <button class="translate-btn" onclick="toggleTranslate(this)" aria-label="Toggle message translation">Translate</button>
+                      <div class="chat-actions">
+                        <button class="chat-act-btn" data-like="true" aria-label="Like this message">
+                          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                          <span class="like-cnt">176</span>
+                        </button>
+                        <button class="chat-act-btn" aria-label="Reply to this message">
+                          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          Reply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="chat-divider"></div>
+                <div class="chat-gate">
+                  <div class="chat-gate-txt">Like and comment with a Passport membership or higher. Shamanic Resin reads everything.</div>
+                  <button class="chat-gate-btn" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Get Passport - $11</button>
+                </div>
+
+              </div><!-- /chat-feed -->
+            </div><!-- /chat-view -->
+
+            </div><!-- /p-board -->
+
+          </div><!-- /phone-inner -->
+        </div><!-- /phone-screen -->
+        <div class="phone-home" aria-hidden="true"></div>
+      </div><!-- /phone-bezel -->
+
+      <!-- MODE TOGGLE -->
+      <div class="mode-toggle" role="group" aria-label="View mode">
+        <button class="mode-btn active" id="btnMusicMode" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          Music
+        </button>
+        <button class="mode-btn" id="btnChatMode" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Chat
+        </button>
+      </div>
+
+    </div><!-- /phone-col -->
+
+    <!-- RIGHT: ARTIST INFO (2-page sliding panel) -->
+    <div class="artist-col">
+
+      <!-- SLIDING PANEL -->
+      <div class="artist-panel" id="artistPanelEl">
+        <div class="artist-track-outer" id="artistTrackEl">
+
+          <!-- PAGE 1: STATS -->
+          <div class="artist-page" id="ap1" role="tabpanel" aria-label="Artist stats">
+            <div class="artist-live-badge">
+              <span class="live-dot" aria-hidden="true"></span>
+              Daily Feed Active
+            </div>
+            <div class="genre-row">
+              <span class="genre-pill">Pop</span>
+              <span class="genre-pill">Rock</span>
+              <span class="genre-pill">R&amp;B</span>
+            </div>
+            <h1 class="artist-name-h">Shamanic Resin</h1>
+            <p class="artist-bio-p">Warm heart, locs, a 111 tattoo. Voice slides between R&amp;B and dancehall. Mad Tings member. Music that feels like coming home.</p>
+            <div class="rank-badge" role="group" aria-label="Artist ranking: #3 in GeekFon Society">
+              <div class="rank-num">#3</div>
+              <div>
+                <div class="rank-label">GeekFon Society</div>
+                <div class="rank-trend">&#x2191; 1 spot this week</div>
+              </div>
+            </div>
+            <div class="stats-grid" aria-label="Artist information">
+              <div class="stat-card"><div class="stat-val">London, UK</div><div class="stat-lbl">Hometown</div></div>
+              <div class="stat-card"><div class="stat-num">23</div><div class="stat-lbl">Age</div></div>
+              <div class="stat-card"><div class="stat-val">Jamaican-British</div><div class="stat-lbl">Heritage</div></div>
+              <div class="stat-card"><div class="stat-num">8</div><div class="stat-lbl">Total Songs</div></div>
+              <div class="stat-card stat-full"><div class="stat-release" id="nextReleaseName">High Vibe Life - 5/22</div><div class="stat-lbl">Next Release</div></div>
+            </div>
+          </div><!-- /ap1 -->
+
+          <!-- PAGE 2: TRACK AVAILABILITY -->
+          <div class="artist-page" id="ap2" role="tabpanel" aria-label="Track availability" aria-hidden="true">
+            <div class="matrix-wrap">
+              <div class="matrix-lbl">Track Availability</div>
+              <table class="matrix-table" aria-label="Song availability by membership tier">
+                <thead>
+                  <tr>
+                    <th scope="col">Song</th>
+                    <th scope="col">Passport<br><span style="color:rgba(255,255,255,.18);font-weight:400;">$11 once</span></th>
+                    <th scope="col">All Access<br><span style="color:rgba(255,255,255,.18);font-weight:400;">$11/mo</span></th>
+                    <th scope="col">Lifetime<br><span style="color:rgba(255,255,255,.18);font-weight:400;">$111</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+<tr><td>Awake from the Matrix</td><td><span class="mx-free">Free</span></td><td><span class="mx-full">Full</span></td><td><span class="mx-full">Full</span></td></tr>
+                  <tr><td>High Vibe Life</td><td><span class="mx-preview">Preview</span></td><td><span class="mx-full">Full</span></td><td><span class="mx-full">Full</span></td></tr>
+                  <tr><td style="color:rgba(255,255,255,.6);">111 Reasons</td><td><span class="mx-date">6/05</span></td><td><span class="mx-full">Full</span></td><td><span class="mx-full">Full</span></td></tr>
+                  <tr><td style="color:rgba(255,255,255,.6);">Real Ones Only</td><td><span class="mx-date">6/19</span></td><td><span class="mx-full">Full</span></td><td><span class="mx-full">Full</span></td></tr>
+                  <tr><td style="color:rgba(255,255,255,.6);">Dance fi Me</td><td><span class="mx-date">7/03</span></td><td><span class="mx-full">Full</span></td><td><span class="mx-full">Full</span></td></tr>
+                  <tr><td style="color:rgba(255,255,255,.6);">Long Road Home</td><td><span class="mx-date">7/17</span></td><td><span class="mx-full">Full</span></td><td><span class="mx-full">Full</span></td></tr>
+                  <tr><td style="color:rgba(255,255,255,.6);">Roots</td><td><span class="mx-date">8/07</span></td><td><span class="mx-full">Full</span></td><td><span class="mx-full">Full</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div><!-- /ap2 -->
+
+        </div><!-- /artist-track-outer -->
+      </div><!-- /artist-panel -->
+
+      <!-- ARTIST PAGE DOTS -->
+      <div class="artist-dots-bar" role="tablist" aria-label="Artist info pages">
+        <button class="artist-dot active" id="adot0" role="tab" aria-selected="true" aria-controls="ap1" onclick="artistGoTo(0)" aria-label="Stats"></button>
+        <button class="artist-dot" id="adot1" role="tab" aria-selected="false" aria-controls="ap2" onclick="artistGoTo(1)" aria-label="Track Availability"></button>
+      </div>
+
+      <!-- PERSISTENT JOIN CTA -->
+      <button class="btn-join-fixed" onclick="window.open('https://lesaruss.ai/geekfon','_blank')" aria-label="Join GeekFon Society">Join GFS</button>
+
+    </div><!-- /artist-col -->
+
+  </div>
+</main>
+
+<audio id="gfsAudio" preload="none"></audio>
+<script>
+/* ---- SLIDER ---- */
+var SCREEN_W = 335;
+var current = 1;
+var piTrack = document.getElementById('piTrack');
+var piViewport = document.getElementById('piViewport');
+var dots = document.querySelectorAll('.pi-dot');
+
+function goTo(n) {
+  current = Math.max(0, Math.min(2, n));
+  piTrack.style.transform = 'translateX(' + (-SCREEN_W * current) + 'px)';
+  dots.forEach(function(d, i) {
+    d.classList.toggle('active', i === current);
+    d.setAttribute('aria-selected', i === current ? 'true' : 'false');
+  });
+}
+goTo(1);
+
+var tsX = 0;
+piViewport.addEventListener('touchstart', function(e) { tsX = e.touches[0].clientX; }, {passive: true});
+piViewport.addEventListener('touchend', function(e) {
+  var diff = tsX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 40) goTo(diff > 0 ? current + 1 : current - 1);
+}, {passive: true});
+
+/* ---- PLAYER ---- */
+var TRACKS = [
+  { title: "Awake from the Matrix", dur: "2:39", totalSec: 159, src: "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/shamanic-resin/awake-from-the-matrix.mp3", free: true  },
+  { title: "High Vibe Life",        dur: "2:48", totalSec: 168, src: "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/shamanic-resin/high-vibe-life.mp3",        free: false }
+];
+var audio = document.getElementById('gfsAudio');
+var curTrack = 0;
+var isPlaying = false;
+var elapsed = 0;
+var timer = null;
+
+function loadTrack(idx) {
+  if (idx >= TRACKS.length) return;
+  stopTimer();
+  elapsed = 0;
+  curTrack = idx;
+  var t = TRACKS[idx];
+  audio.src = t.src;
+  audio.load();
+  document.getElementById('npTitle').textContent = t.title;
+  document.getElementById('miniTitle').textContent = t.title;
+  document.getElementById('npDuration').textContent = t.dur;
+  document.getElementById('npElapsed').textContent = '0:00';
+  document.getElementById('npFill').style.width = '0%';
+  document.getElementById('npProg').setAttribute('aria-valuenow', 0);
+  document.querySelectorAll('.track-item:not(.locked-item)').forEach(function(r, i) {
+    r.classList.toggle('active', i === idx);
+  });
+  setPlaying(true);
+}
+
+function setPlaying(play) {
+  isPlaying = play;
+  document.getElementById('playIcon').style.display   = play ? 'none'  : 'block';
+  document.getElementById('pauseIcon').style.display  = play ? 'block' : 'none';
+  document.getElementById('miniPlayIcon').style.display  = play ? 'none'  : 'block';
+  document.getElementById('miniPauseIcon').style.display = play ? 'block' : 'none';
+  document.getElementById('btnPlay').setAttribute('aria-label', play ? 'Pause' : 'Play');
+  document.getElementById('miniPlayBtn').setAttribute('aria-label', play ? 'Pause' : 'Play');
+  if (play) { audio.play().catch(function(){}); } else { audio.pause(); stopTimer(); }
+}
+
+function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+function togglePlay() { setPlaying(!isPlaying); }
+
+audio.addEventListener('timeupdate', function() {
+  if (!audio.duration) return;
+  var pct = (audio.currentTime / audio.duration) * 100;
+  document.getElementById('npFill').style.width = pct + '%';
+  document.getElementById('npProg').setAttribute('aria-valuenow', Math.round(pct));
+  var s = Math.floor(audio.currentTime);
+  var m = Math.floor(s / 60); s = s % 60;
+  document.getElementById('npElapsed').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+});
+audio.addEventListener('ended', function() {
+  var next = curTrack + 1;
+  if (next < TRACKS.length) loadTrack(next); else setPlaying(false);
+});
+
+document.getElementById('btnPlay').addEventListener('click', togglePlay);
+document.getElementById('btnPrev').addEventListener('click', function() {
+  if (elapsed > 3) { elapsed = 0; return; }
+  if (curTrack > 0) loadTrack(curTrack - 1);
+});
+document.getElementById('btnNext').addEventListener('click', function() {
+  if (curTrack < TRACKS.length - 1) loadTrack(curTrack + 1);
+});
+
+/* Track keyboard */
+document.querySelectorAll('.track-item:not(.locked-item)').forEach(function(row, idx) {
+  row.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); loadTrack(idx); }
+  });
+});
+
+
+/* ---- MODE TOGGLE ---- */
+var btnMusicMode = document.getElementById('btnMusicMode');
+var btnChatMode  = document.getElementById('btnChatMode');
+var musicView    = document.getElementById('musicView');
+var chatView     = document.getElementById('chatView');
+
+function setMode(mode) {
+  var isMusic = mode === 'music';
+  musicView.classList.toggle('hidden', !isMusic);
+  chatView.classList.toggle('visible', !isMusic);
+  btnMusicMode.classList.toggle('active', isMusic);
+  btnChatMode.classList.toggle('active', !isMusic);
+  btnMusicMode.setAttribute('aria-pressed', isMusic ? 'true' : 'false');
+  btnChatMode.setAttribute('aria-pressed', isMusic ? 'false' : 'true');
+}
+
+btnMusicMode.addEventListener('click', function() { setMode('music'); });
+btnChatMode.addEventListener('click',  function() { setMode('chat'); });
+
+/* Chat likes */
+document.querySelectorAll('.chat-act-btn[data-like]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var liked = btn.classList.toggle('liked');
+    var cnt = btn.querySelector('.like-cnt');
+    if (cnt) cnt.textContent = parseInt(cnt.textContent) + (liked ? 1 : -1);
+  });
+});
+
+/* ---- ARTIST PANEL SLIDER ---- */
+var artistCurrent = 0;
+var artistTrackEl  = document.getElementById('artistTrackEl');
+var artistPanelEl  = document.getElementById('artistPanelEl');
+var artistDots     = document.querySelectorAll('.artist-dot');
+var artistPages    = document.querySelectorAll('.artist-page');
+
+function artistGoTo(n) {
+  artistCurrent = Math.max(0, Math.min(1, n));
+  artistTrackEl.style.transform = 'translateX(' + (-50 * artistCurrent) + '%)';
+  artistDots.forEach(function(d, i) {
+    d.classList.toggle('active', i === artistCurrent);
+    d.setAttribute('aria-selected', i === artistCurrent ? 'true' : 'false');
+  });
+  artistPages.forEach(function(p, i) {
+    p.setAttribute('aria-hidden', i !== artistCurrent ? 'true' : 'false');
+  });
+}
+
+var aTsX = 0;
+artistPanelEl.addEventListener('touchstart', function(e) { aTsX = e.touches[0].clientX; }, {passive: true});
+artistPanelEl.addEventListener('touchend', function(e) {
+  var diff = aTsX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 40) artistGoTo(diff > 0 ? artistCurrent + 1 : artistCurrent - 1);
+}, {passive: true});
+
+/* ---- TRANSLATE TOGGLE ---- */
+function toggleTranslate(btn) {
+  var msg = btn.closest('.chat-msg');
+  var jpEl = msg.querySelector('.chat-text-jp');
+  var enEl = msg.querySelector('.chat-text-en');
+  var showingJP = !jpEl.classList.contains('hidden-lang');
+  jpEl.classList.toggle('hidden-lang', showingJP);
+  enEl.classList.toggle('hidden-lang', !showingJP);
+  btn.textContent = showingJP ? 'æ¥æ¬èª' : 'Translate';
+  btn.setAttribute('aria-label', showingJP ? 'Switch back to Japanese' : 'Toggle message translation');
+}
+
+/* Date + time labels */
+(function() {
+  var now = new Date();
+  document.getElementById('s3Date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  var h = now.getHours(), m = now.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  document.getElementById('s3Time').textContent = 'Today at ' + h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+})();
+
+/* ---- FON COLOR CYCLE ---- */
+(function() {
+  var fonColors = ['#e84d1a','#ff6eb4','#e94f8a','#00cfe8','#2ec4b6','#ff9f1c','#7fb069','#c0392b','#8e44ad','#c8922a'];
+  var fonIndex = 0;
+  var fonTargets = [document.getElementById('navFon'), document.getElementById('footerFon')];
+  fonTargets.forEach(function(el) { if (el) el.style.color = fonColors[0]; });
+  setInterval(function() {
+    fonIndex = (fonIndex + 1) % fonColors.length;
+    fonTargets.forEach(function(el) { if (el) el.style.color = fonColors[fonIndex]; });
+  }, 1600);
+})();
+</script>
+
+</div><!-- /50px wrapper -->
+
+<!-- ======== FOOTER ======== -->
+<footer class="gfs-footer" aria-label="GeekFon Society footer">
+  <div class="gfs-footer-inner">
+
+    <!-- BRAND + APP DOWNLOAD -->
+    <div class="gfs-footer-brand">
+      <div class="gfs-footer-wordmark" aria-label="GeekFon Society">Geek<span id="footerFon" style="color:#F69820;transition:color .7s ease;">Fon</span> Society</div>
+      <p class="gfs-footer-tagline">Stream independent artists. Chat with the society. Listen anywhere.</p>
+      <div class="gfs-footer-apps">
+        <a href="#" class="gfs-app-btn" aria-label="Download on the App Store">
+          <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <div class="gfs-app-btn-text"><small>Download on the</small><strong>App Store</strong></div>
+        </a>
+        <a href="#" class="gfs-app-btn" aria-label="Get it on Google Play">
+          <svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M3.18 23.76c.33.18.7.2 1.04.07l11.65-6.73-2.51-2.52-10.18 9.18zm-1.04-20.9C2.05 3.17 2 3.48 2 3.8v16.4c0 .32.05.63.14.9l.09.09 9.19-9.19v-.21L2.23 2.77l-.09.09zM19.5 10.7l-2.54-1.47-2.83 2.83 2.83 2.83 2.57-1.48c.73-.42.73-1.3-.03-1.71zM4.22.24L15.87 6.97l-2.51 2.51L3.18.3C3.52.17 3.89.19 4.22.36z"/></svg>
+          <div class="gfs-app-btn-text"><small>Get it on</small><strong>Google Play</strong></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- SITEMAP -->
+    <nav class="gfs-footer-nav" aria-label="Site map">
+      <div class="gfs-footer-col">
+        <div class="gfs-footer-col-title">Discover</div>
+        <a href="/playbooks/geekfon-society-bible-roster.html">Artists</a>
+        <a href="#">GFS Radio</a>
+        <a href="#">New Releases</a>
+        <a href="#">Society Chat</a>
+      </div>
+      <div class="gfs-footer-col">
+        <div class="gfs-footer-col-title">Membership</div>
+        <a href="https://lesaruss.ai/geekfon" class="highlight">Join GFS</a>
+        <a href="https://lesaruss.ai/geekfon">Passport - $11 once</a>
+        <a href="https://lesaruss.ai/geekfon">All Access - $11/mo</a>
+        <a href="https://lesaruss.ai/geekfon">Lifetime - $111</a>
+      </div>
+      <div class="gfs-footer-col">
+        <div class="gfs-footer-col-title">Company</div>
+        <a href="#">About GFS</a>
+        <a href="#">Press</a>
+        <a href="#">Careers</a>
+        <a href="#">Contact</a>
+      </div>
+    </nav>
+
+    <!-- SUBSCRIPTION TIERS -->
+    <div class="gfs-footer-sub">
+      <div class="gfs-footer-sub-title">Join GeekFon Society</div>
+
+      <a href="https://lesaruss.ai/geekfon" class="gfs-sub-tier">
+        <div class="gfs-sub-tier-info">
+          <span class="gfs-sub-tier-name">Passport</span>
+          <span class="gfs-sub-tier-desc">Own your access forever</span>
+        </div>
+        <div class="gfs-sub-tier-price">$11<small>one-time</small></div>
+      </a>
+
+      <a href="https://lesaruss.ai/geekfon" class="gfs-sub-tier featured">
+        <div class="gfs-sub-tier-info">
+          <span class="gfs-sub-tier-name">All Access</span>
+          <span class="gfs-sub-tier-desc">Every track, every drop</span>
+        </div>
+        <div class="gfs-sub-tier-price">$11<small>/month</small></div>
+      </a>
+
+      <a href="https://lesaruss.ai/geekfon" class="gfs-sub-tier">
+        <div class="gfs-sub-tier-info">
+          <span class="gfs-sub-tier-name">Lifetime</span>
+          <span class="gfs-sub-tier-desc">In the society for good</span>
+        </div>
+        <div class="gfs-sub-tier-price">$111<small>once</small></div>
+      </a>
+
+      <a href="https://lesaruss.ai/geekfon" class="gfs-sub-cta" aria-label="Join GeekFon Society">Join Now &rsaquo;</a>
+    </div>
+
+  </div><!-- /gfs-footer-inner -->
+
+  <!-- BOTTOM BAR -->
+  <div class="gfs-footer-bottom">
+    <div class="gfs-footer-copy">&copy; 2026 GeekFon Society. A LESARUSS universe. All rights reserved.</div>
+    <div class="gfs-footer-legal">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Cookies</a>
+    </div>
+    <div class="gfs-footer-social">
+      <a href="#" aria-label="GeekFon Society on Instagram">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      </a>
+      <a href="#" aria-label="GeekFon Society on TikTok">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.79 1.53V6.77a4.85 4.85 0 01-1.02-.08z"/></svg>
+      </a>
+      <a href="#" aria-label="GeekFon Society on YouTube">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </a>
+      <a href="#" aria-label="GeekFon Society on X">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+    </div>
+  </div>
+
+</footer>
+
+</body>
+</html>
