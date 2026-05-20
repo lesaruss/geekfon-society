@@ -21,14 +21,17 @@ module.exports = async (req, res) => {
   if (!tier || !PRICES[tier]) return res.status(400).json({ error: 'Invalid tier. Use: passport, all-access, lifetime' });
   if (!PRICES[tier]) return res.status(500).json({ error: 'Price ID not configured for: ' + tier });
 
+  const quantity = parseInt(req.query.quantity, 10) || 1;
+  const artists = req.query.artists || '';
+
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [{ price: PRICES[tier], quantity: 1 }],
+      line_items: [{ price: PRICES[tier], quantity: quantity }],
       mode: MODES[tier],
       success_url: 'https://geekfon.ai/welcome?tier=' + tier,
-      cancel_url: 'https://geekfon.ai',
-      metadata: { tier },
+      cancel_url: 'https://geekfon.ai/passport',
+      metadata: { tier, artists, quantity: String(quantity) },
     });
     return res.json({ url: session.url });
   } catch (err) {

@@ -16,7 +16,7 @@ button{font-family:'Montserrat',sans-serif;}
 
 /* Aurora */
 .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
-.stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 9% 6%,rgba(255,255,255,.55) 0%,transparent 100%),radial-gradient(1px 1px at 24% 12%,rgba(255,255,255,.35) 0%,transparent 100%),radial-gradient(1px 1px at 44% 4%,rgba(255,255,255,.48) 0%,transparent 100%),radial-gradient(1px 1px at 76% 7%,rgba(255,255,255,.52) 0%,transparent 100%),radial-gradient(1.5px 1.5px at 18% 4%,rgba(255,255,255,.65) 0%,transparent 100%);}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 9% 6%,rgba(255,255,255,.55) 0%,transparent 100%),radial-gradient(1px 1px at 24% 12%,rgba(255,255,255,.35) 0%,transparent 100%),radial-gradient(1px 1px at 44% 4%,rgba(255,255,255,.48) 0%,transparent 100%),radial-gradient(1px 1px at 76% 7%,rgba(255,255,255,.52) 0%,transparent 100%);}
 .a{position:absolute;border-radius:50%;filter:blur(90px);}
 .a1{width:85vw;height:48vh;top:-20vh;left:4vw;background:radial-gradient(ellipse at center,rgba(0,215,95,.24) 0%,transparent 70%);animation:d1 18s ease-in-out infinite alternate;}
 .a2{width:62vw;height:40vh;top:-14vh;right:-6vw;background:radial-gradient(ellipse at center,rgba(0,155,255,.18) 0%,transparent 70%);animation:d2 24s ease-in-out infinite alternate;}
@@ -26,7 +26,7 @@ button{font-family:'Montserrat',sans-serif;}
 @keyframes d2{from{transform:translate(0,0)}to{transform:translate(-5vw,3vh)}}
 @keyframes d3{from{transform:translate(0,0)}to{transform:translate(3vw,-4vh) rotate(7deg)}}
 
-/* Page wrapper */
+/* Page */
 .page{position:relative;z-index:1;padding:96px 40px 100px;display:flex;flex-direction:column;align-items:center;}
 
 /* Hero */
@@ -34,17 +34,15 @@ button{font-family:'Montserrat',sans-serif;}
 .eyebrow{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.22em;color:#F69820;margin-bottom:18px;}
 .hero-title{font-size:clamp(40px,6vw,72px);font-weight:900;text-transform:uppercase;letter-spacing:-.03em;line-height:.92;color:#fff;margin-bottom:20px;}
 .hero-sub{font-size:15px;font-weight:400;color:rgba(255,255,255,.55);line-height:1.7;max-width:520px;margin:0 auto;}
-
-/* Artist avatars strip */
-.artist-strip{display:flex;align-items:center;justify-content:center;gap:-8px;margin:28px auto 0;flex-wrap:nowrap;}
+.artist-strip{display:flex;align-items:center;justify-content:center;margin:28px auto 0;}
 .strip-av{width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid #020c0a;flex-shrink:0;margin-left:-10px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;}
 .strip-av:first-child{margin-left:0;}
 .strip-av img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
 .strip-count{margin-left:10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.45);white-space:nowrap;}
 
 /* Benefits */
-.benefits{max-width:860px;width:100%;margin-bottom:72px;}
-.benefits-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.35);text-align:center;margin-bottom:32px;}
+.benefits{max-width:960px;width:100%;margin-bottom:72px;}
+.section-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.35);text-align:center;margin-bottom:32px;}
 .benefits-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
 .benefit{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px 20px;}
 .benefit-icon{width:40px;height:40px;border-radius:12px;background:rgba(246,152,32,.1);border:1px solid rgba(246,152,32,.18);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
@@ -52,17 +50,57 @@ button{font-family:'Montserrat',sans-serif;}
 .benefit-name{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#fff;margin-bottom:6px;}
 .benefit-desc{font-size:11px;font-weight:400;color:rgba(255,255,255,.48);line-height:1.65;}
 
-/* Pricing cards */
+/* ---- PRICING ---- */
 .pricing{max-width:960px;width:100%;}
-.pricing-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.35);text-align:center;margin-bottom:32px;}
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch;}
 
-.gfs-sub-tier{display:flex;flex-direction:column;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:28px 24px 24px;text-decoration:none;transition:border-color .18s,background .18s,transform .18s;cursor:pointer;position:relative;overflow:hidden;}
-.gfs-sub-tier:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);transform:translateY(-3px);}
+/* --- PASSPORT CARD (full-width configurator) --- */
+.passport-card{background:rgba(255,255,255,.04);border:1px solid rgba(246,152,32,.28);border-radius:20px;padding:32px;margin-bottom:16px;display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;}
+.passport-info{}
+.passport-name{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#fff;margin-bottom:8px;}
+.passport-pricing{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;}
+.passport-amount{font-size:38px;font-weight:900;color:#F69820;line-height:1;}
+.passport-per{font-size:13px;font-weight:700;color:rgba(255,255,255,.45);}
+.passport-tagline{font-size:11px;color:rgba(255,255,255,.45);line-height:1.6;margin-bottom:20px;}
+.passport-features{display:flex;flex-direction:column;gap:9px;margin-bottom:28px;}
+.passport-feature{display:flex;align-items:flex-start;gap:9px;font-size:11px;font-weight:400;color:rgba(255,255,255,.6);line-height:1.5;}
+.passport-feature svg{width:14px;height:14px;stroke:#4caf50;fill:none;stroke-width:2.5;flex-shrink:0;margin-top:1px;}
+
+/* Price summary + CTA */
+.passport-summary{border-top:1px solid rgba(255,255,255,.08);padding-top:20px;}
+.summary-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.summary-count{font-size:11px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;}
+.summary-total{font-size:20px;font-weight:900;color:#F69820;}
+.summary-none{font-size:11px;color:rgba(255,255,255,.3);font-style:italic;}
+.passport-cta{display:block;width:100%;text-align:center;padding:14px;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;border:none;background:#F69820;color:#020c0a;transition:opacity .15s;}
+.passport-cta:hover:not(:disabled){opacity:.88;}
+.passport-cta:disabled{opacity:.32;cursor:not-allowed;}
+
+/* Artist selector (right side) */
+.artist-selector{}
+.selector-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.selector-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.5);}
+.selector-clear{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.28);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color .15s;}
+.selector-clear:hover{color:#F69820;}
+.artist-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.artist-chip{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;border-radius:14px;padding:10px 6px;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);transition:border-color .15s,background .15s,transform .1s;}
+.artist-chip:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);}
+.artist-chip.selected{border-color:#F69820;background:rgba(246,152,32,.07);}
+.artist-chip:focus-visible{outline:3px solid #F69820;outline-offset:2px;}
+.chip-av{width:52px;height:52px;border-radius:13px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;background:#1a1a1a;position:relative;}
+.chip-av img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
+.chip-check{position:absolute;inset:0;background:rgba(246,152,32,.75);border-radius:13px;display:none;align-items:center;justify-content:center;}
+.artist-chip.selected .chip-check{display:flex;}
+.chip-check svg{width:22px;height:22px;stroke:#020c0a;fill:none;stroke-width:3;}
+.chip-name{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;text-align:center;line-height:1.3;color:rgba(255,255,255,.7);max-width:72px;}
+.artist-chip.selected .chip-name{color:#F69820;}
+
+/* All Access + Lifetime (2-col) */
+.lower-tiers{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.gfs-sub-tier{display:flex;flex-direction:column;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:28px 24px 24px;text-decoration:none;cursor:pointer;position:relative;overflow:hidden;transition:border-color .18s,background .18s,transform .18s;}
+.gfs-sub-tier:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);transform:translateY(-2px);}
 .gfs-sub-tier.featured{border-color:rgba(246,152,32,.5);background:rgba(246,152,32,.05);}
-.gfs-sub-tier.featured:hover{background:rgba(246,152,32,.1);border-color:#F69820;transform:translateY(-3px);}
+.gfs-sub-tier.featured:hover{background:rgba(246,152,32,.1);border-color:#F69820;}
 .gfs-sub-tier:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
-
 .tier-badge{position:absolute;top:16px;right:16px;font-size:7px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;padding:4px 10px;border-radius:100px;background:rgba(246,152,32,.18);color:#F69820;}
 .gfs-sub-tier-name{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#fff;margin-bottom:6px;}
 .tier-price{display:flex;align-items:baseline;gap:4px;margin-bottom:4px;}
@@ -78,16 +116,16 @@ button{font-family:'Montserrat',sans-serif;}
 .gfs-sub-tier.featured .tier-cta{background:#F69820;color:#020c0a;}
 .gfs-sub-tier.featured:hover .tier-cta{opacity:.9;}
 
-/* Divider */
-.divider{max-width:960px;width:100%;height:1px;background:rgba(255,255,255,.06);margin:72px 0;}
+/* Value callout between sections */
+.value-callout{margin:12px 0 4px;padding:14px 18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;display:flex;align-items:center;gap:12px;font-size:11px;color:rgba(255,255,255,.4);line-height:1.55;}
+.value-callout strong{color:rgba(255,255,255,.7);font-weight:700;}
 
-/* Trust strip */
+/* Divider + Trust + FAQ */
+.divider{max-width:960px;width:100%;height:1px;background:rgba(255,255,255,.06);margin:72px 0;}
 .trust{max-width:720px;width:100%;text-align:center;}
 .trust-items{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;}
 .trust-item{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);}
 .trust-item svg{width:14px;height:14px;stroke:rgba(255,255,255,.3);fill:none;stroke-width:2;}
-
-/* FAQ */
 .faq{max-width:720px;width:100%;margin-top:72px;}
 .faq-title{font-size:clamp(22px,3vw,32px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;text-align:center;margin-bottom:32px;}
 .faq-item{border-bottom:1px solid rgba(255,255,255,.07);padding:20px 0;}
@@ -95,20 +133,25 @@ button{font-family:'Montserrat',sans-serif;}
 .faq-a{font-size:12px;font-weight:400;color:rgba(255,255,255,.5);line-height:1.7;}
 
 /* Responsive */
-@media(max-width:760px){
+@media(max-width:900px){
+  .passport-card{grid-template-columns:1fr;gap:28px;}
+  .artist-grid{grid-template-columns:repeat(4,1fr);}
+}
+@media(max-width:680px){
   .page{padding:80px 20px 80px;}
   .benefits-grid{grid-template-columns:1fr 1fr;gap:12px;}
-  .pricing-grid{grid-template-columns:1fr;max-width:420px;margin:0 auto;}
+  .lower-tiers{grid-template-columns:1fr;}
+  .artist-grid{grid-template-columns:repeat(4,1fr);}
   .trust-items{gap:20px;}
 }
-@media(max-width:480px){
+@media(max-width:420px){
+  .artist-grid{grid-template-columns:repeat(3,1fr);}
   .benefits-grid{grid-template-columns:1fr;}
 }
 </style>
 </head>
 <body>
 <script src="/nav.js"></script>
-
 <div class="aurora" aria-hidden="true">
   <div class="stars"></div><div class="a a1"></div><div class="a a2"></div><div class="a a3"></div>
   <div class="aurora-ground"></div>
@@ -118,11 +161,11 @@ button{font-family:'Montserrat',sans-serif;}
 <main class="page" id="main-content">
 
   <!-- Hero -->
-  <section class="hero" aria-label="Passport introduction">
+  <section class="hero">
     <div class="eyebrow">GeekFon Society</div>
     <div class="hero-title">Get Inside<br>The Society</div>
-    <p class="hero-sub">One Passport. Twelve artists. Every drop, every conversation, every moment -- before anyone else hears it.</p>
-    <div class="artist-strip" aria-label="GFS artists">
+    <p class="hero-sub">One Passport. Your artists. Every drop, every conversation, every moment -- before anyone else hears it.</p>
+    <div class="artist-strip">
       <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w80-h80" alt="V" onerror="this.onerror=null;this.parentElement.style.background='#c8922a';this.parentElement.textContent='V'"></div>
       <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w80-h80" alt="Shamanic Resin" onerror="this.onerror=null;this.parentElement.style.background='#b548c6';this.parentElement.textContent='SR'"></div>
       <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w80-h80" alt="Lex" onerror="this.onerror=null;this.parentElement.style.background='#e84d1a';this.parentElement.textContent='L'"></div>
@@ -136,108 +179,195 @@ button{font-family:'Montserrat',sans-serif;}
   </section>
 
   <!-- Benefits -->
-  <section class="benefits" aria-label="What you get">
-    <div class="benefits-title">What you get</div>
+  <section class="benefits">
+    <div class="section-lbl">What you get</div>
     <div class="benefits-grid">
       <div class="benefit">
-        <div class="benefit-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </div>
+        <div class="benefit-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
         <div class="benefit-name">Group Chat Access</div>
         <div class="benefit-desc">Read and reply in the GFS group chat. Every artist posts here -- conversations, updates, and raw unfiltered moments.</div>
       </div>
       <div class="benefit">
-        <div class="benefit-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        </div>
-        <div class="benefit-name">Full Music Library</div>
-        <div class="benefit-desc">Stream every track from every GFS artist. No limits, no 30-second samples. Full plays from day one.</div>
+        <div class="benefit-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+        <div class="benefit-name">Artist Music + Feed</div>
+        <div class="benefit-desc">Unlock the full music library and personal feed for each artist you choose. Their tracks, their world.</div>
       </div>
       <div class="benefit">
-        <div class="benefit-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-        </div>
+        <div class="benefit-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
         <div class="benefit-name">First Drops</div>
         <div class="benefit-desc">GFS members hear new singles, EPs, and announcements before they go public. Every time. No exceptions.</div>
-      </div>
-      <div class="benefit">
-        <div class="benefit-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <div class="benefit-name">Artist Feeds</div>
-        <div class="benefit-desc">Each artist has their own page: music player, bio, stats, and personal feed. Follow the ones you love most.</div>
-      </div>
-      <div class="benefit">
-        <div class="benefit-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        </div>
-        <div class="benefit-name">Weekly Schedule</div>
-        <div class="benefit-desc">See what's coming each week: drops, live events, and featured moments. Never miss what the society is moving toward.</div>
-      </div>
-      <div class="benefit">
-        <div class="benefit-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </div>
-        <div class="benefit-name">Locked Content</div>
-        <div class="benefit-desc">Passport unlocks member-only tracks and conversations not visible to the public. Your membership is your key.</div>
       </div>
     </div>
   </section>
 
   <!-- Pricing -->
-  <section class="pricing" aria-label="Membership tiers">
-    <div class="pricing-title">Choose your membership</div>
-    <div class="pricing-grid">
+  <section class="pricing" aria-label="Membership options">
+    <div class="section-lbl" style="margin-bottom:20px">Choose your membership</div>
 
-      <!-- Passport -->
-      <a class="gfs-sub-tier" href="#" role="button" aria-label="Get Passport for $11 one-time">
-        <div class="gfs-sub-tier-name">Passport</div>
-        <div class="tier-price">
-          <span class="tier-amount">$11</span>
-          <span class="tier-period">one-time</span>
+    <!-- PASSPORT — full-width configurator -->
+    <div class="passport-card" aria-label="Passport membership">
+      <!-- Left: tier info -->
+      <div class="passport-info">
+        <div class="passport-name">Passport</div>
+        <div class="passport-pricing">
+          <span class="passport-amount">$11</span>
+          <span class="passport-per">per artist</span>
         </div>
-        <div class="tier-tagline">Pay once. Stay inside forever.</div>
-        <div class="tier-features">
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Full GFS Group Chat</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>All 11 artist feeds</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Full music library</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>First-listen drop access</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Weekly schedule</div>
+        <div class="passport-tagline">Pay once per artist. Keep access forever. Pick as many as you want.</div>
+        <div class="passport-features">
+          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Full GFS Group Chat</div>
+          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Selected artist feeds</div>
+          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Full music library per artist</div>
+          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>First-listen drop access</div>
+          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>One-time payment, no subscription</div>
         </div>
-        <div class="tier-cta">Get Passport</div>
-      </a>
+        <div class="passport-summary">
+          <div class="summary-row">
+            <span class="summary-count" id="summaryCount">No artists selected</span>
+            <span class="summary-total" id="summaryTotal"></span>
+          </div>
+          <button class="passport-cta" id="passportCta" disabled onclick="checkoutPassport()">Select artists to continue</button>
+        </div>
+      </div>
 
-      <!-- All Access (featured) -->
+      <!-- Right: artist selector -->
+      <div class="artist-selector">
+        <div class="selector-hdr">
+          <span class="selector-lbl">Select your artists</span>
+          <button class="selector-clear" id="clearBtn" onclick="clearAll()" style="display:none">Clear all</button>
+        </div>
+        <div class="artist-grid" role="group" aria-label="Artist selection">
+
+          <button class="artist-chip" data-slug="shamanic-resin" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#b548c6">
+              <img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#b548c6">Shamanic Resin</span>
+          </button>
+
+          <button class="artist-chip" data-slug="lex-from-brixton" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#e84d1a">
+              <img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#e84d1a">Lex from Brixton</span>
+          </button>
+
+          <button class="artist-chip" data-slug="riku" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#7fb069">
+              <img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#7fb069">Riku</span>
+          </button>
+
+          <button class="artist-chip" data-slug="roxanne" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#e94f8a">
+              <img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#e94f8a">Roxanne</span>
+          </button>
+
+          <button class="artist-chip" data-slug="mad-tings" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#d4a800">
+              <img src="https://drive.google.com/thumbnail?id=1JNuyjt2SCH0m8PwbkXGSZynrJeOzA-vC&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#d4a800">Mad Tings</span>
+          </button>
+
+          <button class="artist-chip" data-slug="straight-and-narrow" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#2ec4b6">
+              <img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#2ec4b6">Straight &amp; Narrow</span>
+          </button>
+
+          <button class="artist-chip" data-slug="lickle-bro" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#9b6bcc">
+              <img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#9b6bcc">Lickle Bro</span>
+          </button>
+
+          <button class="artist-chip" data-slug="nilo-wave" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#e8a020">
+              <img src="https://drive.google.com/thumbnail?id=13eUQSq_5tJDErq5AOPzwKV9P0uTb5QnM&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#e8a020">Nilo Wave</span>
+          </button>
+
+          <button class="artist-chip" data-slug="lickle-sis" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#ff6eb4">
+              <img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#ff6eb4">Lickle Sis</span>
+          </button>
+
+          <button class="artist-chip" data-slug="rustblood-prophets" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#8888ff">
+              <img src="https://drive.google.com/thumbnail?id=1F7PGb7Jidinz6SsOgVjAOaHkzKvdfW_M&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#8888ff">Rustblood Prophets</span>
+          </button>
+
+          <button class="artist-chip" data-slug="mr-russell" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#F69820">
+              <img src="https://drive.google.com/thumbnail?id=1m4D6mGkzT_1g-KYVJeN1scbeGt1VzTIt&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#F69820">Mr. Russell</span>
+          </button>
+
+          <button class="artist-chip" data-slug="v" onclick="toggleArtist(this)" aria-pressed="false">
+            <div class="chip-av" style="background:#c8922a">
+              <img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w120-h120" alt="" onerror="this.style.display='none'">
+              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="chip-name" style="color:#c8922a">V</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Value callout -->
+    <div class="value-callout">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F69820" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Unlocking all 12 artists with Passport costs <strong>$132</strong>. The <strong>Lifetime</strong> plan below covers all 12 for <strong>$111</strong> with every future artist included free.
+    </div>
+
+    <!-- All Access + Lifetime -->
+    <div class="lower-tiers" style="margin-top:16px">
+
       <a class="gfs-sub-tier featured" href="#" role="button" aria-label="Get All Access for $11 per month">
         <div class="tier-badge">Most Popular</div>
         <div class="gfs-sub-tier-name">All Access</div>
-        <div class="tier-price">
-          <span class="tier-amount">$11</span>
-          <span class="tier-period">/mo</span>
-        </div>
-        <div class="tier-tagline">Everything in Passport, plus exclusive drops every month.</div>
+        <div class="tier-price"><span class="tier-amount">$11</span><span class="tier-period">/mo</span></div>
+        <div class="tier-tagline">All 12 artists, every drop, every month. Cancel any time.</div>
         <div class="tier-features">
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Everything in Passport</div>
+          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>All 12 artists unlocked</div>
           <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Monthly exclusive drops</div>
           <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Locked member-only tracks</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Early event access</div>
           <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Cancel any time</div>
         </div>
         <div class="tier-cta">Get All Access</div>
       </a>
 
-      <!-- Lifetime -->
       <a class="gfs-sub-tier" href="#" role="button" aria-label="Get Lifetime membership for $111">
         <div class="gfs-sub-tier-name">Lifetime</div>
-        <div class="tier-price">
-          <span class="tier-amount">$111</span>
-          <span class="tier-period">once</span>
-        </div>
-        <div class="tier-tagline">Never think about it again. You're in, forever.</div>
+        <div class="tier-price"><span class="tier-amount">$111</span><span class="tier-period">once</span></div>
+        <div class="tier-tagline">Every artist, every future artist. One payment, forever.</div>
         <div class="tier-features">
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Everything in All Access</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Locked in at today's price</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>All future features included</div>
+          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>All 12 artists, unlocked forever</div>
+          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Every future artist included</div>
           <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Founding member status</div>
           <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>No renewals, ever</div>
         </div>
@@ -249,50 +379,108 @@ button{font-family:'Montserrat',sans-serif;}
 
   <div class="divider" aria-hidden="true"></div>
 
-  <!-- Trust strip -->
-  <div class="trust" aria-label="Trust signals">
+  <div class="trust">
     <div class="trust-items">
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Secure checkout via Stripe
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-        Instant access on purchase
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Cancel All Access any time
-      </div>
+      <div class="trust-item"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Secure checkout via Stripe</div>
+      <div class="trust-item"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Instant access on purchase</div>
+      <div class="trust-item"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Cancel All Access any time</div>
     </div>
   </div>
 
-  <!-- FAQ -->
   <section class="faq" aria-label="Frequently asked questions">
     <div class="faq-title">Questions</div>
     <div class="faq-item">
-      <div class="faq-q">What is a Passport?</div>
-      <div class="faq-a">A Passport is a one-time $11 payment that gives you permanent access to the GFS group chat, all artist feeds, and the full music library. No recurring charges.</div>
+      <div class="faq-q">How does Passport work?</div>
+      <div class="faq-a">Passport is $11 per artist. Select the artists you want at checkout -- you pay once per artist and keep access forever. You can come back and unlock more artists any time.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I add more artists later?</div>
+      <div class="faq-a">Yes. Come back to this page and select any artists you have not unlocked yet. Each new artist is $11 and adds to your existing access.</div>
     </div>
     <div class="faq-item">
       <div class="faq-q">What is the difference between Passport and All Access?</div>
-      <div class="faq-a">Passport unlocks everything for a single payment. All Access adds monthly exclusive drops and locked tracks for $11/month -- think of it as staying at the front of the line.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">Can I cancel All Access?</div>
-      <div class="faq-a">Yes -- cancel any time from your account. Your Passport access (chat + library) stays active even after you cancel All Access, as long as you originally purchased a Passport separately.</div>
+      <div class="faq-a">Passport is a one-time payment per artist you choose. All Access is $11/month and covers all 12 artists plus monthly exclusive drops. If you want all 12, Lifetime at $111 is the best value.</div>
     </div>
     <div class="faq-item">
       <div class="faq-q">What happens after I pay?</div>
-      <div class="faq-a">You are redirected to the GFS welcome page with your login details. Access is instant. The chat, music, and artist feeds are live the moment your payment clears.</div>
+      <div class="faq-a">You land on the GFS welcome page with your login details. Access to the artists you selected is live immediately.</div>
     </div>
     <div class="faq-item">
       <div class="faq-q">Is there a free option?</div>
-      <div class="faq-a">You can preview two 30-second sample tracks and browse the public artist pages without a Passport. The group chat, full library, and drops require membership.</div>
+      <div class="faq-a">You can preview two 30-second sample tracks and browse public artist pages without a Passport. The group chat, full library, and drops require membership.</div>
     </div>
   </section>
 
 </main>
+
+<script>
+var selected = new Set();
+
+function toggleArtist(chip) {
+  var slug = chip.dataset.slug;
+  if (selected.has(slug)) {
+    selected.delete(slug);
+    chip.classList.remove('selected');
+    chip.setAttribute('aria-pressed', 'false');
+  } else {
+    selected.add(slug);
+    chip.classList.add('selected');
+    chip.setAttribute('aria-pressed', 'true');
+  }
+  updateSummary();
+}
+
+function updateSummary() {
+  var n = selected.size;
+  var countEl = document.getElementById('summaryCount');
+  var totalEl = document.getElementById('summaryTotal');
+  var ctaEl   = document.getElementById('passportCta');
+  var clearEl = document.getElementById('clearBtn');
+  if (n === 0) {
+    countEl.textContent = 'No artists selected';
+    totalEl.textContent = '';
+    ctaEl.disabled = true;
+    ctaEl.textContent = 'Select artists to continue';
+    clearEl.style.display = 'none';
+  } else {
+    countEl.textContent = n + ' artist' + (n === 1 ? '' : 's') + ' selected';
+    totalEl.textContent = '$' + (n * 11);
+    ctaEl.disabled = false;
+    ctaEl.textContent = 'Checkout -- $' + (n * 11);
+    clearEl.style.display = '';
+  }
+}
+
+function clearAll() {
+  selected.clear();
+  document.querySelectorAll('.artist-chip.selected').forEach(function(c) {
+    c.classList.remove('selected');
+    c.setAttribute('aria-pressed', 'false');
+  });
+  updateSummary();
+}
+
+function checkoutPassport() {
+  if (selected.size === 0) return;
+  var artists = Array.from(selected).join(',');
+  var qty = selected.size;
+  var cta = document.getElementById('passportCta');
+  cta.disabled = true;
+  cta.textContent = 'Starting checkout...';
+  fetch('/api/checkout?tier=passport&quantity=' + qty + '&artists=' + encodeURIComponent(artists))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.url) { window.location.href = data.url; }
+      else { throw new Error(data.error || 'No checkout URL'); }
+    })
+    .catch(function(err) {
+      console.error('Checkout error:', err);
+      cta.disabled = false;
+      cta.textContent = 'Checkout -- $' + (selected.size * 11);
+      alert('Could not start checkout. Please try again.');
+    });
+}
+</script>
 
 <script src="/stripe-js.js"></script>
 <script src="/footer.js"></script>
