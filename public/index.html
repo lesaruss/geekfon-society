@@ -45,9 +45,9 @@ button{font-family:'Montserrat',sans-serif;}
 .nav-hamburger[aria-expanded="true"] span:nth-child(2){opacity:0;}
 .nav-hamburger[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 /* HAMBURGER MENU */
-.nav-menu{position:fixed;top:56px;left:0;right:0;z-index:99;background:rgba(2,12,10,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.08);padding:0;max-height:0;overflow:hidden;transition:max-height .28s ease,padding .28s ease;}
+.nav-menu{position:fixed;top:56px;left:50%;transform:translateX(-50%);width:calc(100% - 56px);max-width:1280px;z-index:99;background:rgba(2,12,10,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.08);border-top:none;border-radius:0 0 16px 16px;padding:0;max-height:0;overflow:hidden;transition:max-height .28s ease,padding .28s ease;}
 .nav-menu.open{max-height:260px;padding:16px 0;}
-.nav-menu-inner{max-width:1280px;margin:0 auto;padding:0 28px;display:flex;flex-direction:column;gap:4px;}
+.nav-menu-inner{padding:0 12px;display:flex;flex-direction:column;gap:4px;}
 .nav-menu-item{display:flex;align-items:center;gap:12px;background:none;border:none;cursor:pointer;padding:14px 16px;border-radius:10px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.6);text-decoration:none;transition:background .15s,color .15s;width:100%;text-align:left;}
 .nav-menu-item:hover,.nav-menu-item:focus-visible{background:rgba(246,152,32,.08);color:#F69820;outline:none;}
 .nav-menu-item:focus-visible{outline:3px solid #F69820;outline-offset:2px;}
