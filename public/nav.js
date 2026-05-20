@@ -1,8 +1,8 @@
-/* GeekFon Society -- nav.js v1.1
+/* GeekFon Society -- nav.js v1.2
    Single source of truth for all site navigation.
    Rule 2.12: injected via script, never hand-coded per page.
-   v1.1: added /chat and /radio page variants; Music/Chat nav items
-         now navigate to standalone pages instead of toggling phone view.
+   v1.2: added /passport page variant; all "Get Passport" buttons
+         now navigate to /passport instead of external lesaruss.ai/geekfon.
 */
 (function () {
   var CSS = [
@@ -12,9 +12,9 @@
     '.nav-wordmark{font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#fff;justify-self:center;text-decoration:none;background:none;border:none;cursor:default;font-family:inherit;}',
     '.nav-wordmark span{color:#F69820;transition:color .7s ease;}',
     '.nav-right{display:flex;align-items:center;gap:10px;justify-self:end;}',
-    '.nav-login{background:none;border:1px solid rgba(255,255,255,.35);border-radius:100px;padding:8px 18px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.6);cursor:pointer;transition:border-color .15s,color .15s;font-family:inherit;}',
+    '.nav-login{background:none;border:1px solid rgba(255,255,255,.35);border-radius:100px;padding:8px 18px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.6);cursor:pointer;transition:border-color .15s,color .15s;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;}',
     '.nav-login:hover{border-color:rgba(255,255,255,.4);color:#fff;}',
-    '.nav-join{background:#F69820;color:#020c0a;border:none;border-radius:100px;padding:9px 22px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;transition:background .15s;font-family:inherit;}',
+    '.nav-join{background:#F69820;color:#020c0a;border:none;border-radius:100px;padding:9px 22px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;transition:background .15s;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;}',
     '.nav-join:hover{background:#e08818;}',
     '.nav-join:focus-visible,.nav-login:focus-visible,.nav-back:focus-visible{outline:3px solid #F69820;outline-offset:3px;}',
     '.nav-hamburger{display:flex;flex-direction:column;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;transition:background .15s;font-family:inherit;}',
@@ -25,12 +25,14 @@
     '.nav-hamburger[aria-expanded="true"] span:nth-child(2){opacity:0;}',
     '.nav-hamburger[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}',
     '.nav-menu{position:fixed;top:56px;left:0;right:0;display:flex;justify-content:center;z-index:99;background:rgba(2,12,10,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.08);padding:0;max-height:0;overflow:hidden;transition:max-height .28s ease,padding .28s ease;}',
-    '.nav-menu.open{max-height:320px;padding:16px 0;}',
+    '.nav-menu.open{max-height:360px;padding:16px 0;}',
     '.nav-menu-inner{width:100%;max-width:1280px;padding:0 40px;display:flex;flex-direction:column;gap:4px;}',
     '.nav-menu-item{display:flex;align-items:center;gap:12px;background:none;border:none;cursor:pointer;padding:14px 16px;border-radius:10px;font-family:inherit;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.6);text-decoration:none;transition:background .15s,color .15s;width:100%;text-align:left;}',
     '.nav-menu-item:hover,.nav-menu-item:focus-visible{background:rgba(246,152,32,.08);color:#F69820;outline:none;}',
     '.nav-menu-item:focus-visible{outline:3px solid #F69820;outline-offset:2px;}',
     '.nav-menu-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;opacity:.7;}',
+    '.nav-menu-item.nav-menu-cta{background:rgba(246,152,32,.08);color:#F69820;}',
+    '.nav-menu-item.nav-menu-cta:hover{background:rgba(246,152,32,.16);}',
     '.nav-back{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.5);transition:color .15s;justify-self:start;text-decoration:none;background:none;border:none;cursor:pointer;font-family:inherit;}',
     '.nav-back:hover{color:#fff;}',
     '.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;}',
@@ -38,17 +40,19 @@
   ].join('');
 
   var path = window.location.pathname;
-  var isHome    = path === '/' || /\/index\.html?$/.test(path) || path === '';
-  var isRoster  = /\/roster(\.html?)?$/.test(path);
-  var isChat    = /\/chat(\.html?)?$/.test(path);
-  var isRadio   = /\/radio(\.html?)?$/.test(path);
-  var isWelcome = /\/welcome(\.html?)?$/.test(path);
-  var isArtist  = !isHome && !isRoster && !isChat && !isRadio && !isWelcome;
+  var isHome     = path === '/' || /\/index\.html?$/.test(path) || path === '';
+  var isRoster   = /\/roster(\.html?)?$/.test(path);
+  var isChat     = /\/chat(\.html?)?$/.test(path);
+  var isRadio    = /\/radio(\.html?)?$/.test(path);
+  var isPassport = /\/passport(\.html?)?$/.test(path);
+  var isWelcome  = /\/welcome(\.html?)?$/.test(path);
+  var isArtist   = !isHome && !isRoster && !isChat && !isRadio && !isPassport && !isWelcome;
 
   var chevronLeft = '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>';
   var iconMusic   = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
   var iconChat    = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
   var iconRoster  = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+  var iconKey     = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>';
 
   var navHTML = '';
 
@@ -62,7 +66,7 @@
       '    <div class="nav-wordmark">Geek<span id="gfsNavFon">Fon</span></div>',
       '    <div class="nav-right">',
       '      <button class="nav-login" id="gfsNavLoginBtn">Member Login</button>',
-      '      <button class="nav-join" onclick="window.open(\'https://lesaruss.ai/geekfon\',\'_blank\')">Get Passport</button>',
+      '      <a class="nav-join" href="/passport">Get Passport</a>',
       '    </div>',
       '  </div>',
       '</nav>',
@@ -71,8 +75,21 @@
       '    <a class="nav-menu-item" href="/radio">' + iconMusic + ' Music</a>',
       '    <a class="nav-menu-item" href="/chat">' + iconChat + ' Chat</a>',
       '    <a class="nav-menu-item" href="/roster">' + iconRoster + ' Roster</a>',
+      '    <a class="nav-menu-item nav-menu-cta" href="/passport">' + iconKey + ' Get Passport</a>',
       '  </div>',
       '</div>'
+    ].join('');
+  } else if (isPassport) {
+    navHTML = [
+      '<nav class="gfs-nav" aria-label="GeekFon Society navigation">',
+      '  <div class="nav-inner nav-simple">',
+      '    <a href="/" class="nav-back" aria-label="Back to home">' + chevronLeft + ' Home</a>',
+      '    <a href="/" class="nav-wordmark">Geek<span id="gfsNavFon">Fon</span></a>',
+      '    <div style="justify-self:end">',
+      '      <button class="nav-login" id="gfsNavLoginBtn">Member Login</button>',
+      '    </div>',
+      '  </div>',
+      '</nav>'
     ].join('');
   } else if (isChat) {
     navHTML = [
@@ -81,7 +98,7 @@
       '    <a href="/" class="nav-back" aria-label="Back to home">' + chevronLeft + ' Home</a>',
       '    <a href="/" class="nav-wordmark">Geek<span id="gfsNavFon">Fon</span> Chat</a>',
       '    <div style="justify-self:end">',
-      '      <button class="nav-join" onclick="window.open(\'https://lesaruss.ai/geekfon\',\'_blank\')">Get Passport</button>',
+      '      <a class="nav-join" href="/passport">Get Passport</a>',
       '    </div>',
       '  </div>',
       '</nav>'
@@ -93,7 +110,7 @@
       '    <a href="/" class="nav-back" aria-label="Back to home">' + chevronLeft + ' Home</a>',
       '    <a href="/" class="nav-wordmark">Geek<span id="gfsNavFon">Fon</span> Music</a>',
       '    <div style="justify-self:end">',
-      '      <button class="nav-join" onclick="window.open(\'https://lesaruss.ai/geekfon\',\'_blank\')">Get Passport</button>',
+      '      <a class="nav-join" href="/passport">Get Passport</a>',
       '    </div>',
       '  </div>',
       '</nav>'
@@ -105,7 +122,7 @@
       '    <a href="/" class="nav-back" aria-label="Back to home">' + chevronLeft + ' Home</a>',
       '    <a href="/" class="nav-wordmark">Geek<span id="gfsNavFon">Fon</span> Society</a>',
       '    <div style="justify-self:end">',
-      '      <button class="nav-join" onclick="window.open(\'https://lesaruss.ai/geekfon\',\'_blank\')">Get Passport</button>',
+      '      <a class="nav-join" href="/passport">Get Passport</a>',
       '    </div>',
       '  </div>',
       '</nav>'
@@ -116,9 +133,7 @@
       '  <div class="nav-inner nav-simple">',
       '    <a href="/" class="nav-back" aria-label="Back to home">' + chevronLeft + ' Home</a>',
       '    <a href="/" class="nav-wordmark">Geek<span id="gfsNavFon">Fon</span></a>',
-      '    <div style="justify-self:end">',
-      '      <button class="nav-join" onclick="window.open(\'https://lesaruss.ai/geekfon\',\'_blank\')">Get Passport</button>',
-      '    </div>',
+      '    <div style="justify-self:end"></div>',
       '  </div>',
       '</nav>'
     ].join('');
@@ -130,7 +145,7 @@
       '    <a href="/roster" class="nav-back" aria-label="Back to roster">' + chevronLeft + ' Roster</a>',
       '    <a href="/" class="nav-wordmark">Geek<span id="gfsNavFon">Fon</span></a>',
       '    <div style="justify-self:end">',
-      '      <button class="nav-join" onclick="window.open(\'https://lesaruss.ai/geekfon\',\'_blank\')">Get Passport</button>',
+      '      <a class="nav-join" href="/passport">Get Passport</a>',
       '    </div>',
       '  </div>',
       '</nav>'
@@ -172,7 +187,7 @@
         });
       }
 
-      /* Login button: dispatch event so page can handle it */
+      /* Login button */
       var loginBtn = document.getElementById('gfsNavLoginBtn');
       if (loginBtn) loginBtn.addEventListener('click', function () {
         document.dispatchEvent(new CustomEvent('gfs:login-toggle'));
