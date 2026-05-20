@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GFS Chat -- GeekFon Society</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;background:#020c0a;color:#e8e8e8;}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+a{color:inherit;text-decoration:none;}
+
+/* Aurora */
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 9% 6%,rgba(255,255,255,.55) 0%,transparent 100%),radial-gradient(1px 1px at 24% 12%,rgba(255,255,255,.35) 0%,transparent 100%),radial-gradient(1px 1px at 44% 4%,rgba(255,255,255,.48) 0%,transparent 100%),radial-gradient(1px 1px at 76% 7%,rgba(255,255,255,.52) 0%,transparent 100%);}
+.a{position:absolute;border-radius:50%;filter:blur(90px);}
+.a1{width:85vw;height:48vh;top:-20vh;left:4vw;background:radial-gradient(ellipse at center,rgba(0,215,95,.24) 0%,transparent 70%);animation:d1 18s ease-in-out infinite alternate;}
+.a2{width:62vw;height:40vh;top:-14vh;right:-6vw;background:radial-gradient(ellipse at center,rgba(0,155,255,.18) 0%,transparent 70%);animation:d2 24s ease-in-out infinite alternate;}
+.a3{width:52vw;height:34vh;top:0;left:24vw;background:radial-gradient(ellipse at center,rgba(120,0,255,.13) 0%,transparent 70%);animation:d3 20s ease-in-out infinite alternate;}
+@keyframes d1{from{transform:translate(0,0)}to{transform:translate(4vw,5vh)}}
+@keyframes d2{from{transform:translate(0,0)}to{transform:translate(-5vw,3vh)}}
+@keyframes d3{from{transform:translate(0,0)}to{transform:translate(3vw,-4vh) rotate(7deg)}}
+
+/* Layout: sidebar + main */
+.chat-layout{position:relative;z-index:1;display:flex;height:100vh;padding-top:56px;}
+
+/* Sidebar */
+.chat-sidebar{width:260px;flex-shrink:0;display:flex;flex-direction:column;background:rgba(2,12,10,.85);border-right:1px solid rgba(255,255,255,.07);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow-y:auto;scrollbar-width:none;}
+.chat-sidebar::-webkit-scrollbar{display:none;}
+.sidebar-hdr{padding:22px 20px 14px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sidebar-hdr-title{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.9);}
+.sidebar-hdr-sub{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#F69820;margin-top:4px;}
+.sidebar-section-lbl{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.3);padding:16px 20px 8px;}
+.member-list{display:flex;flex-direction:column;gap:2px;padding:0 10px;}
+.member-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;text-decoration:none;transition:background .15s,color .15s;cursor:pointer;}
+.member-item:hover{background:rgba(255,255,255,.06);}
+.member-av{width:36px;height:36px;border-radius:9px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;background:#1a1a1a;}
+.member-av img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
+.member-info{flex:1;min-width:0;}
+.member-name{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.member-rank{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);margin-top:1px;}
+.sidebar-cta{margin:16px 14px 24px;background:rgba(246,152,32,.08);border:1px solid rgba(246,152,32,.2);border-radius:12px;padding:16px;text-align:center;}
+.sidebar-cta-txt{font-size:10px;font-weight:400;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:12px;}
+.sidebar-cta-btn{display:block;background:#F69820;color:#020c0a;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;padding:11px 16px;border-radius:100px;text-decoration:none;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;width:100%;transition:opacity .15s;}
+.sidebar-cta-btn:hover{opacity:.88;}
+
+/* Chat main */
+.chat-main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+
+/* Day nav */
+.day-nav{background:rgba(2,12,10,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;height:52px;flex-shrink:0;padding:0 24px;}
+.day-arrow{background:none;border:1px solid rgba(255,255,255,.12);border-radius:8px;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:36px;height:32px;transition:color .15s,border-color .15s;font-family:serif;padding-bottom:2px;flex-shrink:0;}
+.day-arrow:hover:not(:disabled){color:#F69820;border-color:rgba(246,152,32,.4);}
+.day-arrow:disabled{opacity:.2;cursor:not-allowed;}
+.day-name-label{flex:1;text-align:center;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 16px;border-radius:7px;transition:background .15s;font-family:'Montserrat',sans-serif;}
+.day-name-label:hover{background:rgba(255,255,255,.05);}
+.cal-icon{opacity:.45;flex-shrink:0;}
+
+/* Calendar panel */
+.cal-panel{background:rgba(5,15,12,.97);border-bottom:1px solid rgba(255,255,255,.08);overflow:hidden;max-height:0;transition:max-height .28s ease;}
+.cal-panel.open{max-height:300px;}
+.cal-month-row{display:flex;align-items:center;justify-content:space-between;padding:14px 24px 8px;}
+.cal-month-label{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#fff;}
+.cal-nav-btn{width:30px;height:30px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:#999;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:serif;line-height:1;padding-bottom:2px;transition:color .15s,border-color .15s;}
+.cal-nav-btn:hover{color:#F69820;border-color:#F69820;}
+.cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);padding:0 24px 4px;}
+.cal-dow{text-align:center;font-size:9px;font-weight:700;letter-spacing:.05em;color:#555;padding:3px 0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 24px 16px;}
+.cal-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:400;color:#333;border-radius:5px;border:none;background:none;cursor:default;font-family:'Montserrat',sans-serif;}
+.cal-cell.chat{background:rgba(246,152,32,.14);color:#F69820;cursor:pointer;font-weight:800;transition:background .15s;}
+.cal-cell.chat:hover{background:rgba(246,152,32,.28);}
+.cal-cell.chat.sel{background:#F69820;color:#000;}
+
+/* Chat scroll area */
+.chat-scroll{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent;padding:24px 32px 32px;max-width:900px;width:100%;}
+.chat-scroll::-webkit-scrollbar{width:4px;}
+.chat-scroll::-webkit-scrollbar-track{background:transparent;}
+.chat-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+.day-panel{display:none;}
+.day-panel.active{display:block;}
+
+/* Messages */
+.chat-feed{display:flex;flex-direction:column;gap:2px;}
+.msg{display:flex;align-items:flex-start;gap:14px;padding:6px 0;}
+.msg.gap{margin-top:18px;}
+.av{width:44px;height:44px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;overflow:hidden;background:#1e1e1e;text-decoration:none;transition:opacity .15s;}
+.av:hover{opacity:.8;}
+.av img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
+.msg-col{flex:1;min-width:0;}
+.msg-header{display:flex;align-items:baseline;gap:10px;margin-bottom:5px;}
+.sname{font-size:12px;font-weight:800;text-decoration:none;transition:color .15s;cursor:pointer;}
+.sname:hover{filter:brightness(1.2);}
+.ts{font-size:9px;color:rgba(255,255,255,.3);font-weight:400;}
+.bubble{font-size:14px;line-height:1.6;color:rgba(255,255,255,.82);word-break:break-word;}
+.tag{color:#F69820;font-weight:700;cursor:pointer;text-decoration:none;}
+.tag:hover{text-decoration:underline;}
+.tr-text{display:none;font-style:italic;color:#888;}
+.bubble.translated .or-text{display:none;}
+.bubble.translated .tr-text{display:inline;}
+.tr-btn{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#555;background:none;border:none;cursor:pointer;padding:0;font-family:'Montserrat',sans-serif;transition:color .15s;}
+.tr-btn:hover{color:#aaa;}
+.tr-btn.on{color:#F69820;}
+
+/* Drop card */
+.drop-card{background:#141414;border:1px solid #252525;border-radius:12px;overflow:hidden;max-width:360px;margin-top:8px;cursor:pointer;transition:border-color .2s;display:block;text-decoration:none;}
+.drop-card:hover{border-color:rgba(233,79,138,.5);}
+.drop-art{width:100%;height:80px;display:flex;align-items:center;justify-content:center;font-size:32px;}
+.drop-info{padding:10px 14px 14px;}
+.drop-label{font-size:8px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#666;margin-bottom:3px;}
+.drop-title{font-size:14px;font-weight:900;color:#fff;}
+.drop-artist{font-size:11px;color:#777;margin-top:2px;}
+.drop-cta{display:inline-flex;align-items:center;gap:4px;margin-top:10px;background:#e94f8a;color:#fff;border:none;border-radius:100px;padding:6px 14px;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-family:'Montserrat',sans-serif;}
+
+/* Passport gate */
+.passport-gate{margin:32px 32px 32px;background:rgba(246,152,32,.06);border:1px solid rgba(246,152,32,.14);border-radius:14px;padding:24px;text-align:center;flex-shrink:0;}
+.passport-gate-txt{font-size:13px;font-weight:400;color:rgba(255,255,255,.55);line-height:1.7;margin-bottom:16px;}
+.gate-btn{background:#F69820;color:#020c0a;border:none;border-radius:100px;padding:13px 32px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;transition:opacity .15s;}
+.gate-btn:hover{opacity:.88;}
+
+/* Responsive */
+@media(max-width:820px){
+  .chat-sidebar{width:220px;}
+  .chat-scroll{padding:16px 20px 24px;}
+}
+@media(max-width:640px){
+  html,body{overflow:auto;}
+  .chat-layout{flex-direction:column;height:auto;}
+  .chat-sidebar{width:100%;height:auto;flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid rgba(255,255,255,.07);}
+  .member-list{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:0 12px 12px;gap:8px;}
+  .member-item{flex-direction:column;gap:4px;align-items:center;padding:8px;min-width:56px;}
+  .member-name{font-size:9px;text-align:center;}
+  .member-rank{display:none;}
+  .sidebar-hdr,.sidebar-section-lbl,.sidebar-cta{display:none;}
+  .chat-main{overflow:visible;}
+  .chat-scroll{overflow:visible;max-width:100%;}
+}
+</style>
+</head>
+<body>
+<script src="/nav.js"></script>
+<div class="aurora" aria-hidden="true">
+  <div class="stars"></div><div class="a a1"></div><div class="a a2"></div><div class="a a3"></div>
+</div>
+<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">GFS Chat -- GeekFon Society</h1>
+
+<div class="chat-layout">
+  <!-- Sidebar -->
+  <aside class="chat-sidebar" aria-label="GFS members">
+    <div class="sidebar-hdr">
+      <div class="sidebar-hdr-title">GFS Chat</div>
+      <div class="sidebar-hdr-sub">Group Channel</div>
+    </div>
+    <div class="sidebar-section-lbl">Members</div>
+    <nav class="member-list" aria-label="Artist roster">
+      <a href="v.html" class="member-item"><div class="member-av" style="background:#c8922a">V</div><div class="member-info"><div class="member-name" style="color:#c8922a">V</div><div class="member-rank">Unranked</div></div></a>
+      <a href="shamanic-resin.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w80-h80" alt="Shamanic Resin" onerror="this.parentElement.style.background='#b548c6';this.parentElement.innerHTML='SR'"></div><div class="member-info"><div class="member-name" style="color:#b548c6">Shamanic Resin</div><div class="member-rank">#1</div></div></a>
+      <a href="lex-from-brixton.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w80-h80" alt="Lex" onerror="this.parentElement.style.background='#e84d1a';this.parentElement.innerHTML='L'"></div><div class="member-info"><div class="member-name" style="color:#e84d1a">Lex from Brixton</div><div class="member-rank">#2</div></div></a>
+      <a href="riku.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w80-h80" alt="Riku" onerror="this.parentElement.style.background='#7fb069';this.parentElement.innerHTML='RK'"></div><div class="member-info"><div class="member-name" style="color:#7fb069">Riku</div><div class="member-rank">#3</div></div></a>
+      <a href="roxanne.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w80-h80" alt="Roxanne" onerror="this.parentElement.style.background='#e94f8a';this.parentElement.innerHTML='R'"></div><div class="member-info"><div class="member-name" style="color:#e94f8a">Roxanne</div><div class="member-rank">#4</div></div></a>
+      <a href="mad-tings.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=1JNuyjt2SCH0m8PwbkXGSZynrJeOzA-vC&sz=w80-h80" alt="Mad Tings" onerror="this.parentElement.style.background='#d4a800';this.parentElement.innerHTML='MT'"></div><div class="member-info"><div class="member-name" style="color:#d4a800">Mad Tings</div><div class="member-rank">#5</div></div></a>
+      <a href="straight-and-narrow.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w80-h80" alt="S&N" onerror="this.parentElement.style.background='#2ec4b6';this.parentElement.innerHTML='SN'"></div><div class="member-info"><div class="member-name" style="color:#2ec4b6">Straight &amp; Narrow</div><div class="member-rank">#6</div></div></a>
+      <a href="lickle-bro.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w80-h80" alt="Lickle Bro" onerror="this.parentElement.style.background='#9b6bcc';this.parentElement.innerHTML='LB'"></div><div class="member-info"><div class="member-name" style="color:#9b6bcc">Lickle Bro</div><div class="member-rank">#7</div></div></a>
+      <a href="nilo-wave.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=13eUQSq_5tJDErq5AOPzwKV9P0uTb5QnM&sz=w80-h80" alt="Nilo Wave" onerror="this.parentElement.style.background='#e8a020';this.parentElement.innerHTML='NW'"></div><div class="member-info"><div class="member-name" style="color:#e8a020">Nilo Wave</div><div class="member-rank">#8</div></div></a>
+      <a href="lickle-sis.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w80-h80" alt="Lickle Sis" onerror="this.parentElement.style.background='#ff6eb4';this.parentElement.innerHTML='LS'"></div><div class="member-info"><div class="member-name" style="color:#ff6eb4">Lickle Sis</div><div class="member-rank">#9</div></div></a>
+      <a href="rustblood-prophets.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=1F7PGb7Jidinz6SsOgVjAOaHkzKvdfW_M&sz=w80-h80" alt="RP" onerror="this.parentElement.style.background='#8888ff';this.parentElement.innerHTML='RP'"></div><div class="member-info"><div class="member-name" style="color:#8888ff">Rustblood Prophets</div><div class="member-rank">#10</div></div></a>
+      <a href="mr-russell.html" class="member-item"><div class="member-av"><img src="https://drive.google.com/thumbnail?id=1m4D6mGkzT_1g-KYVJeN1scbeGt1VzTIt&sz=w80-h80" alt="Mr. Russell" onerror="this.parentElement.style.background='#F69820';this.parentElement.innerHTML='MR'"></div><div class="member-info"><div class="member-name" style="color:#F69820">Mr. Russell</div><div class="member-rank">#11</div></div></a>
+    </nav>
+    <div class="sidebar-cta">
+      <div class="sidebar-cta-txt">Get a Passport to join the chat and see the full week of conversations.</div>
+      <button class="sidebar-cta-btn" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Get Passport - $11</button>
+    </div>
+  </aside>
+
+  <!-- Chat main -->
+  <main class="chat-main" id="main-content">
+    <nav class="day-nav" aria-label="Chat day navigation">
+      <button class="day-arrow" id="dayPrev" onclick="prevDay()" aria-label="Previous day" disabled>&#8249;</button>
+      <button class="day-name-label" id="dayLabel" onclick="toggleCal()" aria-expanded="false" aria-haspopup="dialog" aria-label="Open calendar">
+        <svg class="cal-icon" width="13" height="13" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+          <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.1" fill="none"/>
+          <path d="M4 1v2M8 1v2M1 5h10" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+          <rect x="3" y="7" width="1.5" height="1.5" rx=".3" fill="currentColor"/>
+          <rect x="5.25" y="7" width="1.5" height="1.5" rx=".3" fill="currentColor"/>
+          <rect x="7.5" y="7" width="1.5" height="1.5" rx=".3" fill="currentColor"/>
+        </svg>
+        <span id="dayLabelText">Sun, May 10</span>
+      </button>
+      <button class="day-arrow" id="dayNext" onclick="nextDay()" aria-label="Next day">&#8250;</button>
+    </nav>
+    <div class="cal-panel" id="calPanel" role="dialog" aria-label="Date picker" aria-hidden="true">
+      <div id="calContent"></div>
+    </div>
+    <div class="chat-scroll" id="chatScroll">
+      <!-- Day 0: Monday May 4 -->
+      <div class="day-panel active" id="dp0">
+        <div class="chat-feed">
+          <div class="msg gap" role="article" aria-label="Message from V"><a href="#" class="av" style="background:#c8922a" aria-hidden="true">V</a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#c8922a">V</a><span class="ts">9:14 AM</span></div><div class="bubble">Good morning GFS. New week. <a href="#" class="tag">@Lex</a> - what are we running?</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Lex"><a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w200-h200" alt="Lex" onerror="this.onerror=null;this.parentElement.style.background='#e84d1a';this.parentElement.textContent='L'"></a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#e84d1a">Lex</a><span class="ts">9:17 AM</span></div><div class="bubble">mandem's alive. already cooked something last night not gonna lie &#128128;</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Roxanne"><a href="roxanne.html" class="av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w200-h200" alt="Roxanne" onerror="this.onerror=null;this.parentElement.style.background='#e94f8a';this.parentElement.textContent='R'"></a><div class="msg-col"><div class="msg-header"><a href="roxanne.html" class="sname" style="color:#e94f8a">Roxanne</a><span class="ts">9:22 AM</span></div><div class="bubble" id="m-mon-rox"><span class="or-text">おはようございます！新しい週、楽しみにしてた！✨</span><span class="tr-text">Good morning! I've been waiting for this new week! &#10024;</span></div><button class="tr-btn" onclick="toggleTr('m-mon-rox',this)">&#8631; Translate</button></div></div>
+          <div class="msg gap" role="article" aria-label="Message from V"><a href="#" class="av" style="background:#c8922a" aria-hidden="true">V</a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#c8922a">V</a><span class="ts">9:23 AM</span></div><div class="bubble"><a href="riku.html" class="tag">@Riku</a> we see you online. say something.</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Riku"><a href="riku.html" class="av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w200-h200" alt="Riku" onerror="this.onerror=null;this.parentElement.style.background='#7fb069';this.parentElement.textContent='RK'"></a><div class="msg-col"><div class="msg-header"><a href="riku.html" class="sname" style="color:#7fb069">Riku</a><span class="ts">9:41 AM</span></div><div class="bubble">&#128064;</div></div></div>
+        </div>
+      </div>
+      <!-- Day 1: Tuesday -->
+      <div class="day-panel" id="dp1">
+        <div class="chat-feed">
+          <div class="msg gap" role="article" aria-label="Message from Lickle Sis"><a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w200-h200" alt="Lickle Sis" onerror="this.onerror=null;this.parentElement.style.background='#ff6eb4';this.parentElement.textContent='LS'"></a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#ff6eb4">Lickle Sis</a><span class="ts">2:03 AM</span></div><div class="bubble">dropped a new verse. 2am energy is undefeated</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from V"><a href="#" class="av" style="background:#c8922a">V</a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#c8922a">V</a><span class="ts">10:31 AM</span></div><div class="bubble">I woke up to this and it's good. send it when you're ready</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Lickle Bro"><a href="lickle-bro.html" class="av"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w200-h200" alt="Lickle Bro" onerror="this.onerror=null;this.parentElement.style.background='#9b6bcc';this.parentElement.textContent='LB'"></a><div class="msg-col"><div class="msg-header"><a href="lickle-bro.html" class="sname" style="color:#9b6bcc">Lickle Bro</a><span class="ts">10:45 AM</span></div><div class="bubble">bro that bridge was cold though</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Lex"><a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w200-h200" alt="Lex" onerror="this.onerror=null;this.parentElement.style.background='#e84d1a';this.parentElement.textContent='L'"></a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#e84d1a">Lex</a><span class="ts">11:02 AM</span></div><div class="bubble"><a href="#" class="tag">@Lickle Sis</a> always cooking at 2am lmaooo &#128104;&#8205;&#127859;</div></div></div>
+        </div>
+      </div>
+      <!-- Day 2: Wednesday -->
+      <div class="day-panel" id="dp2">
+        <div class="chat-feed">
+          <div class="msg gap" role="article" aria-label="Message from Vira"><a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1eBWin2Fuz3RxC4kPVkT5MTKdnq21rbja&sz=w200-h200" alt="Vira" onerror="this.onerror=null;this.parentElement.style.background='#00cfe8';this.parentElement.textContent='Vi'"></a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#00cfe8">Vira</a><span class="ts">3:17 PM</span></div><div class="bubble" id="m-wed-vira"><span class="or-text">오늘 스튜디오에서 새 트랙 작업했어요 &#127926;</span><span class="tr-text">worked on a new track in the studio today &#127926;</span></div><button class="tr-btn" onclick="toggleTr('m-wed-vira',this)">&#8631; Translate</button></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Roxanne"><a href="roxanne.html" class="av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w200-h200" alt="Roxanne" onerror="this.onerror=null;this.parentElement.style.background='#e94f8a';this.parentElement.textContent='R'"></a><div class="msg-col"><div class="msg-header"><a href="roxanne.html" class="sname" style="color:#e94f8a">Roxanne</a><span class="ts">3:24 PM</span></div><div class="bubble" id="m-wed-rox"><span class="or-text">聴きたい！早く出して！🙏</span><span class="tr-text">I want to hear it! Drop it soon! &#128591;</span></div><button class="tr-btn" onclick="toggleTr('m-wed-rox',this)">&#8631; Translate</button></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Narrow"><a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1R6z1HS-Kxt8gltJ3sUg_QVytRWKnAMzC&sz=w200-h200" alt="Narrow" onerror="this.onerror=null;this.parentElement.style.background='#ff9f1c';this.parentElement.textContent='N'"></a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#ff9f1c">Narrow</a><span class="ts">3:33 PM</span></div><div class="bubble">it's alignment bro</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from V"><a href="#" class="av" style="background:#c8922a">V</a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#c8922a">V</a><span class="ts">3:40 PM</span></div><div class="bubble">when the universe moves together you feel it</div></div></div>
+        </div>
+      </div>
+      <!-- Day 3: Thursday -->
+      <div class="day-panel" id="dp3">
+        <div class="chat-feed">
+          <div class="msg gap" role="article" aria-label="Message from Lex"><a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w200-h200" alt="Lex" onerror="this.onerror=null;this.parentElement.style.background='#e84d1a';this.parentElement.textContent='L'"></a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#e84d1a">Lex</a><span class="ts">1:12 PM</span></div><div class="bubble">can we talk about how <a href="riku.html" class="tag">@Riku</a> has been online for 3 hours and said nothing</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Lickle Sis"><a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w200-h200" alt="Lickle Sis" onerror="this.onerror=null;this.parentElement.style.background='#ff6eb4';this.parentElement.textContent='LS'"></a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#ff6eb4">Lickle Sis</a><span class="ts">1:13 PM</span></div><div class="bubble"><a href="riku.html" class="tag">@Riku</a> lurker behavior &#128557;</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Riku"><a href="riku.html" class="av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w200-h200" alt="Riku" onerror="this.onerror=null;this.parentElement.style.background='#7fb069';this.parentElement.textContent='RK'"></a><div class="msg-col"><div class="msg-header"><a href="riku.html" class="sname" style="color:#7fb069">Riku</a><span class="ts">1:28 PM</span></div><div class="bubble">&#128528;</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from V"><a href="#" class="av" style="background:#c8922a">V</a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#c8922a">V</a><span class="ts">1:30 PM</span></div><div class="bubble">leave them alone lmaooo they're processing</div></div></div>
+        </div>
+      </div>
+      <!-- Day 4: Friday (drop day) -->
+      <div class="day-panel" id="dp4">
+        <div class="chat-feed">
+          <div class="msg gap" role="article" aria-label="Message from V"><a href="#" class="av" style="background:#c8922a">V</a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#c8922a">V</a><span class="ts">11:00 AM</span></div><div class="bubble">ANNOUNCEMENT - <a href="roxanne.html" class="tag">@Roxanne</a>'s single drops next Friday. GFS fam hears it first.</div></div></div>
+          <div class="msg" role="article" aria-label="Drop: Hanamachi"><div class="av" style="background:transparent;visibility:hidden" aria-hidden="true"></div><div class="msg-col"><a class="drop-card" href="#" aria-label="Preview Hanamachi by Roxanne"><div class="drop-art" style="background:linear-gradient(135deg,#1a0a10,#3d1228,#e94f8a18);">&#127800;</div><div class="drop-info"><div class="drop-label">Dropping Next Friday</div><div class="drop-title">Hanamachi</div><div class="drop-artist">Roxanne</div><div class="drop-cta"><svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg> Preview</div></div></a></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Lex"><a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w200-h200" alt="Lex" onerror="this.onerror=null;this.parentElement.style.background='#e84d1a';this.parentElement.textContent='L'"></a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#e84d1a">Lex</a><span class="ts">11:02 AM</span></div><div class="bubble">LET'S GO &#128293;&#128293;&#128293;</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Roxanne"><a href="roxanne.html" class="av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w200-h200" alt="Roxanne" onerror="this.onerror=null;this.parentElement.style.background='#e94f8a';this.parentElement.textContent='R'"></a><div class="msg-col"><div class="msg-header"><a href="roxanne.html" class="sname" style="color:#e94f8a">Roxanne</a><span class="ts">11:14 AM</span></div><div class="bubble" id="m-fri-rox"><span class="or-text">みんなありがとう 😭❤ もうすぐ！</span><span class="tr-text">Thank you everyone &#128557;&#128149; Coming soon!</span></div><button class="tr-btn" onclick="toggleTr('m-fri-rox',this)">&#8631; Translate</button></div></div>
+        </div>
+      </div>
+      <!-- Day 5: Saturday -->
+      <div class="day-panel" id="dp5">
+        <div class="chat-feed">
+          <div class="msg gap" role="article" aria-label="Message from Narrow"><a href="#" class="av"><img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w200-h200" alt="S&N" onerror="this.onerror=null;this.parentElement.style.background='#2ec4b6';this.parentElement.textContent='SN'"></a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#2ec4b6">Narrow</a><span class="ts">2:18 PM</span></div><div class="bubble">Weekend energy. Anyone in the studio?</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from V"><a href="#" class="av" style="background:#c8922a">V</a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#c8922a">V</a><span class="ts">3:02 PM</span></div><div class="bubble">This is why I love this group.</div></div></div>
+        </div>
+      </div>
+      <!-- Day 6: Sunday -->
+      <div class="day-panel" id="dp6">
+        <div class="chat-feed">
+          <div class="msg gap" role="article" aria-label="Message from V"><a href="#" class="av" style="background:#c8922a">V</a><div class="msg-col"><div class="msg-header"><a href="#" class="sname" style="color:#c8922a">V</a><span class="ts">8:00 PM</span></div><div class="bubble">Week one down. This is just the beginning.</div></div></div>
+          <div class="msg gap" role="article" aria-label="Message from Riku"><a href="riku.html" class="av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w200-h200" alt="Riku" onerror="this.onerror=null;this.parentElement.style.background='#7fb069';this.parentElement.textContent='RK'"></a><div class="msg-col"><div class="msg-header"><a href="riku.html" class="sname" style="color:#7fb069">Riku</a><span class="ts">8:04 PM</span></div><div class="bubble">&#10084;&#65039;</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="passport-gate" id="passportGate">
+      <div class="passport-gate-txt">Join GFS to reply and see the full week of conversations from every artist.</div>
+      <button class="gate-btn" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Get Passport - $11</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const CHAT_WEEK_START = new Date(2026, 4, 4);
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY_SHORT   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DOW_LABELS  = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const TODAY_IDX   = 6;
+let cur = TODAY_IDX, calOpen = false, calYear = 2026, calMonthIdx = 4;
+
+function getChatDate(i) { const d = new Date(CHAT_WEEK_START); d.setDate(d.getDate() + i); return d; }
+function formatLabel(i) { const d = getChatDate(i); return DAY_SHORT[i] + ', ' + MONTH_SHORT[d.getMonth()] + ' ' + d.getDate(); }
+
+function showDay(i) {
+  document.querySelectorAll('.day-panel').forEach((p, j) => p.classList.toggle('active', j === i));
+  cur = i;
+  document.getElementById('dayLabelText').textContent = formatLabel(i);
+  document.getElementById('dayLabel').setAttribute('aria-label', 'Open calendar - ' + formatLabel(i));
+  document.getElementById('dayPrev').disabled = (i === 0);
+  document.getElementById('dayNext').disabled = (i === 6);
+  var scroll = document.getElementById('chatScroll');
+  if (scroll) scroll.scrollTop = 0;
+  if (calOpen) renderCal();
+}
+function prevDay() { if (cur > 0) showDay(cur - 1); }
+function nextDay() { if (cur < 6) showDay(cur + 1); }
+function toggleCal() { calOpen ? closeCal() : openCal(); }
+function openCal() {
+  calOpen = true;
+  const p = document.getElementById('calPanel');
+  p.classList.add('open'); p.setAttribute('aria-hidden','false');
+  document.getElementById('dayLabel').setAttribute('aria-expanded','true');
+  renderCal();
+}
+function closeCal() {
+  calOpen = false;
+  const p = document.getElementById('calPanel');
+  p.classList.remove('open'); p.setAttribute('aria-hidden','true');
+  document.getElementById('dayLabel').setAttribute('aria-expanded','false');
+}
+function buildChatMap() {
+  const map = {};
+  for (let i = 0; i < 7; i++) { const d = getChatDate(i); map[d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()] = i; }
+  return map;
+}
+function renderCal() {
+  const chatMap = buildChatMap();
+  const startDow = new Date(calYear, calMonthIdx, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonthIdx + 1, 0).getDate();
+  let html = '<div class="cal-month-row"><button class="cal-nav-btn" onclick="calShift(-1)" aria-label="Previous month">&#8249;</button><span class="cal-month-label">' + MONTH_NAMES[calMonthIdx] + ' ' + calYear + '</span><button class="cal-nav-btn" onclick="calShift(1)" aria-label="Next month">&#8250;</button></div><div class="cal-dow-row">' + DOW_LABELS.map(d => '<span class="cal-dow">' + d + '</span>').join('') + '</div><div class="cal-grid">';
+  for (let i = 0; i < startDow; i++) html += '<span class="cal-cell"></span>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = calYear + '-' + calMonthIdx + '-' + d, dayIdx = chatMap[key];
+    const isChat = dayIdx !== undefined, isSel = isChat && dayIdx === cur;
+    html += isChat ? '<button class="cal-cell chat' + (isSel ? ' sel' : '') + '" onclick="pickDate(' + dayIdx + ')" aria-label="' + MONTH_NAMES[calMonthIdx] + ' ' + d + '" aria-pressed="' + isSel + '">' + d + '</button>' : '<span class="cal-cell">' + d + '</span>';
+  }
+  html += '</div>';
+  document.getElementById('calContent').innerHTML = html;
+}
+function calShift(dir) {
+  calMonthIdx += dir;
+  if (calMonthIdx < 0)  { calMonthIdx = 11; calYear--; }
+  if (calMonthIdx > 11) { calMonthIdx = 0;  calYear++; }
+  renderCal();
+}
+function pickDate(idx) { showDay(idx); closeCal(); }
+document.addEventListener('click', e => {
+  if (!calOpen) return;
+  if (!document.getElementById('calPanel').contains(e.target) && !document.getElementById('dayLabel').contains(e.target)) closeCal();
+});
+document.addEventListener('keydown', e => {
+  if (calOpen && e.key === 'Escape') { closeCal(); return; }
+  if (!calOpen && e.key === 'ArrowLeft')  prevDay();
+  if (!calOpen && e.key === 'ArrowRight') nextDay();
+});
+function toggleTr(id, btn) {
+  const b = document.getElementById(id);
+  const on = b.classList.toggle('translated');
+  btn.textContent = on ? '↳ Original' : '↳ Translate';
+  btn.classList.toggle('on', on);
+}
+showDay(TODAY_IDX);
+</script>
+</body>
+</html>

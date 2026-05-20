@@ -1,7 +1,8 @@
-/* GeekFon Society — nav.js v1.0
+/* GeekFon Society -- nav.js v1.1
    Single source of truth for all site navigation.
    Rule 2.12: injected via script, never hand-coded per page.
-   Page variants detected automatically from window.location.pathname.
+   v1.1: added /chat and /radio page variants; Music/Chat nav items
+         now navigate to standalone pages instead of toggling phone view.
 */
 (function () {
   var CSS = [
@@ -39,8 +40,10 @@
   var path = window.location.pathname;
   var isHome    = path === '/' || /\/index\.html?$/.test(path) || path === '';
   var isRoster  = /\/roster(\.html?)?$/.test(path);
+  var isChat    = /\/chat(\.html?)?$/.test(path);
+  var isRadio   = /\/radio(\.html?)?$/.test(path);
   var isWelcome = /\/welcome(\.html?)?$/.test(path);
-  var isArtist  = !isHome && !isRoster && !isWelcome;
+  var isArtist  = !isHome && !isRoster && !isChat && !isRadio && !isWelcome;
 
   var chevronLeft = '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>';
   var iconMusic   = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
@@ -65,11 +68,35 @@
       '</nav>',
       '<div class="nav-menu" id="gfsNavMenu" role="navigation" aria-label="Site navigation">',
       '  <div class="nav-menu-inner">',
-      '    <button class="nav-menu-item" id="gfsNavMusic">' + iconMusic + ' Music</button>',
-      '    <button class="nav-menu-item" id="gfsNavChat">' + iconChat + ' Chat</button>',
+      '    <a class="nav-menu-item" href="/radio">' + iconMusic + ' Music</a>',
+      '    <a class="nav-menu-item" href="/chat">' + iconChat + ' Chat</a>',
       '    <a class="nav-menu-item" href="/roster">' + iconRoster + ' Roster</a>',
       '  </div>',
       '</div>'
+    ].join('');
+  } else if (isChat) {
+    navHTML = [
+      '<nav class="gfs-nav" aria-label="GeekFon Society navigation">',
+      '  <div class="nav-inner nav-simple">',
+      '    <a href="/" class="nav-back" aria-label="Back to home">' + chevronLeft + ' Home</a>',
+      '    <a href="/" class="nav-wordmark">Geek<span id="gfsNavFon">Fon</span> Chat</a>',
+      '    <div style="justify-self:end">',
+      '      <button class="nav-join" onclick="window.open(\'https://lesaruss.ai/geekfon\',\'_blank\')">Get Passport</button>',
+      '    </div>',
+      '  </div>',
+      '</nav>'
+    ].join('');
+  } else if (isRadio) {
+    navHTML = [
+      '<nav class="gfs-nav" aria-label="GeekFon Society navigation">',
+      '  <div class="nav-inner nav-simple">',
+      '    <a href="/" class="nav-back" aria-label="Back to home">' + chevronLeft + ' Home</a>',
+      '    <a href="/" class="nav-wordmark">Geek<span id="gfsNavFon">Fon</span> Music</a>',
+      '    <div style="justify-self:end">',
+      '      <button class="nav-join" onclick="window.open(\'https://lesaruss.ai/geekfon\',\'_blank\')">Get Passport</button>',
+      '    </div>',
+      '  </div>',
+      '</nav>'
     ].join('');
   } else if (isRoster) {
     navHTML = [
@@ -145,18 +172,6 @@
         });
       }
 
-      /* Music / Chat menu items: call page function if available, then close */
-      var musicBtn = document.getElementById('gfsNavMusic');
-      var chatBtn  = document.getElementById('gfsNavChat');
-      if (musicBtn) musicBtn.addEventListener('click', function () {
-        if (typeof window.setPhoneView === 'function') window.setPhoneView('music');
-        closeMenu();
-      });
-      if (chatBtn) chatBtn.addEventListener('click', function () {
-        if (typeof window.setPhoneView === 'function') window.setPhoneView('chat');
-        closeMenu();
-      });
-
       /* Login button: dispatch event so page can handle it */
       var loginBtn = document.getElementById('gfsNavLoginBtn');
       if (loginBtn) loginBtn.addEventListener('click', function () {
@@ -165,7 +180,7 @@
     });
   }
 
-  /* Fon color cycling — all pages */
+  /* Fon color cycling -- all pages */
   var FON_COLORS = ['#F69820', '#e94f8a', '#7fb069', '#9b6bcc', '#00cfe8', '#e84d1a'];
   var fonIdx = 0;
   document.addEventListener('DOMContentLoaded', function () {

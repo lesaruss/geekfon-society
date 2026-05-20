@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GFS Music -- GeekFon Society</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;background:#020c0a;color:#e8e8e8;}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+a{color:inherit;text-decoration:none;}
+
+/* Aurora */
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 9% 6%,rgba(255,255,255,.55) 0%,transparent 100%),radial-gradient(1px 1px at 44% 4%,rgba(255,255,255,.48) 0%,transparent 100%),radial-gradient(1px 1px at 76% 7%,rgba(255,255,255,.52) 0%,transparent 100%);}
+.a{position:absolute;border-radius:50%;filter:blur(90px);}
+.a1{width:85vw;height:48vh;top:-20vh;left:4vw;background:radial-gradient(ellipse at center,rgba(0,215,95,.24) 0%,transparent 70%);animation:d1 18s ease-in-out infinite alternate;}
+.a2{width:62vw;height:40vh;top:-14vh;right:-6vw;background:radial-gradient(ellipse at center,rgba(0,155,255,.18) 0%,transparent 70%);animation:d2 24s ease-in-out infinite alternate;}
+.a3{width:52vw;height:34vh;top:0;left:24vw;background:radial-gradient(ellipse at center,rgba(120,0,255,.13) 0%,transparent 70%);animation:d3 20s ease-in-out infinite alternate;}
+@keyframes d1{from{transform:translate(0,0)}to{transform:translate(4vw,5vh)}}
+@keyframes d2{from{transform:translate(0,0)}to{transform:translate(-5vw,3vh)}}
+@keyframes d3{from{transform:translate(0,0)}to{transform:translate(3vw,-4vh) rotate(7deg)}}
+
+/* Layout */
+.radio-layout{position:relative;z-index:1;display:flex;height:100vh;padding-top:56px;}
+
+/* Player panel (left) */
+.player-panel{width:380px;flex-shrink:0;display:flex;flex-direction:column;background:rgba(2,12,10,.82);border-right:1px solid rgba(255,255,255,.07);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);overflow-y:auto;scrollbar-width:none;padding:28px 28px 32px;}
+.player-panel::-webkit-scrollbar{display:none;}
+
+/* Album art */
+.album-art{width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:#0d0d0d;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:22px;flex-shrink:0;}
+.album-art img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
+.album-art-ph{display:flex;align-items:center;justify-content:center;width:100%;height:100%;}
+.album-art-ph img{width:52%;height:52%;object-fit:contain;opacity:.35;}
+
+/* Track meta */
+.track-meta{margin-bottom:20px;}
+.track-title{font-size:clamp(18px,2.4vw,26px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-artist{font-size:13px;font-weight:700;color:rgba(255,255,255,.5);}
+
+/* Scrubber */
+.scrub-wrap{margin-bottom:18px;}
+.scrub{height:4px;background:rgba(255,255,255,.1);border-radius:2px;cursor:pointer;position:relative;}
+.scrub-fill{height:100%;border-radius:2px;background:#F69820;width:0%;transition:width .4s linear;pointer-events:none;}
+.scrub-times{display:flex;justify-content:space-between;margin-top:6px;}
+.scrub-time{font-size:9px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.04em;}
+
+/* Controls */
+.controls{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:24px;}
+.ctrl-btn{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;transition:color .15s;padding:8px;border-radius:50%;}
+.ctrl-btn:hover{color:#fff;}
+.ctrl-btn svg{display:block;}
+.ctrl-play{width:58px;height:58px;border-radius:50%;background:#F69820;color:#020c0a;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s,transform .1s;}
+.ctrl-play:hover{opacity:.9;transform:scale(1.04);}
+.ctrl-play svg{display:block;}
+.ctrl-play:focus-visible,.ctrl-btn:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+
+/* Bio card */
+.bio-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px 18px;}
+.bio-text{font-size:12px;font-weight:400;color:rgba(255,255,255,.6);line-height:1.7;}
+.bio-profile-btn{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:rgba(246,152,32,.1);border:1px solid rgba(246,152,32,.25);color:#F69820;border-radius:100px;padding:9px 20px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;text-decoration:none;transition:background .15s;}
+.bio-profile-btn:hover{background:rgba(246,152,32,.2);}
+
+/* Track list panel (right) */
+.tracks-panel{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+.tracks-hdr{padding:22px 28px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.tracks-title{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.9);}
+.tab-group{display:flex;gap:3px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:3px;}
+.tab-btn{background:none;border:none;cursor:pointer;padding:7px 18px;border-radius:100px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.45);transition:all .18s;}
+.tab-btn.active{background:rgba(246,152,32,.14);color:#F69820;}
+.tab-btn:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+
+.tracks-scroll{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent;padding:12px 0 32px;}
+.tracks-scroll::-webkit-scrollbar{width:4px;}
+.tracks-scroll::-webkit-scrollbar-track{background:transparent;}
+.tracks-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+/* Track items */
+.track-item{display:flex;align-items:center;gap:14px;padding:13px 28px;cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(255,255,255,.04);}
+.track-item:hover{background:rgba(255,255,255,.04);}
+.track-item.active{background:rgba(246,152,32,.06);}
+.track-item.locked{cursor:default;}
+.track-item.locked:hover{background:none;}
+.t-num{width:22px;font-size:12px;font-weight:700;color:rgba(255,255,255,.28);text-align:center;flex-shrink:0;}
+.track-item.active .t-num{color:#F69820;}
+.t-art{width:44px;height:44px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:rgba(255,255,255,.5);}
+.t-art img{width:100%;height:100%;object-fit:cover;display:block;}
+.t-info{flex:1;min-width:0;}
+.t-name{font-size:13px;font-weight:700;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-item.active .t-name{color:#fff;}
+.track-item.locked .t-name{color:rgba(255,255,255,.25);}
+.t-artist{font-size:11px;font-weight:400;color:rgba(255,255,255,.35);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-item.locked .t-artist{color:rgba(255,255,255,.15);}
+.t-tag{font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:100px;flex-shrink:0;background:rgba(76,175,80,.12);color:#4caf50;}
+.t-duration{font-size:11px;color:rgba(255,255,255,.25);font-weight:400;flex-shrink:0;}
+
+/* Gate */
+.tracks-gate{margin:20px 28px;background:rgba(246,152,32,.06);border:1px solid rgba(246,152,32,.14);border-radius:14px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;}
+.gate-txt{font-size:12px;font-weight:400;color:rgba(255,255,255,.55);line-height:1.65;}
+.gate-btn{flex-shrink:0;background:#F69820;color:#020c0a;border:none;border-radius:100px;padding:13px 28px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+.gate-btn:hover{opacity:.88;}
+
+/* Responsive */
+@media(max-width:900px){
+  .player-panel{width:300px;padding:20px 20px 24px;}
+}
+@media(max-width:680px){
+  html,body{overflow:auto;}
+  .radio-layout{flex-direction:column;height:auto;}
+  .player-panel{width:100%;border-right:none;border-bottom:1px solid rgba(255,255,255,.07);}
+  .album-art{max-width:260px;margin:0 auto 20px;}
+  .tracks-panel{overflow:visible;}
+  .tracks-scroll{overflow:visible;}
+  .track-item{padding:12px 20px;}
+  .tracks-hdr{padding:16px 20px 12px;}
+  .tracks-gate{margin:16px 20px;}
+}
+</style>
+</head>
+<body>
+<script src="/nav.js"></script>
+<div class="aurora" aria-hidden="true">
+  <div class="stars"></div><div class="a a1"></div><div class="a a2"></div><div class="a a3"></div>
+</div>
+<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">GFS Music -- GeekFon Society</h1>
+
+<div class="radio-layout">
+  <!-- Player panel -->
+  <section class="player-panel" aria-label="Now playing">
+    <div class="album-art" id="albumArt" aria-label="Album art">
+      <img id="albumImg" src="" alt="" style="display:none" onerror="this.style.display='none';document.getElementById('albumPh').style.display=''">
+      <div id="albumPh" class="album-art-ph"><img src="geekfon-logo.png" alt="GeekFon Society"></div>
+    </div>
+    <div class="track-meta">
+      <div class="track-title" id="trackTitle">GeekFon Society</div>
+      <div class="track-artist" id="trackArtist">Select a track to play</div>
+    </div>
+    <div class="scrub-wrap">
+      <div class="scrub" id="scrubBar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Playback progress" onclick="scrubClick(event)">
+        <div class="scrub-fill" id="scrubFill"></div>
+      </div>
+      <div class="scrub-times">
+        <span class="scrub-time" id="timeElapsed">0:00</span>
+        <span class="scrub-time" id="timeDuration">0:00</span>
+      </div>
+    </div>
+    <div class="controls" role="group" aria-label="Playback controls">
+      <button class="ctrl-btn" id="btnPrev" onclick="prevTrack()" aria-label="Previous track">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+      </button>
+      <button class="ctrl-play" id="btnPlay" onclick="togglePlay()" aria-label="Play">
+        <svg id="playIcon" width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </button>
+      <button class="ctrl-btn" id="btnNext" onclick="nextTrack()" aria-label="Next track">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+      </button>
+    </div>
+    <div class="bio-card" id="bioCard">
+      <div class="bio-text" id="bioText">Tap any track from the library to start playing.</div>
+      <a class="bio-profile-btn" id="bioProfileBtn" href="#" style="display:none">View Artist Page
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Track library -->
+  <section class="tracks-panel" aria-label="Track library">
+    <div class="tracks-hdr">
+      <div class="tracks-title">Library</div>
+      <div class="tab-group" role="group" aria-label="Library view">
+        <button class="tab-btn active" id="tabPreview" onclick="switchTab('preview')" aria-pressed="true">Preview</button>
+        <button class="tab-btn" id="tabSample" onclick="switchTab('sample')" aria-pressed="false">Sample</button>
+      </div>
+    </div>
+    <div class="tracks-scroll" id="trackScroll">
+      <div id="trackListEl" aria-label="Track list"></div>
+      <div class="tracks-gate" id="tracksGate" style="display:none">
+        <div class="gate-txt">Get a Passport to unlock all tracks and support every GFS artist.</div>
+        <button class="gate-btn" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Get Passport - $11</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<audio id="audioEl" preload="none"></audio>
+<script>
+const AUDIO_BASE = 'https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/';
+const ART_BASE   = 'https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/';
+
+const TRACKS = [
+  { title:'Lottery of Love', artist:'Riku Hayasaka', src:'riku-hayasaka/lottery-of-love.mp3', art:'riku-hayasaka/hero.png', color:'#7fb069', profileUrl:'riku.html', bio:'They blend alt-pop and synth soul into something you cannot categorize. Riku is the sound of searching and finding it.' },
+  { title:'Awake from the Matrix', artist:'Lickle Bro', src:'lickle-bro/awake-from-the-matrix.mp3', art:'lickle-bro/hero.png', color:'#9b6bcc', profileUrl:'lickle-bro.html', bio:'UK grime meets Caribbean soul. Raw, real, and always about something bigger than the bar. Lickle Bro is built different.' },
+  { title:"Life's Tough", artist:'Roxanne', src:'roxanne/lifes-tough.mp3', art:null, color:'#e94f8a', profileUrl:'roxanne.html', bio:"South Florida's sharpest voice. Heat, honesty, and hooks that hit different. No filter, no apologies. Just the truth." },
+  { title:'Not Impressed', artist:'Lickle Sis', src:'lickle-sis/not-impressed.mp3', art:'lickle-sis/hero.png', color:'#ff6eb4', profileUrl:null, bio:'Her sound is soft but her words are not. Lickle Sis turns emotion into anthems, one quiet truth at a time.' },
+  { title:'Beyond Space and Time', artist:'Rustblood Prophets', src:'rustblood-prophets/beyond-space-and-time.mp3', art:'rustblood-prophets/hero.png', color:'#8888ff', profileUrl:null, bio:'A collective built on prophecy and noise. They channel chaos into clarity: dark, cinematic, and undeniable.' },
+  { title:'Super Nintendo, Sega Genesis', artist:'Mr. Russell', src:'mr-russell/super-nintendo-sega-genesis.mp3', art:null, color:'#F69820', profileUrl:'mr-russell.html', bio:'The architect. Mr. Russell does not just make music, he builds worlds. Every track is a blueprint for something bigger.' },
+  { title:'Real Dream', artist:'Shamanic Resin', src:'shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3', art:'shamanic-resin/hero.png', color:'#b548c6', profileUrl:'shamanic-resin.html', bio:'K-pop energy with a mystical edge. Shamanic Resin fuses ritual and rhythm into something that pulls you in and holds on.' },
+  { title:'Be Yourself', artist:'Lex from Brixton', src:'lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3', art:'lex-from-brixton/hero.png', color:'#e84d1a', profileUrl:'lex-from-brixton.html', bio:'Brixton-born and road-tested. Lex spits truth over grime, turning street life into scripture one verse at a time.' },
+  { title:'Never Broke Us', artist:'Mad Tings', src:'mad-tings/never-broke-us.mp3', art:'mad-tings/d17155c8-fda6-4c49-843a-6481dddd561f.png', color:'#F69820', profileUrl:'mad-tings.html', bio:'UK grime, dubstep, and reggae collide. Mad Tings bring the energy of a sound clash to every track they drop.' },
+  { title:'Dead Broke', artist:'Straight & Narrow', src:'straight-and-narrow/dead-broke.mp3', art:'straight-and-narrow/hero.png', color:'#2ec4b6', profileUrl:null, bio:'Two sides of the same story. Straight & Narrow split the difference between hard truth and soft light.' },
+  { title:'Spice it Up', artist:'Nilo Wave', src:'nilo-wave/spice-it-up.mp3', art:null, color:'#e8a020', profileUrl:'nilo-wave.html', bio:'Affiliate. Innovator. Nilo Wave moves through the scene on his own terms: no features, just pure frequency.' }
+];
+
+const PREVIEW_TRACKS = [
+  { title:'High Vibe Life', artist:'Lickle Bro', src:'lickle-bro/high-vibe-life.mp3', art:'lickle-bro/hero.png', color:'#9b6bcc', profileUrl:'lickle-bro.html', bio:'UK grime meets Caribbean soul. Raw, real, and always about something bigger than the bar.', preview30:true },
+  { title:'Being You, Being Me', artist:'Roxanne', src:'roxanne/being-you-being-me.mp3', art:null, color:'#e94f8a', profileUrl:'roxanne.html', bio:"South Florida's sharpest voice. Heat, honesty, and hooks that hit different.", preview30:true }
+];
+
+let currentTrack = -1, isPlaying = false, activeTab = 'preview', previewTimer = null;
+const audio = document.getElementById('audioEl');
+
+function fmtTime(s) {
+  if (!s || isNaN(s)) return '0:00';
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+function getActiveList() { return activeTab === 'preview' ? TRACKS : PREVIEW_TRACKS; }
+
+function renderTracks() {
+  const list = getActiveList();
+  let html = '';
+  list.forEach((t, i) => {
+    const isActive = i === currentTrack && activeTab === (t.preview30 ? 'sample' : 'preview');
+    const artSrc = t.art ? ART_BASE + t.art : '';
+    const artContent = artSrc
+      ? '<img src="' + artSrc + '" alt="' + t.artist + '" onerror="this.style.display=\'none\'">'
+      : '<span style="color:' + t.color + '">' + t.artist.substring(0,2).toUpperCase() + '</span>';
+    html += '<div class="track-item' + (isActive ? ' active' : '') + '" id="ti' + i + '" onclick="loadTrack(' + i + ')" role="button" tabindex="0" aria-label="Play ' + t.title + ' by ' + t.artist + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \')loadTrack(' + i + ')">'
+      + '<div class="t-num">' + (isActive ? '&#9654;' : (i + 1)) + '</div>'
+      + '<div class="t-art">' + artContent + '</div>'
+      + '<div class="t-info"><div class="t-name">' + t.title + '</div><div class="t-artist">' + t.artist + '</div></div>'
+      + '<span class="t-tag">Free</span>'
+      + '</div>';
+  });
+  document.getElementById('trackListEl').innerHTML = html;
+  document.getElementById('tracksGate').style.display = 'none';
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  var btnP = document.getElementById('tabPreview');
+  var btnS = document.getElementById('tabSample');
+  btnP.classList.toggle('active', tab === 'preview');
+  btnP.setAttribute('aria-pressed', String(tab === 'preview'));
+  btnS.classList.toggle('active', tab === 'sample');
+  btnS.setAttribute('aria-pressed', String(tab === 'sample'));
+  currentTrack = -1;
+  audio.pause();
+  updatePlayIcon(false);
+  document.getElementById('trackTitle').textContent = 'GeekFon Society';
+  document.getElementById('trackArtist').textContent = 'Select a track to play';
+  document.getElementById('albumImg').style.display = 'none';
+  document.getElementById('albumPh').style.display = '';
+  document.getElementById('bioText').textContent = 'Tap any track from the library to start playing.';
+  document.getElementById('bioProfileBtn').style.display = 'none';
+  renderTracks();
+}
+
+function loadTrack(idx) {
+  const list = getActiveList();
+  const t = list[idx];
+  if (!t) return;
+  if (previewTimer) { clearTimeout(previewTimer); previewTimer = null; }
+  currentTrack = idx;
+  const albumImg = document.getElementById('albumImg');
+  const albumPh  = document.getElementById('albumPh');
+  if (t.art) { albumImg.src = ART_BASE + t.art; albumImg.alt = t.artist; albumImg.style.display = ''; albumPh.style.display = 'none'; }
+  else { albumImg.style.display = 'none'; albumPh.style.display = ''; }
+  document.getElementById('trackTitle').textContent = t.title;
+  document.getElementById('trackArtist').textContent = t.artist;
+  document.getElementById('bioText').textContent = t.bio || '';
+  var bioBtn = document.getElementById('bioProfileBtn');
+  bioBtn.style.display = t.profileUrl ? '' : 'none';
+  bioBtn.href = t.profileUrl || '#';
+  document.getElementById('scrubFill').style.width = '0%';
+  document.getElementById('scrubBar').setAttribute('aria-valuenow', '0');
+  audio.src = AUDIO_BASE + t.src;
+  audio.load();
+  audio.play().catch(() => {});
+  if (t.preview30) {
+    previewTimer = setTimeout(function() { audio.pause(); updatePlayIcon(false); }, 30000);
+  }
+  renderTracks();
+}
+
+function togglePlay() {
+  if (currentTrack < 0) { loadTrack(0); return; }
+  if (audio.paused) { audio.play().catch(() => {}); }
+  else { audio.pause(); }
+}
+function prevTrack() {
+  const list = getActiveList();
+  if (currentTrack > 0) loadTrack(currentTrack - 1);
+}
+function nextTrack() {
+  const list = getActiveList();
+  if (currentTrack + 1 < list.length) loadTrack(currentTrack + 1);
+}
+function scrubClick(e) { if (!audio.duration) return; audio.currentTime = (e.offsetX / e.currentTarget.offsetWidth) * audio.duration; }
+
+function updatePlayIcon(playing) {
+  document.getElementById('playIcon').innerHTML = playing
+    ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
+    : '<polygon points="5 3 19 12 5 21 5 3"/>';
+  document.getElementById('btnPlay').setAttribute('aria-label', playing ? 'Pause' : 'Play');
+}
+
+audio.addEventListener('play', () => updatePlayIcon(true));
+audio.addEventListener('pause', () => updatePlayIcon(false));
+audio.addEventListener('ended', () => { updatePlayIcon(false); nextTrack(); });
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  document.getElementById('scrubFill').style.width = pct + '%';
+  document.getElementById('scrubBar').setAttribute('aria-valuenow', Math.round(pct));
+  document.getElementById('timeElapsed').textContent = fmtTime(audio.currentTime);
+  document.getElementById('timeDuration').textContent = fmtTime(audio.duration);
+});
+
+document.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA','BUTTON','SELECT'].includes(document.activeElement.tagName)) return;
+  if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+  if (e.key === 'ArrowLeft') { if (audio.duration) audio.currentTime = Math.max(0, audio.currentTime - 5); }
+  if (e.key === 'ArrowRight') { if (audio.duration) audio.currentTime = Math.min(audio.duration, audio.currentTime + 5); }
+});
+
+renderTracks();
+</script>
+</body>
+</html>

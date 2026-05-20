@@ -8,11 +8,13 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
-html,body{height:100%;overflow-x:hidden;font-family:'Montserrat',sans-serif;background:#020c0a;color:#e8e8e8;}
+html,body{min-height:100%;overflow-x:hidden;font-family:'Montserrat',sans-serif;background:#020c0a;color:#e8e8e8;}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
 :focus-visible{outline:3px solid #F69820;outline-offset:3px;}
 a{color:inherit;text-decoration:none;}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+/* Aurora */
 .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
 .stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 9% 6%,rgba(255,255,255,.55) 0%,transparent 100%),radial-gradient(1px 1px at 24% 12%,rgba(255,255,255,.35) 0%,transparent 100%),radial-gradient(1px 1px at 44% 4%,rgba(255,255,255,.48) 0%,transparent 100%),radial-gradient(1px 1px at 76% 7%,rgba(255,255,255,.52) 0%,transparent 100%),radial-gradient(1.5px 1.5px at 18% 4%,rgba(255,255,255,.65) 0%,transparent 100%);}
 .a{position:absolute;border-radius:50%;filter:blur(90px);}
@@ -23,63 +25,57 @@ a{color:inherit;text-decoration:none;}
 @keyframes d1{from{transform:translate(0,0)}to{transform:translate(4vw,5vh)}}
 @keyframes d2{from{transform:translate(0,0)}to{transform:translate(-5vw,3vh)}}
 @keyframes d3{from{transform:translate(0,0)}to{transform:translate(3vw,-4vh) rotate(7deg)}}
-.page{position:relative;z-index:1;height:100vh;padding-top:68px;display:flex;align-items:center;justify-content:center;}
-.layout{display:flex;align-items:flex-start;justify-content:center;gap:clamp(32px,5vw,72px);width:100%;max-width:1280px;padding:0 40px;height:100%;}
-.phone-col{display:flex;flex-direction:column;align-items:center;gap:14px;flex-shrink:0;}
-.phone-bezel{--ph:min(88vh,680px);--pw:calc(var(--ph)*0.495);width:var(--pw);height:var(--ph);background:rgba(18,20,20,.92);border-radius:min(46px,calc(var(--pw)*0.14));padding:min(13px,calc(var(--ph)*0.018));box-shadow:0 0 0 1px rgba(255,255,255,.07),0 0 0 3px rgba(0,0,0,.55),0 30px 90px rgba(0,0,0,.85),0 0 60px rgba(0,200,100,.05);position:relative;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease;backdrop-filter:blur(4px);}
-.phone-bezel:hover{transform:translateY(-3px);box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 0 3px rgba(0,0,0,.55),0 40px 100px rgba(0,0,0,.9),0 0 80px rgba(0,200,100,.08);}
-.phone-notch{width:min(98px,calc(var(--pw)*0.34));height:min(20px,calc(var(--ph)*0.029));background:#0a0c0b;border-radius:0 0 14px 14px;position:absolute;top:min(13px,calc(var(--ph)*0.018));left:50%;transform:translateX(-50%);z-index:4;}
-.phone-screen{width:100%;height:100%;background:#080808;border-radius:min(36px,calc(var(--pw)*0.11));overflow:hidden;position:relative;display:flex;justify-content:center;align-items:flex-start;padding-top:26px;}
-.phone-screen iframe{flex-shrink:0;width:375px;height:820px;border:none;display:block;transform-origin:top center;transform:scale(calc((var(--pw) - 26px) / 375));}
-.pb{position:absolute;background:rgba(255,255,255,.07);border-radius:2px;}
-.pb.r{right:-3px;top:16%;width:3px;height:12%;border-radius:0 2px 2px 0;}
-.pb.l1{left:-3px;top:13%;width:3px;height:6%;border-radius:2px 0 0 2px;}
-.pb.l2{left:-3px;top:21%;width:3px;height:10%;border-radius:2px 0 0 2px;}
-.pb.l3{left:-3px;top:34%;width:3px;height:10%;border-radius:2px 0 0 2px;}
-.phone-home{position:absolute;bottom:min(14px,2.5%);left:50%;transform:translateX(-50%);width:30%;height:4px;background:rgba(255,255,255,.12);border-radius:100px;z-index:4;}
-.phone-mode-toggle{display:flex;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:4px;align-self:center;}
-.phone-mode-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:8px 22px;border-radius:100px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.38);transition:all .18s;}
-.phone-mode-btn.active{background:rgba(246,152,32,.14);color:#F69820;}
-.phone-mode-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
-.phone-mode-btn:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
-.roster-col{display:flex;flex-direction:column;gap:16px;flex-shrink:0;max-width:480px;width:clamp(300px,40vw,480px);}
-.roster-panel-wrap{height:var(--ph);overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;gap:20px;padding:20px 0 32px;}
-.roster-panel-wrap::-webkit-scrollbar{display:none;}
-.gfs-roster-title{font-size:clamp(32px,4.8vw,56px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;line-height:.95;white-space:nowrap;}
-.gfs-roster-sub{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#F69820;margin-top:6px;}
+
+/* Page layout */
+.page{position:relative;z-index:1;padding:100px 40px 80px;display:flex;justify-content:center;}
+.content{width:100%;max-width:960px;display:flex;flex-direction:column;gap:24px;}
+
+/* Header */
+.roster-title{font-size:clamp(36px,5vw,64px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;line-height:.95;}
+.roster-sub{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#F69820;margin-top:8px;}
+
+/* Toggle */
 .panel-toggle{display:flex;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:4px;align-self:flex-start;}
-.panel-btn{background:none;border:none;cursor:pointer;padding:8px 22px;border-radius:100px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);transition:all .18s;}
+.panel-btn{background:none;border:none;cursor:pointer;padding:10px 26px;border-radius:100px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);transition:all .18s;}
 .panel-btn.active{background:rgba(246,152,32,.14);color:#F69820;}
 .panel-btn:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
-.ac-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-.ac{display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;cursor:pointer;transition:transform .18s;}
-.ac:hover{transform:translateY(-3px);}
-.ac-img{width:100%;aspect-ratio:1;border-radius:16px;overflow:hidden;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;position:relative;}
+
+/* Schedule link */
+.sched-link{display:inline-flex;align-items:center;gap:7px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,.32);text-decoration:none;transition:color .18s;padding:6px 0;}
+.sched-link:hover{color:#F69820;}
+.sched-link svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;transition:transform .18s;}
+.sched-link:hover svg{transform:translateY(2px);}
+
+/* 3-column artist grid */
+.ac-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.ac{display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;cursor:pointer;transition:transform .18s;}
+.ac:hover{transform:translateY(-4px);}
+.ac-img{width:100%;aspect-ratio:1;border-radius:18px;overflow:hidden;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;position:relative;}
 .ac-img img{width:100%;height:100%;object-fit:cover;object-position:top center;}
-.ac-name{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;text-align:center;line-height:1.3;}
-.ac-rank{position:absolute;top:6px;left:6px;background:rgba(10,10,10,.78);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:6px;font-size:9px;font-weight:900;color:rgba(255,255,255,.9);padding:2px 6px;letter-spacing:.02em;line-height:1.4;z-index:1;}
-.ac-move{font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-top:-5px;}
+.ac-name{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;text-align:center;line-height:1.3;}
+.ac-rank{position:absolute;top:8px;left:8px;background:rgba(10,10,10,.78);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:6px;font-size:10px;font-weight:900;color:rgba(255,255,255,.9);padding:3px 8px;letter-spacing:.02em;line-height:1.4;z-index:1;}
+.ac-move{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-top:-6px;}
 .ac-move.up{color:#4caf50;}
 .ac-move.dn{color:#e94f8a;}
 .ac-move.hold{color:rgba(255,255,255,.38);}
-.mem-section-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.52);margin-bottom:4px;}
-.sub-tier{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;gap:10px;text-decoration:none;margin-bottom:10px;transition:border-color .15s,background .15s;}
+
+/* Membership panel */
+.mem-section-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.52);margin-bottom:8px;}
+.sub-tier{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 18px;gap:10px;text-decoration:none;margin-bottom:10px;transition:border-color .15s,background .15s;}
 .sub-tier:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);}
 .sub-tier.featured{border-color:rgba(246,152,32,.45);background:rgba(246,152,32,.06);}
 .sub-tier.featured:hover{background:rgba(246,152,32,.12);border-color:#F69820;}
 .sub-tier-name{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#fff;}
 .sub-tier-desc{font-size:11px;color:rgba(255,255,255,.5);font-weight:400;margin-top:3px;line-height:1.5;}
-.sub-tier-price{font-size:15px;font-weight:900;color:#F69820;white-space:nowrap;flex-shrink:0;line-height:1;}
+.sub-tier-price{font-size:16px;font-weight:900;color:#F69820;white-space:nowrap;flex-shrink:0;line-height:1;}
 .sub-tier-price small{display:block;font-size:9px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.06em;margin-top:2px;}
-.sub-cta{display:block;text-align:center;background:#F69820;color:#020c0a;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;padding:14px;border-radius:12px;text-decoration:none;transition:opacity .15s;cursor:pointer;border:none;font-family:'Montserrat',sans-serif;width:100%;}
+.sub-cta{display:block;text-align:center;background:#F69820;color:#020c0a;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;padding:16px;border-radius:12px;text-decoration:none;transition:opacity .15s;cursor:pointer;border:none;font-family:'Montserrat',sans-serif;width:100%;}
 .sub-cta:hover{opacity:.88;}
 .sub-cta:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
-.sched-link{display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,.32);text-decoration:none;transition:color .18s;padding:6px 0;}
-.sched-link:hover{color:#F69820;}
-.sched-link svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;transition:transform .18s;}
-.sched-link:hover svg{transform:translateY(2px);}
+
+/* Schedule section */
 .schedule-section{position:relative;z-index:1;padding:80px 40px 120px;width:100%;border-top:1px solid rgba(255,255,255,.07);}
-.schedule-inner{max-width:1280px;margin:0 auto;}
+.schedule-inner{max-width:960px;margin:0 auto;}
 .sched-header{margin-bottom:40px;}
 .sched-title{font-size:clamp(28px,4vw,48px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;line-height:.95;}
 .sched-sub{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#F69820;margin-top:8px;}
@@ -98,18 +94,16 @@ a{color:inherit;text-decoration:none;}
 .sched-drop-lbl{font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:#e94f8a;margin-bottom:5px;}
 .sched-drop-title{font-size:13px;font-weight:900;color:#fff;line-height:1.1;}
 .sched-drop-artist{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px;}
-@media(max-width:820px){
-  html,body{overflow-y:auto;}
-  .page{height:auto;min-height:100vh;padding:72px 0 60px;}
-  .layout{flex-direction:column;align-items:center;gap:28px;height:auto;padding:0 20px;}
-  .roster-col{order:1;max-width:100%;width:100%;}
-  .phone-col{order:2;}
-  .phone-bezel{--ph:560px;--pw:calc(var(--ph)*0.495);}
-  .roster-panel-wrap{height:auto;overflow-y:visible;}
+
+@media(max-width:760px){
+  .page{padding:80px 20px 60px;}
+  .ac-grid{grid-template-columns:repeat(2,1fr);gap:12px;}
   .schedule-section{padding:60px 20px 80px;}
   .sched-week{grid-template-columns:repeat(4,1fr);}
 }
-@keyframes pdot{0%,100%{opacity:1}50%{opacity:.3}}
+@media(max-width:480px){
+  .ac-grid{grid-template-columns:repeat(2,1fr);}
+}
 </style>
 </head>
 <body>
@@ -119,130 +113,107 @@ a{color:inherit;text-decoration:none;}
   <div class="stars"></div><div class="a a1"></div><div class="a a2"></div><div class="a a3"></div>
   <div class="aurora-ground"></div>
 </div>
-<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">GFS Roster -- GeekFon Society</h1>
+<h1 class="sr-only">GFS Roster -- GeekFon Society</h1>
+
 <main class="page" id="main-content">
-  <div class="layout">
-    <div class="phone-col">
-      <div class="phone-bezel">
-        <div class="phone-notch" aria-hidden="true"></div>
-        <div class="pb r" aria-hidden="true"></div>
-        <div class="pb l1" aria-hidden="true"></div>
-        <div class="pb l2" aria-hidden="true"></div>
-        <div class="pb l3" aria-hidden="true"></div>
-        <div class="phone-screen">
-            <iframe src="gfs-phone-content.html" title="GeekFon Society -- music and chat"></iframe>
-        </div>
-        <div class="phone-home" aria-hidden="true"></div>
-      </div>
-      <div class="phone-mode-toggle" role="group" aria-label="Phone view">
-        <button class="phone-mode-btn active" id="btnViewMusic" onclick="setPhoneView('music')" aria-pressed="true">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          Music
-        </button>
-        <button class="phone-mode-btn" id="btnViewChat" onclick="setPhoneView('chat')" aria-pressed="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Chat
-        </button>
+  <div class="content">
+    <div>
+      <div class="roster-title">GFS Roster</div>
+      <div class="roster-sub">GeekFon Society</div>
+    </div>
+    <div class="panel-toggle" role="group" aria-label="View">
+      <button class="panel-btn active" id="btnPanelRoster" onclick="switchPanel('roster')" aria-pressed="true">Roster</button>
+      <button class="panel-btn" id="btnPanelMember" onclick="switchPanel('membership')" aria-pressed="false">Membership</button>
+    </div>
+    <a href="#schedule" class="sched-link" aria-label="Scroll to This Week schedule">
+      This Week
+      <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+    </a>
+
+    <div id="panelRoster">
+      <div class="ac-grid">
+        <a href="shamanic-resin.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w400-h400" alt="Shamanic Resin" onerror="this.parentElement.style.background='#b548c6';this.parentElement.innerHTML='<span class=ac-rank>#1</span><span style=font-size:1.4em;font-weight:900;color:#fff>SR</span>'"><span class="ac-rank">#1</span></div>
+          <span class="ac-name" style="color:#b548c6">Shamanic Resin</span>
+          <span class="ac-move up">&#9650;3</span>
+        </a>
+        <a href="lex-from-brixton.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w400-h400" alt="Lex from Brixton" onerror="this.parentElement.style.background='#e84d1a';this.parentElement.innerHTML='<span class=ac-rank>#2</span><span>L</span>'"><span class="ac-rank">#2</span></div>
+          <span class="ac-name" style="color:#e84d1a">Lex from Brixton</span>
+          <span class="ac-move up">&#9650;5</span>
+        </a>
+        <a href="riku.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w400-h400" alt="Riku" onerror="this.parentElement.style.background='#7fb069';this.parentElement.innerHTML='<span class=ac-rank>#3</span><span>RK</span>'"><span class="ac-rank">#3</span></div>
+          <span class="ac-name" style="color:#7fb069">Riku</span>
+          <span class="ac-move dn">&#9660;1</span>
+        </a>
+        <a href="roxanne.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w400-h400" alt="Roxanne" onerror="this.parentElement.style.background='#e94f8a';this.parentElement.innerHTML='<span class=ac-rank>#4</span><span>R</span>'"><span class="ac-rank">#4</span></div>
+          <span class="ac-name" style="color:#e94f8a">Roxanne</span>
+          <span class="ac-move up">&#9650;2</span>
+        </a>
+        <a href="mad-tings.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1JNuyjt2SCH0m8PwbkXGSZynrJeOzA-vC&sz=w400-h400" alt="Mad Tings" onerror="this.parentElement.style.background='#d4a800';this.parentElement.innerHTML='<span class=ac-rank>#5</span><span style=font-size:1.2em;font-weight:900;color:#1a1a1a>MT</span>'"><span class="ac-rank">#5</span></div>
+          <span class="ac-name" style="color:#d4a800">Mad Tings</span>
+          <span class="ac-move up">&#9650;1</span>
+        </a>
+        <a href="straight-and-narrow.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w400-h400" alt="Straight and Narrow" onerror="this.parentElement.style.background='#2ec4b6';this.parentElement.innerHTML='<span class=ac-rank>#6</span><span style=font-size:1em;font-weight:900;color:#fff>S&amp;N</span>'"><span class="ac-rank">#6</span></div>
+          <span class="ac-name" style="color:#2ec4b6">Straight &amp; Narrow</span>
+          <span class="ac-move dn">&#9660;2</span>
+        </a>
+        <a href="lickle-bro.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w400-h400" alt="Lickle Bro" onerror="this.parentElement.style.background='#9b6bcc';this.parentElement.innerHTML='<span class=ac-rank>#7</span><span>LB</span>'"><span class="ac-rank">#7</span></div>
+          <span class="ac-name" style="color:#9b6bcc">Lickle Bro</span>
+          <span class="ac-move up">&#9650;1</span>
+        </a>
+        <a href="nilo-wave.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=13eUQSq_5tJDErq5AOPzwKV9P0uTb5QnM&sz=w400-h400" alt="Nilo Wave" onerror="this.parentElement.style.background='#e8a020';this.parentElement.innerHTML='<span class=ac-rank>#8</span><span style=color:#1a1200;font-weight:900>NW</span>'"><span class="ac-rank">#8</span></div>
+          <span class="ac-name" style="color:#e8a020">Nilo Wave</span>
+          <span class="ac-move up">&#9650;3</span>
+        </a>
+        <a href="lickle-sis.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w400-h400" alt="Lickle Sis" onerror="this.parentElement.style.background='#ff6eb4';this.parentElement.innerHTML='<span class=ac-rank>#9</span><span>LS</span>'"><span class="ac-rank">#9</span></div>
+          <span class="ac-name" style="color:#ff6eb4">Lickle Sis</span>
+          <span class="ac-move dn">&#9660;1</span>
+        </a>
+        <a href="rustblood-prophets.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1F7PGb7Jidinz6SsOgVjAOaHkzKvdfW_M&sz=w400-h400" alt="Rustblood Prophets" onerror="this.parentElement.style.background='#8888ff';this.parentElement.innerHTML='<span class=ac-rank>#10</span><span style=font-size:1.1em;font-weight:900;color:#fff>RP</span>'"><span class="ac-rank">#10</span></div>
+          <span class="ac-name" style="color:#8888ff">Rustblood Prophets</span>
+          <span class="ac-move dn">&#9660;3</span>
+        </a>
+        <a href="mr-russell.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1m4D6mGkzT_1g-KYVJeN1scbeGt1VzTIt&sz=w400-h400" alt="Mr. Russell" onerror="this.parentElement.style.background='#F69820';this.parentElement.innerHTML='<span class=ac-rank>#11</span><span style=font-size:1.4em;font-weight:900;color:#1a1a1a>MR</span>'"><span class="ac-rank">#11</span></div>
+          <span class="ac-name" style="color:#F69820">Mr. Russell</span>
+          <span class="ac-move hold">NEW</span>
+        </a>
+        <a href="v.html" class="ac">
+          <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w400-h400" alt="V" onerror="this.parentElement.style.background='#c8922a';this.parentElement.innerHTML='<span class=ac-rank>-</span><span>V</span>'"><span class="ac-rank">-</span></div>
+          <span class="ac-name" style="color:#c8922a">V</span>
+          <span class="ac-move hold">NR</span>
+        </a>
       </div>
     </div>
-    <div class="roster-col">
-      <div class="roster-panel-wrap">
-        <div>
-          <div class="gfs-roster-title">GFS Roster</div>
-          <div class="gfs-roster-sub">GeekFon Society</div>
-        </div>
-        <div class="panel-toggle" role="group" aria-label="View">
-          <button class="panel-btn active" id="btnPanelRoster" onclick="switchPanel('roster')" aria-pressed="true">Roster</button>
-          <button class="panel-btn" id="btnPanelMember" onclick="switchPanel('membership')" aria-pressed="false">Membership</button>
-        </div>
-        <a href="#schedule" class="sched-link" aria-label="Scroll to This Week schedule">
-          This Week
-          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </a>
-        <div id="panelRoster">
-          <div class="ac-grid">
-            <a href="shamanic-resin.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w400-h400" alt="Shamanic Resin" onerror="this.parentElement.style.background='#b548c6';this.parentElement.innerHTML='<span style=font-size:1.4em;font-weight:900;color:#fff>SR</span>'"><span class="ac-rank">#1</span></div>
-              <span class="ac-name" style="color:#b548c6">Shamanic Resin</span>
-              <span class="ac-move up">&#9650;3</span>
-            </a>
-            <a href="lex-from-brixton.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w400-h400" alt="Lex from Brixton" onerror="this.parentElement.style.background='#e84d1a';this.parentElement.innerHTML='<span>L</span>'"><span class="ac-rank">#2</span></div>
-              <span class="ac-name" style="color:#e84d1a">Lex from Brixton</span>
-              <span class="ac-move up">&#9650;5</span>
-            </a>
-            <a href="riku.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w400-h400" alt="Riku" onerror="this.parentElement.style.background='#7fb069';this.parentElement.innerHTML='<span>RK</span>'"><span class="ac-rank">#3</span></div>
-              <span class="ac-name" style="color:#7fb069">Riku</span>
-              <span class="ac-move dn">&#9660;1</span>
-            </a>
-            <a href="roxanne.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w400-h400" alt="Roxanne" onerror="this.parentElement.style.background='#e94f8a';this.parentElement.innerHTML='<span>R</span>'"><span class="ac-rank">#4</span></div>
-              <span class="ac-name" style="color:#e94f8a">Roxanne</span>
-              <span class="ac-move up">&#9650;2</span>
-            </a>
-            <a href="mad-tings.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1JNuyjt2SCH0m8PwbkXGSZynrJeOzA-vC&sz=w400-h400" alt="Mad Tings" onerror="this.parentElement.style.background='#d4a800';this.parentElement.innerHTML='<span style=font-size:1.2em;font-weight:900;color:#1a1a1a>MT</span>'"><span class="ac-rank">#5</span></div>
-              <span class="ac-name" style="color:#d4a800">Mad Tings</span>
-              <span class="ac-move up">&#9650;1</span>
-            </a>
-            <a href="straight-and-narrow.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w400-h400" alt="Straight and Narrow" onerror="this.parentElement.style.background='#2ec4b6';this.parentElement.innerHTML='<span style=font-size:1em;font-weight:900;color:#fff>S&amp;N</span>'"><span class="ac-rank">#6</span></div>
-              <span class="ac-name" style="color:#2ec4b6">Straight &amp; Narrow</span>
-              <span class="ac-move dn">&#9660;2</span>
-            </a>
-            <a href="lickle-bro.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w400-h400" alt="Lickle Bro" onerror="this.parentElement.style.background='#9b6bcc';this.parentElement.innerHTML='<span>LB</span>'"><span class="ac-rank">#7</span></div>
-              <span class="ac-name" style="color:#9b6bcc">Lickle Bro</span>
-              <span class="ac-move up">&#9650;1</span>
-            </a>
-            <a href="nilo-wave.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=13eUQSq_5tJDErq5AOPzwKV9P0uTb5QnM&sz=w400-h400" alt="Nilo Wave" onerror="this.parentElement.style.background='#e8a020';this.parentElement.innerHTML='<span style=color:#1a1200;font-weight:900>NW</span>'"><span class="ac-rank">#8</span></div>
-              <span class="ac-name" style="color:#e8a020">Nilo Wave</span>
-              <span class="ac-move up">&#9650;3</span>
-            </a>
-            <a href="lickle-sis.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w400-h400" alt="Lickle Sis" onerror="this.parentElement.style.background='#ff6eb4';this.parentElement.innerHTML='<span>LS</span>'"><span class="ac-rank">#9</span></div>
-              <span class="ac-name" style="color:#ff6eb4">Lickle Sis</span>
-              <span class="ac-move dn">&#9660;1</span>
-            </a>
-            <a href="rustblood-prophets.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1F7PGb7Jidinz6SsOgVjAOaHkzKvdfW_M&sz=w400-h400" alt="Rustblood Prophets" onerror="this.parentElement.style.background='#8888ff';this.parentElement.innerHTML='<span style=font-size:1.1em;font-weight:900;color:#fff>RP</span>'"><span class="ac-rank">#10</span></div>
-              <span class="ac-name" style="color:#8888ff">Rustblood Prophets</span>
-              <span class="ac-move dn">&#9660;3</span>
-            </a>
-            <a href="mr-russell.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1m4D6mGkzT_1g-KYVJeN1scbeGt1VzTIt&sz=w400-h400" alt="Mr. Russell" onerror="this.parentElement.style.background='#F69820';this.parentElement.innerHTML='<span style=font-size:1.4em;font-weight:900;color:#1a1a1a>MR</span>'"><span class="ac-rank">#11</span></div>
-              <span class="ac-name" style="color:#F69820">Mr. Russell</span>
-              <span class="ac-move hold">NEW</span>
-            </a>
-            <a href="v.html" class="ac">
-              <div class="ac-img"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w400-h400" alt="V" onerror="this.parentElement.style.background='#c8922a';this.parentElement.innerHTML='<span>V</span>'"><span class="ac-rank">-</span></div>
-              <span class="ac-name" style="color:#c8922a">V</span>
-              <span class="ac-move hold">NR</span>
-            </a>
-          </div>
-        </div>
-        <div id="panelMembership" style="display:none">
-          <div class="mem-section-lbl">Membership</div>
-          <a href="#" class="sub-tier featured">
-            <div><div class="sub-tier-name">Passport</div><div class="sub-tier-desc">Full Group Chat + all artist feeds</div></div>
-            <div class="sub-tier-price">$11<small>one-time</small></div>
-          </a>
-          <a href="#" class="sub-tier">
-            <div><div class="sub-tier-name">All Access</div><div class="sub-tier-desc">Everything + exclusive drops</div></div>
-            <div class="sub-tier-price">$11<small>/mo</small></div>
-          </a>
-          <a href="#" class="sub-tier">
-            <div><div class="sub-tier-name">Lifetime</div><div class="sub-tier-desc">Never pay again</div></div>
-            <div class="sub-tier-price">$111</div>
-          </a>
-          <button class="sub-cta" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Join GeekFon Society</button>
-        </div>
-      </div>
+
+    <div id="panelMembership" style="display:none">
+      <div class="mem-section-lbl">Membership</div>
+      <a href="#" class="sub-tier featured">
+        <div><div class="sub-tier-name">Passport</div><div class="sub-tier-desc">Full Group Chat + all artist feeds</div></div>
+        <div class="sub-tier-price">$11<small>one-time</small></div>
+      </a>
+      <a href="#" class="sub-tier">
+        <div><div class="sub-tier-name">All Access</div><div class="sub-tier-desc">Everything + exclusive drops</div></div>
+        <div class="sub-tier-price">$11<small>/mo</small></div>
+      </a>
+      <a href="#" class="sub-tier">
+        <div><div class="sub-tier-name">Lifetime</div><div class="sub-tier-desc">Never pay again</div></div>
+        <div class="sub-tier-price">$111</div>
+      </a>
+      <button class="sub-cta" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Join GeekFon Society</button>
     </div>
   </div>
 </main>
+
 <section id="schedule" class="schedule-section" aria-label="GFS weekly schedule">
   <div class="schedule-inner">
     <div class="sched-header">
@@ -250,146 +221,35 @@ a{color:inherit;text-decoration:none;}
       <div class="sched-sub">May 18 -- 24, 2026 &nbsp;&middot;&nbsp; GFS Group Chat</div>
     </div>
     <div class="sched-week">
-      <div class="sched-day">
-        <div class="sched-day-hdr">Mon 18</div>
-        <div class="sched-avatars">
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w60-h60" alt="Riku"></div>
-        </div>
-        <div class="sched-events">
-          <div class="sched-event"><strong>V</strong>New week. What are we running?</div>
-          <div class="sched-event"><strong>Lex</strong>Already cooked something last night.</div>
-        </div>
-      </div>
-      <div class="sched-day">
-        <div class="sched-day-hdr">Tue 19</div>
-        <div class="sched-avatars">
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w60-h60" alt="Lickle Sis"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w60-h60" alt="Lickle Bro"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div>
-        </div>
-        <div class="sched-events">
-          <div class="sched-event"><strong>Lickle Sis</strong>Dropped a new verse. 2am energy is undefeated.</div>
-        </div>
-      </div>
-      <div class="sched-day">
-        <div class="sched-day-hdr">Wed 20</div>
-        <div class="sched-avatars">
-          <div class="sched-av" style="background:#00cfe8;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#000;">Vi</div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w60-h60" alt="S&N"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div>
-        </div>
-        <div class="sched-events">
-          <div class="sched-event"><strong>Vira</strong>New track in the studio today.</div>
-          <div class="sched-event"><strong>V</strong>When the universe moves together you feel it.</div>
-        </div>
-      </div>
-      <div class="sched-day">
-        <div class="sched-day-hdr">Thu 21</div>
-        <div class="sched-avatars">
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w60-h60" alt="Lickle Sis"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w60-h60" alt="Riku"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div>
-        </div>
-        <div class="sched-events">
-          <div class="sched-event"><strong>Lex</strong>Riku has been online for 3 hours and said nothing.</div>
-          <div class="sched-event"><strong>Riku</strong>&#128528;</div>
-        </div>
-      </div>
-      <div class="sched-day featured">
-        <div class="sched-day-hdr">Fri 22</div>
-        <div class="sched-avatars">
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w60-h60" alt="Lickle Sis"></div>
-        </div>
-        <div class="sched-events">
-          <div class="sched-event"><strong>V</strong>GFS fam hears it first.</div>
-        </div>
-        <div class="sched-drop">
-          <div class="sched-drop-lbl">Dropping This Friday</div>
-          <div class="sched-drop-title">Hanamachi</div>
-          <div class="sched-drop-artist">Roxanne</div>
-        </div>
-      </div>
-      <div class="sched-day">
-        <div class="sched-day-hdr">Sat 23</div>
-        <div class="sched-avatars">
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w60-h60" alt="S&N"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w60-h60" alt="Lickle Bro"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div>
-        </div>
-        <div class="sched-events">
-          <div class="sched-event"><strong>Narrow</strong>Weekend energy. Anyone in the studio?</div>
-          <div class="sched-event"><strong>V</strong>This is why I love this group.</div>
-        </div>
-      </div>
-      <div class="sched-day">
-        <div class="sched-day-hdr">Sun 24</div>
-        <div class="sched-avatars">
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div>
-          <div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w60-h60" alt="Riku"></div>
-        </div>
-        <div class="sched-events">
-          <div class="sched-event"><strong>V</strong>Week one down. This is just the beginning.</div>
-          <div class="sched-event"><strong>Riku</strong>&#10084;&#65039;</div>
-        </div>
-      </div>
+      <div class="sched-day"><div class="sched-day-hdr">Mon 18</div><div class="sched-avatars"><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w60-h60" alt="Riku"></div></div><div class="sched-events"><div class="sched-event"><strong>V</strong>New week. What are we running?</div><div class="sched-event"><strong>Lex</strong>Already cooked something last night.</div></div></div>
+      <div class="sched-day"><div class="sched-day-hdr">Tue 19</div><div class="sched-avatars"><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w60-h60" alt="Lickle Sis"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w60-h60" alt="Lickle Bro"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div></div><div class="sched-events"><div class="sched-event"><strong>Lickle Sis</strong>Dropped a new verse. 2am energy is undefeated.</div></div></div>
+      <div class="sched-day"><div class="sched-day-hdr">Wed 20</div><div class="sched-avatars"><div class="sched-av" style="background:#00cfe8;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#000;">Vi</div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w60-h60" alt="S&N"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div></div><div class="sched-events"><div class="sched-event"><strong>Vira</strong>New track in the studio today.</div><div class="sched-event"><strong>V</strong>When the universe moves together you feel it.</div></div></div>
+      <div class="sched-day"><div class="sched-day-hdr">Thu 21</div><div class="sched-avatars"><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w60-h60" alt="Lickle Sis"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w60-h60" alt="Riku"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div></div><div class="sched-events"><div class="sched-event"><strong>Lex</strong>Riku has been online for 3 hours and said nothing.</div><div class="sched-event"><strong>Riku</strong>&#128528;</div></div></div>
+      <div class="sched-day featured"><div class="sched-day-hdr">Fri 22</div><div class="sched-avatars"><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w60-h60" alt="Lickle Sis"></div></div><div class="sched-events"><div class="sched-event"><strong>V</strong>GFS fam hears it first.</div></div><div class="sched-drop"><div class="sched-drop-lbl">Dropping This Friday</div><div class="sched-drop-title">Hanamachi</div><div class="sched-drop-artist">Roxanne</div></div></div>
+      <div class="sched-day"><div class="sched-day-hdr">Sat 23</div><div class="sched-avatars"><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w60-h60" alt="S&N"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w60-h60" alt="Lickle Bro"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div></div><div class="sched-events"><div class="sched-event"><strong>Narrow</strong>Weekend energy. Anyone in the studio?</div><div class="sched-event"><strong>V</strong>This is why I love this group.</div></div></div>
+      <div class="sched-day"><div class="sched-day-hdr">Sun 24</div><div class="sched-avatars"><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1WLPPw7Gf3YJXBi32RzLkOrcfux2gTwZo&sz=w60-h60" alt="V"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w60-h60" alt="Lex"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w60-h60" alt="Roxanne"></div><div class="sched-av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w60-h60" alt="Riku"></div></div><div class="sched-events"><div class="sched-event"><strong>V</strong>Week one down. This is just the beginning.</div><div class="sched-event"><strong>Riku</strong>&#10084;&#65039;</div></div></div>
     </div>
   </div>
 </section>
+
 <script>
-  function getPhoneIframe() { return document.querySelector('.phone-screen iframe'); }
-  function sendToPhone(msg) { var iframe = getPhoneIframe(); if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage(msg, '*'); }
-  function setPhoneView(v) {
-    sendToPhone({ view: v });
-    ['Music','Chat'].forEach(function(x) {
-      var btn = document.getElementById('btnView' + x);
-      var active = x.toLowerCase() === v;
-      if (btn) { btn.classList.toggle('active', active); btn.setAttribute('aria-pressed', String(active)); }
-    });
+function switchPanel(panel) {
+  var panelR = document.getElementById('panelRoster');
+  var panelM = document.getElementById('panelMembership');
+  var btnR   = document.getElementById('btnPanelRoster');
+  var btnM   = document.getElementById('btnPanelMember');
+  if (panel === 'roster') {
+    if (panelR) panelR.style.display = '';
+    if (panelM) panelM.style.display = 'none';
+    if (btnR) { btnR.classList.add('active'); btnR.setAttribute('aria-pressed','true'); }
+    if (btnM) { btnM.classList.remove('active'); btnM.setAttribute('aria-pressed','false'); }
+  } else {
+    if (panelR) panelR.style.display = 'none';
+    if (panelM) panelM.style.display = '';
+    if (btnM) { btnM.classList.add('active'); btnM.setAttribute('aria-pressed','true'); }
+    if (btnR) { btnR.classList.remove('active'); btnR.setAttribute('aria-pressed','false'); }
   }
-  var _loggedIn = false;
-  function toggleLogin() {
-  _loggedIn = !_loggedIn;
-  sendToPhone({ loggedIn: _loggedIn });
-});
-  }
-  function switchPanel(panel) {
-    var panelR = document.getElementById('panelRoster');
-    var panelM = document.getElementById('panelMembership');
-    var btnR   = document.getElementById('btnPanelRoster');
-    var btnM   = document.getElementById('btnPanelMember');
-    if (panel === 'roster') {
-      if (panelR) panelR.style.display = '';
-      if (panelM) panelM.style.display = 'none';
-      if (btnR) { btnR.classList.add('active'); btnR.setAttribute('aria-pressed','true'); }
-      if (btnM) { btnM.classList.remove('active'); btnM.setAttribute('aria-pressed','false'); }
-    } else {
-      if (panelR) panelR.style.display = 'none';
-      if (panelM) panelM.style.display = '';
-      if (btnM) { btnM.classList.add('active'); btnM.setAttribute('aria-pressed','true'); }
-      if (btnR) { btnR.classList.remove('active'); btnR.setAttribute('aria-pressed','false'); }
-    }
-  }
-  var FON_COLORS = ['#F69820','#e94f8a','#7fb069','#9b6bcc','#00cfe8','#e84d1a'];
-  var fonColorIdx = 0;
-  document.addEventListener('DOMContentLoaded', function() {
-    setInterval(function() {
-      fonColorIdx = (fonColorIdx + 1) % FON_COLORS.length;
-      var el = document.getElementById('navFon');
-      if (el) el.style.color = FON_COLORS[fonColorIdx];
-    }, 3000);
-  });
+}
 </script>
 <script src="/footer.js"></script>
 </body>
