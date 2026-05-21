@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout -- GeekFon Society</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;font-family:'Montserrat',sans-serif;background:#020c0a;color:#e8e8e8;overflow-x:hidden;}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+a{color:inherit;text-decoration:none;}
+
+/* Aurora */
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 9% 6%,rgba(255,255,255,.55) 0%,transparent 100%),radial-gradient(1px 1px at 44% 4%,rgba(255,255,255,.48) 0%,transparent 100%),radial-gradient(1px 1px at 76% 7%,rgba(255,255,255,.52) 0%,transparent 100%);}
+.a{position:absolute;border-radius:50%;filter:blur(90px);}
+.a1{width:85vw;height:48vh;top:-20vh;left:4vw;background:radial-gradient(ellipse at center,rgba(0,215,95,.22) 0%,transparent 70%);animation:d1 18s ease-in-out infinite alternate;}
+.a2{width:62vw;height:40vh;top:-14vh;right:-6vw;background:radial-gradient(ellipse at center,rgba(0,155,255,.15) 0%,transparent 70%);animation:d2 24s ease-in-out infinite alternate;}
+.a3{width:52vw;height:34vh;top:0;left:24vw;background:radial-gradient(ellipse at center,rgba(120,0,255,.11) 0%,transparent 70%);animation:d3 20s ease-in-out infinite alternate;}
+.aurora-ground{position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to top,rgba(2,12,10,.98) 0%,transparent 100%);}
+@keyframes d1{from{transform:translate(0,0)}to{transform:translate(4vw,5vh)}}
+@keyframes d2{from{transform:translate(0,0)}to{transform:translate(-5vw,3vh)}}
+@keyframes d3{from{transform:translate(0,0)}to{transform:translate(3vw,-4vh) rotate(7deg)}}
+
+/* Layout */
+.page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:24px 40px;border-bottom:1px solid rgba(255,255,255,.06);}
+.topbar-logo{font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;color:#F69820;}
+.topbar-back{font-size:11px;font-weight:700;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:6px;transition:color .15s;}
+.topbar-back:hover{color:#fff;}
+.topbar-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.checkout-wrap{flex:1;display:grid;grid-template-columns:1fr 1fr;max-width:1100px;width:100%;margin:0 auto;padding:60px 40px 80px;gap:64px;align-items:start;}
+
+/* Order summary */
+.summary{position:sticky;top:40px;}
+.summary-eyebrow{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.22em;color:#F69820;margin-bottom:20px;}
+.summary-tier{font-size:36px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;line-height:1;margin-bottom:6px;}
+.summary-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:28px;}
+.summary-amount{font-size:42px;font-weight:900;color:#F69820;line-height:1;}
+.summary-period{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);}
+.summary-divider{height:1px;background:rgba(255,255,255,.07);margin-bottom:24px;}
+.summary-section-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.55);margin-bottom:14px;}
+.summary-features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.summary-feature{display:flex;align-items:flex-start;gap:10px;font-size:12px;font-weight:500;color:rgba(255,255,255,.7);line-height:1.5;}
+.summary-feature svg{width:15px;height:15px;stroke:#4caf50;fill:none;stroke-width:2.5;flex-shrink:0;margin-top:1px;}
+
+/* Artist list (passport only) */
+.artist-list{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;}
+.artist-row{display:flex;align-items:center;gap:10px;}
+.artist-av{width:32px;height:32px;border-radius:50%;overflow:hidden;background:#1a2a1a;flex-shrink:0;border:1px solid rgba(255,255,255,.1);}
+.artist-av img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
+.artist-name{font-size:12px;font-weight:700;color:rgba(255,255,255,.8);}
+.artist-price{font-size:11px;font-weight:700;color:rgba(255,255,255,.55);margin-left:auto;}
+.summary-total-row{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:20px;}
+.total-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.65);}
+.total-amt{font-size:22px;font-weight:900;color:#F69820;}
+.trust-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.trust-badge{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);}
+.trust-badge svg{width:12px;height:12px;stroke:rgba(255,255,255,.55);fill:none;stroke-width:2;}
+
+/* Stripe panel */
+.stripe-panel{}
+.stripe-panel-hdr{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.55);margin-bottom:24px;}
+#checkout{min-height:400px;}
+.stripe-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:16px;}
+.stripe-spinner{width:32px;height:32px;border:3px solid rgba(246,152,32,.2);border-top-color:#F69820;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stripe-loading-text{font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.1em;}
+.stripe-error{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:12px;padding:20px;font-size:13px;color:rgba(231,76,60,.9);line-height:1.6;text-align:center;}
+.stripe-error a{color:#F69820;text-decoration:underline;}
+
+/* Responsive */
+@media(max-width:860px){
+  .checkout-wrap{grid-template-columns:1fr;gap:40px;padding:40px 24px 60px;}
+  .summary{position:static;}
+  .topbar{padding:20px 24px;}
+}
+@media(max-width:480px){
+  .topbar{padding:16px 20px;}
+  .checkout-wrap{padding:32px 20px 60px;}
+  .summary-tier{font-size:28px;}
+  .summary-amount{font-size:34px;}
+}
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true">
+  <div class="stars"></div>
+  <div class="a a1"></div><div class="a a2"></div><div class="a a3"></div>
+  <div class="aurora-ground"></div>
+</div>
+
+<div class="page">
+  <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Checkout -- GeekFon Society</h1>
+<header class="topbar">
+    <span class="topbar-logo">GeekFon Society</span>
+    <a href="/passport" class="topbar-back" aria-label="Back to membership options">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      Change plan
+    </a>
+  </header>
+
+  <div class="checkout-wrap" id="checkoutWrap" style="display:none">
+    <!-- Order summary -->
+    <aside class="summary" aria-label="Order summary" id="summaryPanel">
+      <div class="summary-eyebrow">Order summary</div>
+      <div class="summary-tier" id="tierName">--</div>
+      <div class="summary-price-row">
+        <span class="summary-amount" id="tierAmount">--</span>
+        <span class="summary-period" id="tierPeriod"></span>
+      </div>
+      <div class="summary-divider"></div>
+
+      <!-- Artist list (passport only) -->
+      <div id="artistSection" style="display:none">
+        <div class="summary-section-lbl">Artists unlocked</div>
+        <div class="artist-list" id="artistList"></div>
+        <div class="summary-total-row">
+          <span class="total-lbl">Total</span>
+          <span class="total-amt" id="totalAmt">--</span>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="summary-section-lbl">What you get</div>
+      <div class="summary-features" id="featureList"></div>
+
+      <div class="trust-row">
+        <div class="trust-badge">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Secured by Stripe
+        </div>
+        <div class="trust-badge">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          Instant access
+        </div>
+        <div class="trust-badge">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Cancel any time
+        </div>
+      </div>
+    </aside>
+
+    <!-- Stripe embedded form -->
+    <section class="stripe-panel" aria-label="Payment">
+      <div class="stripe-panel-hdr">Payment details</div>
+      <div id="checkoutContainer">
+        <div class="stripe-loading" id="stripeLoading" aria-live="polite" aria-label="Loading payment form">
+          <div class="stripe-spinner" aria-hidden="true"></div>
+          <span class="stripe-loading-text">Loading secure checkout...</span>
+        </div>
+        <div id="checkout"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Full-page loading before params are resolved -->
+  <div id="pageLoading" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+    <div class="stripe-spinner" aria-hidden="true"></div>
+    <span class="stripe-loading-text">Preparing your order...</span>
+  </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+var STRIPE_PK = null; // loaded from /api/config at runtime
+
+var ARTIST_DATA = {
+  'shamanic-resin':     { name: 'Shamanic Resin',     img: 'https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w80-h80',  color: '#b548c6' },
+  'lex-from-brixton':   { name: 'Lex from Brixton',   img: 'https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w80-h80',   color: '#e84d1a' },
+  'riku':               { name: 'Riku',               img: 'https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w80-h80',   color: '#7fb069' },
+  'roxanne':            { name: 'Roxanne',             img: 'https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w80-h80',   color: '#e94f8a' },
+  'mad-tings':          { name: 'Mad Tings',           img: 'https://drive.google.com/thumbnail?id=1JNuyjt2SCH0m8PwbkXGSZynrJeOzA-vC&sz=w80-h80',   color: '#d4a800' },
+  'straight-and-narrow':{ name: 'Straight & Narrow',  img: 'https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w80-h80',   color: '#2ec4b6' },
+  'lickle-bro':         { name: 'Lickle Bro',          img: 'https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w80-h80',   color: '#9b6bcc' },
+  'nilo-wave':          { name: 'Nilo Wave',           img: 'https://drive.google.com/thumbnail?id=13eUQSq_5tJDErq5AOPzwKV9P0uTb5QnM&sz=w80-h80',   color: '#e8a020' },
+  'lickle-sis':         { name: 'Lickle Sis',          img: 'https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w80-h80',   color: '#ff6eb4' },
+  'rustblood-prophets': { name: 'Rustblood Prophets',  img: 'https://drive.google.com/thumbnail?id=1F7PGb7Jidinz6SsOgVjAOaHkzKvdfW_M&sz=w80-h80',   color: '#8888ff' },
+  'mr-russell':         { name: 'Mr. Russell',         img: 'https://drive.google.com/thumbnail?id=1m4D6mGkzT_1g-KYVJeN1scbeGt1VzTIt&sz=w80-h80',   color: '#F69820' },
+};
+
+var TIER_META = {
+  'passport': {
+    label: 'Passport',
+    period: 'per artist / once',
+    features: [
+      'Lifetime access to every selected artist',
+      'Full track catalog -- current and future releases',
+      'First-listen drop access',
+      'Full GFS group chat',
+      'One-time payment, no subscription',
+    ],
+  },
+  'all-access': {
+    label: 'All Access',
+    period: '/month',
+    features: [
+      'Every artist on the platform unlocked',
+      'All future artists included automatically',
+      'Full track catalog for every artist',
+      'Full GFS group chat',
+      'Cancel any time',
+    ],
+  },
+  'lifetime': {
+    label: 'Lifetime',
+    period: 'once',
+    features: [
+      'Every artist on the platform, forever',
+      'New drops heard before All Access members',
+      'Full track catalog, always',
+      'Full GFS group chat',
+      'No renewals, ever',
+    ],
+  },
+};
+
+var TIER_PRICE = { 'passport': 11, 'all-access': 11, 'lifetime': 111 };
+
+function checkSvg() {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+}
+
+function buildSummary(tier, artists, quantity) {
+  var meta = TIER_META[tier];
+  if (!meta) return;
+
+  document.getElementById('tierName').textContent = meta.label;
+  document.getElementById('tierPeriod').textContent = meta.period;
+
+  var basePrice = TIER_PRICE[tier] || 0;
+
+  if (tier === 'passport' && artists.length > 0) {
+    var total = basePrice * artists.length;
+    document.getElementById('tierAmount').textContent = '$' + basePrice;
+    document.getElementById('totalAmt').textContent = '$' + total;
+    document.getElementById('artistSection').style.display = '';
+    var listEl = document.getElementById('artistList');
+    artists.forEach(function(slug) {
+      var a = ARTIST_DATA[slug] || { name: slug, img: '', color: '#444' };
+      var row = document.createElement('div');
+      row.className = 'artist-row';
+      row.innerHTML =
+        '<div class="artist-av" style="background:' + a.color + '">' +
+          (a.img ? '<img src="' + a.img + '" alt="' + a.name + '" onerror="this.style.display=\'none\'">' : '') +
+        '</div>' +
+        '<span class="artist-name">' + a.name + '</span>' +
+        '<span class="artist-price">$' + basePrice + '</span>';
+      listEl.appendChild(row);
+    });
+  } else {
+    document.getElementById('tierAmount').textContent = '$' + (basePrice * quantity);
+    document.getElementById('artistSection').style.display = 'none';
+  }
+
+  var featEl = document.getElementById('featureList');
+  meta.features.forEach(function(f) {
+    var div = document.createElement('div');
+    div.className = 'summary-feature';
+    div.innerHTML = checkSvg() + f;
+    featEl.appendChild(div);
+  });
+}
+
+async function initCheckout() {
+  var params = new URLSearchParams(window.location.search);
+  var tier     = params.get('tier');
+  var artists  = (params.get('artists') || '').split(',').filter(Boolean);
+  var quantity = parseInt(params.get('quantity'), 10) || (artists.length > 0 ? artists.length : 1);
+
+  if (!tier || !['passport','all-access','lifetime'].includes(tier)) {
+    window.location.href = '/passport';
+    return;
+  }
+
+  // Show layout, populate summary
+  document.getElementById('pageLoading').style.display = 'none';
+  document.getElementById('checkoutWrap').style.display = '';
+  buildSummary(tier, artists, quantity);
+
+  // Fetch client secret from API
+  var apiUrl = '/api/checkout?tier=' + encodeURIComponent(tier) +
+               '&quantity=' + quantity +
+               (artists.length ? '&artists=' + encodeURIComponent(artists.join(',')) : '');
+
+  var clientSecret;
+  try {
+    var r = await fetch(apiUrl);
+    var data = await r.json();
+    if (!r.ok || !data.clientSecret) throw new Error(data.error || 'No client secret');
+    clientSecret = data.clientSecret;
+  } catch (err) {
+    console.error('Checkout session error:', err);
+    document.getElementById('stripeLoading').style.display = 'none';
+    document.getElementById('checkout').innerHTML =
+      '<div class="stripe-error">Could not start checkout. <a href="/passport">Go back</a> and try again.</div>';
+    return;
+  }
+
+  // Fetch publishable key if not already loaded
+  if (!STRIPE_PK) {
+    try {
+      var cfgRes = await fetch('/api/config');
+      var cfg = await cfgRes.json();
+      if (!cfg.stripePk) throw new Error('No PK in config');
+      STRIPE_PK = cfg.stripePk;
+    } catch (err) {
+      console.error('Config fetch error:', err);
+      document.getElementById('stripeLoading').style.display = 'none';
+      document.getElementById('checkout').innerHTML =
+        '<div class="stripe-error">Payment config unavailable. <a href="/passport">Go back</a> and try again.</div>';
+      return;
+    }
+  }
+
+  // Mount Stripe embedded checkout
+  var stripeObj = Stripe(STRIPE_PK);
+  var appearance = {
+    theme: 'night',
+    variables: {
+      colorPrimary: '#F69820',
+      colorBackground: '#0d1c14',
+      colorText: '#e8e8e8',
+      colorDanger: '#e74c3c',
+      fontFamily: 'Montserrat, system-ui, sans-serif',
+      spacingUnit: '4px',
+      borderRadius: '10px',
+    },
+  };
+
+  try {
+    var checkout = await stripeObj.initEmbeddedCheckout({
+      clientSecret: clientSecret,
+      appearance: appearance,
+    });
+    document.getElementById('stripeLoading').style.display = 'none';
+    checkout.mount('#checkout');
+  } catch (err) {
+    console.error('Stripe mount error:', err);
+    document.getElementById('stripeLoading').style.display = 'none';
+    document.getElementById('checkout').innerHTML =
+      '<div class="stripe-error">Payment form failed to load. <a href="/passport">Go back</a> and try again.</div>';
+  }
+}
+
+initCheckout();
+</script>
+</body>
+</html>

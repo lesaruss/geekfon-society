@@ -2,7 +2,6 @@
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// Env var fallbacks (used if Supabase is unavailable)
 const PRICE_FALLBACKS = {
   passport:     { price: process.env.STRIPE_PRICE_PASSPORT,   mode: 'payment'      },
   'all-access': { price: process.env.STRIPE_PRICE_ALL_ACCESS, mode: 'subscription' },
@@ -11,7 +10,6 @@ const PRICE_FALLBACKS = {
 
 const VALID_TIERS = new Set(['passport', 'all-access', 'lifetime']);
 
-// Fetch price from lesaruss_products table (canonical source)
 async function getPriceFromDB(tier) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY;
@@ -43,8 +41,8 @@ module.exports = async (req, res) => {
 
   const quantity = parseInt(req.query.quantity, 10) || 1;
   const artists  = req.query.artists || '';
+  const origin   = req.headers.origin || 'https://geekfon.ai';
 
-  // Prefer DB lookup, fall back to env vars
   const product = (await getPriceFromDB(tier)) || PRICE_FALLBACKS[tier];
   if (!product || !product.price) {
     return res.status(500).json({ error: 'Price not configured for: ' + tier });
@@ -55,11 +53,11 @@ module.exports = async (req, res) => {
       payment_method_types: ['card'],
       line_items: [{ price: product.price, quantity }],
       mode: product.mode,
-      success_url: 'https://geekfon.ai/register?tier=' + tier,
-      cancel_url:  'https://geekfon.ai/passport',
+      ui_mode: 'embedded',
+      return_url: origin + '/register?tier=' + tier + '&session_id={CHECKOUT_SESSION_ID}',
       metadata: { tier, artists, quantity: String(quantity) },
     });
-    return res.json({ url: session.url });
+    return res.json({ clientSecret: session.client_secret });
   } catch (err) {
     console.error('Stripe checkout error:', err.message);
     return res.status(500).json({ error: 'Checkout session failed' });

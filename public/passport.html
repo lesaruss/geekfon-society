@@ -340,7 +340,7 @@ button{font-family:'Montserrat',sans-serif;}
     <!-- All Access + Lifetime -->
     <div class="lower-tiers" style="margin-top:16px">
 
-      <a class="gfs-sub-tier featured" href="#" role="button" aria-label="Get All Access for $11 per month">
+      <a class="gfs-sub-tier featured" href="/checkout?tier=all-access" role="button" aria-label="Get All Access for $11 per month">
         <div class="tier-badge">Most Popular</div>
         <div class="tier-header">
           <span class="gfs-sub-tier-name">All Access</span>
@@ -355,7 +355,7 @@ button{font-family:'Montserrat',sans-serif;}
         <div class="tier-cta">Get All Access</div>
       </a>
 
-      <a class="gfs-sub-tier" href="#" role="button" aria-label="Get Lifetime membership for $111">
+      <a class="gfs-sub-tier" href="/checkout?tier=lifetime" role="button" aria-label="Get Lifetime membership for $111">
         <div class="tier-badge">Closes July 1</div>
         <div class="tier-header">
           <span class="gfs-sub-tier-name">Lifetime</span>
@@ -460,21 +460,8 @@ function checkoutPassport() {
   if (selected.size === 0) return;
   var artists = Array.from(selected).join(',');
   var qty = selected.size;
-  var cta = document.getElementById('passportCta');
-  cta.disabled = true;
-  cta.textContent = 'Starting checkout...';
-  fetch('/api/checkout?tier=passport&quantity=' + qty + '&artists=' + encodeURIComponent(artists))
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.url) { window.location.href = data.url; }
-      else { throw new Error(data.error || 'No checkout URL'); }
-    })
-    .catch(function(err) {
-      console.error('Checkout error:', err);
-      cta.disabled = false;
-      cta.textContent = 'Checkout -- $' + (selected.size * 11);
-      alert('Could not start checkout. Please try again.');
-    });
+  var params = new URLSearchParams({ tier: 'passport', quantity: qty, artists: artists });
+  window.location.href = '/checkout?' + params.toString();
 }
 </script>
 
