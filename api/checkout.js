@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
       payment_method_types: ['card'],
       line_items: [{ price: product.price, quantity }],
       mode: product.mode,
-      success_url: 'https://geekfon.ai/welcome?tier=' + tier,
+      success_url: 'https://geekfon.ai/register?tier=' + tier,
       cancel_url:  'https://geekfon.ai/passport',
       metadata: { tier, artists, quantity: String(quantity) },
     });

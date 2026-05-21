@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Your GeekFon Society dashboard.">
+<meta name="theme-color" content="#1A1A1A">
+<title>Dashboard - GeekFon Society</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #F69820;
+  --black: #1A1A1A;
+  --gray: #555555;
+  --bg: #f7f7f7;
+  --card: #ffffff;
+  --border: #e0e0e0;
+  --nav-h: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html, body {
+  height: 100%;
+  background: var(--bg);
+  font-family: 'Montserrat', sans-serif;
+  color: var(--black);
+  overflow-x: hidden;
+}
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top header */
+.top-header {
+  background: var(--black);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  height: 52px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.top-header .logo img { height: 28px; }
+.top-header .member-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.member-pill .tier-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--orange);
+  animation: pulse-dot 2.8s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(246,152,32,0.5); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(246,152,32,0); }
+}
+.member-pill .tier-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--orange);
+}
+
+/* Scroll area */
+.scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 1rem);
+}
+
+/* Tab panels */
+.tab-panel { display: none; padding: 1rem; }
+.tab-panel.active { display: block; }
+
+/* Bottom nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(var(--nav-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 100;
+  border-top: 1px solid #333;
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #888;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-btn svg { width: 22px; height: 22px; transition: color 0.15s; }
+.nav-btn.active { color: var(--orange); }
+.nav-btn:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: -2px;
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.card-header {
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-header h2 {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.card-body { padding: 1.25rem; }
+
+/* ===== GET STARTED GUIDE ===== */
+.guide-card {
+  background: var(--black);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+.guide-card h3 {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  margin-bottom: 0.85rem;
+}
+.guide-steps { list-style: none; }
+.guide-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #333;
+}
+.guide-step:last-child { border-bottom: none; }
+.step-check {
+  width: 20px; height: 20px; min-width: 20px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+.step-check.done { background: var(--orange); border-color: var(--orange); }
+.step-check svg { width: 10px; height: 10px; display: none; }
+.step-check.done svg { display: block; }
+.step-label {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #ccc;
+  line-height: 1.4;
+}
+.step-label.done { text-decoration: line-through; color: #666; }
+.guide-dismiss {
+  position: absolute;
+  top: 0.75rem; right: 1rem;
+  background: none; border: none;
+  color: #666; font-size: 1.2rem;
+  cursor: pointer; line-height: 1;
+  padding: 0.25rem;
+}
+.guide-dismiss:focus-visible { outline: 2px solid var(--orange); border-radius: 4px; }
+
+/* ===== RADIO PLAYER ===== */
+.player-card {
+  background: var(--black);
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.player-art {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #111;
+  position: relative;
+  overflow: hidden;
+}
+.player-art img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: opacity 0.4s;
+}
+.live-badge {
+  position: absolute;
+  top: 0.75rem; left: 0.75rem;
+  background: #e53935;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  display: flex; align-items: center; gap: 0.3rem;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+.player-info {
+  padding: 1rem 1.25rem 0.5rem;
+}
+.player-info .track-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-info .track-artist {
+  font-size: 0.78rem;
+  color: #aaa;
+}
+.player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+.ctrl-btn {
+  background: none; border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex; align-items: center;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ctrl-btn:hover { color: #fff; }
+.ctrl-btn:focus-visible { outline: 2px solid var(--orange); border-radius: 4px; }
+.ctrl-btn.primary {
+  width: 52px; height: 52px;
+  background: var(--orange);
+  border-radius: 50%;
+  color: #fff;
+  justify-content: center;
+}
+.ctrl-btn.primary:hover { opacity: 0.88; }
+.ctrl-btn svg { width: 24px; height: 24px; }
+.ctrl-btn.primary svg { width: 26px; height: 26px; }
+
+/* progress bar - decorative, no scrubber (live stream) */
+.progress-bar-wrap {
+  padding: 0 1.25rem 0.75rem;
+}
+.progress-bar {
+  height: 2px;
+  background: #333;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--orange);
+  width: 0%;
+  transition: width 1s linear;
+}
+
+/* volume row */
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.25rem 1rem;
+}
+.volume-row svg { width: 16px; height: 16px; color: #666; flex-shrink: 0; }
+.volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 3px;
+  background: #333;
+  border-radius: 2px;
+  outline: none;
+}
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--orange);
+  cursor: pointer;
+}
+.volume-slider::-moz-range-thumb {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--orange);
+  cursor: pointer;
+  border: none;
+}
+
+/* ===== ARTIST GRID ===== */
+.artist-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+.artist-tile {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.artist-tile:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.artist-tile:focus-visible { outline: 2px solid var(--orange); }
+.artist-tile img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+.artist-tile .artist-name {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.artist-tile.locked {
+  opacity: 0.5;
+  position: relative;
+}
+.artist-tile.locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.35);
+  pointer-events: none;
+}
+.lock-icon {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -70%);
+  color: #fff;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+  pointer-events: none;
+}
+
+/* ===== CHAT ===== */
+.chat-stub {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+.chat-stub svg { width: 48px; height: 48px; color: #ccc; margin-bottom: 1rem; }
+.chat-stub h3 { font-size: 1rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem; }
+.chat-stub p { font-size: 0.82rem; color: var(--gray); line-height: 1.6; }
+.btn-orange {
+  display: inline-block;
+  margin-top: 1.25rem;
+  padding: 0.7rem 1.5rem;
+  background: var(--orange);
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-orange:hover { opacity: 0.88; }
+
+/* ===== MORE TAB ===== */
+.more-list { list-style: none; }
+.more-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--black);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.more-item:last-child { border-bottom: none; }
+.more-item:hover { color: var(--orange); }
+.more-item svg { width: 18px; height: 18px; color: #ccc; }
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 1rem;
+  z-index: 999;
+  transition: opacity 0.3s;
+}
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-overlay img { height: 48px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 28px; height: 28px;
+  border: 3px solid #e0e0e0;
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* Unauthenticated state */
+.unauth-wall {
+  display: none;
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+.unauth-wall h2 { font-size: 1.1rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; }
+.unauth-wall p { font-size: 0.85rem; color: var(--gray); line-height: 1.6; margin-bottom: 1.5rem; }
+
+@media (min-width: 600px) {
+  .artist-grid { grid-template-columns: repeat(3, 1fr); }
+  .tab-panel { max-width: 640px; margin: 0 auto; }
+}
+@media (min-width: 900px) {
+  .artist-grid { grid-template-columns: repeat(4, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay" role="status" aria-label="Loading your dashboard">
+  <img src="/geekfon-logo.png" alt="GeekFon Society">
+  <div class="spinner" aria-hidden="true"></div>
+</div>
+
+<!-- Top header -->
+<header class="top-header" role="banner">
+  <div class="logo">
+    <a href="/" aria-label="GeekFon Society home">
+      <img src="/geekfon-logo.png" alt="GeekFon Society">
+    </a>
+  </div>
+  <div class="member-pill" aria-label="Membership tier">
+    <div class="tier-dot" aria-hidden="true"></div>
+    <span class="tier-label" id="headerTierLabel">Member</span>
+  </div>
+</header>
+
+<!-- Scroll body -->
+<div class="scroll-body" id="scrollBody">
+
+  <!-- Unauthenticated wall -->
+  <div class="unauth-wall" id="unauthWall">
+    <h2>Sign In Required</h2>
+    <p>Access your dashboard by signing in with your magic link.</p>
+    <a href="/login?redirect=/dashboard" class="btn-orange">Sign In</a>
+  </div>
+
+  <!-- Radio tab -->
+  <section class="tab-panel active" id="tabRadio" role="tabpanel" aria-label="Radio">
+
+    <!-- Get Started guide (dismissible) -->
+    <div class="guide-card" id="guideCard" aria-label="Get started guide">
+      <button class="guide-dismiss" id="guideDismiss" aria-label="Dismiss get started guide">&times;</button>
+      <h3>Get Started</h3>
+      <ul class="guide-steps" id="guideSteps">
+        <li class="guide-step" data-step="registered">
+          <div class="step-check done" aria-hidden="true">
+            <svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="step-label done">Create your account</span>
+        </li>
+        <li class="guide-step" data-step="radio">
+          <div class="step-check" id="stepRadioCheck" aria-hidden="true">
+            <svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="step-label" id="stepRadioLabel">Listen to the radio</span>
+        </li>
+        <li class="guide-step" data-step="artist">
+          <div class="step-check" id="stepArtistCheck" aria-hidden="true">
+            <svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="step-label" id="stepArtistLabel">Visit an artist page</span>
+        </li>
+        <li class="guide-step" data-step="upgrade">
+          <div class="step-check" id="stepUpgradeCheck" aria-hidden="true">
+            <svg viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="step-label" id="stepUpgradeLabel">Upgrade your membership</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Live radio player -->
+    <div class="player-card" role="region" aria-label="Live radio player">
+      <div class="player-art" aria-hidden="true">
+        <img id="playerArt" src="" alt="">
+        <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      </div>
+      <div class="player-info">
+        <div class="track-title" id="playerTitle">Loading...</div>
+        <div class="track-artist" id="playerArtist"></div>
+      </div>
+      <div class="progress-bar-wrap" aria-hidden="true">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+      <div class="player-controls" role="group" aria-label="Playback controls">
+        <button class="ctrl-btn" id="btnPrev" aria-label="Previous track">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+        </button>
+        <button class="ctrl-btn primary" id="btnPlay" aria-label="Play" aria-pressed="false">
+          <svg id="iconPlay" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="iconPause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button class="ctrl-btn" id="btnNext" aria-label="Next track">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14 5.14 3.64L8 17.14V9.86zM16 6h2v12h-2z"/></svg>
+        </button>
+      </div>
+      <div class="volume-row" role="group" aria-label="Volume control">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" aria-label="Volume">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77 0-4.28-2.99-7.86-7-8.77z"/></svg>
+      </div>
+    </div>
+
+    <!-- Tier info -->
+    <div class="card">
+      <div class="card-body">
+        <p id="tierInfoText" style="font-size:0.82rem;color:var(--gray);line-height:1.6;"></p>
+        <a href="/passport" id="upgradeLink" class="btn-orange" style="margin-top:1rem;display:none;">Upgrade Membership</a>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Artists tab -->
+  <section class="tab-panel" id="tabArtists" role="tabpanel" aria-label="Artists">
+    <div class="artist-grid" id="artistGrid" aria-label="Artist list">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <!-- Chat tab -->
+  <section class="tab-panel" id="tabChat" role="tabpanel" aria-label="Chat">
+    <div class="chat-stub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+      </svg>
+      <h3>Community Chat</h3>
+      <p>Connect with other GeekFon Society members, discuss music, and more.</p>
+      <a href="/chat" class="btn-orange">Open Chat</a>
+    </div>
+  </section>
+
+  <!-- More tab -->
+  <section class="tab-panel" id="tabMore" role="tabpanel" aria-label="More">
+    <div class="card">
+      <div class="card-body">
+        <ul class="more-list" role="list">
+          <li><a href="/passport" class="more-item" role="listitem">
+            <span>Upgrade Membership</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a></li>
+          <li><a href="/roster" class="more-item" role="listitem">
+            <span>All Artists</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a></li>
+          <li><a href="/radio" class="more-item" role="listitem">
+            <span>Full Radio Library</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a></li>
+          <li><a href="/chat" class="more-item" role="listitem">
+            <span>Community Chat</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a></li>
+          <li><button id="signOutBtn" class="more-item" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;font-family:inherit;font-size:0.88rem;font-weight:600;color:var(--black);" role="listitem">
+            <span>Sign Out</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          </button></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /scroll-body -->
+
+<!-- Bottom navigation -->
+<nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+  <button class="nav-btn active" id="navRadio" aria-selected="true" aria-controls="tabRadio" role="tab">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zm-6-5.5c0 1.38-1.12 2.5-2.5 2.5S9 13.88 9 12.5 10.12 10 11.5 10s2.5 1.12 2.5 2.5zM11.5 17c-2.49 0-4.5-2.01-4.5-4.5S9.01 8 11.5 8 16 10.01 16 12.5 13.99 17 11.5 17zm7-10h-2v2h2V7zm0 4h-2v2h2v-2z"/></svg>
+    Radio
+  </button>
+  <button class="nav-btn" id="navArtists" aria-selected="false" aria-controls="tabArtists" role="tab">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+    Artists
+  </button>
+  <button class="nav-btn" id="navChat" aria-selected="false" aria-controls="tabChat" role="tab">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    Chat
+  </button>
+  <button class="nav-btn" id="navMore" aria-selected="false" aria-controls="tabMore" role="tab">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+    More
+  </button>
+</nav>
+
+<script>
+(function () {
+'use strict';
+
+var SUPABASE_URL  = 'https://fwbhwfxpncrsfhttimna.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA';
+var ART_BASE  = 'https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-art/';
+var AUDIO_BASE = 'https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/';
+
+// Guide steps storage key
+var GUIDE_KEY   = 'gfs_guide_dismissed';
+var GUIDE_STEPS_KEY = 'gfs_guide_steps';
+var RADIO_PLAYED_KEY = 'gfs_radio_played';
+var ARTIST_VISITED_KEY = 'gfs_artist_visited';
+
+// State
+var state = {
+  token: null,
+  member: null,
+  tracks: [],
+  currentIdx: 0,
+  playing: false,
+  progressTimer: null,
+  progressSec: 0,
+  trackDuration: 90, // simulated: cycle every 90s for live feel
+};
+
+var audio = new Audio();
+audio.preload = 'none';
+
+// ---- Auth ----
+function getToken() {
+  var s = sessionStorage.getItem('gfs_session');
+  if (s) {
+    try {
+      var parsed = JSON.parse(s);
+      if (parsed && parsed.access_token) return parsed.access_token;
+    } catch (_) {}
+  }
+  // Cookie fallback
+  var m = document.cookie.match(/gfs_token=([^;]+)/);
+  if (m) return m[1];
+  // Supabase hash on redirect
+  var hash = window.location.hash;
+  if (hash.includes('access_token=')) {
+    var params = new URLSearchParams(hash.substring(1));
+    var tok = params.get('access_token');
+    if (tok) {
+      sessionStorage.setItem('gfs_session', JSON.stringify({ access_token: tok }));
+      document.cookie = 'gfs_token=' + tok + '; path=/; SameSite=Lax';
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return tok;
+    }
+  }
+  return null;
+}
+
+async function mergeProfile(token) {
+  try {
+    await fetch('/api/profile', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    });
+  } catch (_) {}
+}
+
+async function loadMember(token) {
+  // Try to get member info via songs endpoint (it resolves tier)
+  try {
+    var res = await fetch('/api/songs', {
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    if (res.ok) {
+      var data = await res.json();
+      return { tier: data.tier || 'free', tracks: data.tracks || [] };
+    }
+  } catch (_) {}
+  return { tier: 'free', tracks: [] };
+}
+
+// ---- Tier helpers ----
+var TIER_LABELS = { free: 'Free', passport: 'Passport', 'all-access': 'All Access', lifetime: 'Lifetime' };
+var TIER_ORDER  = { free: 0, passport: 1, 'all-access': 2, lifetime: 3 };
+
+function tierInfo(tier) {
+  var msgs = {
+    free: 'You\'re on the Free tier. You can hear preview tracks. Upgrade to unlock full songs and artist access.',
+    passport: 'Passport member: you have access to tracks from your selected artists.',
+    'all-access': 'All Access member: you can hear all released tracks.',
+    lifetime: 'Lifetime member: you have unlimited access to everything, forever.',
+  };
+  return msgs[tier] || msgs.free;
+}
+
+// ---- Artists ----
+var ALL_ARTISTS = [
+  { slug: 'shamanic-resin',       name: 'Shamanic Resin',       img: 'shamanic-resin.jpg' },
+  { slug: 'lex-from-brixton',     name: 'Lex from Brixton',     img: 'lex-from-brixton.jpg' },
+  { slug: 'lickle-bro',          name: 'Lickle Bro',           img: 'lickle-bro.jpg' },
+  { slug: 'lickle-sis',          name: 'Lickle Sis',           img: 'lickle-sis.jpg' },
+  { slug: 'mad-tings',           name: 'Mad Tings',            img: 'mad-tings.jpg' },
+  { slug: 'mr-russell',          name: 'Mr. Russell',          img: 'mr-russell.jpg' },
+  { slug: 'nilo-wave',           name: 'Nilo Wave',            img: 'nilo-wave.jpg' },
+  { slug: 'riku',                name: 'Riku',                  img: 'riku.jpg' },
+  { slug: 'roxanne',             name: 'Roxanne',               img: 'roxanne.jpg' },
+  { slug: 'rustblood-prophets',  name: 'Rustblood Prophets',   img: 'rustblood-prophets.jpg' },
+  { slug: 'straight-and-narrow', name: 'Straight and Narrow',  img: 'straight-and-narrow.jpg' },
+  { slug: 'v',                   name: 'V',                     img: 'v.jpg' },
+];
+
+function buildArtistGrid(tier, tracks, passportArtists) {
+  var grid = document.getElementById('artistGrid');
+  grid.innerHTML = '';
+
+  // Which artists are accessible
+  var unlockedSlugs = new Set();
+  if (tier === 'lifetime' || tier === 'all-access') {
+    ALL_ARTISTS.forEach(function (a) { unlockedSlugs.add(a.slug); });
+  } else if (tier === 'passport' && passportArtists) {
+    passportArtists.forEach(function (s) { unlockedSlugs.add(s); });
+  }
+  // Free: only artists with free preview tracks
+  if (tier === 'free') {
+    tracks.forEach(function (t) {
+      if (t.artist_slug) unlockedSlugs.add(t.artist_slug);
+    });
+  }
+
+  ALL_ARTISTS.forEach(function (artist) {
+    var locked = !unlockedSlugs.has(artist.slug);
+    var tile = document.createElement('a');
+    tile.href = '/' + artist.slug;
+    tile.className = 'artist-tile' + (locked ? ' locked' : '');
+    tile.setAttribute('aria-label', artist.name + (locked ? ' (locked)' : ''));
+
+    var img = document.createElement('img');
+    img.src = ART_BASE + artist.img;
+    img.alt = '';
+    img.onerror = function () { this.src = '/geekfon-logo.png'; };
+    tile.appendChild(img);
+
+    if (locked) {
+      var lock = document.createElement('div');
+      lock.className = 'lock-icon';
+      lock.setAttribute('aria-hidden', 'true');
+      lock.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>';
+      tile.appendChild(lock);
+      tile.addEventListener('click', function (e) {
+        e.preventDefault();
+        window.location.href = '/passport';
+      });
+    }
+
+    var nameDiv = document.createElement('div');
+    nameDiv.className = 'artist-name';
+    nameDiv.textContent = artist.name;
+    tile.appendChild(nameDiv);
+
+    grid.appendChild(tile);
+  });
+
+  // Track artist visit for guide
+  document.querySelectorAll('.artist-tile:not(.locked)').forEach(function (tile) {
+    tile.addEventListener('click', function () {
+      sessionStorage.setItem(ARTIST_VISITED_KEY, '1');
+      updateGuideSteps();
+    });
+  });
+}
+
+// ---- Radio player ----
+function buildPlaylist(tracks) {
+  // Shuffle for live feel
+  var arr = tracks.slice();
+  for (var i = arr.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+
+function renderTrack(track) {
+  if (!track) return;
+  document.getElementById('playerTitle').textContent = track.title || 'Unknown Track';
+  document.getElementById('playerArtist').textContent = track.artist || '';
+  var artEl = document.getElementById('playerArt');
+  artEl.src = track.art_url || (ART_BASE + (track.artist_slug || 'default') + '.jpg');
+  artEl.alt = track.title || '';
+  artEl.onerror = function () { this.src = '/geekfon-logo.png'; };
+}
+
+function loadTrack(idx) {
+  if (!state.tracks.length) return;
+  state.currentIdx = (idx + state.tracks.length) % state.tracks.length;
+  var track = state.tracks[state.currentIdx];
+  renderTrack(track);
+
+  var src = track.src || (AUDIO_BASE + (track.file_key || track.slug + '.mp3'));
+  audio.src = src;
+  audio.volume = parseFloat(document.getElementById('volumeSlider').value) || 0.8;
+
+  if (state.playing) {
+    audio.play().catch(function () {});
+  }
+  resetProgress();
+}
+
+function resetProgress() {
+  state.progressSec = 0;
+  clearInterval(state.progressTimer);
+  if (state.playing) startProgressTimer();
+}
+
+function startProgressTimer() {
+  state.progressTimer = setInterval(function () {
+    state.progressSec++;
+    var dur = audio.duration && isFinite(audio.duration) ? audio.duration : state.trackDuration;
+    var pct = Math.min(100, (state.progressSec / dur) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    if (pct >= 100) {
+      clearInterval(state.progressTimer);
+      nextTrack();
+    }
+  }, 1000);
+}
+
+function setPlaying(playing) {
+  state.playing = playing;
+  var btnPlay = document.getElementById('btnPlay');
+  var iconPlay = document.getElementById('iconPlay');
+  var iconPause = document.getElementById('iconPause');
+  btnPlay.setAttribute('aria-pressed', playing ? 'true' : 'false');
+  btnPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  iconPlay.style.display  = playing ? 'none' : 'block';
+  iconPause.style.display = playing ? 'block' : 'none';
+
+  if (playing) {
+    audio.play().catch(function () {});
+    startProgressTimer();
+    // Mark radio listened
+    sessionStorage.setItem(RADIO_PLAYED_KEY, '1');
+    updateGuideSteps();
+  } else {
+    audio.pause();
+    clearInterval(state.progressTimer);
+  }
+}
+
+function nextTrack() {
+  loadTrack(state.currentIdx + 1);
+}
+function prevTrack() {
+  loadTrack(state.currentIdx - 1);
+}
+
+audio.addEventListener('ended', nextTrack);
+audio.addEventListener('error', function () {
+  // Skip to next on error
+  setTimeout(nextTrack, 1000);
+});
+
+// ---- Guide ----
+function updateGuideSteps() {
+  var radioPlayed  = !!sessionStorage.getItem(RADIO_PLAYED_KEY);
+  var artistVisited = !!sessionStorage.getItem(ARTIST_VISITED_KEY);
+  var upgraded     = state.member && TIER_ORDER[state.member.tier] > 0;
+
+  setStep('stepRadioCheck', 'stepRadioLabel', radioPlayed);
+  setStep('stepArtistCheck', 'stepArtistLabel', artistVisited);
+  setStep('stepUpgradeCheck', 'stepUpgradeLabel', upgraded);
+}
+
+function setStep(checkId, labelId, done) {
+  var check = document.getElementById(checkId);
+  var label = document.getElementById(labelId);
+  if (!check || !label) return;
+  if (done) {
+    check.classList.add('done');
+    label.classList.add('done');
+  } else {
+    check.classList.remove('done');
+    label.classList.remove('done');
+  }
+}
+
+function initGuide() {
+  if (sessionStorage.getItem(GUIDE_KEY)) {
+    var gc = document.getElementById('guideCard');
+    if (gc) gc.style.display = 'none';
+    return;
+  }
+  document.getElementById('guideDismiss').addEventListener('click', function () {
+    sessionStorage.setItem(GUIDE_KEY, '1');
+    var gc = document.getElementById('guideCard');
+    if (gc) { gc.style.maxHeight = gc.scrollHeight + 'px'; gc.style.overflow = 'hidden'; }
+    requestAnimationFrame(function () {
+      if (gc) { gc.style.transition = 'max-height 0.3s ease, opacity 0.3s ease'; gc.style.maxHeight = '0'; gc.style.opacity = '0'; }
+      setTimeout(function () { if (gc) gc.style.display = 'none'; }, 300);
+    });
+  });
+  updateGuideSteps();
+}
+
+// ---- Tabs ----
+var tabs = [
+  { btn: 'navRadio',   panel: 'tabRadio'   },
+  { btn: 'navArtists', panel: 'tabArtists' },
+  { btn: 'navChat',    panel: 'tabChat'    },
+  { btn: 'navMore',    panel: 'tabMore'    },
+];
+
+tabs.forEach(function (tab) {
+  document.getElementById(tab.btn).addEventListener('click', function () {
+    tabs.forEach(function (t) {
+      document.getElementById(t.btn).classList.remove('active');
+      document.getElementById(t.btn).setAttribute('aria-selected', 'false');
+      document.getElementById(t.panel).classList.remove('active');
+    });
+    document.getElementById(tab.btn).classList.add('active');
+    document.getElementById(tab.btn).setAttribute('aria-selected', 'true');
+    document.getElementById(tab.panel).classList.add('active');
+    document.getElementById('scrollBody').scrollTop = 0;
+  });
+});
+
+// ---- Volume ----
+document.getElementById('volumeSlider').addEventListener('input', function () {
+  audio.volume = parseFloat(this.value);
+});
+
+// ---- Sign out ----
+document.getElementById('signOutBtn').addEventListener('click', function () {
+  sessionStorage.clear();
+  document.cookie = 'gfs_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  window.location.href = '/login';
+});
+
+// ---- Play/Prev/Next controls ----
+document.getElementById('btnPlay').addEventListener('click', function () {
+  if (!state.tracks.length) return;
+  setPlaying(!state.playing);
+});
+document.getElementById('btnPrev').addEventListener('click', prevTrack);
+document.getElementById('btnNext').addEventListener('click', nextTrack);
+
+// ---- Init ----
+async function init() {
+  var token = getToken();
+
+  if (!token) {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    document.getElementById('unauthWall').style.display = 'block';
+    document.getElementById('tabRadio').style.display = 'none';
+    return;
+  }
+
+  state.token = token;
+
+  // Merge profile (idempotent, handles post-register first visit)
+  await mergeProfile(token);
+
+  var result = await loadMember(token);
+  var tier = result.tier || 'free';
+  state.tracks = buildPlaylist(result.tracks || []);
+  state.member = { tier: tier, passportArtists: result.passportArtists || [] };
+
+  // Update UI
+  var tierLabel = TIER_LABELS[tier] || 'Member';
+  document.getElementById('headerTierLabel').textContent = tierLabel;
+  document.getElementById('tierInfoText').textContent = tierInfo(tier);
+
+  var upgradeLink = document.getElementById('upgradeLink');
+  if (TIER_ORDER[tier] < TIER_ORDER['lifetime']) {
+    upgradeLink.style.display = 'inline-block';
+  }
+
+  // Artist grid
+  buildArtistGrid(tier, result.tracks || [], result.passportArtists || []);
+
+  // Radio
+  if (state.tracks.length) {
+    loadTrack(0);
+  } else {
+    document.getElementById('playerTitle').textContent = 'No tracks available';
+  }
+
+  // Guide
+  initGuide();
+
+  // Hide loading
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+init();
+
+}());
+</script>
+</body>
+</html>

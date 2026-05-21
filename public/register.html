@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Complete your GeekFon Society registration.">
+<title>Register - GeekFon Society</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --orange: #F69820;
+    --black: #1A1A1A;
+    --gray: #555555;
+    --light: #f5f5f5;
+    --red: #d32f2f;
+    --green: #2e7d32;
+  }
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: #fff;
+    color: var(--black);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 1rem 3rem;
+  }
+  .top-bar {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 0 0;
+    margin-bottom: 2rem;
+  }
+  .top-bar img { height: 36px; }
+  .card {
+    width: 100%;
+    max-width: 480px;
+    background: #fff;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+  }
+  .tier-badge {
+    display: inline-block;
+    background: var(--orange);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 99px;
+    padding: 0.25rem 0.75rem;
+    margin-bottom: 1rem;
+  }
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--black);
+    margin-bottom: 0.4rem;
+    line-height: 1.2;
+  }
+  .subtitle {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin-bottom: 1.75rem;
+    line-height: 1.5;
+  }
+  .field {
+    margin-bottom: 1.1rem;
+  }
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--black);
+    margin-bottom: 0.35rem;
+  }
+  label .req { color: var(--orange); margin-left: 2px; }
+  input[type="text"],
+  input[type="email"],
+  input[type="date"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid #ccc;
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    color: var(--black);
+    background: #fff;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input:focus {
+    outline: none;
+    border-color: var(--orange);
+  }
+  input.error { border-color: var(--red); }
+  .field-error {
+    font-size: 0.72rem;
+    color: var(--red);
+    margin-top: 0.3rem;
+    display: none;
+  }
+  .field-error.show { display: block; }
+  .tos-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    margin-top: 0.5rem;
+  }
+  .tos-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    margin-top: 1px;
+    accent-color: var(--orange);
+    cursor: pointer;
+  }
+  .tos-row label {
+    font-size: 0.78rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--gray);
+    line-height: 1.5;
+    margin-bottom: 0;
+  }
+  .tos-row a { color: var(--orange); text-decoration: none; }
+  .tos-row a:hover { text-decoration: underline; }
+  .btn-submit {
+    width: 100%;
+    padding: 0.9rem;
+    background: var(--orange);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-submit:hover:not(:disabled) { opacity: 0.88; }
+  .btn-submit:active:not(:disabled) { transform: scale(0.98); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  .form-error {
+    background: #fdecea;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    color: var(--red);
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .form-error.show { display: block; }
+
+  /* Success state */
+  .success-card {
+    width: 100%;
+    max-width: 480px;
+    background: #fff;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    display: none;
+  }
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--orange);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+  }
+  .success-icon svg { width: 32px; height: 32px; }
+  .success-card h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+  }
+  .success-card p {
+    font-size: 0.88rem;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+  .success-card .email-highlight {
+    font-weight: 600;
+    color: var(--black);
+  }
+  .divider { height: 1px; background: #e0e0e0; margin: 1.5rem 0; }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar" role="banner">
+  <a href="/" aria-label="GeekFon Society home">
+    <img src="/geekfon-logo.png" alt="GeekFon Society">
+  </a>
+</div>
+
+<!-- Registration Form -->
+<div class="card" id="formCard" role="main">
+  <span class="tier-badge" id="tierBadge" aria-label="Membership tier">Member</span>
+  <h1>Set Up Your Account</h1>
+  <p class="subtitle">One quick step before you access your dashboard. Use the same email address you used at checkout.</p>
+
+  <div class="form-error" id="formError" role="alert" aria-live="polite"></div>
+
+  <form id="regForm" novalidate>
+    <div class="field">
+      <label for="nameInput">Full Name <span class="req" aria-hidden="true">*</span></label>
+      <input type="text" id="nameInput" name="name" autocomplete="name"
+             placeholder="Your name" required aria-required="true"
+             aria-describedby="nameErr">
+      <div class="field-error" id="nameErr" role="alert">Please enter your name.</div>
+    </div>
+
+    <div class="field">
+      <label for="dobInput">Date of Birth <span class="req" aria-hidden="true">*</span></label>
+      <input type="date" id="dobInput" name="dob" required aria-required="true"
+             aria-describedby="dobErr">
+      <div class="field-error" id="dobErr" role="alert">You must be 13 or older to join.</div>
+    </div>
+
+    <div class="field">
+      <label for="emailInput">Email Address <span class="req" aria-hidden="true">*</span></label>
+      <input type="email" id="emailInput" name="email" autocomplete="email"
+             placeholder="same as checkout" required aria-required="true"
+             aria-describedby="emailErr">
+      <div class="field-error" id="emailErr" role="alert">Please enter a valid email address.</div>
+    </div>
+
+    <div class="tos-row">
+      <input type="checkbox" id="tosCheck" name="tos" required aria-required="true"
+             aria-describedby="tosErr">
+      <label for="tosCheck">
+        I agree to the <a href="/terms" target="_blank" rel="noopener">Terms of Service</a>
+        and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+        I confirm I am 13 years of age or older.
+      </label>
+    </div>
+    <div class="field-error" id="tosErr" role="alert" style="margin-top:-0.75rem;margin-bottom:1rem;">You must agree to the Terms of Service.</div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">Create Account</button>
+  </form>
+</div>
+
+<!-- Success State -->
+<div class="success-card" id="successCard" role="main" aria-live="polite">
+  <div class="success-icon" aria-hidden="true">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 16l7 7 13-14" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <h2>Check Your Email</h2>
+  <p>We sent a login link to<br><span class="email-highlight" id="successEmail"></span></p>
+  <div class="divider"></div>
+  <p>Click the link in your email to open your dashboard. No password needed.</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // Read tier from URL param (?tier=passport)
+  var params = new URLSearchParams(window.location.search);
+  var tier = params.get('tier') || 'free';
+  var VALID_TIERS = { free: 'Free', passport: 'Passport', 'all-access': 'All Access', lifetime: 'Lifetime' };
+  var tierLabel = VALID_TIERS[tier] || 'Member';
+
+  document.getElementById('tierBadge').textContent = tierLabel + ' Member';
+
+  var form      = document.getElementById('regForm');
+  var nameInput = document.getElementById('nameInput');
+  var dobInput  = document.getElementById('dobInput');
+  var emailInput= document.getElementById('emailInput');
+  var tosCheck  = document.getElementById('tosCheck');
+  var submitBtn = document.getElementById('submitBtn');
+  var formError = document.getElementById('formError');
+  var formCard  = document.getElementById('formCard');
+  var successCard = document.getElementById('successCard');
+  var successEmail = document.getElementById('successEmail');
+
+  // Set max DOB to today (prevents future dates)
+  var today = new Date().toISOString().split('T')[0];
+  dobInput.setAttribute('max', today);
+
+  function calcAge(dob) {
+    var now = new Date();
+    var birth = new Date(dob);
+    var age = now.getFullYear() - birth.getFullYear();
+    var m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+    return age;
+  }
+
+  function showFieldError(inputEl, errId, show) {
+    var err = document.getElementById(errId);
+    if (show) {
+      inputEl.classList.add('error');
+      inputEl.setAttribute('aria-invalid', 'true');
+      err.classList.add('show');
+    } else {
+      inputEl.classList.remove('error');
+      inputEl.removeAttribute('aria-invalid');
+      err.classList.remove('show');
+    }
+  }
+
+  function showFormError(msg) {
+    formError.textContent = msg;
+    formError.classList.add('show');
+    formError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function clearFormError() {
+    formError.textContent = '';
+    formError.classList.remove('show');
+  }
+
+  function validate() {
+    var ok = true;
+    clearFormError();
+
+    if (!nameInput.value.trim()) {
+      showFieldError(nameInput, 'nameErr', true);
+      ok = false;
+    } else {
+      showFieldError(nameInput, 'nameErr', false);
+    }
+
+    var age = dobInput.value ? calcAge(dobInput.value) : -1;
+    if (!dobInput.value || age < 13) {
+      showFieldError(dobInput, 'dobErr', true);
+      if (dobInput.value && age < 13) {
+        document.getElementById('dobErr').textContent = 'You must be 13 or older to join.';
+      } else {
+        document.getElementById('dobErr').textContent = 'Date of birth is required.';
+      }
+      ok = false;
+    } else {
+      showFieldError(dobInput, 'dobErr', false);
+    }
+
+    var emailVal = emailInput.value.trim();
+    if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+      showFieldError(emailInput, 'emailErr', true);
+      ok = false;
+    } else {
+      showFieldError(emailInput, 'emailErr', false);
+    }
+
+    var tosErr = document.getElementById('tosErr');
+    if (!tosCheck.checked) {
+      tosErr.classList.add('show');
+      ok = false;
+    } else {
+      tosErr.classList.remove('show');
+    }
+
+    return ok;
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (!validate()) return;
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span>Creating account...';
+
+    try {
+      var res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nameInput.value.trim(),
+          dob: dobInput.value,
+          email: emailInput.value.trim().toLowerCase(),
+          tos: tosCheck.checked,
+          tier: tier,
+        }),
+      });
+
+      var data = await res.json();
+
+      if (!res.ok) {
+        showFormError(data.error || 'Something went wrong. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+        return;
+      }
+
+      // Show success
+      successEmail.textContent = emailInput.value.trim().toLowerCase();
+      formCard.style.display = 'none';
+      successCard.style.display = 'block';
+      successCard.focus();
+
+    } catch (err) {
+      showFormError('Network error. Please check your connection and try again.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
+    }
+  });
+
+  // Clear field errors on input
+  [nameInput, dobInput, emailInput].forEach(function (el) {
+    el.addEventListener('input', function () {
+      el.classList.remove('error');
+      el.removeAttribute('aria-invalid');
+    });
+  });
+
+}());
+</script>
+</body>
+</html>
