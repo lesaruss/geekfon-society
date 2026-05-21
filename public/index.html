@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GeekFon Society</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700;800;900&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1A1A1A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GeekFon">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow-x:hidden;font-family:'Montserrat',sans-serif;background:#020c0a;color:#e8e8e8;}
@@ -195,7 +202,7 @@ button{font-family:'Montserrat',sans-serif;}
 
       <!-- CTAs -->
       <div class="hero-ctas">
-        <button class="cta-primary" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">
+        <button class="cta-primary" onclick="window.location.href='/passport'">
           Get Your Passport
         </button>
         <a class="cta-secondary" href="/roster">
@@ -321,5 +328,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </script>
 <script src="/footer.js"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("/sw.js").catch(function() {});
+  });
+}
+</script>
 </body>
 </html>

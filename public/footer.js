@@ -24,7 +24,7 @@
     '  <a href="/" class="gfs-footer-wordmark" aria-label="GeekFon Society home">Geek<span>Fon</span></a>',
     '  <nav class="gfs-footer-links" aria-label="Footer navigation">',
     '    <a href="/roster" class="gfs-footer-link">Roster</a>',
-    '    <a href="https://lesaruss.ai/geekfon" class="gfs-footer-link" target="_blank" rel="noopener">Get Passport</a>',
+    '    <a href="/passport" class="gfs-footer-link">Get Passport</a>',
     '    <a href="https://lesaruss.ai" class="gfs-footer-link" target="_blank" rel="noopener">LESARUSS</a>',
     '  </nav>',
     '  <span class="gfs-footer-copy">&copy; ' + year + ' LESARUSS Universe</span>',
