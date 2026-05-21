@@ -14,7 +14,7 @@ const VALID_TIERS = new Set(['passport', 'all-access', 'lifetime']);
 // Fetch price from lesaruss_products table (canonical source)
 async function getPriceFromDB(tier) {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_ANON_KEY;
   if (!url || !key) return null;
   try {
     const res = await fetch(
