@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
 
     // Look for pending profile
     const pending = await sbGet(
-      '/rest/v1/gfs_pending_profiles?email=eq.' + encodeURIComponent(email) + '&limit=1&order=created_at.desc'
+      '/rest/v1/gfs_pending_profiles?select=email,name,dob,tier,tos_agreed_at,is_minor&email=eq.' + encodeURIComponent(email) + '&limit=1&order=created_at.desc'
     );
 
     // Get existing member row if any
@@ -74,6 +74,7 @@ module.exports = async (req, res) => {
         tos_agreed_at: p.tos_agreed_at,
         // Only upgrade tier, never downgrade
         tier: upgradeTier(member ? member.tier : 'free', p.tier),
+        is_minor: p.is_minor || false,
       };
     }
 

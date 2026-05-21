@@ -34,7 +34,7 @@ async function getUserIdFromToken(token) {
 async function getGfsMember(userId) {
   try {
     const rows = await sbGet(
-      '/rest/v1/gfs_members?select=tier,passport_artists&user_id=eq.' + userId + '&limit=1',
+      '/rest/v1/gfs_members?select=tier,passport_artists,is_minor&user_id=eq.' + userId + '&limit=1',
       SUPABASE_SVC
     );
     return rows && rows[0] ? rows[0] : null;
@@ -84,6 +84,7 @@ module.exports = async (req, res) => {
     const token = extractToken(req);
     let tier = 'free';
     let passportArtists = [];
+    let isMinor = false;
 
     if (token) {
       const userId = await getUserIdFromToken(token);
@@ -92,6 +93,7 @@ module.exports = async (req, res) => {
         if (member) {
           tier = member.tier || 'free';
           passportArtists = member.passport_artists || [];
+          isMinor = member.is_minor || false;
         }
       }
     }
@@ -119,7 +121,7 @@ module.exports = async (req, res) => {
       tracks = await fetchTracks(artistSlug, 'is_free_preview=eq.true');
     }
 
-    return res.status(200).json({ tier, tracks: tracks || [] });
+    return res.status(200).json({ tier, tracks: tracks || [], passportArtists, isMinor });
   } catch (err) {
     console.error('songs API error:', err.message);
     return res.status(500).json({ error: 'Failed to load tracks' });

@@ -70,6 +70,7 @@ module.exports = async (req, res) => {
         dob,
         tier,
         tos_agreed_at: new Date().toISOString(),
+        is_minor: isMinor,
       }),
     });
 

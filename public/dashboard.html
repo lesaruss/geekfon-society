@@ -720,7 +720,7 @@ async function loadMember(token) {
     });
     if (res.ok) {
       var data = await res.json();
-      return { tier: data.tier || 'free', tracks: data.tracks || [] };
+      return { tier: data.tier || 'free', tracks: data.tracks || [], passportArtists: data.passportArtists || [], isMinor: data.isMinor || false };
     }
   } catch (_) {}
   return { tier: 'free', tracks: [] };
@@ -1010,7 +1010,8 @@ async function init() {
   var result = await loadMember(token);
   var tier = result.tier || 'free';
   state.tracks = buildPlaylist(result.tracks || []);
-  state.member = { tier: tier, passportArtists: result.passportArtists || [] };
+  var isMinor = result.isMinor || false;
+  state.member = { tier: tier, passportArtists: result.passportArtists || [], isMinor: isMinor };
 
   // Update UI
   var tierLabel = TIER_LABELS[tier] || 'Member';
@@ -1024,6 +1025,19 @@ async function init() {
 
   // Artist grid
   buildArtistGrid(tier, result.tracks || [], result.passportArtists || []);
+
+  // Under-18 restriction: hide Chat tab and nav button
+  if (isMinor) {
+    var navChat = document.getElementById('navChat');
+    if (navChat) {
+      navChat.style.display = 'none';
+      navChat.setAttribute('aria-hidden', 'true');
+    }
+    var tabChat = document.getElementById('tabChat');
+    if (tabChat) {
+      tabChat.innerHTML = '<div class="chat-stub" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h3>Chat Restricted</h3><p>Community Chat is available to members 18 and older.</p></div>';
+    }
+  }
 
   // Radio
   if (state.tracks.length) {
