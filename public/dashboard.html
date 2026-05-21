@@ -465,6 +465,196 @@ body {
 @media (min-width: 900px) {
   .artist-grid { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* ── Superadmin "View As" drawer ─────────────────────────────────────────── */
+.admin-pull-tab {
+  display: none; /* shown only for superadmin */
+  position: fixed;
+  right: -36px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  transform-origin: center center;
+  background: #F69820;
+  color: #000;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  z-index: 4000;
+  white-space: nowrap;
+  transition: right 0.2s ease;
+  box-shadow: -2px 0 12px rgba(0,0,0,0.35);
+}
+.admin-pull-tab:hover { right: -28px; }
+.admin-pull-tab:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+body.is-superadmin .admin-pull-tab { display: block; }
+
+.admin-drawer-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 4001;
+}
+.admin-drawer-scrim.open { display: block; }
+
+.admin-drawer {
+  position: fixed;
+  top: 0;
+  right: -320px;
+  bottom: 0;
+  width: 300px;
+  background: #111;
+  border-left: 1px solid rgba(246,152,32,0.25);
+  z-index: 4002;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.28s cubic-bezier(0.4,0,0.2,1);
+  overflow-y: auto;
+}
+.admin-drawer.open { right: 0; }
+
+.admin-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(246,152,32,0.2);
+  flex-shrink: 0;
+}
+.admin-drawer-head .adh-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #F69820;
+}
+.admin-drawer-head .adh-sublabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  margin-top: 2px;
+}
+.admin-close-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.6);
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.admin-close-btn:hover { background: #F69820; color: #000; border-color: #F69820; }
+.admin-close-btn:focus-visible { outline: 3px solid #F69820; outline-offset: 2px; }
+
+.admin-drawer-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 24px; }
+
+.admin-section-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 10px;
+}
+
+.admin-tier-list { display: flex; flex-direction: column; gap: 6px; }
+.admin-tier-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.admin-tier-option:hover { border-color: rgba(246,152,32,0.45); background: rgba(246,152,32,0.06); }
+.admin-tier-option input[type=radio] { accent-color: #F69820; width: 15px; height: 15px; flex-shrink: 0; }
+.admin-tier-option.selected {
+  border-color: #F69820;
+  background: rgba(246,152,32,0.1);
+  color: #fff;
+}
+
+.admin-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.admin-toggle-row .atr-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.08em; }
+.admin-toggle-row .atr-sub { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+.admin-mini-toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.admin-mini-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.admin-mini-toggle-track {
+  position: absolute; cursor: pointer; inset: 0;
+  background: rgba(255,255,255,0.15); border-radius: 11px; transition: background 0.2s;
+}
+.admin-mini-toggle-track::before {
+  content: ""; position: absolute; width: 16px; height: 16px; left: 3px; bottom: 3px;
+  background: #fff; border-radius: 50%; transition: transform 0.2s;
+}
+.admin-mini-toggle input:checked + .admin-mini-toggle-track { background: #F69820; }
+.admin-mini-toggle input:checked + .admin-mini-toggle-track::before { transform: translateX(18px); }
+.admin-mini-toggle input:focus-visible + .admin-mini-toggle-track { outline: 3px solid #F69820; outline-offset: 2px; }
+
+.admin-preview-banner {
+  display: none;
+  position: fixed;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #F69820;
+  color: #000;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 7px 16px 7px 12px;
+  border-radius: 20px;
+  z-index: 3999;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.admin-preview-banner button {
+  background: rgba(0,0,0,0.18);
+  border: none;
+  color: #000;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.admin-preview-banner button:hover { background: rgba(0,0,0,0.32); }
+body.admin-previewing .admin-preview-banner { display: flex; }
+/* ── End Superadmin drawer ───────────────────────────────────────────────── */
+
 </style>
 </head>
 <body>
@@ -1003,6 +1193,7 @@ async function init() {
   }
 
   state.token = token;
+  initAdminDrawer(token);
 
   // Merge profile (idempotent, handles post-register first visit)
   await mergeProfile(token);
@@ -1055,7 +1246,192 @@ async function init() {
 
 init();
 
+
+  // ── Superadmin "View As" ──────────────────────────────────────────────────
+  var SUPERADMIN_EMAILS = ['contact@lesaruss.com', 'srussell@lesaruss.com'];
+
+  function decodeJwtEmail(token) {
+    try {
+      var payload = token.split('.')[1];
+      var padded = payload + '==='.slice((payload.length + 3) % 4);
+      var decoded = JSON.parse(atob(padded.replace(/-/g,'+').replace(/_/g,'/')));
+      return (decoded.email || '').toLowerCase();
+    } catch (_) { return ''; }
+  }
+
+  function initAdminDrawer(token) {
+    var email = decodeJwtEmail(token);
+    if (!SUPERADMIN_EMAILS.includes(email)) return;
+    document.body.classList.add('is-superadmin');
+
+    var pullTab     = document.getElementById('adminPullTab');
+    var scrim       = document.getElementById('adminDrawerScrim');
+    var drawer      = document.getElementById('adminDrawer');
+    var closeBtn    = document.getElementById('adminDrawerClose');
+    var tierOptions = document.querySelectorAll('.admin-tier-option');
+    var tierRadios  = document.querySelectorAll('input[name=adminTier]');
+    var minorToggle = document.getElementById('adminMinorToggle');
+    var bannerText  = document.getElementById('adminPreviewBannerText');
+    var exitBtn     = document.getElementById('adminExitPreview');
+
+    var ALL_ARTISTS = ['shamanic-resin','lex-from-brixton','riku','roxanne','mad-tings',
+      'lickle-bro','nilo-wave','dg','juno-star','phantom-wave','arc'];
+
+    var PREVIEW_TRACKS = {
+      free: [],
+      passport: [],
+      'all-access': [
+        { id: 'p-001', title: 'Preview Track 1', artist: 'Various', free_preview: true, url: '' },
+        { id: 'p-002', title: 'Preview Track 2', artist: 'Various', free_preview: false, url: '' }
+      ],
+      lifetime: [
+        { id: 'p-001', title: 'Preview Track 1', artist: 'Various', free_preview: true, url: '' },
+        { id: 'p-002', title: 'Preview Track 2', artist: 'Various', free_preview: false, url: '' },
+        { id: 'p-003', title: 'Preview Track 3', artist: 'Various', free_preview: false, url: '' }
+      ]
+    };
+
+    function openDrawer() {
+      drawer.classList.add('open');
+      scrim.classList.add('open');
+      drawer.removeAttribute('aria-hidden');
+      scrim.removeAttribute('aria-hidden');
+      pullTab.setAttribute('aria-expanded', 'true');
+      closeBtn.focus();
+    }
+    function closeDrawer() {
+      drawer.classList.remove('open');
+      scrim.classList.remove('open');
+      drawer.setAttribute('aria-hidden', 'true');
+      scrim.setAttribute('aria-hidden', 'true');
+      pullTab.setAttribute('aria-expanded', 'false');
+      pullTab.focus();
+    }
+
+    function applyPreview() {
+      var tier = document.querySelector('input[name=adminTier]:checked').value;
+      var isMinorPrev = minorToggle.checked;
+
+      tierOptions.forEach(function(opt) {
+        opt.classList.toggle('selected', opt.querySelector('input[type=radio]').checked);
+      });
+
+      var mockPassportArtists = tier === 'passport' ? ALL_ARTISTS.slice(0, 3) : [];
+      var mockTracks = PREVIEW_TRACKS[tier] || [];
+
+      state.member = { tier: tier, passportArtists: mockPassportArtists, isMinor: isMinorPrev };
+      state.tracks = buildPlaylist(mockTracks);
+
+      var headerTierEl = document.getElementById('headerTierLabel');
+      if (headerTierEl) headerTierEl.textContent = (TIER_LABELS[tier] || 'Member') + ' (Preview)';
+
+      buildArtistGrid(tier, mockTracks, mockPassportArtists);
+
+      var navChatEl = document.getElementById('navChat');
+      var tabChatEl = document.getElementById('tabChat');
+      if (navChatEl) {
+        navChatEl.style.display = isMinorPrev ? 'none' : '';
+        navChatEl.setAttribute('aria-hidden', String(isMinorPrev));
+      }
+      if (tabChatEl) {
+        if (isMinorPrev) {
+          tabChatEl.innerHTML = '<div class="chat-stub" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h3>Chat Restricted</h3><p>Community Chat is available to members 18 and older.</p></div>';
+        } else if (tabChatEl.querySelector('.chat-stub')) {
+          tabChatEl.innerHTML = '<p style="color:rgba(255,255,255,0.5);padding:32px 20px;text-align:center;">Community chat coming soon.</p>';
+        }
+      }
+
+      document.body.classList.add('admin-previewing');
+      bannerText.textContent = 'PREVIEW: ' + tier.toUpperCase().replace('-', ' ') + (isMinorPrev ? ' + MINOR' : '');
+
+      closeDrawer();
+    }
+
+    function exitPreview() {
+      document.body.classList.remove('admin-previewing');
+      tierRadios.forEach(function(r) { r.checked = r.value === 'free'; });
+      tierOptions.forEach(function(opt) {
+        opt.classList.toggle('selected', opt.querySelector('input[type=radio]').value === 'free');
+      });
+      minorToggle.checked = false;
+      bannerText.textContent = 'PREVIEW: FREE';
+      // Re-init to restore real member data
+      init();
+    }
+
+    pullTab.addEventListener('click', openDrawer);
+    closeBtn.addEventListener('click', closeDrawer);
+    scrim.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer();
+    });
+    tierOptions.forEach(function(opt) {
+      opt.addEventListener('click', applyPreview);
+    });
+    minorToggle.addEventListener('change', applyPreview);
+    exitBtn.addEventListener('click', exitPreview);
+  }
+  // ── End Superadmin ────────────────────────────────────────────────────────
+
 }());
 </script>
+
+<!-- Superadmin pull tab -->
+<button class="admin-pull-tab" id="adminPullTab" type="button" aria-label="Open admin preview panel" aria-expanded="false" aria-controls="adminDrawer">
+  View As
+</button>
+
+<!-- Superadmin drawer scrim -->
+<div class="admin-drawer-scrim" id="adminDrawerScrim" aria-hidden="true"></div>
+
+<!-- Superadmin drawer -->
+<aside class="admin-drawer" id="adminDrawer" aria-label="Admin preview panel" aria-hidden="true" role="dialog">
+  <div class="admin-drawer-head">
+    <div>
+      <div class="adh-label">View As</div>
+      <div class="adh-sublabel">Superadmin preview</div>
+    </div>
+    <button class="admin-close-btn" id="adminDrawerClose" type="button" aria-label="Close admin preview panel">&times;</button>
+  </div>
+  <div class="admin-drawer-body">
+    <div>
+      <div class="admin-section-label">Member Tier</div>
+      <div class="admin-tier-list" id="adminTierList" role="radiogroup" aria-label="Preview as tier">
+        <label class="admin-tier-option selected">
+          <input type="radio" name="adminTier" value="free" checked> Free
+        </label>
+        <label class="admin-tier-option">
+          <input type="radio" name="adminTier" value="passport"> Passport
+        </label>
+        <label class="admin-tier-option">
+          <input type="radio" name="adminTier" value="all-access"> All Access
+        </label>
+        <label class="admin-tier-option">
+          <input type="radio" name="adminTier" value="lifetime"> Lifetime
+        </label>
+      </div>
+    </div>
+    <div>
+      <div class="admin-section-label">Flags</div>
+      <div class="admin-toggle-row">
+        <div>
+          <div class="atr-label">Under 18</div>
+          <div class="atr-sub">Hides Chat tab</div>
+        </div>
+        <label class="admin-mini-toggle" aria-label="Preview as under-18 member">
+          <input type="checkbox" id="adminMinorToggle">
+          <span class="admin-mini-toggle-track" aria-hidden="true"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Preview active banner -->
+<div class="admin-preview-banner" id="adminPreviewBanner" aria-live="polite" role="status">
+  <span id="adminPreviewBannerText">PREVIEW: FREE</span>
+  <button id="adminExitPreview" type="button">Exit</button>
+</div>
+
 </body>
 </html>
