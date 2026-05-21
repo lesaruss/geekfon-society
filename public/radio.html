@@ -169,7 +169,7 @@ a{color:inherit;text-decoration:none;}
   <!-- Track library -->
   <section class="tracks-panel" aria-label="Track library">
     <div class="tracks-hdr">
-      <div class="tracks-title">Library</div>
+      <div class="tracks-title">Library <span id="tierBadge" style="display:none;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;background:rgba(246,152,32,.15);color:#F69820;border:1px solid rgba(246,152,32,.25);border-radius:100px;padding:3px 10px;margin-left:8px;vertical-align:middle;"></span></div>
       <div class="tab-group" role="group" aria-label="Library view">
         <button class="tab-btn active" id="tabPreview" onclick="switchTab('preview')" aria-pressed="true">Preview</button>
         <button class="tab-btn" id="tabSample" onclick="switchTab('sample')" aria-pressed="false">Sample</button>
@@ -179,7 +179,7 @@ a{color:inherit;text-decoration:none;}
       <div id="trackListEl" aria-label="Track list"></div>
       <div class="tracks-gate" id="tracksGate" style="display:none">
         <div class="gate-txt">Get a Passport to unlock all tracks and support every GFS artist.</div>
-        <button class="gate-btn" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Get Passport - $11</button>
+        <button class="gate-btn" onclick="window.location.href='/passport'">Get a Passport</button>
       </div>
     </div>
   </section>
@@ -211,6 +211,49 @@ const PREVIEW_TRACKS = [
 
 let currentTrack = -1, isPlaying = false, activeTab = 'preview', previewTimer = null;
 const audio = document.getElementById('audioEl');
+
+// --- Auth helpers ---
+let userTier = 'free';
+let unlockedSrcs = new Set(); // full audio src URLs that the current user can play
+
+function getToken() {
+  try {
+    var s = sessionStorage.getItem('gfs_session');
+    if (s) { var p = JSON.parse(s); if (p && p.access_token) return p.access_token; }
+  } catch(_) {}
+  var m = document.cookie.match(/gfs_token=([^;]+)/);
+  return m ? m[1] : null;
+}
+
+async function fetchTierData() {
+  var headers = { 'Content-Type': 'application/json' };
+  var token = getToken();
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  try {
+    var res = await fetch('/api/songs', { headers: headers });
+    if (!res.ok) return;
+    var data = await res.json();
+    userTier = data.tier || 'free';
+    unlockedSrcs = new Set((data.tracks || []).map(function(t) {
+      return t.src_path || '';
+    }));
+  } catch(_) {}
+}
+
+function isUnlocked(t) {
+  if (userTier === 'lifetime') return true;
+  // Match by src path suffix (AUDIO_BASE is prepended client-side)
+  return unlockedSrcs.has(t.src) || unlockedSrcs.has(AUDIO_BASE + t.src);
+}
+
+// Show tier badge in library header
+function renderTierBadge() {
+  var el = document.getElementById('tierBadge');
+  if (!el) return;
+  var labels = { free: 'Free', passport: 'Passport', 'all-access': 'All Access', lifetime: 'Lifetime' };
+  el.textContent = labels[userTier] || 'Free';
+  el.style.display = '';
+}
 
 function fmtTime(s) {
   if (!s || isNaN(s)) return '0:00';
@@ -264,6 +307,7 @@ function loadTrack(idx) {
   const list = getActiveList();
   const t = list[idx];
   if (!t) return;
+  if (!isUnlocked(t)) { window.location.href = '/passport'; return; }
   if (previewTimer) { clearTimeout(previewTimer); previewTimer = null; }
   currentTrack = idx;
   const albumImg = document.getElementById('albumImg');
@@ -328,7 +372,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') { if (audio.duration) audio.currentTime = Math.min(audio.duration, audio.currentTime + 5); }
 });
 
-renderTracks();
+async function init() {
+  await fetchTierData();
+  renderTracks();
+}
+init();
 </script>
 </body>
 </html>

@@ -303,9 +303,9 @@ button{font-family:'Montserrat',sans-serif;}
             <div class="chat-gate" id="chatGate">Like and comment with a Passport membership or higher. Shamanic reads everything.</div>
             <div class="chat-compose">
               <input class="chat-input" type="text" placeholder="Add a reply..."
-                     onclick="window.open('https://lesaruss.ai/geekfon','_blank')"
+                     onclick="window.location.href='/passport'"
                      readonly aria-label="Reply - Passport required to comment">
-              <button class="chat-send" onclick="window.open('https://lesaruss.ai/geekfon','_blank')" aria-label="Send reply - Passport required">
+              <button class="chat-send" onclick="window.location.href='/passport'" aria-label="Send reply - Passport required">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="#0a0a0a"/></svg>
               </button>
             </div>
@@ -343,7 +343,7 @@ button{font-family:'Montserrat',sans-serif;}
             <div class="gate-bar-title">Join GeekFon Society</div>
             <div class="gate-bar-sub">From $11 one-time - Passport, All Access, or Lifetime</div>
           </div>
-          <button class="gate-bar-btn" onclick="window.open('https://lesaruss.ai/geekfon','_blank')">Join Now</button>
+          <button class="gate-bar-btn" onclick="window.location.href='/passport'">Join Now</button>
         </div>
         <div class="app-btns">
           <a href="#" class="app-btn" aria-label="Download on the App Store">
@@ -374,7 +374,7 @@ button{font-family:'Montserrat',sans-serif;}
   var _loggedIn=false;
   function toggleLogin(){
     _loggedIn=!_loggedIn;
-    document.getElementById('loginToggleBtn').textContent=_loggedIn?'Simulate Logout':'Simulate Login';
+    document.getElementById('loginToggleBtnNoop').textContent=_loggedIn?'Simulate Logout':'Simulate Login';
     document.getElementById('devStatus').textContent=_loggedIn?'Logged In':'Logged Out';
     document.getElementById('devStatus').classList.toggle('on',_loggedIn);
     var f=document.getElementById('phoneFrame');
@@ -386,14 +386,16 @@ button{font-family:'Montserrat',sans-serif;}
     if(ci){
       ci.readOnly=!_loggedIn;
       ci.placeholder=_loggedIn?'Write a reply...':'Add a reply...';
-      if(_loggedIn){ci.onclick=null;}else{ci.onclick=function(){window.open('https://lesaruss.ai/geekfon','_blank');};}
+      if(_loggedIn){ci.onclick=null;}else{ci.onclick=function(){window.location.href='/passport';};}
     }
     var cs=document.querySelector('.chat-send');
     if(cs){
       if(_loggedIn){cs.onclick=function(){var ci=document.querySelector('.chat-input');if(ci&&ci.value.trim()){ci.value='';}};}
-      else{cs.onclick=function(){window.open('https://lesaruss.ai/geekfon','_blank');};}
+      else{cs.onclick=function(){window.location.href='/passport';};}
     }
   }
+  loadAuthState();
+
   function toggleTranslate(id) {
     var orig = document.getElementById(id + '-orig');
     var en = document.getElementById(id + '-en');

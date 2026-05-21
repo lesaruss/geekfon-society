@@ -190,7 +190,7 @@
       /* Login button */
       var loginBtn = document.getElementById('gfsNavLoginBtn');
       if (loginBtn) loginBtn.addEventListener('click', function () {
-        document.dispatchEvent(new CustomEvent('gfs:login-toggle'));
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
       });
     });
   }

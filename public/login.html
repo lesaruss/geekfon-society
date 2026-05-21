@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Member Login - GeekFon Society</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow-x:hidden;font-family:'Montserrat',sans-serif;background:#020c0a;color:#e8e8e8;}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}}
+:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+a{color:inherit;text-decoration:none;}
+
+/* AURORA */
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 9% 6%,rgba(255,255,255,.55) 0%,transparent 100%),radial-gradient(1px 1px at 44% 14%,rgba(255,255,255,.48) 0%,transparent 100%),radial-gradient(1.5px 1.5px at 76% 7%,rgba(255,255,255,.52) 0%,transparent 100%),radial-gradient(1.5px 1.5px at 18% 4%,rgba(255,255,255,.65) 0%,transparent 100%);}
+.a{position:absolute;border-radius:50%;filter:blur(90px);}
+.a1{width:85vw;height:48vh;top:-20vh;left:4vw;background:radial-gradient(ellipse at center,rgba(0,215,95,.22) 0%,transparent 70%);animation:d1 18s ease-in-out infinite alternate;}
+.a2{width:62vw;height:40vh;top:-14vh;right:-6vw;background:radial-gradient(ellipse at center,rgba(0,155,255,.16) 0%,transparent 70%);animation:d2 24s ease-in-out infinite alternate;}
+.aurora-ground{position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to top,rgba(2,12,10,.97) 0%,transparent 100%);}
+@keyframes d1{from{transform:translate(0,0)}to{transform:translate(4vw,5vh)}}
+@keyframes d2{from{transform:translate(0,0)}to{transform:translate(-5vw,3vh)}}
+
+/* LAYOUT */
+.page{position:relative;z-index:1;min-height:100vh;padding-top:80px;display:flex;align-items:center;justify-content:center;padding-bottom:40px;}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:24px;padding:48px 40px;width:100%;max-width:400px;margin:0 20px;}
+
+/* WORDMARK */
+.logo-row{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:32px;}
+.logo-word{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#fff;}
+.logo-word span{color:#F69820;}
+
+/* HEADINGS */
+.card-eyebrow{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3em;color:rgba(246,152,32,.7);text-align:center;margin-bottom:10px;}
+.card-title{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;color:#fff;text-align:center;margin-bottom:8px;}
+.card-sub{font-size:12px;font-weight:400;color:rgba(255,255,255,.5);text-align:center;line-height:1.6;margin-bottom:32px;}
+
+/* FORM */
+.field{margin-bottom:16px;}
+label{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.5);margin-bottom:8px;}
+input[type="email"]{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:14px 16px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:400;color:#fff;transition:border-color .15s;}
+input[type="email"]::placeholder{color:rgba(255,255,255,.25);}
+input[type="email"]:focus{outline:none;border-color:#F69820;}
+input[type="email"]:disabled{opacity:.5;cursor:not-allowed;}
+
+.btn-submit{width:100%;background:#F69820;color:#020c0a;border:none;border-radius:100px;padding:15px 36px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.16em;cursor:pointer;transition:background .15s,opacity .15s;margin-top:8px;}
+.btn-submit:hover:not(:disabled){background:#e08818;}
+.btn-submit:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;}
+
+/* STATUS STATES */
+.status-msg{margin-top:16px;text-align:center;font-size:12px;font-weight:600;line-height:1.6;display:none;}
+.status-msg.error{color:#ff6b6b;display:block;}
+.status-msg.info{color:rgba(255,255,255,.6);display:block;}
+
+/* SUCCESS STATE */
+.success-state{display:none;text-align:center;}
+.success-icon{font-size:48px;margin-bottom:16px;}
+.success-title{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;color:#fff;margin-bottom:10px;}
+.success-sub{font-size:12px;font-weight:400;color:rgba(255,255,255,.55);line-height:1.7;}
+.success-resend{background:none;border:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(246,152,32,.7);cursor:pointer;margin-top:20px;transition:color .15s;padding:8px;}
+.success-resend:hover{color:#F69820;}
+.success-resend:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:12px;margin:24px 0;}
+.divider-line{flex:1;height:1px;background:rgba(255,255,255,.08);}
+.divider-text{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.3);}
+
+/* FOOTER LINKS */
+.card-footer{margin-top:24px;text-align:center;}
+.card-footer a{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.4);transition:color .15s;}
+.card-footer a:hover{color:#F69820;}
+.card-footer a:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+.dot{color:#F69820;margin:0 10px;}
+
+/* VERIFIED STATE (magic link landed) */
+.verified-state{display:none;text-align:center;}
+.verified-icon{font-size:48px;margin-bottom:16px;}
+.verified-title{font-size:18px;font-weight:900;text-transform:uppercase;color:#4caf50;margin-bottom:10px;}
+.verified-sub{font-size:12px;font-weight:400;color:rgba(255,255,255,.55);line-height:1.7;}
+.spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.15);border-top-color:#F69820;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LOADING STATE (processing token) */
+.loading-state{display:none;text-align:center;}
+.loading-title{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.7);margin-top:12px;}
+</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <div class="stars"></div>
+  <div class="a a1"></div>
+  <div class="a a2"></div>
+  <div class="aurora-ground"></div>
+</div>
+
+<script src="/nav.js"></script>
+
+<main class="page" id="main">
+  <div class="card" role="main">
+    <div class="logo-row">
+      <a href="/" class="logo-word" aria-label="GeekFon Society home">Geek<span>Fon</span></a>
+    </div>
+
+    <!-- DEFAULT: email form -->
+    <div id="formState">
+      <p class="card-eyebrow">Member Access</p>
+      <h1 class="card-title">Sign In</h1>
+      <p class="card-sub">We'll send a magic link to your inbox. No password needed.</p>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="emailInput">Email address</label>
+          <input type="email" id="emailInput" name="email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <button type="submit" class="btn-submit" id="submitBtn">Send Magic Link</button>
+        <p class="status-msg" id="statusMsg" role="alert" aria-live="polite"></p>
+      </form>
+
+      <div class="divider"><div class="divider-line"></div><div class="divider-text">New here?</div><div class="divider-line"></div></div>
+
+      <div class="card-footer">
+        <a href="/passport">Get a Passport</a>
+        <span class="dot" aria-hidden="true">.</span>
+        <a href="/">Back to site</a>
+      </div>
+    </div>
+
+    <!-- SUCCESS: email sent -->
+    <div class="success-state" id="successState" role="status" aria-live="polite">
+      <div class="success-icon" aria-hidden="true">&#9993;</div>
+      <h2 class="success-title">Check Your Inbox</h2>
+      <p class="success-sub">We sent a magic link to <strong id="sentEmailDisplay"></strong>. Click it to sign in. The link expires in 60 minutes.</p>
+      <button class="success-resend" id="resendBtn" type="button">Resend link</button>
+      <div class="card-footer" style="margin-top:16px;">
+        <a href="/">Back to site</a>
+      </div>
+    </div>
+
+    <!-- LOADING: processing token from URL -->
+    <div class="loading-state" id="loadingState" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="loading-title">Signing you in...</p>
+    </div>
+
+    <!-- VERIFIED: signed in successfully -->
+    <div class="verified-state" id="verifiedState" role="status" aria-live="polite">
+      <div class="verified-icon" aria-hidden="true">&#10003;</div>
+      <h2 class="verified-title">You're In</h2>
+      <p class="verified-sub">Redirecting you now...</p>
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  var SUPABASE_URL  = 'https://fwbhwfxpncrsfhttimna.supabase.co';
+  var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA';
+
+  // Elements
+  var formState    = document.getElementById('formState');
+  var successState = document.getElementById('successState');
+  var loadingState = document.getElementById('loadingState');
+  var verifiedState= document.getElementById('verifiedState');
+  var loginForm    = document.getElementById('loginForm');
+  var emailInput   = document.getElementById('emailInput');
+  var submitBtn    = document.getElementById('submitBtn');
+  var statusMsg    = document.getElementById('statusMsg');
+  var sentDisplay  = document.getElementById('sentEmailDisplay');
+  var resendBtn    = document.getElementById('resendBtn');
+
+  var lastEmail = '';
+
+  // ----- State helpers -----
+  function showOnly(el) {
+    [formState, successState, loadingState, verifiedState].forEach(function (e) {
+      e.style.display = 'none';
+    });
+    el.style.display = 'block';
+  }
+
+  function setError(msg) {
+    statusMsg.textContent = msg;
+    statusMsg.className   = 'status-msg error';
+  }
+
+  function clearStatus() {
+    statusMsg.className = 'status-msg';
+    statusMsg.textContent = '';
+  }
+
+  // ----- Redirect target -----
+  function getRedirect() {
+    var params = new URLSearchParams(window.location.search);
+    var r = params.get('redirect');
+    if (r && r.startsWith('/') && !r.startsWith('//')) return r;
+    return '/';
+  }
+
+  // ----- Send magic link -----
+  async function sendMagicLink(email) {
+    var redirectTo = window.location.origin + '/login?redirect=' + encodeURIComponent(getRedirect());
+    var res = await fetch(SUPABASE_URL + '/auth/v1/magiclink', {
+      method: 'POST',
+      headers: {
+        apikey:         SUPABASE_ANON,
+        Authorization:  'Bearer ' + SUPABASE_ANON,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: email, options: { emailRedirectTo: redirectTo } }),
+    });
+    if (!res.ok) {
+      var data = await res.json().catch(function () { return {}; });
+      throw new Error(data.error_description || data.msg || 'Failed to send link');
+    }
+  }
+
+  // ----- Exchange token -----
+  async function exchangeToken(accessToken, refreshToken) {
+    // Store session tokens in memory + sessionStorage (no localStorage per project rules)
+    var session = { access_token: accessToken, refresh_token: refreshToken, timestamp: Date.now() };
+    try { sessionStorage.setItem('gfs_session', JSON.stringify(session)); } catch (_) {}
+    // Also set as a cookie so the API can read it server-side
+    document.cookie = 'gfs_token=' + accessToken + '; path=/; SameSite=Lax; Secure';
+  }
+
+  // ----- Check for magic link token in URL hash -----
+  function processHashToken() {
+    var hash = window.location.hash;
+    if (!hash || !hash.includes('access_token')) return false;
+
+    showOnly(loadingState);
+
+    var params = new URLSearchParams(hash.replace(/^#/, ''));
+    var type    = params.get('type');
+    var access  = params.get('access_token');
+    var refresh = params.get('refresh_token');
+
+    if (!access) {
+      showOnly(formState);
+      setError('Invalid magic link. Please request a new one.');
+      return true;
+    }
+
+    exchangeToken(access, refresh || '').then(function () {
+      // Clean up the URL
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+      showOnly(verifiedState);
+      setTimeout(function () {
+        window.location.href = getRedirect();
+      }, 1000);
+    }).catch(function (err) {
+      showOnly(formState);
+      setError('Could not verify your link. Please try again.');
+    });
+
+    return true;
+  }
+
+  // ----- Form submit -----
+  loginForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearStatus();
+
+    var email = emailInput.value.trim();
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address.');
+      emailInput.focus();
+      return;
+    }
+
+    submitBtn.disabled    = true;
+    submitBtn.textContent = 'Sending...';
+
+    try {
+      await sendMagicLink(email);
+      lastEmail = email;
+      sentDisplay.textContent = email;
+      showOnly(successState);
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      submitBtn.disabled    = false;
+      submitBtn.textContent = 'Send Magic Link';
+    }
+  });
+
+  // ----- Resend -----
+  resendBtn.addEventListener('click', async function () {
+    if (!lastEmail) { showOnly(formState); return; }
+    resendBtn.disabled    = true;
+    resendBtn.textContent = 'Sending...';
+    try {
+      await sendMagicLink(lastEmail);
+      resendBtn.textContent = 'Sent!';
+      setTimeout(function () {
+        resendBtn.disabled    = false;
+        resendBtn.textContent = 'Resend link';
+      }, 3000);
+    } catch (err) {
+      resendBtn.disabled    = false;
+      resendBtn.textContent = 'Try again';
+    }
+  });
+
+  // ----- Init -----
+  if (!processHashToken()) {
+    showOnly(formState);
+    emailInput.focus();
+  }
+})();
+</script>
+</body>
+</html>
