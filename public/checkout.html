@@ -165,7 +165,7 @@ a{color:inherit;text-decoration:none;}
 
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-var STRIPE_PK = null; // loaded from /api/config at runtime
+var STRIPE_PK = 'pk_live_Q1e42RlryNbGEACcR8cSNoIc';
 
 var ARTIST_DATA = {
   'shamanic-resin':     { name: 'Shamanic Resin',     img: 'https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w80-h80',  color: '#b548c6' },
@@ -297,22 +297,6 @@ async function initCheckout() {
     document.getElementById('checkout').innerHTML =
       '<div class="stripe-error">Could not start checkout. <a href="/passport">Go back</a> and try again.</div>';
     return;
-  }
-
-  // Fetch publishable key if not already loaded
-  if (!STRIPE_PK) {
-    try {
-      var cfgRes = await fetch('/api/config');
-      var cfg = await cfgRes.json();
-      if (!cfg.stripePk) throw new Error('No PK in config');
-      STRIPE_PK = cfg.stripePk;
-    } catch (err) {
-      console.error('Config fetch error:', err);
-      document.getElementById('stripeLoading').style.display = 'none';
-      document.getElementById('checkout').innerHTML =
-        '<div class="stripe-error">Payment config unavailable. <a href="/passport">Go back</a> and try again.</div>';
-      return;
-    }
   }
 
   // Mount Stripe embedded checkout
