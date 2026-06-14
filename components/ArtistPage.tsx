@@ -80,15 +80,6 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
           <div className="bible-head">
             {/* Logo + breadcrumb bar */}
             <div className="head-topbar">
-              <div className="head-logo-wrap">
-                {/* GEEKFON text logo — same component as topbar, GEEK goes white on dark bg */}
-                <span className="gfs-logo" aria-label="GeekFon Society">
-                  <span className="gfs-geek">GEEK</span>
-                  <span className="gfs-f">F</span>
-                  <span className="gfs-o">O</span>
-                  <span className="gfs-n">N</span>
-                </span>
-              </div>
               <nav className="head-crumb" aria-label="Breadcrumb">
                 {crumb.map((x, i, a) => (
                   <span key={i} className="head-crumb-item">
@@ -326,12 +317,6 @@ const CSS = `
   border-bottom:1px solid rgba(255,255,255,.07);
   margin-bottom:28px;
 }
-.head-logo-wrap{display:flex;align-items:center;flex-shrink:0}
-.gfs-logo{font-family:'Montserrat',-apple-system,sans-serif;font-size:22px;font-weight:900;letter-spacing:-.01em;line-height:1;text-transform:uppercase;display:inline-flex;align-items:baseline;user-select:none}
-.gfs-geek{color:#fff}
-.gfs-f{color:#E91E8C}
-.gfs-o{color:#00B4FF}
-.gfs-n{color:#AAFF00}
 .head-crumb{display:flex;align-items:center;gap:8px}
 .head-crumb-item{display:flex;align-items:center;gap:8px}
 .head-crumb a{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);text-decoration:none;letter-spacing:.01em}
