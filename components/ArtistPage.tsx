@@ -8,7 +8,7 @@ type Track = { n: string; m: string; v: string; url?: string };
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
-type News = { tag?: string; date?: string; title?: string; blurb?: string; href?: string };
+type News = { tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string };
 type Audit = { title: string; status?: string; pillar?: string; theme?: string; emotion?: string; scores?: Record<string, number> };
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
@@ -24,6 +24,7 @@ export type ArtistContent = {
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
+  { key: "about", label: "About" },
   { key: "news", label: "News" },
   { key: "music", label: "Music" },
   { key: "pulse", label: "Pulse" },
@@ -35,8 +36,35 @@ const PLAY = <svg viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4" /></s
 const PAUSE = <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>;
 const LOCK = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>;
 
+const PLACEHOLDER_NEWS: News[] = [
+  {
+    tag: "Feature",
+    date: "Season 1 — Coming Jul 2026",
+    title: "Roxanne Steps Into the Light",
+    blurb: "After years of silence, the voice that once disappeared from the GeekFon universe is ready to tell the full story. We sit down with Roxanne ahead of Season 1.",
+    href: "#",
+    thumb: undefined,
+  },
+  {
+    tag: "Interview",
+    date: "Season 1 — Coming Jul 2026",
+    title: "The Lost Song: What Really Happened",
+    blurb: "A deep dive into the era that defined Roxanne's sound and the conversation with Riku Hayasaka that changed everything.",
+    href: "#",
+    thumb: undefined,
+  },
+  {
+    tag: "Press",
+    date: "Season 1 — Coming Jul 2026",
+    title: "GeekFon Society Announces Season 1 Roster",
+    blurb: "The full lineup for the inaugural 111-day season is revealed. Roxanne leads the charge as the universe's first fully documented artist.",
+    href: "#",
+    thumb: undefined,
+  },
+];
+
 export default function ArtistPage({ content }: { content: ArtistContent }) {
-  const [tab, setTab] = useState("news");
+  const [tab, setTab] = useState("about");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -123,7 +151,8 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
           <div className="body-layout">
             <div className="body-main">
 
-              {tab === "news" && (
+              {/* ── About tab ── */}
+              {tab === "about" && (
                 <section className="panel">
                   {hasMsg && (
                     <div className="rxp">
@@ -144,23 +173,35 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
                   <div className="card about-bio">
                     {(c.bio || []).map((p, i) => (<p key={i} style={i ? { marginTop: 14 } : undefined} dangerouslySetInnerHTML={{ __html: emph(p) }} />))}
                   </div>
-                  <div className="about-stats">
-                    {(c.stats || []).map((s, i) => (<div key={i} className="astat"><div className="astat-v">{s.v}</div><div className="astat-l">{s.l}</div></div>))}
-                  </div>
-                  {!!(c.news || []).length && (
-                    <>
-                      <p className="bsec">Latest</p>
-                      <div className="news-grid">
-                        {(c.news || []).map((n, i) => (
-                          <div key={i} className="newscard">
-                            <div className="news-top">{n.tag && <span className="news-tag">{n.tag}</span>}{n.date && <span className="news-date">{n.date}</span>}</div>
-                            {n.title && <div className="news-title">{n.title}</div>}
-                            {n.blurb && <p className="news-blurb">{n.blurb}</p>}
-                          </div>
-                        ))}
+                </section>
+              )}
+
+              {/* ── News tab ── */}
+              {tab === "news" && (
+                <section className="panel">
+                  <p className="bsec">Latest</p>
+                  <div className="article-grid">
+                    {(c.news && c.news.length > 0 ? c.news : PLACEHOLDER_NEWS).map((n, i) => (
+                      <div key={i} className="article-card">
+                        <div className="article-thumb">
+                          {n.thumb
+                            ? <img src={n.thumb} alt={n.title || ""} />
+                            : <div className="article-thumb-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 88%)` }} />
+                          }
+                          {n.tag && <span className="article-tag">{n.tag}</span>}
+                        </div>
+                        <div className="article-body">
+                          <div className="article-date">{n.date || "Coming Soon"}</div>
+                          {n.title && <div className="article-title">{n.title}</div>}
+                          {n.blurb && <p className="article-blurb">{n.blurb}</p>}
+                          <a href={n.href || "#"} className="article-cta">
+                            Read more
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                          </a>
+                        </div>
                       </div>
-                    </>
-                  )}
+                    ))}
+                  </div>
                 </section>
               )}
 
@@ -392,26 +433,34 @@ const CSS = `
 .card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:22px 24px;margin-bottom:14px}
 .card p{font-size:15px;color:var(--lr-text-75);line-height:1.75}
 .about-bio p+p{margin-top:10px}
-.about-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:4px}
-.astat{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:10px;padding:18px 16px}
-.astat-v{font-size:14px;font-weight:800}.astat-l{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--lr-text-50);margin-top:5px}
 @media(max-width:900px){
   .body-layout{flex-direction:column;padding:0 16px}
   .body-main{padding-right:0}
   .billboard{width:100%;position:static;padding-top:0}
   .bb-slot-tall{display:none}
-  .about-stats{grid-template-columns:repeat(2,1fr)}
   .head-grid{flex-direction:column;padding:0 16px}
   .head-topbar{padding:14px 16px 16px}
   .tabbar{padding:0 16px}
 }
-.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
-.newscard{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:16px 18px}
-.news-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
-.news-tag{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 10px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text)}
-.news-date{font-size:11px;font-weight:700;color:var(--lr-text-50)}
-.news-title{font-size:15px;font-weight:800;line-height:1.3}
-.news-blurb{font-size:13px;color:var(--lr-text-75);line-height:1.55;margin-top:6px}
+/* ── Article cards ── */
+.article-grid{display:flex;flex-direction:column;gap:20px}
+.article-card{display:flex;gap:20px;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden}
+.article-thumb{width:200px;min-width:200px;aspect-ratio:16/10;position:relative;overflow:hidden;flex-shrink:0}
+.article-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.article-thumb-ph{width:100%;height:100%;background:#eee}
+.article-tag{position:absolute;top:10px;left:10px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 10px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text);backdrop-filter:blur(4px)}
+.article-body{flex:1;padding:18px 20px 18px 0;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.article-date{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-50)}
+.article-title{font-size:17px;font-weight:900;line-height:1.25;color:var(--lr-text)}
+.article-blurb{font-size:13px;color:var(--lr-text-75);line-height:1.6;margin:0}
+.article-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);text-decoration:none;margin-top:4px}
+.article-cta svg{width:14px;height:14px;transition:transform .15s}
+.article-cta:hover svg{transform:translateX(3px)}
+@media(max-width:700px){
+  .article-card{flex-direction:column}
+  .article-thumb{width:100%;min-width:unset;aspect-ratio:16/9}
+  .article-body{padding:14px 16px 16px}
+}
 .panel-intro{font-size:13px;color:var(--lr-text-50);margin-bottom:18px}
 .track{display:flex;align-items:center;gap:16px;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:10px;padding:13px 18px;margin-bottom:9px}
 .tplay{width:42px;height:42px;border-radius:50%;border:none;background:var(--rx);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0}
