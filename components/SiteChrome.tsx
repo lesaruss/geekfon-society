@@ -10,15 +10,15 @@ const NAV = [
 
 type Crumb = { label: string; href?: string };
 
-// Inline text logo — no image file needed.
-// "GEEK" = white, "F" = magenta, "O" = electric blue, "N" = lime
+// Logo: circle icon + GEEKFON wordmark
+// "GEEK" = black (topbar) or white (drawer)
+// "FON" = all one color, slowly hue-cycling via CSS animation
 function GeekFonLogo() {
   return (
     <span className="gfs-logo" aria-label="GeekFon Society">
+      <img src="/geekfon-logo.png" alt="" className="gfs-icon" aria-hidden="true" />
       <span className="gfs-geek">GEEK</span>
-      <span className="gfs-f">F</span>
-      <span className="gfs-o">O</span>
-      <span className="gfs-n">N</span>
+      <span className="gfs-fon">FON</span>
     </span>
   );
 }
@@ -86,7 +86,14 @@ const CHROME_CSS = `
 .gham:hover{background:var(--lr-bg)}
 .gham svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
 
-/* ── GEEKFON text logo ── */
+/* ── GEEKFON logo ── */
+@keyframes fonHue {
+  0%   { color: #E91E8C; }
+  25%  { color: #00B4FF; }
+  50%  { color: #AAFF00; }
+  75%  { color: #F69820; }
+  100% { color: #E91E8C; }
+}
 .gfs-logo{
   font-family:'Montserrat',-apple-system,sans-serif;
   font-size:20px;
@@ -95,17 +102,25 @@ const CHROME_CSS = `
   line-height:1;
   text-transform:uppercase;
   display:inline-flex;
-  align-items:baseline;
-  gap:0;
+  align-items:center;
+  gap:6px;
   user-select:none;
+  text-decoration:none;
 }
-.gfs-geek{color:#1a1a1a}
-.gfs-f{color:#E91E8C}
-.gfs-o{color:#00B4FF}
-.gfs-n{color:#AAFF00}
+.gfs-icon{
+  height:28px;
+  width:28px;
+  object-fit:contain;
+  display:block;
+  flex-shrink:0;
+}
+.gfs-geek{ color:#1a1a1a; }
+.gfs-fon{
+  animation: fonHue 6s ease-in-out infinite;
+}
 
 /* Drawer version — GEEK goes white */
-.gdrawer .gfs-geek{color:#fff}
+.gdrawer .gfs-geek{ color:#fff; }
 
 .glogo{
   display:flex;align-items:center;
