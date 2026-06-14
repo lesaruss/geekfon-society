@@ -116,7 +116,14 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
             )}
             {c.brief && (
               <div className="card">
-                {c.brief.highConcept && (<><p className="mini-h">High Concept</p><p>{c.brief.highConcept}</p></>)}
+                {c.brief.highConcept && (<><p className="mini-h" style={{ marginTop: 0 }}>High Concept</p><p>{c.brief.highConcept}</p></>)}
+                {(c.brief.strength || c.brief.weakness) && (<><p className="mini-h">Strength &amp; Weakness</p><p><strong>Greatest strength:</strong> {c.brief.strength} <strong>Greatest weakness:</strong> {c.brief.weakness}</p></>)}
+                {c.brief.wound && (<><p className="mini-h">Defining Wound</p><p>{c.brief.wound}</p></>)}
+                {c.brief.lostSong && (<><p className="mini-h">The Lost Song Era</p><p>{c.brief.lostSong}</p></>)}
+                {c.brief.rikuConversation && (<><p className="mini-h">The Conversation</p><p>{c.brief.rikuConversation}</p></>)}
+                {c.brief.emotionalJourney && (<><p className="mini-h">Emotional Journey</p><p>{c.brief.emotionalJourney}</p></>)}
+                {c.brief.vocalIdentity && (<><p className="mini-h">Vocal Identity</p><p>{c.brief.vocalIdentity}</p></>)}
+                {c.brief.genreIdentity && (<><p className="mini-h">Genre Identity</p><p>{c.brief.genreIdentity}</p></>)}
                 {c.brief.finalDefinition && (<><p className="mini-h">Final Definition</p><p>{c.brief.finalDefinition}</p></>)}
               </div>
             )}
@@ -125,6 +132,13 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
                 {(c.relationships || []).map((r, i) => (
                   <div key={i} className="rel-row"><div className="rel-name">{r.name}</div><div className="rel-desc">{r.desc}</div></div>
                 ))}
+              </div>
+            )}
+            {!!(c.tracks || []).length && (
+              <div className="card">
+                <p className="mini-h" style={{ marginTop: 0 }}>Catalog</p>
+                <table className="cat"><thead><tr><th>Song</th><th>Era / Tier</th><th>Visibility</th></tr></thead>
+                <tbody>{(c.tracks || []).map((t, i) => (<tr key={i}><td className="song">{t.n}</td><td>{t.m}</td><td><span className={"vis " + t.v}>{t.v}</span></td></tr>))}</tbody></table>
               </div>
             )}
           </section>
@@ -173,4 +187,8 @@ const CSS = `
 .rel-row{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--lr-border)}.rel-row:first-child{border-top:none}
 .rel-name{font-size:12px;font-weight:900;text-transform:uppercase;color:var(--rx-text);min-width:120px}.rel-desc{font-size:13px;color:var(--lr-text-75)}
 .empty-note{font-size:13px;color:var(--lr-text-50);font-style:italic}
+.cat{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.cat th{text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);padding:8px 10px;border-bottom:2px solid var(--lr-border)}
+.cat td{padding:9px 10px;border-bottom:1px solid var(--lr-border);color:var(--lr-text-75)}
+.cat td.song{font-weight:700;color:var(--lr-text)}
 `;
