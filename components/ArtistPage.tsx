@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import SiteChrome from "@/components/SiteChrome";
 
 type Track = { n: string; m: string; v: string };
 type Stat = { v: string; l: string };
@@ -40,6 +41,7 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
   }
 
   return (
+    <SiteChrome>
     <div style={vars}>
       <style>{CSS}</style>
       <div className="apg">
@@ -218,11 +220,12 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
         )}
       </div>
     </div>
+    </SiteChrome>
   );
 }
 
 const CSS = `
-.apg{max-width:1100px;margin:0 auto;padding:0 0 80px}
+.apg{max-width:none;margin:0;padding:0 0 80px}
 .bible-head{background:#111;color:#fff;padding:28px 36px 22px;border-bottom:4px solid var(--rx)}
 .crumb{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,.5);margin-bottom:16px}
 .crumb a:hover{color:#fff}.crumb-sep{color:rgba(255,255,255,.25)}
@@ -233,7 +236,7 @@ const CSS = `
 .pill-row{grid-area:pills;display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
 .pill{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:4px 11px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16)}
 .pill.accent{background:var(--rx);border-color:var(--rx)}
-.tabbar{position:sticky;top:0;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);display:flex;gap:2px;padding:0 36px}
+.tabbar{position:sticky;top:56px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);display:flex;gap:2px;padding:0 36px}
 .tab{position:relative;font-family:inherit;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);background:none;border:none;padding:16px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
 .tab[aria-selected="true"]{color:var(--rx-text)}
 .tab[aria-selected="true"]::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--rx)}
