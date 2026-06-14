@@ -17,8 +17,7 @@ function GeekFonLogo() {
   return (
     <span className="gfs-logo" aria-label="GeekFon Society">
       <img src="/geekfon-logo.png" alt="" className="gfs-icon" aria-hidden="true" />
-      <span className="gfs-geek">GEEK</span>
-      <span className="gfs-fon">FON</span>
+      <span className="gfs-word"><span className="gfs-geek">GEEK</span><span className="gfs-fon">FON</span></span>
     </span>
   );
 }
@@ -107,6 +106,9 @@ const CHROME_CSS = `
   user-select:none;
   text-decoration:none;
 }
+/* GEEK+FON wrapped together so flex gap only separates icon from wordmark */
+.gfs-word{ display:inline; }
+.gfs-geek, .gfs-fon{ display:inline; }
 .gfs-icon{
   height:28px;
   width:28px;
