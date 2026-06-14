@@ -61,13 +61,54 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
   const msg = c.message || {};
   const hasMsg = !!(msg.ja || msg.en);
 
+  // Build breadcrumb: always GeekFon > Roster > Artist Name
+  const crumb = [
+    { label: "GeekFon", href: "/" },
+    { label: "Roster", href: "/roster" },
+    { label: name },
+  ];
+
   return (
-    <SiteChrome crumb={c.crumb}>
+    // No crumb passed to SiteChrome — breadcrumb lives in the black header now
+    <SiteChrome>
       <div style={vars}>
         <style>{CSS}</style>
         <audio ref={audioRef} onEnded={() => setPlaying(null)} />
         <div className="apg">
+
+          {/* ── Black header ── */}
           <div className="bible-head">
+            {/* Logo + breadcrumb bar */}
+            <div className="head-topbar">
+              <div className="head-logo-wrap">
+                <img
+                  src="/geekfon-logo.png"
+                  alt="GeekFon Society"
+                  className="head-logo"
+                  onError={(e) => {
+                    const t = e.currentTarget as HTMLImageElement;
+                    t.style.display = "none";
+                    const next = t.nextElementSibling as HTMLElement | null;
+                    if (next) next.style.display = "block";
+                  }}
+                />
+                {/* Fallback text logo shown if image 404s */}
+                <span className="head-logo-text" style={{ display: "none" }}>GFS</span>
+              </div>
+              <nav className="head-crumb" aria-label="Breadcrumb">
+                {crumb.map((x, i, a) => (
+                  <span key={i} className="head-crumb-item">
+                    {x.href
+                      ? <a href={x.href}>{x.label}</a>
+                      : <span className="cur">{x.label}</span>
+                    }
+                    {i < a.length - 1 && <span className="sep">/</span>}
+                  </span>
+                ))}
+              </nav>
+            </div>
+
+            {/* Artist hero + meta */}
             <div className="head-grid">
               {c.heroUrl ? (
                 <img className="head-art" src={c.heroUrl} alt={name + " portrait"} />
@@ -84,6 +125,7 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
             </div>
           </div>
 
+          {/* ── Tab bar ── */}
           <div className="tabbar" role="tablist">
             {TABS.map((t) => (
               <button key={t.key} className="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}>
@@ -92,148 +134,186 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
             ))}
           </div>
 
-          {tab === "news" && (
-            <section className="panel">
-              {hasMsg && (
-                <div className="rxp">
-                  {c.heroUrl && <img className="rxp-img" src={c.heroUrl} alt="" />}
-                  <div className="rxp-body">
-                    <p className="rxp-label">A Message from {name}</p>
-                    <div className="rxp-wave">{Array.from({ length: 22 }).map((_, i) => (<span key={i} style={{ height: 6 + Math.round(Math.abs(Math.sin(i * 1.1)) * 22) }} />))}</div>
-                    <p className="rxp-cap">{lang === "ja" ? msg.ja : msg.en}</p>
-                    {msg.en && msg.ja && (
-                      <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
-                        {lang === "ja" ? "🇺🇸 Listen in English" : "🇯🇵 日本語で聴く"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+          {/* ── Two-column body: content + billboard ── */}
+          <div className="body-layout">
+            <div className="body-main">
 
-              {c.quote && <blockquote className="about-quote">{"“" + c.quote + "”"}</blockquote>}
-              <div className="card about-bio">
-                {(c.bio || []).map((p, i) => (<p key={i} style={i ? { marginTop: 14 } : undefined} dangerouslySetInnerHTML={{ __html: emph(p) }} />))}
-              </div>
-              <div className="about-stats">
-                {(c.stats || []).map((s, i) => (<div key={i} className="astat"><div className="astat-v">{s.v}</div><div className="astat-l">{s.l}</div></div>))}
-              </div>
-
-              {!!(c.news || []).length && (
-                <>
-                  <p className="bsec">Latest</p>
-                  <div className="news-grid">
-                    {(c.news || []).map((n, i) => (
-                      <div key={i} className="newscard">
-                        <div className="news-top">{n.tag && <span className="news-tag">{n.tag}</span>}{n.date && <span className="news-date">{n.date}</span>}</div>
-                        {n.title && <div className="news-title">{n.title}</div>}
-                        {n.blurb && <p className="news-blurb">{n.blurb}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </section>
-          )}
-
-          {tab === "music" && (
-            <section className="panel">
-              <div className="panel-intro"><span>Full catalog. What plays adapts to the viewer&apos;s permissions.</span></div>
-              {(c.tracks || []).map((t, i) => {
-                const url = t.url ? AUDIO + t.url : null;
-                const locked = t.v !== "public" || !url;
-                const isPlaying = !!url && playing === url;
-                return (
-                  <div key={i} className="track">
-                    <button className={"tplay" + (locked ? " locked" : "") + (isPlaying ? " on" : "")} disabled={locked} aria-label={locked ? "Locked" : isPlaying ? "Pause" : "Play"} onClick={() => url && togglePlay(url)}>
-                      {locked ? LOCK : isPlaying ? PAUSE : PLAY}
-                    </button>
-                    <div className="ti"><div className="tn">{t.n}</div><div className="tm">{t.m}</div></div>
-                    <span className={"vis " + t.v}>{t.v}</span>
-                  </div>
-                );
-              })}
-            </section>
-          )}
-
-          {tab === "pulse" && (<section className="panel"><p className="empty-note">Pulse feed renders here (parity with the data model in progress).</p></section>)}
-          {tab === "media" && (<section className="panel"><p className="empty-note">Media gallery renders here (wire to storage on rollout).</p></section>)}
-
-          {tab === "brief" && (
-            <section className="panel">
-              <div className="adminbar"><span className="t">Admin only.</span> <span className="s">The Brief tab is the internal World Bible.</span></div>
-
-              <p className="bsec">Identity &amp; Backstory</p>
-              {c.identity && (<div className="card"><div className="kv">{Object.entries(c.identity).map(([k, v]) => (<div key={k}><div className="k">{k}</div><div className="v">{v}</div></div>))}</div></div>)}
-              {c.brief && (
-                <div className="card">
-                  {c.brief.highConcept && (<><p className="mini-h" style={{ marginTop: 0 }}>High Concept</p><p>{c.brief.highConcept}</p></>)}
-                  {(c.brief.strength || c.brief.weakness) && (<><p className="mini-h">Strength &amp; Weakness</p><p><strong>Greatest strength:</strong> {c.brief.strength} <strong>Greatest weakness:</strong> {c.brief.weakness}</p></>)}
-                  {c.brief.wound && (<><p className="mini-h">Defining Wound</p><p>{c.brief.wound}</p></>)}
-                  {c.brief.lostSong && (<><p className="mini-h">The Lost Song Era</p><p>{c.brief.lostSong}</p></>)}
-                  {c.brief.rikuConversation && (<><p className="mini-h">The Conversation</p><p>{c.brief.rikuConversation}</p></>)}
-                  {c.brief.emotionalJourney && (<><p className="mini-h">Emotional Journey</p><p>{c.brief.emotionalJourney}</p></>)}
-                </div>
-              )}
-
-              {c.universe && (<><p className="bsec">Universe Placement</p><div className="card"><div className="kv">{Object.entries(c.universe).map(([k, v]) => (<div key={k}><div className="k">{k}</div><div className="v">{v}</div></div>))}</div></div></>)}
-              {!!(c.relationships || []).length && (<div className="card">{(c.relationships || []).map((r, i) => (<div key={i} className="rel-row"><div className="rel-name">{r.name}</div><div className="rel-desc">{r.desc}</div></div>))}</div>)}
-
-              {c.sonic && (
-                <>
-                  <p className="bsec">Sonic DNA &amp; Song Prompt</p>
-                  <div className="card">
-                    <div className="kv">
-                      {c.sonic.primaryGenre && <div><div className="k">Primary Genre</div><div className="v">{c.sonic.primaryGenre}</div></div>}
-                      {c.sonic.secondaryGenre && <div><div className="k">Secondary Genre</div><div className="v">{c.sonic.secondaryGenre}</div></div>}
-                      {c.sonic.vocalAge && <div><div className="k">Vocal Age</div><div className="v">{c.sonic.vocalAge}</div></div>}
-                      {c.sonic.tone && <div><div className="k">Tone / Energy / Texture</div><div className="v">{c.sonic.tone}</div></div>}
-                    </div>
-                    {c.sonic.delivery && <p style={{ marginTop: 14 }}>{c.sonic.delivery}</p>}
-                  </div>
-                  {c.sonic.songPrompt && (<div className="copy-block"><div className="copy-bar"><span className="lbl">Song Prompt (paste into Suno)</span><button className="copy-btn" onClick={(e) => copy(e, c.sonic!.songPrompt!)}>Copy</button></div><pre className="copy-body">{c.sonic.songPrompt}</pre></div>)}
-                  {c.sonic.songPromptNote && <p className="hint">{c.sonic.songPromptNote}</p>}
-                </>
-              )}
-
-              {c.visual && (
-                <>
-                  <p className="bsec">Visual DNA &amp; Image Prompt</p>
-                  <div className="card">
-                    {c.visual.visualIdentity && <p><strong>Visual identity.</strong> {c.visual.visualIdentity}</p>}
-                    {c.visual.houseStyle && <p style={{ marginTop: 10 }}><strong>House style.</strong> {c.visual.houseStyle}</p>}
-                  </div>
-                  {c.visual.imagePrompt && (<div className="copy-block"><div className="copy-bar"><span className="lbl">Image Prompt (zero text)</span><button className="copy-btn" onClick={(e) => copy(e, c.visual!.imagePrompt!)}>Copy</button></div><pre className="copy-body">{c.visual.imagePrompt}</pre></div>)}
-                  {c.visual.imagePromptNote && <p className="hint">{c.visual.imagePromptNote}</p>}
-                </>
-              )}
-
-              {!!(c.songAudits || []).length && (
-                <>
-                  <p className="bsec">Song Audits</p>
-                  {(c.songAudits || []).map((a, i) => (
-                    <div key={i} className="audit">
-                      <div className="audit-title">{a.title}</div>
-                      {(a.status || a.pillar) && <div className="audit-meta">{a.status}{a.status && a.pillar ? " · " : ""}{a.pillar}</div>}
-                      {a.theme && <p className="audit-theme">{a.theme}</p>}
-                      <div className="scores">
-                        {Object.entries(a.scores || {}).map(([k, v]) => (<span key={k} className="score">{k.replace(/_/g, " ")} {v}</span>))}
-                        {a.emotion && <span className="score emo">{a.emotion}</span>}
+              {tab === "news" && (
+                <section className="panel">
+                  {hasMsg && (
+                    <div className="rxp">
+                      {c.heroUrl && <img className="rxp-img" src={c.heroUrl} alt="" />}
+                      <div className="rxp-body">
+                        <p className="rxp-label">A Message from {name}</p>
+                        <div className="rxp-wave">{Array.from({ length: 22 }).map((_, i) => (<span key={i} style={{ height: 6 + Math.round(Math.abs(Math.sin(i * 1.1)) * 22) }} />))}</div>
+                        <p className="rxp-cap">{lang === "ja" ? msg.ja : msg.en}</p>
+                        {msg.en && msg.ja && (
+                          <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
+                            {lang === "ja" ? "🇺🇸 Listen in English" : "🇯🇵 日本語で聴く"}
+                          </button>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </>
+                  )}
+                  {c.quote && <blockquote className="about-quote">{"“" + c.quote + "”"}</blockquote>}
+                  <div className="card about-bio">
+                    {(c.bio || []).map((p, i) => (<p key={i} style={i ? { marginTop: 14 } : undefined} dangerouslySetInnerHTML={{ __html: emph(p) }} />))}
+                  </div>
+                  <div className="about-stats">
+                    {(c.stats || []).map((s, i) => (<div key={i} className="astat"><div className="astat-v">{s.v}</div><div className="astat-l">{s.l}</div></div>))}
+                  </div>
+                  {!!(c.news || []).length && (
+                    <>
+                      <p className="bsec">Latest</p>
+                      <div className="news-grid">
+                        {(c.news || []).map((n, i) => (
+                          <div key={i} className="newscard">
+                            <div className="news-top">{n.tag && <span className="news-tag">{n.tag}</span>}{n.date && <span className="news-date">{n.date}</span>}</div>
+                            {n.title && <div className="news-title">{n.title}</div>}
+                            {n.blurb && <p className="news-blurb">{n.blurb}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </section>
               )}
 
-              {!!(c.tracks || []).length && (
-                <>
-                  <p className="bsec">Catalog &amp; Status</p>
-                  <div className="card"><table className="cat"><thead><tr><th>Song</th><th>Era / Tier</th><th>Visibility</th></tr></thead>
-                  <tbody>{(c.tracks || []).map((t, i) => (<tr key={i}><td className="song">{t.n}</td><td>{t.m}</td><td><span className={"vis " + t.v}>{t.v}</span></td></tr>))}</tbody></table></div>
-                </>
+              {tab === "music" && (
+                <section className="panel">
+                  <div className="panel-intro"><span>Full catalog. What plays adapts to the viewer&apos;s permissions.</span></div>
+                  {(c.tracks || []).map((t, i) => {
+                    const url = t.url ? AUDIO + t.url : null;
+                    const locked = t.v !== "public" || !url;
+                    const isPlaying = !!url && playing === url;
+                    return (
+                      <div key={i} className="track">
+                        <button className={"tplay" + (locked ? " locked" : "") + (isPlaying ? " on" : "")} disabled={locked} aria-label={locked ? "Locked" : isPlaying ? "Pause" : "Play"} onClick={() => url && togglePlay(url)}>
+                          {locked ? LOCK : isPlaying ? PAUSE : PLAY}
+                        </button>
+                        <div className="ti"><div className="tn">{t.n}</div><div className="tm">{t.m}</div></div>
+                        <span className={"vis " + t.v}>{t.v}</span>
+                      </div>
+                    );
+                  })}
+                </section>
               )}
-            </section>
-          )}
-        </div>
+
+              {tab === "pulse" && (<section className="panel"><p className="empty-note">Pulse feed renders here (parity with the data model in progress).</p></section>)}
+              {tab === "media" && (<section className="panel"><p className="empty-note">Media gallery renders here (wire to storage on rollout).</p></section>)}
+
+              {tab === "brief" && (
+                <section className="panel">
+                  <div className="adminbar"><span className="t">Admin only.</span> <span className="s">The Brief tab is the internal World Bible.</span></div>
+                  <p className="bsec">Identity &amp; Backstory</p>
+                  {c.identity && (<div className="card"><div className="kv">{Object.entries(c.identity).map(([k, v]) => (<div key={k}><div className="k">{k}</div><div className="v">{v}</div></div>))}</div></div>)}
+                  {c.brief && (
+                    <div className="card">
+                      {c.brief.highConcept && (<><p className="mini-h" style={{ marginTop: 0 }}>High Concept</p><p>{c.brief.highConcept}</p></>)}
+                      {(c.brief.strength || c.brief.weakness) && (<><p className="mini-h">Strength &amp; Weakness</p><p><strong>Greatest strength:</strong> {c.brief.strength} <strong>Greatest weakness:</strong> {c.brief.weakness}</p></>)}
+                      {c.brief.wound && (<><p className="mini-h">Defining Wound</p><p>{c.brief.wound}</p></>)}
+                      {c.brief.lostSong && (<><p className="mini-h">The Lost Song Era</p><p>{c.brief.lostSong}</p></>)}
+                      {c.brief.rikuConversation && (<><p className="mini-h">The Conversation</p><p>{c.brief.rikuConversation}</p></>)}
+                      {c.brief.emotionalJourney && (<><p className="mini-h">Emotional Journey</p><p>{c.brief.emotionalJourney}</p></>)}
+                    </div>
+                  )}
+                  {c.universe && (<><p className="bsec">Universe Placement</p><div className="card"><div className="kv">{Object.entries(c.universe).map(([k, v]) => (<div key={k}><div className="k">{k}</div><div className="v">{v}</div></div>))}</div></div></>)}
+                  {!!(c.relationships || []).length && (<div className="card">{(c.relationships || []).map((r, i) => (<div key={i} className="rel-row"><div className="rel-name">{r.name}</div><div className="rel-desc">{r.desc}</div></div>))}</div>)}
+                  {c.sonic && (
+                    <>
+                      <p className="bsec">Sonic DNA &amp; Song Prompt</p>
+                      <div className="card">
+                        <div className="kv">
+                          {c.sonic.primaryGenre && <div><div className="k">Primary Genre</div><div className="v">{c.sonic.primaryGenre}</div></div>}
+                          {c.sonic.secondaryGenre && <div><div className="k">Secondary Genre</div><div className="v">{c.sonic.secondaryGenre}</div></div>}
+                          {c.sonic.vocalAge && <div><div className="k">Vocal Age</div><div className="v">{c.sonic.vocalAge}</div></div>}
+                          {c.sonic.tone && <div><div className="k">Tone / Energy / Texture</div><div className="v">{c.sonic.tone}</div></div>}
+                        </div>
+                        {c.sonic.delivery && <p style={{ marginTop: 14 }}>{c.sonic.delivery}</p>}
+                      </div>
+                      {c.sonic.songPrompt && (<div className="copy-block"><div className="copy-bar"><span className="lbl">Song Prompt (paste into Suno)</span><button className="copy-btn" onClick={(e) => copy(e, c.sonic!.songPrompt!)}>Copy</button></div><pre className="copy-body">{c.sonic.songPrompt}</pre></div>)}
+                      {c.sonic.songPromptNote && <p className="hint">{c.sonic.songPromptNote}</p>}
+                    </>
+                  )}
+                  {c.visual && (
+                    <>
+                      <p className="bsec">Visual DNA &amp; Image Prompt</p>
+                      <div className="card">
+                        {c.visual.visualIdentity && <p><strong>Visual identity.</strong> {c.visual.visualIdentity}</p>}
+                        {c.visual.houseStyle && <p style={{ marginTop: 10 }}><strong>House style.</strong> {c.visual.houseStyle}</p>}
+                      </div>
+                      {c.visual.imagePrompt && (<div className="copy-block"><div className="copy-bar"><span className="lbl">Image Prompt (zero text)</span><button className="copy-btn" onClick={(e) => copy(e, c.visual!.imagePrompt!)}>Copy</button></div><pre className="copy-body">{c.visual.imagePrompt}</pre></div>)}
+                      {c.visual.imagePromptNote && <p className="hint">{c.visual.imagePromptNote}</p>}
+                    </>
+                  )}
+                  {!!(c.songAudits || []).length && (
+                    <>
+                      <p className="bsec">Song Audits</p>
+                      {(c.songAudits || []).map((a, i) => (
+                        <div key={i} className="audit">
+                          <div className="audit-title">{a.title}</div>
+                          {(a.status || a.pillar) && <div className="audit-meta">{a.status}{a.status && a.pillar ? " · " : ""}{a.pillar}</div>}
+                          {a.theme && <p className="audit-theme">{a.theme}</p>}
+                          <div className="scores">
+                            {Object.entries(a.scores || {}).map(([k, v]) => (<span key={k} className="score">{k.replace(/_/g, " ")} {v}</span>))}
+                            {a.emotion && <span className="score emo">{a.emotion}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  {!!(c.tracks || []).length && (
+                    <>
+                      <p className="bsec">Catalog &amp; Status</p>
+                      <div className="card"><table className="cat"><thead><tr><th>Song</th><th>Era / Tier</th><th>Visibility</th></tr></thead>
+                      <tbody>{(c.tracks || []).map((t, i) => (<tr key={i}><td className="song">{t.n}</td><td>{t.m}</td><td><span className={"vis " + t.v}>{t.v}</span></td></tr>))}</tbody></table></div>
+                    </>
+                  )}
+                </section>
+              )}
+
+            </div>{/* end body-main */}
+
+            {/* ── Billboard sidebar ── */}
+            <aside className="billboard">
+              <div className="bb-label">Billboard</div>
+
+              <div className="bb-slot bb-slot-primary">
+                <div className="bb-placeholder">
+                  <div className="bb-ph-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                  </div>
+                  <div className="bb-ph-text">Primary Ad</div>
+                  <div className="bb-ph-dim">300 × 250</div>
+                </div>
+              </div>
+
+              <div className="bb-slot">
+                <div className="bb-placeholder">
+                  <div className="bb-ph-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                  </div>
+                  <div className="bb-ph-text">Feature Ad</div>
+                  <div className="bb-ph-dim">300 × 250</div>
+                </div>
+              </div>
+
+              <div className="bb-slot bb-slot-tall">
+                <div className="bb-placeholder">
+                  <div className="bb-ph-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                  </div>
+                  <div className="bb-ph-text">Skyscraper</div>
+                  <div className="bb-ph-dim">300 × 600</div>
+                </div>
+              </div>
+
+              <div className="bb-tag">Powered by LESARUSS Advertising</div>
+            </aside>
+
+          </div>{/* end body-layout */}
+
+        </div>{/* end apg */}
       </div>
     </SiteChrome>
   );
@@ -241,8 +321,29 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
 
 const CSS = `
 .apg{max-width:none;margin:0;padding:0 0 80px}
-.bible-head{background:#111;color:#fff;padding:32px 40px 28px;border-bottom:4px solid var(--rx)}
-.head-grid{display:flex;gap:32px;align-items:flex-start}
+
+/* ── Black header ── */
+.bible-head{background:#111;color:#fff;padding:0 0 28px;border-bottom:4px solid var(--rx)}
+
+/* Logo + breadcrumb bar inside header */
+.head-topbar{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 40px 20px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  margin-bottom:28px;
+}
+.head-logo-wrap{display:flex;align-items:center;flex-shrink:0}
+.head-logo{height:28px;width:auto;display:block}
+.head-logo-text{font-size:15px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#fff;opacity:.9}
+.head-crumb{display:flex;align-items:center;gap:8px}
+.head-crumb-item{display:flex;align-items:center;gap:8px}
+.head-crumb a{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);text-decoration:none;letter-spacing:.01em}
+.head-crumb a:hover{color:rgba(255,255,255,.9)}
+.head-crumb .cur{font-size:13px;font-weight:800;color:var(--rx);letter-spacing:.01em}
+.head-crumb .sep{color:rgba(255,255,255,.22);font-size:13px;font-weight:400}
+
+/* Artist hero */
+.head-grid{display:flex;gap:32px;align-items:flex-start;padding:0 40px}
 .head-art,.head-art-fallback{width:clamp(280px,34vw,460px);aspect-ratio:1;border-radius:20px;border:2px solid var(--rx);object-fit:cover;background:var(--rx);display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:#fff;flex-shrink:0}
 .head-meta{flex:1;min-width:0;padding-top:6px}
 .head-name{font-size:clamp(36px,6vw,60px);font-weight:900;letter-spacing:-.02em;text-transform:uppercase;line-height:.98}
@@ -250,12 +351,52 @@ const CSS = `
 .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
 .pill{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:6px 14px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16)}
 .pill.accent{background:var(--rx);border-color:var(--rx)}
+
+/* ── Tab bar ── */
 .tabbar{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);display:flex;gap:2px;padding:0 40px}
 .tab{position:relative;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);background:none;border:none;padding:18px 18px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
 .tab[aria-selected="true"]{color:var(--rx-text)}
 .tab[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--rx)}
 .adminbadge{font-size:8px;font-weight:900;background:var(--rx-tint);color:var(--rx-text);padding:2px 5px;border-radius:3px}
-.panel{padding:30px 40px 0;max-width:1180px}
+
+/* ── Two-column layout ── */
+.body-layout{display:flex;align-items:flex-start;gap:0;padding:0 40px;margin-top:0}
+.body-main{flex:1;min-width:0;padding-top:30px;padding-right:28px}
+.panel{max-width:none}
+
+/* ── Billboard sidebar ── */
+.billboard{
+  width:300px;
+  flex-shrink:0;
+  position:sticky;
+  top:120px;
+  padding-top:30px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.bb-label{
+  font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;
+  color:var(--lr-text-30);margin-bottom:4px;
+}
+.bb-slot{width:100%}
+.bb-placeholder{
+  border:1px dashed var(--lr-border);
+  border-radius:10px;
+  background:var(--lr-surface);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;
+  padding:32px 16px;
+  color:var(--lr-text-30);
+  min-height:250px;
+}
+.bb-slot-tall .bb-placeholder{min-height:500px}
+.bb-ph-icon svg{width:28px;height:28px;opacity:.4}
+.bb-ph-text{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-30)}
+.bb-ph-dim{font-size:10px;font-weight:600;color:var(--lr-text-30);opacity:.7}
+.bb-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-30);text-align:center;padding:8px 0}
+
+/* ── Panel contents ── */
 .rxp{display:flex;gap:18px;align-items:center;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;padding:18px 22px;margin-bottom:26px}
 .rxp-img{width:88px;height:88px;border-radius:12px;object-fit:cover;flex-shrink:0}
 .rxp-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
@@ -272,8 +413,17 @@ const CSS = `
 .about-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:4px}
 .astat{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:10px;padding:18px 16px}
 .astat-v{font-size:14px;font-weight:800}.astat-l{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--lr-text-50);margin-top:5px}
-@media(max-width:700px){.about-stats{grid-template-columns:repeat(2,1fr)}.head-grid{flex-direction:column}}
-.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+@media(max-width:900px){
+  .body-layout{flex-direction:column;padding:0 16px}
+  .body-main{padding-right:0}
+  .billboard{width:100%;position:static;padding-top:0}
+  .bb-slot-tall{display:none}
+  .about-stats{grid-template-columns:repeat(2,1fr)}
+  .head-grid{flex-direction:column;padding:0 16px}
+  .head-topbar{padding:14px 16px 16px}
+  .tabbar{padding:0 16px}
+}
+.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .newscard{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:16px 18px}
 .news-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
 .news-tag{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 10px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text)}
