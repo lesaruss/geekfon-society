@@ -5,6 +5,7 @@ type Track = { n: string; m: string; v: string };
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
+type Audit = { title: string; status?: string; pillar?: string; theme?: string; emotion?: string; scores?: Record<string, number> };
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
   heroUrl?: string; initial?: string; tagline?: string;
@@ -13,6 +14,10 @@ export type ArtistContent = {
   quote?: string; bio?: string[]; stats?: Stat[]; tracks?: Track[];
   relationships?: Rel[]; identity?: Record<string, string>;
   brief?: Record<string, string>;
+  universe?: Record<string, string>;
+  sonic?: { primaryGenre?: string; secondaryGenre?: string; vocalAge?: string; tone?: string; delivery?: string; songPrompt?: string; songPromptNote?: string };
+  visual?: { visualIdentity?: string; houseStyle?: string; imagePrompt?: string; imagePromptNote?: string };
+  songAudits?: Audit[];
 };
 
 const TABS = ["about", "music", "pulse", "media", "brief"] as const;
@@ -28,6 +33,11 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
   } as React.CSSProperties;
   const emph = (t: string) =>
     t.replace(/\{\{(.+?)\}\}/g, '<em style="color:var(--rx-text);font-style:normal;font-weight:800">$1</em>');
+  function copy(e: React.MouseEvent<HTMLButtonElement>, text: string) {
+    const b = e.currentTarget; const prev = b.textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
+    b.textContent = "Copied"; setTimeout(() => { b.textContent = prev; }, 1400);
+  }
 
   return (
     <div style={vars}>
@@ -106,12 +116,12 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
 
         {tab === "brief" && (
           <section className="panel">
-            <div className="adminbar"><span className="t">Admin only.</span> <span className="s">Internal World Bible.</span></div>
+            <div className="adminbar"><span className="t">Admin only.</span> <span className="s">The Brief tab is the internal World Bible.</span></div>
+
+            <p className="bsec">Identity &amp; Backstory</p>
             {c.identity && (
               <div className="card"><div className="kv">
-                {Object.entries(c.identity).map(([k, v]) => (
-                  <div key={k}><div className="k">{k}</div><div className="v">{v}</div></div>
-                ))}
+                {Object.entries(c.identity).map(([k, v]) => (<div key={k}><div className="k">{k}</div><div className="v">{v}</div></div>))}
               </div></div>
             )}
             {c.brief && (
@@ -122,24 +132,87 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
                 {c.brief.lostSong && (<><p className="mini-h">The Lost Song Era</p><p>{c.brief.lostSong}</p></>)}
                 {c.brief.rikuConversation && (<><p className="mini-h">The Conversation</p><p>{c.brief.rikuConversation}</p></>)}
                 {c.brief.emotionalJourney && (<><p className="mini-h">Emotional Journey</p><p>{c.brief.emotionalJourney}</p></>)}
-                {c.brief.vocalIdentity && (<><p className="mini-h">Vocal Identity</p><p>{c.brief.vocalIdentity}</p></>)}
-                {c.brief.genreIdentity && (<><p className="mini-h">Genre Identity</p><p>{c.brief.genreIdentity}</p></>)}
-                {c.brief.finalDefinition && (<><p className="mini-h">Final Definition</p><p>{c.brief.finalDefinition}</p></>)}
               </div>
+            )}
+
+            {c.universe && (
+              <>
+                <p className="bsec">Universe Placement</p>
+                <div className="card"><div className="kv">
+                  {Object.entries(c.universe).map(([k, v]) => (<div key={k}><div className="k">{k}</div><div className="v">{v}</div></div>))}
+                </div></div>
+              </>
             )}
             {!!(c.relationships || []).length && (
               <div className="card">
-                {(c.relationships || []).map((r, i) => (
-                  <div key={i} className="rel-row"><div className="rel-name">{r.name}</div><div className="rel-desc">{r.desc}</div></div>
-                ))}
+                {(c.relationships || []).map((r, i) => (<div key={i} className="rel-row"><div className="rel-name">{r.name}</div><div className="rel-desc">{r.desc}</div></div>))}
               </div>
             )}
+
+            {c.sonic && (
+              <>
+                <p className="bsec">Sonic DNA &amp; Song Prompt</p>
+                <div className="card">
+                  <div className="kv">
+                    {c.sonic.primaryGenre && <div><div className="k">Primary Genre</div><div className="v">{c.sonic.primaryGenre}</div></div>}
+                    {c.sonic.secondaryGenre && <div><div className="k">Secondary Genre</div><div className="v">{c.sonic.secondaryGenre}</div></div>}
+                    {c.sonic.vocalAge && <div><div className="k">Vocal Age</div><div className="v">{c.sonic.vocalAge}</div></div>}
+                    {c.sonic.tone && <div><div className="k">Tone / Energy / Texture</div><div className="v">{c.sonic.tone}</div></div>}
+                  </div>
+                  {c.sonic.delivery && <p style={{ marginTop: 14 }}>{c.sonic.delivery}</p>}
+                </div>
+                {c.sonic.songPrompt && (
+                  <div className="copy-block">
+                    <div className="copy-bar"><span className="lbl">Song Prompt (paste into Suno)</span><button className="copy-btn" onClick={(e) => copy(e, c.sonic!.songPrompt!)}>Copy</button></div>
+                    <pre className="copy-body">{c.sonic.songPrompt}</pre>
+                  </div>
+                )}
+                {c.sonic.songPromptNote && <p className="hint">{c.sonic.songPromptNote}</p>}
+              </>
+            )}
+
+            {c.visual && (
+              <>
+                <p className="bsec">Visual DNA &amp; Image Prompt</p>
+                <div className="card">
+                  {c.visual.visualIdentity && <p><strong>Visual identity.</strong> {c.visual.visualIdentity}</p>}
+                  {c.visual.houseStyle && <p style={{ marginTop: 10 }}><strong>House style.</strong> {c.visual.houseStyle}</p>}
+                </div>
+                {c.visual.imagePrompt && (
+                  <div className="copy-block">
+                    <div className="copy-bar"><span className="lbl">Image Prompt (zero text)</span><button className="copy-btn" onClick={(e) => copy(e, c.visual!.imagePrompt!)}>Copy</button></div>
+                    <pre className="copy-body">{c.visual.imagePrompt}</pre>
+                  </div>
+                )}
+                {c.visual.imagePromptNote && <p className="hint">{c.visual.imagePromptNote}</p>}
+              </>
+            )}
+
+            {!!(c.songAudits || []).length && (
+              <>
+                <p className="bsec">Song Audits</p>
+                {(c.songAudits || []).map((a, i) => (
+                  <div key={i} className="audit">
+                    <div className="audit-title">{a.title}</div>
+                    {(a.status || a.pillar) && <div className="audit-meta">{a.status}{a.status && a.pillar ? " · " : ""}{a.pillar}</div>}
+                    {a.theme && <p className="audit-theme">{a.theme}</p>}
+                    <div className="scores">
+                      {Object.entries(a.scores || {}).map(([k, v]) => (<span key={k} className="score">{k.replace(/_/g, " ")} {v}</span>))}
+                      {a.emotion && <span className="score emo">{a.emotion}</span>}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
             {!!(c.tracks || []).length && (
-              <div className="card">
-                <p className="mini-h" style={{ marginTop: 0 }}>Catalog</p>
-                <table className="cat"><thead><tr><th>Song</th><th>Era / Tier</th><th>Visibility</th></tr></thead>
-                <tbody>{(c.tracks || []).map((t, i) => (<tr key={i}><td className="song">{t.n}</td><td>{t.m}</td><td><span className={"vis " + t.v}>{t.v}</span></td></tr>))}</tbody></table>
-              </div>
+              <>
+                <p className="bsec">Catalog &amp; Status</p>
+                <div className="card">
+                  <table className="cat"><thead><tr><th>Song</th><th>Era / Tier</th><th>Visibility</th></tr></thead>
+                  <tbody>{(c.tracks || []).map((t, i) => (<tr key={i}><td className="song">{t.n}</td><td>{t.m}</td><td><span className={"vis " + t.v}>{t.v}</span></td></tr>))}</tbody></table>
+                </div>
+              </>
             )}
           </section>
         )}
@@ -181,11 +254,25 @@ const CSS = `
 .vis.public{background:rgba(76,175,80,.14);color:#2e7d32}.vis.members{background:rgba(246,152,32,.16);color:var(--lr-orange-text)}.vis.admin{background:var(--rx-tint);color:var(--rx-text)}
 .adminbar{display:flex;gap:10px;background:#111;color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:22px;font-size:12px}
 .adminbar .t{font-weight:800;text-transform:uppercase;letter-spacing:.08em}.adminbar .s{color:rgba(255,255,255,.7)}
+.bsec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:var(--rx-text);margin:26px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--lr-border)}
 .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px 22px}
 .kv .k{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--rx-text);margin-bottom:2px}.kv .v{font-size:14px;font-weight:600}
 .mini-h{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;margin:16px 0 6px}.mini-h:first-child{margin-top:0}
 .rel-row{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--lr-border)}.rel-row:first-child{border-top:none}
 .rel-name{font-size:12px;font-weight:900;text-transform:uppercase;color:var(--rx-text);min-width:120px}.rel-desc{font-size:13px;color:var(--lr-text-75)}
+.copy-block{border:1px solid var(--lr-border);border-radius:10px;overflow:hidden;margin-bottom:8px}
+.copy-bar{display:flex;align-items:center;justify-content:space-between;background:var(--rx-tint);padding:9px 14px;border-bottom:1px solid var(--lr-border)}
+.copy-bar .lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--rx-text)}
+.copy-btn{font-family:inherit;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;background:var(--rx);color:#fff;border:none;border-radius:5px;padding:6px 13px;cursor:pointer}
+.copy-body{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.65;color:var(--lr-text);background:var(--lr-surface);padding:14px 16px;white-space:pre-wrap;word-break:break-word;margin:0}
+.hint{font-size:12px;color:var(--lr-text-50);margin:6px 0 4px;font-style:italic}
+.audit{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+.audit-title{font-size:15px;font-weight:900}
+.audit-meta{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--lr-text-50);margin-top:4px}
+.audit-theme{font-size:13.5px;color:var(--lr-text-75);line-height:1.6;margin-top:9px}
+.scores{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.score{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text)}
+.score.emo{background:var(--lr-bg);color:var(--lr-text-50)}
 .empty-note{font-size:13px;color:var(--lr-text-50);font-style:italic}
 .cat{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
 .cat th{text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);padding:8px 10px;border-bottom:2px solid var(--lr-border)}
