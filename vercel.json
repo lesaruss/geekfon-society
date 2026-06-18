@@ -1,26 +1,8 @@
 {
-  "buildCommand": null,
-  "outputDirectory": "public",
-  "framework": null,
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "cleanUrls": true,
   "headers": [
-    {
-      "source": "/images/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/Roster/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=604800"
-        }
-      ]
-    }
-  ],
-  "cleanUrls": true
+    { "source": "/images/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
+  ]
 }
