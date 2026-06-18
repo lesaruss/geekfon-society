@@ -1,25 +1,57 @@
 import { notFound } from "next/navigation";
-import ArtistPage, { ArtistContent } from "@/components/ArtistPage";
+import ArtistPage from "@/components/ArtistPage";
+import type { ArtistContent } from "@/components/ArtistPage";
 
-const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fwbhwfxpncrsfhttimna.supabase.co";
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA";
+async function getArtist(slug: string): Promise<ArtistContent | null> {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-async function getPage(slug: string): Promise<ArtistContent | null> {
-  const res = await fetch(`${SUPA}/rest/v1/rpc/get_published_page`, {
-    method: "POST",
-    headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ p_brand: "geekfon", p_slug: slug }),
-    cache: "no-store",
-  });
+  if (!url || !key) return null;
+
+  const res = await fetch(
+    `${url}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(slug)}&select=name,profile&limit=1`,
+    {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+      next: { revalidate: 300 }, // cache 5 min
+    }
+  );
+
   if (!res.ok) return null;
+
   const rows = await res.json();
-  if (!rows || !rows[0]) return null;
-  return rows[0].content as ArtistContent;
+  if (!rows || rows.length === 0) return null;
+
+  const row = rows[0];
+  const profile: ArtistContent = row.profile || {};
+
+  // Always ensure the name from the DB row is set
+  if (!profile.name) profile.name = row.name;
+
+  return profile;
 }
 
-export default async function Page({ params }: { params: Promise<{ artist: string }> }) {
-  const { artist } = await params;
-  const content = await getPage(artist);
-  if (!content) notFound();
+type Props = { params: Promise<{ artist: string }> };
+
+export default async function ArtistPageRoute({ params }: Props) {
+  const { artist: slug } = await params;
+  const content = await getArtist(slug);
+
+  if (!content) {
+    notFound();
+  }
+
   return <ArtistPage content={content} />;
+}
+
+export async function generateMetadata({ params }: Props) {
+  const { artist: slug } = await params;
+  const content = await getArtist(slug);
+  const name = content?.name || slug;
+  return {
+    title: `${name} - GeekFon Society`,
+    description: content?.tagline || `${name} is an original artist on GeekFon Society.`,
+  };
 }
