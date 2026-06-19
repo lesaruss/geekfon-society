@@ -205,7 +205,7 @@ export default function HomePage() {
         </div>
 
         <div className="cta-row">
-          <a href="/roster" className="btn-p">Take the Tour</a>
+          <a href="/welcome" className="btn-p">Take the Tour</a>
           <a href="/roster" className="btn-s">Meet the Artists</a>
         </div>
       </div>
