@@ -47,9 +47,20 @@ const FON_COLORS = [
   "#2ec4b6","#ff9f1c","#7fb069","#8e44ad","#c8922a",
 ];
 
+// "Society" in 5 languages: English, Japanese, Korean, German, Zulu
+const SOCIETY_LANGS = [
+  "Society",
+  "社会",
+  "사회",
+  "Gesellschaft",
+  "Umphakathi",
+];
+
 export default function HomePage() {
   const [current, setCurrent] = useState(0);
   const [fonIdx, setFonIdx] = useState(0);
+  const [societyIdx, setSocietyIdx] = useState(0);
+  const [societyVisible, setSocietyVisible] = useState(true);
   const currentRef = useRef(0);
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -57,6 +68,18 @@ export default function HomePage() {
   // FON color cycle
   useEffect(() => {
     const t = setInterval(() => setFonIdx((i) => (i + 1) % FON_COLORS.length), 1800);
+    return () => clearInterval(t);
+  }, []);
+
+  // Society language cycle with fade
+  useEffect(() => {
+    const t = setInterval(() => {
+      setSocietyVisible(false);
+      setTimeout(() => {
+        setSocietyIdx((i) => (i + 1) % SOCIETY_LANGS.length);
+        setSocietyVisible(true);
+      }, 350);
+    }, 3200);
     return () => clearInterval(t);
   }, []);
 
@@ -70,7 +93,6 @@ export default function HomePage() {
 
     nextPanel.style.transition = "none";
     nextPanel.style.transform = "translateX(100%)";
-    // force reflow
     void nextPanel.offsetHeight;
 
     const ease = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
@@ -90,7 +112,6 @@ export default function HomePage() {
     setCurrent(next);
   }, []);
 
-  // Auto-advance timer
   useEffect(() => {
     timerRef.current = setInterval(
       () => goTo((currentRef.current + 1) % CITIES.length),
@@ -110,7 +131,6 @@ export default function HomePage() {
     );
   }
 
-  // Init panel positions
   useEffect(() => {
     panelRefs.current.forEach((p, i) => {
       if (!p) return;
@@ -199,7 +219,15 @@ export default function HomePage() {
                 Fon
               </span>
             </div>
-            <div className="hero-tagline-inner">Society</div>
+            <div
+              className="hero-tagline-inner"
+              style={{
+                opacity: societyVisible ? 1 : 0,
+                transition: "opacity 0.35s ease",
+              }}
+            >
+              {SOCIETY_LANGS[societyIdx]}
+            </div>
           </div>
           <h1 className="sr-only">GeekFon Society</h1>
         </div>
@@ -243,7 +271,9 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
 
 /* Page overlay */
 .page{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;pointer-events:none;}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.38);}
+
+/* ADA fix: eyebrow bumped to rgba(255,255,255,.65) - approx 9:1 on dark bg */
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.65);}
 .live-dot{width:6px;height:6px;background:#4caf50;border-radius:50%;animation:pdot 1.6s ease-in-out infinite;}
 @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.65)}}
 
@@ -255,21 +285,35 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
 .hero-overlay{position:absolute;inset:0;background:rgba(2,12,10,.45);border-radius:50%;}
 .hero-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:15%;}
 .hero-title{font-size:clamp(34px,9vw,56px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;line-height:1;text-align:center;white-space:nowrap;text-shadow:0 0 30px rgba(0,0,0,1),0 0 70px rgba(0,0,0,.9),0 2px 14px rgba(0,0,0,1);}
-.hero-tagline-inner{font-size:clamp(8px,1.2vw,11px);font-weight:200;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.6);text-align:center;text-shadow:0 1px 8px rgba(0,0,0,1);}
 
-/* CTAs */
+/* Society text: fixed size, overflow ellipsis so long words (Gesellschaft) don't break layout */
+.hero-tagline-inner{
+  font-size:clamp(8px,1.2vw,11px);
+  font-weight:200;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.6);
+  text-align:center;
+  text-shadow:0 1px 8px rgba(0,0,0,1);
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* CTAs - ADA fix: use dark text on orange for AA compliance */
 .cta-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;pointer-events:all;}
-.btn-p{background:#F69820;color:#fff;border:none;border-radius:100px;padding:13px 30px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:background .15s,transform .1s;}
+.btn-p{background:#F69820;color:#1a1a1a;border:none;border-radius:100px;padding:13px 30px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:background .15s,transform .1s;}
 .btn-p:hover{background:#e08818;transform:translateY(-1px);}
 .btn-p:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
 .btn-s{background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.14);border-radius:100px;padding:13px 30px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:border-color .15s,color .15s;}
 .btn-s:hover{border-color:rgba(255,255,255,.3);color:#fff;}
 .btn-s:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
 
-/* City label */
+/* City label - ADA fix: bumped to rgba(255,255,255,.55) */
 .city-label{position:fixed;bottom:4.5vh;right:5vw;z-index:20;display:flex;align-items:center;gap:8px;}
 .city-dot{width:5px;height:5px;border-radius:50%;transition:background-color 1s ease;}
-.city-name-text{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.3);}
+.city-name-text{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);}
 
 /* Progress dots */
 .progress-dots{position:fixed;bottom:5.2vh;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:6px;align-items:center;}
@@ -277,7 +321,7 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
 .pdot.on{width:18px;border-radius:2px;background:rgba(255,255,255,.5);}
 .pdot:focus-visible{outline:2px solid #F69820;outline-offset:2px;}
 
-/* Mobile - portrait images already loaded via picture/source, adjust stage height */
+/* Mobile */
 @media(max-width:768px){
   .city-stage{height:100vh;}
   .city-stage::before{height:30%;}
