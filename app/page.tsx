@@ -40,6 +40,12 @@ const CITIES = [
     desktop: CDN + "hf_20260619_061618_b63a68e5-ec0d-4f6a-8473-0e9652db85bf.png",
     mobile:  CDN + "hf_20260619_064547_2906c350-a205-4c96-9bb1-114dc53fc237.png",
   },
+  {
+    name: "Orlando, FL",
+    accent: "#FF9800",
+    desktop: CDN + "hf_20260619_125302_4c4f6747-3bcb-45b2-a743-610912078942.png",
+    mobile:  CDN + "hf_20260619_125452_ad933e6f-0b03-43a4-b111-341e76b9efd9.jpeg",
+  },
 ];
 
 const FON_COLORS = [
