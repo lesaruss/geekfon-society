@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactElement } from "react";
 
 type Role = "fan" | "label" | "brand" | "promoter";
 type Phase = "welcome" | "picker" | "path";
@@ -13,7 +13,7 @@ interface SlideData {
   cta?: { label: string; href: string };
 }
 
-const ROLE_META: Record<Role, { label: string; tagline: string; accent: string; icon: JSX.Element }> = {
+const ROLE_META: Record<Role, { label: string; tagline: string; accent: string; icon: ReactElement }> = {
   fan: {
     label: "Music Fan",
     tagline: "Discover artists, earn points, unlock everything",
