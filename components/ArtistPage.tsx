@@ -39,7 +39,7 @@ const LOCK = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWi
 const PLACEHOLDER_NEWS: News[] = [
   {
     tag: "Feature",
-    date: "Season 1 — Coming Jul 2026",
+    date: "Season 1 - Coming Jul 2026",
     title: "Roxanne Steps Into the Light",
     blurb: "After years of silence, the voice that once disappeared from the GeekFon universe is ready to tell the full story. We sit down with Roxanne ahead of Season 1.",
     href: "#",
@@ -47,7 +47,7 @@ const PLACEHOLDER_NEWS: News[] = [
   },
   {
     tag: "Interview",
-    date: "Season 1 — Coming Jul 2026",
+    date: "Season 1 - Coming Jul 2026",
     title: "The Lost Song: What Really Happened",
     blurb: "A deep dive into the era that defined Roxanne's sound and the conversation with Riku Hayasaka that changed everything.",
     href: "#",
@@ -55,7 +55,7 @@ const PLACEHOLDER_NEWS: News[] = [
   },
   {
     tag: "Press",
-    date: "Season 1 — Coming Jul 2026",
+    date: "Season 1 - Coming Jul 2026",
     title: "GeekFon Society Announces Season 1 Roster",
     blurb: "The full lineup for the inaugural 111-day season is revealed. Roxanne leads the charge as the universe's first fully documented artist.",
     href: "#",
@@ -89,7 +89,6 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const msg = c.message || {};
   const hasMsg = !!(msg.ja || msg.en);
 
-  // Build breadcrumb: always GeekFon > Roster > Artist Name
   const crumb = [
     { label: "GeekFon", href: "/" },
     { label: "Roster", href: "/roster" },
@@ -97,33 +96,33 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   ];
 
   return (
-    // No crumb passed to SiteChrome — breadcrumb lives in the black header now
-    <>
-      {cityBg && (
-        <>
-          {/* Artist city background: aurora + locked city panel */}
-          <div className="apg-aurora" aria-hidden="true">
-            <div className="apg-stars" />
-            <div className="apga apga1" /><div className="apga apga2" /><div className="apga apga3" />
-            <div className="apga apga4" /><div className="apga apga5" />
-            <div className="apg-ground" />
-          </div>
-          <div className="apg-city-stage" aria-hidden="true">
-            <picture>
-              <source media="(max-width:768px)" srcSet={cityBg.mobile} />
-              <img src={cityBg.desktop} alt="" aria-hidden="true" />
-            </picture>
-          </div>
-        </>
-      )}
-      <SiteChrome>
+    <SiteChrome>
       <div style={vars}>
         <style>{CSS}{cityBg ? CITY_CSS : ""}</style>
         <audio ref={audioRef} onEnded={() => setPlaying(null)} />
         <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
-          {/* ── Black header ── */}
+          {/* Black header - city bg is scoped inside here */}
           <div className="bible-head">
+
+            {/* City background layers - absolute, behind all content */}
+            {cityBg && (
+              <>
+                <div className="apg-aurora" aria-hidden="true">
+                  <div className="apg-stars" />
+                  <div className="apga apga1" /><div className="apga apga2" /><div className="apga apga3" />
+                  <div className="apga apga4" /><div className="apga apga5" />
+                  <div className="apg-ground" />
+                </div>
+                <div className="apg-city-stage" aria-hidden="true">
+                  <picture>
+                    <source media="(max-width:768px)" srcSet={cityBg.mobile} />
+                    <img src={cityBg.desktop} alt="" aria-hidden="true" />
+                  </picture>
+                </div>
+              </>
+            )}
+
             {/* Logo + breadcrumb bar */}
             <div className="head-topbar">
               <nav className="head-crumb" aria-label="Breadcrumb">
@@ -156,7 +155,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
             </div>
           </div>
 
-          {/* ── Tab bar ── */}
+          {/* Tab bar */}
           <div className="tabbar" role="tablist">
             {TABS.map((t) => (
               <button key={t.key} className="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}>
@@ -165,11 +164,11 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
             ))}
           </div>
 
-          {/* ── Two-column body: content + billboard ── */}
+          {/* Two-column body: content + billboard */}
           <div className="body-layout">
             <div className="body-main">
 
-              {/* ── About tab ── */}
+              {/* About tab */}
               {tab === "about" && (
                 <section className="panel">
                   {hasMsg && (
@@ -194,7 +193,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                 </section>
               )}
 
-              {/* ── News tab ── */}
+              {/* News tab */}
               {tab === "news" && (
                 <section className="panel">
                   <p className="bsec">Latest</p>
@@ -316,61 +315,49 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                 </section>
               )}
 
-            </div>{/* end body-main */}
+            </div>
 
-            {/* ── Billboard sidebar ── */}
+            {/* Billboard sidebar */}
             <aside className="billboard">
               <div className="bb-label">Billboard</div>
-
               <div className="bb-slot bb-slot-primary">
                 <div className="bb-placeholder">
-                  <div className="bb-ph-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                  </div>
+                  <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
                   <div className="bb-ph-text">Primary Ad</div>
-                  <div className="bb-ph-dim">300 × 250</div>
+                  <div className="bb-ph-dim">300 x 250</div>
                 </div>
               </div>
-
               <div className="bb-slot">
                 <div className="bb-placeholder">
-                  <div className="bb-ph-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                  </div>
+                  <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
                   <div className="bb-ph-text">Feature Ad</div>
-                  <div className="bb-ph-dim">300 × 250</div>
+                  <div className="bb-ph-dim">300 x 250</div>
                 </div>
               </div>
-
               <div className="bb-slot bb-slot-tall">
                 <div className="bb-placeholder">
-                  <div className="bb-ph-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                  </div>
+                  <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
                   <div className="bb-ph-text">Skyscraper</div>
-                  <div className="bb-ph-dim">300 × 600</div>
+                  <div className="bb-ph-dim">300 x 600</div>
                 </div>
               </div>
-
               <div className="bb-tag">Powered by LESARUSS Advertising</div>
             </aside>
 
-          </div>{/* end body-layout */}
+          </div>
 
-        </div>{/* end apg */}
+        </div>
       </div>
     </SiteChrome>
-    </>
   );
 }
 
 const CSS = `
 .apg{max-width:none;margin:0;padding:0 0 80px}
 
-/* ── Black header ── */
+/* Black header */
 .bible-head{background:#111;color:#fff;padding:0 0 28px;border-bottom:4px solid var(--rx)}
 
-/* Logo + breadcrumb bar inside header */
 .head-topbar{
   display:flex;align-items:center;gap:14px;
   padding:16px 40px 20px;
@@ -384,7 +371,6 @@ const CSS = `
 .head-crumb .cur{font-size:13px;font-weight:800;color:var(--rx);letter-spacing:.01em}
 .head-crumb .sep{color:rgba(255,255,255,.22);font-size:13px;font-weight:400}
 
-/* Artist hero */
 .head-grid{display:flex;gap:32px;align-items:flex-start;padding:0 40px}
 .head-art,.head-art-fallback{width:clamp(280px,34vw,460px);aspect-ratio:1;border-radius:20px;border:2px solid var(--rx);object-fit:cover;background:var(--rx);display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:#fff;flex-shrink:0}
 .head-meta{flex:1;min-width:0;padding-top:6px}
@@ -394,51 +380,26 @@ const CSS = `
 .pill{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:6px 14px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16)}
 .pill.accent{background:var(--rx);border-color:var(--rx)}
 
-/* ── Tab bar ── */
 .tabbar{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);display:flex;gap:2px;padding:0 40px}
 .tab{position:relative;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);background:none;border:none;padding:18px 18px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
 .tab[aria-selected="true"]{color:var(--rx-text)}
 .tab[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--rx)}
 .adminbadge{font-size:8px;font-weight:900;background:var(--rx-tint);color:var(--rx-text);padding:2px 5px;border-radius:3px}
 
-/* ── Two-column layout ── */
 .body-layout{display:flex;align-items:flex-start;gap:0;padding:0 40px;margin-top:0}
 .body-main{flex:1;min-width:0;padding-top:30px;padding-right:28px}
 .panel{max-width:none}
 
-/* ── Billboard sidebar ── */
-.billboard{
-  width:300px;
-  flex-shrink:0;
-  position:sticky;
-  top:120px;
-  padding-top:30px;
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-}
-.bb-label{
-  font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;
-  color:var(--lr-text-30);margin-bottom:4px;
-}
+.billboard{width:300px;flex-shrink:0;position:sticky;top:120px;padding-top:30px;display:flex;flex-direction:column;gap:16px}
+.bb-label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;color:var(--lr-text-30);margin-bottom:4px}
 .bb-slot{width:100%}
-.bb-placeholder{
-  border:1px dashed var(--lr-border);
-  border-radius:10px;
-  background:var(--lr-surface);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:8px;
-  padding:32px 16px;
-  color:var(--lr-text-30);
-  min-height:250px;
-}
+.bb-placeholder{border:1px dashed var(--lr-border);border-radius:10px;background:var(--lr-surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px 16px;color:var(--lr-text-30);min-height:250px}
 .bb-slot-tall .bb-placeholder{min-height:500px}
 .bb-ph-icon svg{width:28px;height:28px;opacity:.4}
 .bb-ph-text{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-30)}
 .bb-ph-dim{font-size:10px;font-weight:600;color:var(--lr-text-30);opacity:.7}
 .bb-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-30);text-align:center;padding:8px 0}
 
-/* ── Panel contents ── */
 .rxp{display:flex;gap:18px;align-items:center;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;padding:18px 22px;margin-bottom:26px}
 .rxp-img{width:88px;height:88px;border-radius:12px;object-fit:cover;flex-shrink:0}
 .rxp-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
@@ -461,7 +422,6 @@ const CSS = `
   .head-topbar{padding:14px 16px 16px}
   .tabbar{padding:0 16px}
 }
-/* ── Article cards ── */
 .article-grid{display:flex;flex-direction:column;gap:20px}
 .article-card{display:flex;gap:20px;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden}
 .article-thumb{width:200px;min-width:200px;aspect-ratio:16/10;position:relative;overflow:hidden;flex-shrink:0}
@@ -519,13 +479,29 @@ const CSS = `
 `;
 
 const CITY_CSS = `
-/* ---- City background overrides ---- */
-html, body { overflow-x: hidden; }
+/* City bg scoped to bible-head only */
+.has-city-bg .bible-head {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: #020c0a !important;
+}
+/* All content inside bible-head sits above the bg layers */
+.has-city-bg .head-topbar,
+.has-city-bg .head-grid {
+  position: relative;
+  z-index: 2;
+}
+/* Aurora layer - absolute, fills bible-head */
 .apg-aurora {
-  position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 .apg-stars {
-  position:absolute; inset:0;
+  position: absolute; inset: 0;
   background-image:
     radial-gradient(1px 1px at 9% 6%, rgba(255,255,255,.55) 0%, transparent 100%),
     radial-gradient(1px 1px at 24% 12%, rgba(255,255,255,.35) 0%, transparent 100%),
@@ -539,32 +515,27 @@ html, body { overflow-x: hidden; }
 .apga3 { width:52vw; height:34vh; top:0; left:24vw; background:radial-gradient(ellipse at center,rgba(120,0,255,.13) 0%,transparent 70%); animation:apgd3 20s ease-in-out infinite alternate; }
 .apga4 { width:40vw; height:24vh; top:-8vh; left:46vw; background:radial-gradient(ellipse at center,rgba(0,255,185,.15) 0%,transparent 70%); animation:apgd4 28s ease-in-out infinite alternate; }
 .apga5 { width:28vw; height:20vh; top:4vh; left:62vw; background:radial-gradient(ellipse at center,rgba(190,70,255,.09) 0%,transparent 70%); animation:apgd5 22s ease-in-out infinite alternate; }
-.apg-ground { position:absolute; bottom:0; left:0; right:0; height:60%; background:linear-gradient(to top,rgba(2,12,10,.97) 0%,transparent 100%); }
+.apg-ground { position:absolute; bottom:0; left:0; right:0; height:50%; background:linear-gradient(to top,rgba(2,12,10,.85) 0%,transparent 100%); }
 @keyframes apgd1 { from{transform:translate(0,0) scaleX(1)} to{transform:translate(4vw,5vh) scaleX(1.1)} }
 @keyframes apgd2 { from{transform:translate(0,0) scaleY(1)} to{transform:translate(-5vw,3vh) scaleY(1.18)} }
 @keyframes apgd3 { from{transform:translate(0,0) rotate(0)} to{transform:translate(3vw,-4vh) rotate(7deg)} }
 @keyframes apgd4 { from{transform:translate(0,0)} to{transform:translate(-4vw,6vh)} }
 @keyframes apgd5 { from{transform:translate(0,0) scale(1)} to{transform:translate(5vw,-5vh) scale(1.3)} }
+/* City image layer - absolute, fills bible-head */
 .apg-city-stage {
-  position:fixed; bottom:0; left:0; right:0; height:56vh; z-index:1; pointer-events:none; overflow:hidden;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
 }
 .apg-city-stage::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:45%;
-  background:linear-gradient(to bottom,rgba(2,12,10,1) 0%,transparent 100%); z-index:10;
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 40%;
+  background: linear-gradient(to bottom, rgba(2,12,10,.9) 0%, transparent 100%);
+  z-index: 10;
 }
-.apg-city-stage picture { display:block; width:100%; height:100%; }
-.apg-city-stage img { width:100%; height:100%; object-fit:cover; object-position:center bottom; display:block; }
-
-/* Semi-transparent bible-head when city bg is active */
-.has-city-bg .bible-head { background: rgba(0,0,0,0.78) !important; }
-.has-city-bg .gtop { background: rgba(2,12,10,0.82) !important; border-bottom-color: rgba(255,255,255,0.08) !important; backdrop-filter: blur(12px); }
-.has-city-bg .gham { color: #fff !important; }
-.has-city-bg .gham:hover { background: rgba(255,255,255,0.08) !important; }
-.has-city-bg .gfs-geek { color: #fff !important; }
-.has-city-bg .gcta { background: #F69820 !important; color: #1a1a1a !important; border-radius: 100px; }
-
-@media(max-width:768px) {
-  .apg-city-stage { height:100vh; }
-  .apg-city-stage::before { height:30%; }
-}
+.apg-city-stage picture { display: block; width: 100%; height: 100%; }
+.apg-city-stage img { width: 100%; height: 100%; object-fit: cover; object-position: center bottom; display: block; }
 `;
