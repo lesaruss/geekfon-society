@@ -63,7 +63,7 @@ const PLACEHOLDER_NEWS: News[] = [
   },
 ];
 
-export default function ArtistPage({ content }: { content: ArtistContent }) {
+export default function ArtistPage({ content, cityBg }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null }) {
   const [tab, setTab] = useState("about");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
@@ -98,11 +98,29 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
 
   return (
     // No crumb passed to SiteChrome — breadcrumb lives in the black header now
-    <SiteChrome>
+    <>
+      {cityBg && (
+        <>
+          {/* Artist city background: aurora + locked city panel */}
+          <div className="apg-aurora" aria-hidden="true">
+            <div className="apg-stars" />
+            <div className="apga apga1" /><div className="apga apga2" /><div className="apga apga3" />
+            <div className="apga apga4" /><div className="apga apga5" />
+            <div className="apg-ground" />
+          </div>
+          <div className="apg-city-stage" aria-hidden="true">
+            <picture>
+              <source media="(max-width:768px)" srcSet={cityBg.mobile} />
+              <img src={cityBg.desktop} alt="" aria-hidden="true" />
+            </picture>
+          </div>
+        </>
+      )}
+      <SiteChrome>
       <div style={vars}>
-        <style>{CSS}</style>
+        <style>{CSS}{cityBg ? CITY_CSS : ""}</style>
         <audio ref={audioRef} onEnded={() => setPlaying(null)} />
-        <div className="apg">
+        <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
           {/* ── Black header ── */}
           <div className="bible-head">
@@ -342,6 +360,7 @@ export default function ArtistPage({ content }: { content: ArtistContent }) {
         </div>{/* end apg */}
       </div>
     </SiteChrome>
+    </>
   );
 }
 
@@ -497,4 +516,55 @@ const CSS = `
 .cat th{text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);padding:8px 10px;border-bottom:2px solid var(--lr-border)}
 .cat td{padding:9px 10px;border-bottom:1px solid var(--lr-border);color:var(--lr-text-75)}
 .cat td.song{font-weight:700;color:var(--lr-text)}
+`;
+
+const CITY_CSS = `
+/* ---- City background overrides ---- */
+html, body { overflow-x: hidden; }
+.apg-aurora {
+  position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+}
+.apg-stars {
+  position:absolute; inset:0;
+  background-image:
+    radial-gradient(1px 1px at 9% 6%, rgba(255,255,255,.55) 0%, transparent 100%),
+    radial-gradient(1px 1px at 24% 12%, rgba(255,255,255,.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 44% 4%, rgba(255,255,255,.48) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 18% 4%, rgba(255,255,255,.65) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 66% 2%, rgba(255,255,255,.55) 0%, transparent 100%);
+}
+.apga { position:absolute; border-radius:50%; filter:blur(90px); }
+.apga1 { width:85vw; height:48vh; top:-20vh; left:4vw; background:radial-gradient(ellipse at center,rgba(0,215,95,.24) 0%,transparent 70%); animation:apgd1 18s ease-in-out infinite alternate; }
+.apga2 { width:62vw; height:40vh; top:-14vh; right:-6vw; background:radial-gradient(ellipse at center,rgba(0,155,255,.18) 0%,transparent 70%); animation:apgd2 24s ease-in-out infinite alternate; }
+.apga3 { width:52vw; height:34vh; top:0; left:24vw; background:radial-gradient(ellipse at center,rgba(120,0,255,.13) 0%,transparent 70%); animation:apgd3 20s ease-in-out infinite alternate; }
+.apga4 { width:40vw; height:24vh; top:-8vh; left:46vw; background:radial-gradient(ellipse at center,rgba(0,255,185,.15) 0%,transparent 70%); animation:apgd4 28s ease-in-out infinite alternate; }
+.apga5 { width:28vw; height:20vh; top:4vh; left:62vw; background:radial-gradient(ellipse at center,rgba(190,70,255,.09) 0%,transparent 70%); animation:apgd5 22s ease-in-out infinite alternate; }
+.apg-ground { position:absolute; bottom:0; left:0; right:0; height:60%; background:linear-gradient(to top,rgba(2,12,10,.97) 0%,transparent 100%); }
+@keyframes apgd1 { from{transform:translate(0,0) scaleX(1)} to{transform:translate(4vw,5vh) scaleX(1.1)} }
+@keyframes apgd2 { from{transform:translate(0,0) scaleY(1)} to{transform:translate(-5vw,3vh) scaleY(1.18)} }
+@keyframes apgd3 { from{transform:translate(0,0) rotate(0)} to{transform:translate(3vw,-4vh) rotate(7deg)} }
+@keyframes apgd4 { from{transform:translate(0,0)} to{transform:translate(-4vw,6vh)} }
+@keyframes apgd5 { from{transform:translate(0,0) scale(1)} to{transform:translate(5vw,-5vh) scale(1.3)} }
+.apg-city-stage {
+  position:fixed; bottom:0; left:0; right:0; height:56vh; z-index:1; pointer-events:none; overflow:hidden;
+}
+.apg-city-stage::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:45%;
+  background:linear-gradient(to bottom,rgba(2,12,10,1) 0%,transparent 100%); z-index:10;
+}
+.apg-city-stage picture { display:block; width:100%; height:100%; }
+.apg-city-stage img { width:100%; height:100%; object-fit:cover; object-position:center bottom; display:block; }
+
+/* Semi-transparent bible-head when city bg is active */
+.has-city-bg .bible-head { background: rgba(0,0,0,0.78) !important; }
+.has-city-bg .gtop { background: rgba(2,12,10,0.82) !important; border-bottom-color: rgba(255,255,255,0.08) !important; backdrop-filter: blur(12px); }
+.has-city-bg .gham { color: #fff !important; }
+.has-city-bg .gham:hover { background: rgba(255,255,255,0.08) !important; }
+.has-city-bg .gfs-geek { color: #fff !important; }
+.has-city-bg .gcta { background: #F69820 !important; color: #1a1a1a !important; border-radius: 100px; }
+
+@media(max-width:768px) {
+  .apg-city-stage { height:100vh; }
+  .apg-city-stage::before { height:30%; }
+}
 `;
