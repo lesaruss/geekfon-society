@@ -1,250 +1,453 @@
+"use client";
+import { useState, useEffect, useRef, useCallback } from "react";
 import SiteChrome from "@/components/SiteChrome";
 
-const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fwbhwfxpncrsfhttimna.supabase.co";
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA";
+const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
-type ArtistRow = {
+const CITIES = [
+  {
+    name: "London, UK",
+    accent: "#F69820",
+    desktop: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png",
+    mobile:  CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png",
+  },
+  {
+    name: "Fort Lauderdale, FL",
+    accent: "#00BCD4",
+    desktop: CDN + "hf_20260619_061001_82fbd428-6543-4a12-ba50-fe80d6255515.png",
+    mobile:  CDN + "hf_20260619_061949_d919c8f7-448a-48c4-aa18-a5487e4ae4a0.png",
+  },
+  {
+    name: "Seoul, South Korea",
+    accent: "#9C27B0",
+    desktop: CDN + "hf_20260619_061116_c00ea5ca-cad0-4b95-b593-c9d5d4a7f654.png",
+    mobile:  CDN + "hf_20260619_062102_df16b724-a594-440e-a35d-3a96406fabf7.png",
+  },
+  {
+    name: "Tokyo, Japan",
+    accent: "#E91E8C",
+    desktop: CDN + "hf_20260619_061254_7c730145-acef-4518-a816-64c5846ffb1b.png",
+    mobile:  CDN + "hf_20260619_062028_83b5584e-2bc2-4879-ac28-ec59b79962f8.png",
+  },
+  {
+    name: "Berlin, Germany",
+    accent: "#2196F3",
+    desktop: CDN + "hf_20260619_061452_342ffc31-9332-438d-b032-c581bbfc5205.png",
+    mobile:  CDN + "hf_20260619_062309_26ba4c35-6221-47ff-844e-a8cab948cdab.png",
+  },
+  {
+    name: "Johannesburg, SA",
+    accent: "#F44336",
+    desktop: CDN + "hf_20260619_061618_b63a68e5-ec0d-4f6a-8473-0e9652db85bf.png",
+    mobile:  CDN + "hf_20260619_064547_2906c350-a205-4c96-9bb1-114dc53fc237.png",
+  },
+];
+
+const SUPA = "https://fwbhwfxpncrsfhttimna.supabase.co";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA";
+
+type Artist = {
   slug: string;
   name: string;
   profile: {
     heroUrl?: string;
     initial?: string;
-    tagline?: string;
-    pills?: { label: string; accent?: boolean }[];
     accent?: string;
-    accentText?: string;
-    accentTint?: string;
-    // visibility tier: "public" | "members" | "admin" — defaults to public if absent
+    tagline?: string;
     visibility?: string;
   };
 };
 
-async function getArtists(): Promise<ArtistRow[]> {
-  const res = await fetch(
-    `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&order=created_at.asc`,
-    {
-      headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
-      cache: "no-store",
-    }
-  );
-  if (!res.ok) return [];
-  return res.json();
-}
+const PER_PAGE = 3;
 
-export default async function RosterPage() {
-  const artists = await getArtists();
+export default function RosterPage() {
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [page, setPage] = useState(0);
+  const [current, setCurrent] = useState(0);
+  const currentRef = useRef(0);
+  const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Fetch artists from Supabase
+  useEffect(() => {
+    fetch(
+      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&order=created_at.asc`,
+      { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } }
+    )
+      .then((r) => r.json())
+      .then((data: Artist[]) => setArtists(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
+  // City slideshow transition
+  const goTo = useCallback((next: number) => {
+    const prev = currentRef.current;
+    if (next === prev) return;
+    const prevP = panelRefs.current[prev];
+    const nextP = panelRefs.current[next];
+    if (!prevP || !nextP) return;
+    nextP.style.transition = "none";
+    nextP.style.transform = "translateX(100%)";
+    void nextP.offsetHeight;
+    const ease = "cubic-bezier(0.25,0.46,0.45,0.94)";
+    nextP.style.transition = `transform 0.95s ${ease}`;
+    prevP.style.transition = `transform 0.95s ${ease}`;
+    nextP.style.transform = "translateX(0)";
+    prevP.style.transform = "translateX(-105%)";
+    setTimeout(() => {
+      if (prevP) { prevP.style.transition = "none"; prevP.style.transform = "translateX(100%)"; }
+    }, 980);
+    currentRef.current = next;
+    setCurrent(next);
+  }, []);
+
+  useEffect(() => {
+    timerRef.current = setInterval(
+      () => goTo((currentRef.current + 1) % CITIES.length),
+      5200
+    );
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [goTo]);
+
+  useEffect(() => {
+    panelRefs.current.forEach((p, i) => {
+      if (!p) return;
+      p.style.transition = "none";
+      p.style.transform = i === 0 ? "translateX(0)" : "translateX(100%)";
+    });
+  }, []);
+
+  const totalPages = Math.max(1, Math.ceil(artists.length / PER_PAGE));
+  const visible = artists.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+  const city = CITIES[current];
+
+  function prev() { setPage((p) => Math.max(0, p - 1)); }
+  function next() { setPage((p) => Math.min(totalPages - 1, p + 1)); }
 
   return (
-    <SiteChrome crumb={[{ label: "GeekFon", href: "/" }, { label: "Roster" }]}>
+    <>
       <style>{CSS}</style>
-      <div className="rost-wrap">
-        <div className="rost-head">
-          <h1 className="rost-title">The Roster</h1>
-          <p className="rost-sub">
-            {artists.length} artist{artists.length !== 1 ? "s" : ""} in the GeekFon Society universe.
-            Members and admins unlock additional profiles.
-          </p>
-        </div>
 
-        <div className="rost-grid">
-          {artists.map((a) => {
-            const p = a.profile || {};
-            const accent = p.accent || "#E91E8C";
-            const accentText = p.accentText || "#9c1458";
-            const accentTint = p.accentTint || "rgba(233,30,140,0.10)";
-            return (
-              <a
-                key={a.slug}
-                href={`/${a.slug}`}
-                className="acard"
-                style={
-                  {
-                    "--rx": accent,
-                    "--rx-text": accentText,
-                    "--rx-tint": accentTint,
-                  } as React.CSSProperties
-                }
-              >
-                <div className="acard-img-wrap">
-                  {p.heroUrl ? (
-                    <img className="acard-img" src={p.heroUrl} alt={a.name} />
-                  ) : (
-                    <div className="acard-fallback">{p.initial || a.name.charAt(0)}</div>
-                  )}
-                  <div className="acard-gradient" />
-                </div>
-                <div className="acard-body">
-                  <div className="acard-name">{a.name}</div>
-                  {p.tagline && <p className="acard-tagline">{p.tagline}</p>}
-                  {!!(p.pills || []).length && (
-                    <div className="acard-pills">
-                      {(p.pills || []).slice(0, 3).map((pill, i) => (
-                        <span key={i} className={"acard-pill" + (pill.accent ? " accent" : "")}>
-                          {pill.label}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="acard-arrow">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                </div>
-              </a>
-            );
-          })}
-
-          {/* Coming soon placeholder */}
-          <div className="acard acard-locked">
-            <div className="acard-img-wrap">
-              <div className="acard-fallback locked-fallback">?</div>
-            </div>
-            <div className="acard-body">
-              <div className="acard-name" style={{ opacity: 0.45 }}>More Coming</div>
-              <p className="acard-tagline" style={{ opacity: 0.4 }}>New artists drop each season.</p>
-            </div>
-          </div>
-        </div>
+      {/* Aurora background */}
+      <div className="r-aurora" aria-hidden="true">
+        <div className="r-stars" />
+        <div className="ra ra1" />
+        <div className="ra ra2" />
+        <div className="ra ra3" />
+        <div className="ra ra4" />
+        <div className="ra ra5" />
+        <div className="r-ground" />
       </div>
-    </SiteChrome>
+
+      {/* City slideshow */}
+      <div className="r-city-stage" aria-hidden="true">
+        {CITIES.map((c, i) => (
+          <div
+            key={c.name}
+            className="r-city-panel"
+            ref={(el) => { panelRefs.current[i] = el; }}
+          >
+            <picture>
+              <source media="(max-width:768px)" srcSet={c.mobile} />
+              <img src={c.desktop} alt="" aria-hidden="true" />
+            </picture>
+          </div>
+        ))}
+      </div>
+
+      {/* City label */}
+      <div className="r-city-label" aria-live="polite">
+        <span className="r-city-dot" style={{ backgroundColor: city.accent }} />
+        <span className="r-city-name">{city.name}</span>
+      </div>
+
+      <SiteChrome crumb={[{ label: "GeekFon", href: "/" }, { label: "Roster" }]}>
+        <div className="r-page">
+
+          <div className="r-header">
+            <p className="r-eyebrow">GeekFon Society</p>
+            <h1 className="r-title">The Roster</h1>
+            <p className="r-sub">Original artists of the GeekFon Society universe</p>
+          </div>
+
+          {artists.length === 0 ? (
+            <div className="r-loading">
+              <div className="r-spinner" />
+              <span>Loading artists...</span>
+            </div>
+          ) : (
+            <>
+              <div className="r-grid">
+                {visible.map((a) => {
+                  const accent = a.profile?.accent || "#E91E8C";
+                  return (
+                    <a
+                      key={a.slug}
+                      href={`/${a.slug}`}
+                      className="r-card"
+                      style={{ "--r-accent": accent } as React.CSSProperties}
+                    >
+                      <div className="r-card-img">
+                        {a.profile?.heroUrl ? (
+                          <img src={a.profile.heroUrl} alt={a.name} />
+                        ) : (
+                          <div
+                            className="r-card-fallback"
+                            style={{ backgroundColor: accent + "33" }}
+                          >
+                            {a.profile?.initial || a.name.charAt(0)}
+                          </div>
+                        )}
+                        <div className="r-card-grad" />
+                      </div>
+                      <div className="r-card-info">
+                        <span className="r-card-name">{a.name}</span>
+                        {a.profile?.tagline && (
+                          <span className="r-card-tag">{a.profile.tagline}</span>
+                        )}
+                      </div>
+                    </a>
+                  );
+                })}
+                {/* Spacer cards to maintain grid shape on last page */}
+                {visible.length < PER_PAGE &&
+                  Array.from({ length: PER_PAGE - visible.length }).map((_, i) => (
+                    <div key={`sp-${i}`} className="r-card r-card-spacer" aria-hidden="true" />
+                  ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="r-nav" role="navigation" aria-label="Artist pagination">
+                  <button
+                    className="r-arrow"
+                    onClick={prev}
+                    disabled={page === 0}
+                    aria-label="Previous artists"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                  </button>
+                  <div className="r-page-info">
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        className={"r-dot" + (i === page ? " on" : "")}
+                        onClick={() => setPage(i)}
+                        aria-label={`Page ${i + 1}`}
+                        aria-current={i === page ? "true" : undefined}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    className="r-arrow"
+                    onClick={next}
+                    disabled={page === totalPages - 1}
+                    aria-label="Next artists"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </SiteChrome>
+    </>
   );
 }
 
 const CSS = `
-.rost-wrap { max-width: 1180px; margin: 0 auto; padding: 40px 40px 80px; }
-.rost-head { margin-bottom: 36px; }
-.rost-title { font-size: clamp(32px, 5vw, 52px); font-weight: 900; letter-spacing: -.02em; line-height: .98; margin: 0 0 12px; }
-.rost-sub { font-size: 15px; color: var(--lr-text-50); margin: 0; max-width: 520px; }
+/* ---- Theme overrides for dark page ---- */
+html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden; }
+.gtop { background: rgba(2,12,10,0.85) !important; border-bottom-color: rgba(255,255,255,0.08) !important; backdrop-filter: blur(12px); }
+.gham { color: #fff !important; }
+.gham:hover { background: rgba(255,255,255,0.08) !important; }
+.gfs-geek { color: #fff !important; }
+.gcta { background: #F69820 !important; color: #1a1a1a !important; border-radius: 100px; padding: 8px 18px; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.gcrumb a { color: rgba(255,255,255,0.55) !important; }
+.gcrumb-cur { color: rgba(255,255,255,0.9) !important; }
+.gcrumb-sep { color: rgba(255,255,255,0.3) !important; }
+.gbody { background: transparent !important; min-height: 100vh; }
 
-.rost-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+/* ---- Aurora ---- */
+.r-aurora { position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+.r-stars {
+  position:absolute; inset:0;
+  background-image:
+    radial-gradient(1px 1px at 9% 6%, rgba(255,255,255,.55) 0%, transparent 100%),
+    radial-gradient(1px 1px at 24% 12%, rgba(255,255,255,.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 44% 4%, rgba(255,255,255,.48) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 10%, rgba(255,255,255,.30) 0%, transparent 100%),
+    radial-gradient(1px 1px at 76% 7%, rgba(255,255,255,.52) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 3%, rgba(255,255,255,.42) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,.28) 0%, transparent 100%),
+    radial-gradient(1px 1px at 38% 17%, rgba(255,255,255,.22) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 18% 4%, rgba(255,255,255,.65) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 66% 2%, rgba(255,255,255,.55) 0%, transparent 100%);
 }
+.ra { position:absolute; border-radius:50%; filter:blur(90px); }
+.ra1 { width:85vw; height:48vh; top:-20vh; left:4vw; background:radial-gradient(ellipse at center,rgba(0,215,95,.24) 0%,transparent 70%); animation:rd1 18s ease-in-out infinite alternate; }
+.ra2 { width:62vw; height:40vh; top:-14vh; right:-6vw; background:radial-gradient(ellipse at center,rgba(0,155,255,.18) 0%,transparent 70%); animation:rd2 24s ease-in-out infinite alternate; }
+.ra3 { width:52vw; height:34vh; top:0; left:24vw; background:radial-gradient(ellipse at center,rgba(120,0,255,.13) 0%,transparent 70%); animation:rd3 20s ease-in-out infinite alternate; }
+.ra4 { width:40vw; height:24vh; top:-8vh; left:46vw; background:radial-gradient(ellipse at center,rgba(0,255,185,.15) 0%,transparent 70%); animation:rd4 28s ease-in-out infinite alternate; }
+.ra5 { width:28vw; height:20vh; top:4vh; left:62vw; background:radial-gradient(ellipse at center,rgba(190,70,255,.09) 0%,transparent 70%); animation:rd5 22s ease-in-out infinite alternate; }
+.r-ground { position:absolute; bottom:0; left:0; right:0; height:60%; background:linear-gradient(to top,rgba(2,12,10,.97) 0%,transparent 100%); }
+@keyframes rd1 { from{transform:translate(0,0) scaleX(1)} to{transform:translate(4vw,5vh) scaleX(1.1)} }
+@keyframes rd2 { from{transform:translate(0,0) scaleY(1)} to{transform:translate(-5vw,3vh) scaleY(1.18)} }
+@keyframes rd3 { from{transform:translate(0,0) rotate(0)} to{transform:translate(3vw,-4vh) rotate(7deg)} }
+@keyframes rd4 { from{transform:translate(0,0)} to{transform:translate(-4vw,6vh)} }
+@keyframes rd5 { from{transform:translate(0,0) scale(1)} to{transform:translate(5vw,-5vh) scale(1.3)} }
 
-.acard {
-  position: relative;
-  background: var(--lr-surface);
-  border: 1px solid var(--lr-border);
-  border-radius: 16px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  color: var(--lr-text);
-  transition: border-color .18s, box-shadow .18s, transform .18s;
+/* ---- City stage ---- */
+.r-city-stage {
+  position:fixed; bottom:0; left:0; right:0; height:56vh; overflow:hidden; z-index:2; pointer-events:none;
 }
-.acard:hover {
-  border-color: var(--rx, #E91E8C);
-  box-shadow: 0 8px 32px rgba(0,0,0,.1);
-  transform: translateY(-2px);
+.r-city-stage::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:45%;
+  background:linear-gradient(to bottom,rgba(2,12,10,1) 0%,transparent 100%); z-index:10;
 }
-.acard.acard-locked {
-  opacity: .55;
-  pointer-events: none;
-  border-style: dashed;
-}
+.r-city-panel { position:absolute; top:0; left:0; width:100%; height:100%; will-change:transform; }
+.r-city-panel picture { display:block; width:100%; height:100%; }
+.r-city-panel img { width:100%; height:100%; object-fit:cover; object-position:center bottom; display:block; }
 
-.acard-img-wrap {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  overflow: hidden;
-  background: #111;
+/* City label */
+.r-city-label {
+  position:fixed; bottom:20px; right:24px; z-index:20;
+  display:flex; align-items:center; gap:8px; pointer-events:none;
 }
-.acard-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform .3s;
-}
-.acard:hover .acard-img { transform: scale(1.03); }
-.acard-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 80px;
-  font-weight: 900;
-  background: var(--rx, #E91E8C);
-  color: #fff;
-}
-.locked-fallback { background: #222; color: rgba(255,255,255,.2); }
-.acard-gradient {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,.55) 0%, transparent 50%);
-  pointer-events: none;
-}
+.r-city-dot { width:5px; height:5px; border-radius:50%; transition:background-color 1s ease; }
+.r-city-name { font-size:9px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; color:rgba(255,255,255,.55); }
 
-.acard-body {
-  padding: 18px 18px 14px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.acard-name {
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: -.01em;
-  line-height: 1.1;
-}
-.acard-tagline {
-  font-size: 13px;
-  color: var(--lr-text-75);
-  line-height: 1.5;
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.acard-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
-.acard-pill {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  padding: 4px 10px;
-  border-radius: 20px;
-  background: var(--lr-bg);
-  border: 1px solid var(--lr-border);
-  color: var(--lr-text-50);
-}
-.acard-pill.accent {
-  background: var(--rx-tint, rgba(233,30,140,.1));
-  border-color: transparent;
-  color: var(--rx-text, #9c1458);
+/* ---- Page content ---- */
+.r-page {
+  position:relative; z-index:10;
+  padding: 48px 32px 100px;
+  max-width: 1080px; margin: 0 auto;
+  min-height: calc(100vh - 60px);
 }
 
-.acard-arrow {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity .18s;
+/* Header */
+.r-header { text-align:center; margin-bottom:52px; }
+.r-eyebrow {
+  font-size:9px; font-weight:700; letter-spacing:.22em; text-transform:uppercase;
+  color:rgba(255,255,255,.45); margin:0 0 14px;
 }
-.acard-arrow svg { width: 16px; height: 16px; color: var(--rx, #E91E8C); }
-.acard:hover .acard-arrow { opacity: 1; }
+.r-title {
+  font-size:clamp(40px,7vw,72px); font-weight:900; color:#fff;
+  letter-spacing:-.03em; line-height:.95; margin:0 0 14px;
+  text-shadow:0 0 40px rgba(0,0,0,.8);
+}
+.r-sub {
+  font-size:12px; color:rgba(255,255,255,.4);
+  letter-spacing:.12em; text-transform:uppercase; font-weight:600; margin:0;
+}
 
-@media (max-width: 600px) {
-  .rost-wrap { padding: 24px 16px 60px; }
-  .rost-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+/* ---- Artist grid ---- */
+.r-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
+}
+
+/* ---- Artist card ---- */
+.r-card {
+  display:block; text-decoration:none; border-radius:10px; overflow:hidden;
+  position:relative; aspect-ratio:3/4; background:#0d1a14;
+  transition:transform .22s ease, box-shadow .22s ease;
+  cursor:pointer;
+}
+.r-card:hover {
+  transform:translateY(-5px) scale(1.01);
+  box-shadow:0 16px 48px rgba(0,0,0,.6), 0 0 0 1.5px var(--r-accent, #E91E8C);
+}
+.r-card:focus-visible {
+  outline:3px solid #F69820; outline-offset:3px;
+}
+.r-card-spacer {
+  pointer-events:none; background:transparent;
+}
+.r-card-img {
+  position:absolute; inset:0;
+}
+.r-card-img img {
+  width:100%; height:100%; object-fit:cover; object-position:top center; display:block;
+  transition:transform .4s ease;
+}
+.r-card:hover .r-card-img img { transform:scale(1.04); }
+.r-card-fallback {
+  width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+  font-size:clamp(52px,9vw,88px); font-weight:900; color:#fff; letter-spacing:-.04em;
+}
+.r-card-grad {
+  position:absolute; bottom:0; left:0; right:0; height:70%;
+  background:linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.5) 40%, transparent 100%);
+}
+.r-card-info {
+  position:absolute; bottom:0; left:0; right:0; padding:16px 14px 14px; z-index:2;
+}
+.r-card-name {
+  display:block; font-size:clamp(12px,1.3vw,16px); font-weight:800; color:#fff;
+  letter-spacing:.01em; line-height:1.2; text-transform:uppercase;
+}
+.r-card-tag {
+  display:block; font-size:10px; color:rgba(255,255,255,.5);
+  letter-spacing:.06em; margin-top:4px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* ---- Pagination nav ---- */
+.r-nav {
+  display:flex; align-items:center; justify-content:center;
+  gap:16px; margin-top:44px;
+}
+.r-arrow {
+  width:48px; height:48px; border-radius:50%;
+  border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.05);
+  color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background .15s, border-color .15s, transform .1s;
+  flex-shrink:0;
+}
+.r-arrow:hover:not(:disabled) {
+  background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.38);
+  transform:scale(1.05);
+}
+.r-arrow:disabled { opacity:.25; cursor:not-allowed; }
+.r-arrow:focus-visible { outline:3px solid #F69820; outline-offset:3px; }
+.r-arrow svg { width:22px; height:22px; }
+.r-page-info { display:flex; gap:8px; align-items:center; }
+.r-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(255,255,255,.2); border:none; cursor:pointer; padding:0;
+  transition:all .3s ease;
+}
+.r-dot.on {
+  width:22px; border-radius:4px; background:rgba(255,255,255,.55);
+}
+.r-dot:focus-visible { outline:2px solid #F69820; outline-offset:2px; }
+
+/* ---- Loading state ---- */
+.r-loading {
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+  padding:80px 0; color:rgba(255,255,255,.4); font-size:14px; letter-spacing:.08em;
+}
+.r-spinner {
+  width:32px; height:32px; border-radius:50%;
+  border:2px solid rgba(255,255,255,.1); border-top-color:rgba(255,255,255,.5);
+  animation:rspin .8s linear infinite;
+}
+@keyframes rspin { to { transform:rotate(360deg); } }
+
+/* ---- Responsive ---- */
+@media(max-width:768px) {
+  .r-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+  .r-page { padding:32px 16px 80px; }
+  .r-city-stage { height:100vh; }
+  .r-city-stage::before { height:30%; }
+  .r-city-panel img { object-position:center center; }
+  .r-header { margin-bottom:36px; }
+}
+@media(max-width:480px) {
+  .r-grid { grid-template-columns:1fr 1fr; gap:8px; }
 }
 `;
