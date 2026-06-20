@@ -77,7 +77,7 @@ export default function RosterPage() {
   // Fetch artists from Supabase
   useEffect(() => {
     fetch(
-      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&order=created_at.asc`,
+      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=neq.v&order=created_at.asc`,
       { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } }
     )
       .then((r) => r.json())
