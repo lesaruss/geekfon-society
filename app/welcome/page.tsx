@@ -453,18 +453,30 @@ export default function WelcomePage() {
 
               {/* Last-slide CTA */}
               {isLastSlide && currentSlide.cta && !currentSlide.isArtistSlide && (
-                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
-                  <a
-                    href={currentSlide.cta.href}
-                    style={{ display: "inline-block", background: currentSlide.accent, color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 40px", fontSize: "1rem", fontWeight: 800, letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.04)"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; }}
-                  >
-                    {currentSlide.cta.label}
-                  </a>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
+                  <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+                    <a
+                      href={currentSlide.cta.href}
+                      style={{ display: "inline-block", background: currentSlide.accent, color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 40px", fontSize: "1rem", fontWeight: 800, letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.04)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; }}
+                    >
+                      {currentSlide.cta.label}
+                    </a>
+                    {currentSlide.cta.href !== "/passport" && (
+                      <a
+                        href="/passport"
+                        style={{ display: "inline-block", background: "rgba(255,255,255,0.08)", color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", border: "1.5px solid rgba(255,255,255,0.18)", transition: "transform 0.15s ease, background 0.15s ease" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.14)"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.08)"; }}
+                      >
+                        Become a Member
+                      </a>
+                    )}
+                  </div>
                   <button
                     onClick={() => transition(() => { setPhase("picker"); setRole(null); })}
-                    style={{ background: "transparent", border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: "100px", padding: "16px 32px", color: "rgba(255,255,255,0.6)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em" }}
+                    style={{ background: "none", border: "none", padding: "4px 0", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", textDecoration: "underline", textUnderlineOffset: "3px" }}
                   >
                     See other paths
                   </button>
