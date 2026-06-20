@@ -321,10 +321,15 @@ export default function WelcomePage() {
       <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
         <picture>
           <source media="(max-width:768px)" srcSet={activeBg.mobile} />
-          <img src={activeBg.desktop} alt="" aria-hidden="true" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center bottom", opacity: 0.35, transition: "opacity 0.6s ease" }} />
+          <img src={activeBg.desktop} alt="" aria-hidden="true" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center bottom", opacity: 0.88, transition: "opacity 0.6s ease" }} />
         </picture>
-        {/* Overlay gradient */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,7,18,0.7) 0%, rgba(7,7,18,0.5) 40%, rgba(7,7,18,0.85) 100%)" }} />
+        {/* Left-to-right overlay: dark on left (text), clear on right (city) */}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(7,7,18,0.95) 0%, rgba(7,7,18,0.92) 28%, rgba(7,7,18,0.55) 55%, rgba(7,7,18,0.08) 100%)" }} />
+        {/* Bottom vignette so nav stays readable */}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(7,7,18,0.7) 0%, transparent 20%)" }} />
+        {/* Mobile: dark on top so text is readable over portrait image */}
+        <style>{`@media(max-width:768px){.city-left-overlay{background:linear-gradient(to bottom,rgba(7,7,18,0.92) 0%,rgba(7,7,18,0.75) 50%,rgba(7,7,18,0.2) 100%) !important}}`}</style>
+        <div className="city-left-overlay" style={{ position: "absolute", inset: 0 }} />
       </div>
 
       <style>{`
