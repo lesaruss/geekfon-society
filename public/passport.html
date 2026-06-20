@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Get Your Passport -- GeekFon Society</title>
+<title>Get Inside the Society -- GeekFon Society</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -12,7 +12,16 @@ html,body{min-height:100%;overflow-x:hidden;font-family:'Montserrat',sans-serif;
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
 :focus-visible{outline:3px solid #F69820;outline-offset:3px;}
 a{color:inherit;text-decoration:none;}
-button{font-family:'Montserrat',sans-serif;}
+button{font-family:'Montserrat',sans-serif;cursor:pointer;}
+
+/* Nav */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(2,12,10,.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06);}
+.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.nav-wordmark{font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#fff;}
+.nav-wordmark span{color:#F69820;}
+.nav-back{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:6px;}
+.nav-back:hover{color:rgba(255,255,255,.75);}
+.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
 
 /* Aurora */
 .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
@@ -27,445 +36,316 @@ button{font-family:'Montserrat',sans-serif;}
 @keyframes d3{from{transform:translate(0,0)}to{transform:translate(3vw,-4vh) rotate(7deg)}}
 
 /* Page */
-.page{position:relative;z-index:1;padding:96px 40px 100px;display:flex;flex-direction:column;align-items:center;}
+.page{position:relative;z-index:1;padding:96px 40px 100px;display:flex;flex-direction:column;align-items:center;max-width:1100px;margin:0 auto;}
 
 /* Hero */
-.hero{max-width:720px;width:100%;text-align:center;margin-bottom:72px;}
+.hero{width:100%;text-align:center;margin-bottom:64px;}
 .eyebrow{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.22em;color:#F69820;margin-bottom:18px;}
-.hero-title{font-size:clamp(40px,6vw,72px);font-weight:900;text-transform:uppercase;letter-spacing:-.03em;line-height:.92;color:#fff;margin-bottom:20px;}
-.hero-sub{font-size:15px;font-weight:400;color:rgba(255,255,255,.55);line-height:1.7;max-width:520px;margin:0 auto;}
-.artist-strip{display:flex;align-items:center;justify-content:center;margin:28px auto 0;}
-.strip-av{width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid #020c0a;flex-shrink:0;margin-left:-10px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;}
-.strip-av:first-child{margin-left:0;}
-.strip-av img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
-.strip-count{margin-left:10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.45);white-space:nowrap;}
+.hero-title{font-size:clamp(36px,5.5vw,64px);font-weight:900;text-transform:uppercase;letter-spacing:-.03em;line-height:.92;color:#fff;margin-bottom:18px;}
+.hero-sub{font-size:14px;font-weight:400;color:rgba(255,255,255,.5);line-height:1.75;max-width:480px;margin:0 auto;}
 
-/* Benefits */
-.benefits{max-width:960px;width:100%;margin-bottom:72px;}
-.section-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.35);text-align:center;margin-bottom:32px;}
-.benefits-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-.benefit{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px 20px;}
-.benefit-icon{width:40px;height:40px;border-radius:12px;background:rgba(246,152,32,.1);border:1px solid rgba(246,152,32,.18);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
-.benefit-icon svg{width:20px;height:20px;stroke:#F69820;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-.benefit-name{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#fff;margin-bottom:6px;}
-.benefit-desc{font-size:11px;font-weight:400;color:rgba(255,255,255,.48);line-height:1.65;}
+/* Two-column layout */
+.two-col{width:100%;display:grid;grid-template-columns:420px 1fr;gap:28px;align-items:start;margin-bottom:60px;}
 
-/* ---- PRICING ---- */
-.pricing{max-width:960px;width:100%;}
+/* --- LEFT: PASSPORT PLAN --- */
+.passport-col{display:flex;flex-direction:column;gap:16px;}
 
-/* --- PASSPORT CARD (full-width configurator) --- */
-.passport-card{background:rgba(255,255,255,.04);border:1px solid rgba(246,152,32,.28);border-radius:20px;padding:32px;margin-bottom:16px;display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;}
-.passport-info{}
-.passport-name{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#fff;margin-bottom:8px;}
-.passport-pricing{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;}
-.passport-amount{font-size:38px;font-weight:900;color:#F69820;line-height:1;}
-.passport-per{font-size:13px;font-weight:700;color:rgba(255,255,255,.45);}
-.passport-tagline{font-size:11px;color:rgba(255,255,255,.45);line-height:1.6;margin-bottom:20px;}
-.passport-features{display:flex;flex-direction:column;gap:9px;margin-bottom:28px;}
-.passport-feature{display:flex;align-items:flex-start;gap:9px;font-size:11px;font-weight:400;color:rgba(255,255,255,.6);line-height:1.5;}
-.passport-feature svg{width:14px;height:14px;stroke:#4caf50;fill:none;stroke-width:2.5;flex-shrink:0;margin-top:1px;}
+.passport-card{background:rgba(255,255,255,.04);border:1px solid rgba(246,152,32,.3);border-radius:20px;padding:32px;}
+.plan-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(246,152,32,.1);border:1px solid rgba(246,152,32,.2);border-radius:100px;padding:5px 14px;margin-bottom:20px;}
+.plan-badge-dot{width:7px;height:7px;border-radius:50%;background:#F69820;}
+.plan-badge-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.16em;color:#F69820;}
 
-/* Price summary + CTA */
-.passport-summary{border-top:1px solid rgba(255,255,255,.08);padding-top:20px;}
-.summary-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.summary-count{font-size:11px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;}
-.summary-total{font-size:20px;font-weight:900;color:#F69820;}
-.summary-none{font-size:11px;color:rgba(255,255,255,.3);font-style:italic;}
-.passport-cta{display:block;width:100%;text-align:center;padding:14px;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;border:none;background:#F69820;color:#020c0a;transition:opacity .15s;}
-.passport-cta:hover:not(:disabled){opacity:.88;}
-.passport-cta:disabled{opacity:.32;cursor:not-allowed;}
+.plan-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:6px;}
+.plan-price{font-size:52px;font-weight:900;color:#fff;line-height:1;letter-spacing:-.03em;}
+.plan-price-period{font-size:14px;font-weight:600;color:rgba(255,255,255,.4);}
+.plan-points-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(0,215,95,.08);border:1px solid rgba(0,215,95,.18);border-radius:8px;padding:6px 12px;margin-bottom:20px;}
+.plan-points-icon{font-size:14px;}
+.plan-points-label{font-size:12px;font-weight:800;color:rgba(0,215,95,.9);letter-spacing:.04em;}
 
-/* Artist selector (right side) */
-.artist-selector{}
-.selector-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.selector-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.5);}
-.selector-clear{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.28);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color .15s;}
-.selector-clear:hover{color:#F69820;}
-.artist-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.artist-chip{position:relative;cursor:pointer;border:2px solid transparent;border-radius:10px;overflow:hidden;background:#0d1512;display:flex;flex-direction:column;padding:0;transition:border-color .15s,transform .12s;flex-shrink:0;}
-.artist-chip:hover{border-color:rgba(255,255,255,.22);transform:translateY(-2px);}
-.artist-chip.selected{border-color:#F69820;}
-.artist-chip:focus-visible{outline:3px solid #F69820;outline-offset:2px;}
-.chip-photo{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;flex-shrink:0;}
-.chip-photo img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;}
-.chip-check{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#F69820;display:none;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5);}
-.artist-chip.selected .chip-check{display:flex;}
-.chip-check svg{width:12px;height:12px;stroke:#020c0a;fill:none;stroke-width:3;}
-.chip-name{padding:6px 4px 7px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;text-align:center;color:rgba(255,255,255,.6);background:rgba(255,255,255,.04);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.artist-chip.selected .chip-name{color:#F69820;background:rgba(246,152,32,.1);}
+.plan-desc{font-size:12px;font-weight:400;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:22px;}
 
-/* All Access + Lifetime (2-col) */
-.lower-tiers{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
-.gfs-sub-tier{display:flex;flex-direction:column;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px;text-decoration:none;cursor:pointer;position:relative;transition:border-color .18s,background .18s,transform .18s;}
-.gfs-sub-tier:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);transform:translateY(-2px);}
-.gfs-sub-tier.featured{border-color:rgba(246,152,32,.4);background:rgba(246,152,32,.04);}
-.gfs-sub-tier.featured:hover{background:rgba(246,152,32,.09);border-color:rgba(246,152,32,.7);}
-.gfs-sub-tier:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
-.tier-badge{display:inline-block;font-size:7px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;padding:3px 9px;border-radius:100px;margin-bottom:10px;}
-.gfs-sub-tier.featured .tier-badge{background:rgba(246,152,32,.15);color:#F69820;}
-.gfs-sub-tier:not(.featured) .tier-badge{background:rgba(192,57,43,.18);color:#e74c3c;}
-.tier-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;}
-.gfs-sub-tier-name{font-size:15px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;color:#fff;}
-.tier-price{display:flex;align-items:baseline;gap:3px;}
-.tier-amount{font-size:28px;font-weight:900;color:#F69820;line-height:1;}
-.tier-period{font-size:11px;font-weight:700;color:rgba(255,255,255,.35);}
-.tier-tagline{font-size:11px;color:rgba(255,255,255,.4);line-height:1.55;margin:8px 0 16px;}
-.tier-features{display:flex;flex-direction:column;gap:8px;flex:1;margin-bottom:20px;}
-.tier-feature{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,.6);}
-.tier-feature svg{width:13px;height:13px;stroke:#4caf50;fill:none;stroke-width:2.5;flex-shrink:0;}
-.tier-cta{display:block;text-align:center;padding:12px;border-radius:10px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;margin-top:auto;transition:opacity .15s,background .15s;cursor:pointer;border:none;width:100%;box-sizing:border-box;}
-.gfs-sub-tier:not(.featured) .tier-cta{background:rgba(255,255,255,.09);color:#fff;}
-.gfs-sub-tier:not(.featured):hover .tier-cta{background:rgba(255,255,255,.15);}
-.gfs-sub-tier.featured .tier-cta{background:#F69820;color:#020c0a;}
-.gfs-sub-tier.featured:hover .tier-cta{opacity:.88;}
+.plan-features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.07);}
+.plan-feature{display:flex;align-items:flex-start;gap:10px;font-size:11px;font-weight:500;color:rgba(255,255,255,.65);line-height:1.5;}
+.plan-feature-check{flex-shrink:0;margin-top:1px;}
+.plan-feature-check svg{width:14px;height:14px;stroke:#4caf50;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
 
-/* Value callout between sections */
-.value-callout{margin:12px 0 4px;padding:14px 18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;display:flex;align-items:center;gap:12px;font-size:11px;color:rgba(255,255,255,.4);line-height:1.55;}
-.value-callout strong{color:rgba(255,255,255,.7);font-weight:700;}
+.plan-cta{display:block;width:100%;text-align:center;padding:16px;border-radius:12px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;border:none;background:#F69820;color:#020c0a;transition:opacity .15s;}
+.plan-cta:hover{opacity:.88;}
 
-/* Divider + Trust + FAQ */
-.divider{max-width:960px;width:100%;height:1px;background:rgba(255,255,255,.06);margin:72px 0;}
-.trust{max-width:720px;width:100%;text-align:center;}
-.trust-items{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;}
-.trust-item{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);}
-.trust-item svg{width:14px;height:14px;stroke:rgba(255,255,255,.3);fill:none;stroke-width:2;}
-.faq{max-width:720px;width:100%;margin-top:72px;}
-.faq-title{font-size:clamp(22px,3vw,32px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;text-align:center;margin-bottom:32px;}
-.faq-item{border-bottom:1px solid rgba(255,255,255,.07);padding:20px 0;}
-.faq-q{font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;}
-.faq-a{font-size:12px;font-weight:400;color:rgba(255,255,255,.5);line-height:1.7;}
+/* Points packages (below passport card) */
+.points-section-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.28);padding:0 4px;margin-bottom:12px;}
+.points-packages{display:flex;flex-direction:column;gap:10px;}
+.points-pkg{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;transition:border-color .15s;}
+.points-pkg:hover{border-color:rgba(255,255,255,.15);}
+.points-pkg-left{display:flex;flex-direction:column;gap:3px;}
+.points-pkg-pts{font-size:16px;font-weight:900;color:#fff;letter-spacing:-.01em;}
+.points-pkg-pts span{color:#F69820;}
+.points-pkg-desc{font-size:10px;font-weight:500;color:rgba(255,255,255,.38);}
+.points-pkg-right{display:flex;align-items:center;gap:10px;}
+.points-pkg-price{font-size:15px;font-weight:800;color:rgba(255,255,255,.7);}
+.points-pkg-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.6);transition:background .15s,color .15s;}
+.points-pkg-btn:hover{background:rgba(255,255,255,.12);color:#fff;}
 
-/* Responsive */
-@media(max-width:900px){
-  .passport-card{grid-template-columns:1fr;gap:28px;}
-  .artist-grid{grid-template-columns:repeat(4,1fr);}
-}
-@media(max-width:680px){
-  .page{padding:80px 20px 80px;}
-  .benefits-grid{grid-template-columns:1fr 1fr;gap:12px;}
-  .lower-tiers{grid-template-columns:1fr;}
-  .artist-grid{grid-template-columns:repeat(4,1fr);}
-  .trust-items{gap:20px;}
-}
-@media(max-width:420px){
-  .artist-grid{grid-template-columns:repeat(3,1fr);}
-  .benefits-grid{grid-template-columns:1fr;}
+/* --- RIGHT: ARTIST TOGGLE --- */
+.artist-col{}
+.artist-panel{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;position:relative;}
+
+.artist-hero{aspect-ratio:4/3;background:#0d1f1a;position:relative;display:flex;align-items:flex-end;}
+.artist-hero-initial{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.artist-initial-block{width:120px;height:120px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#fff;letter-spacing:-.02em;}
+.artist-hero-gradient{position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to top,rgba(2,12,10,.95) 0%,transparent 100%);}
+.artist-hero-meta{position:relative;z-index:2;padding:20px 24px;}
+.artist-name{font-size:22px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.artist-genre{font-size:11px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;}
+.artist-tagline{font-size:12px;font-weight:400;color:rgba(255,255,255,.65);line-height:1.6;max-width:340px;}
+
+.artist-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-top:1px solid rgba(255,255,255,.07);}
+.artist-nav-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;color:rgba(255,255,255,.55);transition:background .15s,color .15s;}
+.artist-nav-btn:hover{background:rgba(255,255,255,.1);color:#fff;}
+.artist-nav-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.artist-nav-counter{font-size:11px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.04em;}
+.artist-dots{display:flex;gap:5px;align-items:center;flex-wrap:wrap;max-width:180px;justify-content:center;}
+.artist-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.15);border:none;padding:0;transition:background .2s,transform .2s;}
+.artist-dot.active{transform:scale(1.4);}
+
+/* responsive */
+@media(max-width:820px){
+  .nav{padding:0 20px;}
+  .page{padding:88px 20px 80px;}
+  .two-col{grid-template-columns:1fr;gap:20px;}
+  .passport-card{padding:24px;}
+  .artist-col{order:-1;}
 }
 </style>
 </head>
 <body>
-<script src="/nav.js"></script>
+
+<!-- Nav -->
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <svg width="26" height="26" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="10" fill="#111"/>
+      <text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="#F69820" font-family="Montserrat,sans-serif" font-weight="900" font-size="15">GF</text>
+    </svg>
+    <span class="nav-wordmark">GEEK<span>FON</span> SOCIETY</span>
+  </a>
+  <a href="/" class="nav-back">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Back
+  </a>
+</nav>
+
+<!-- Aurora -->
 <div class="aurora" aria-hidden="true">
-  <div class="stars"></div><div class="a a1"></div><div class="a a2"></div><div class="a a3"></div>
+  <div class="stars"></div>
+  <div class="a a1"></div>
+  <div class="a a2"></div>
+  <div class="a a3"></div>
   <div class="aurora-ground"></div>
 </div>
-<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Get Your Passport -- GeekFon Society</h1>
 
-<main class="page" id="main-content">
+<main class="page">
 
   <!-- Hero -->
-  <section class="hero">
-    <div class="eyebrow">GeekFon Society</div>
-    <div class="hero-title">Get Inside<br>The Society</div>
-    <p class="hero-sub">Pick the artists you want. Pay $11 once per artist and keep lifetime access to their current and future tracks. Or go all-in.</p>
-    <div class="artist-strip">
-      <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w80-h80" alt="Shamanic Resin" onerror="this.onerror=null;this.parentElement.style.background='#b548c6';this.parentElement.textContent='SR'"></div>
-      <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w80-h80" alt="Lex" onerror="this.onerror=null;this.parentElement.style.background='#e84d1a';this.parentElement.textContent='L'"></div>
-      <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w80-h80" alt="Riku" onerror="this.onerror=null;this.parentElement.style.background='#7fb069';this.parentElement.textContent='RK'"></div>
-      <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w80-h80" alt="Roxanne" onerror="this.onerror=null;this.parentElement.style.background='#e94f8a';this.parentElement.textContent='R'"></div>
-      <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w80-h80" alt="Lickle Bro" onerror="this.onerror=null;this.parentElement.style.background='#9b6bcc';this.parentElement.textContent='LB'"></div>
-      <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w80-h80" alt="Lickle Sis" onerror="this.onerror=null;this.parentElement.style.background='#ff6eb4';this.parentElement.textContent='LS'"></div>
-      <div class="strip-av"><img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w80-h80" alt="S&N" onerror="this.onerror=null;this.parentElement.style.background='#2ec4b6';this.parentElement.textContent='SN'"></div>
-      <span class="strip-count">+ 4 more</span>
-    </div>
+  <section class="hero" aria-labelledby="page-title">
+    <p class="eyebrow">Membership</p>
+    <h1 class="hero-title" id="page-title">Get Inside<br>the Society</h1>
+    <p class="hero-sub">One passport. Every artist. Spend your points on the music you want - and reload when you need more.</p>
   </section>
 
-  <!-- Benefits -->
-  <section class="benefits">
-    <div class="section-lbl">What you get</div>
-    <div class="benefits-grid">
-      <div class="benefit">
-        <div class="benefit-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-        <div class="benefit-name">Group Chat Access</div>
-        <div class="benefit-desc">Read and reply in the GFS group chat. Every artist posts here -- conversations, updates, and raw unfiltered moments.</div>
-      </div>
-      <div class="benefit">
-        <div class="benefit-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
-        <div class="benefit-name">Artist Music + Feed</div>
-        <div class="benefit-desc">Unlock the full music library and personal feed for each artist you choose. Their tracks, their world.</div>
-      </div>
-      <div class="benefit">
-        <div class="benefit-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
-        <div class="benefit-name">First Drops</div>
-        <div class="benefit-desc">GFS members hear new singles, EPs, and announcements before they go public. Every time. No exceptions.</div>
-      </div>
-    </div>
-  </section>
+  <!-- Two column -->
+  <section class="two-col" aria-label="Membership plans and artist preview">
 
-  <!-- Pricing -->
-  <section class="pricing" aria-label="Membership options">
-    <div class="section-lbl" style="margin-bottom:20px">Choose your membership</div>
+    <!-- LEFT: Passport plan -->
+    <div class="passport-col">
+      <div class="passport-card">
 
-    <!-- PASSPORT — full-width configurator -->
-    <div class="passport-card" aria-label="Passport membership">
-      <!-- Left: tier info -->
-      <div class="passport-info">
-        <div class="passport-name">Passport</div>
-        <div class="passport-pricing">
-          <span class="passport-amount">$11</span>
-          <span class="passport-per">per artist</span>
+        <div class="plan-badge">
+          <div class="plan-badge-dot"></div>
+          <span class="plan-badge-label">GeekFon Passport</span>
         </div>
-        <div class="passport-tagline">Pay $11 once. Keep lifetime access to that artist's current and future tracks. Pick as many as you want.</div>
-        <div class="passport-features">
-          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Full GFS Group Chat</div>
-          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Selected artist feeds</div>
-          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Full track catalog -- current and future releases</div>
-          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>First-listen drop access</div>
-          <div class="passport-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>One-time payment, no subscription</div>
+
+        <div class="plan-price-row">
+          <span class="plan-price">$11</span>
+          <span class="plan-price-period">/ month</span>
         </div>
-        <div class="passport-summary">
-          <div class="summary-row">
-            <span class="summary-count" id="summaryCount">No artists selected</span>
-            <span class="summary-total" id="summaryTotal"></span>
+        <div class="plan-points-tag" aria-label="Includes 1000 points each month">
+          <span class="plan-points-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,215,95,.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+          <span class="plan-points-label">1,000 points included each month</span>
+        </div>
+
+        <p class="plan-desc">Your points reload every billing cycle. Use them to purchase songs, unlock exclusives, and support the artists you love. If you need more - just grab a top-up.</p>
+
+        <ul class="plan-features" role="list">
+          <li class="plan-feature">
+            <span class="plan-feature-check" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span>1,000 points added automatically each month</span>
+          </li>
+          <li class="plan-feature">
+            <span class="plan-feature-check" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span>Spend on any artist - no per-artist restrictions</span>
+          </li>
+          <li class="plan-feature">
+            <span class="plan-feature-check" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span>Access to GeekFon Radio and member-only drops</span>
+          </li>
+          <li class="plan-feature">
+            <span class="plan-feature-check" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span>Early access to new artists before public release</span>
+          </li>
+          <li class="plan-feature">
+            <span class="plan-feature-check" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span>Cancel anytime - your purchased songs stay with you</span>
+          </li>
+        </ul>
+
+        <a href="#join" class="plan-cta">Get Your Passport</a>
+      </div>
+
+      <!-- Points packages -->
+      <p class="points-section-label">Need more points?</p>
+      <div class="points-packages" role="list">
+        <div class="points-pkg" role="listitem">
+          <div class="points-pkg-left">
+            <span class="points-pkg-pts"><span>500</span> points</span>
+            <span class="points-pkg-desc">One-time add-on</span>
           </div>
-          <button class="passport-cta" id="passportCta" disabled onclick="checkoutPassport()">Select artists to continue</button>
+          <div class="points-pkg-right">
+            <span class="points-pkg-price">$5</span>
+            <button class="points-pkg-btn" aria-label="Buy 500 points for $5">Buy</button>
+          </div>
+        </div>
+        <div class="points-pkg" role="listitem">
+          <div class="points-pkg-left">
+            <span class="points-pkg-pts"><span>1,500</span> points</span>
+            <span class="points-pkg-desc">One-time add-on</span>
+          </div>
+          <div class="points-pkg-right">
+            <span class="points-pkg-price">$11</span>
+            <button class="points-pkg-btn" aria-label="Buy 1500 points for $11">Buy</button>
+          </div>
+        </div>
+        <div class="points-pkg" role="listitem">
+          <div class="points-pkg-left">
+            <span class="points-pkg-pts"><span>5,000</span> points</span>
+            <span class="points-pkg-desc">One-time add-on</span>
+          </div>
+          <div class="points-pkg-right">
+            <span class="points-pkg-price">$33</span>
+            <button class="points-pkg-btn" aria-label="Buy 5000 points for $33">Buy</button>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Right: artist selector -->
-      <div class="artist-selector">
-        <div class="selector-hdr">
-          <span class="selector-lbl">Select your artists</span>
-          <button class="selector-clear" id="clearBtn" onclick="clearAll()" style="display:none">Clear all</button>
+    <!-- RIGHT: Artist toggle -->
+    <div class="artist-col">
+      <div class="artist-panel" role="region" aria-label="Artist showcase">
+        <div class="artist-hero" id="artist-hero" aria-live="polite" aria-atomic="true">
+          <div class="artist-hero-initial">
+            <div class="artist-initial-block" id="artist-initial" style="background:rgba(233,30,140,.15);border:2px solid rgba(233,30,140,.3);">R</div>
+          </div>
+          <div class="artist-hero-gradient" aria-hidden="true"></div>
+          <div class="artist-hero-meta">
+            <h2 class="artist-name" id="artist-name">Roxanne</h2>
+            <p class="artist-genre" id="artist-genre">J-Pop / Pop</p>
+            <p class="artist-tagline" id="artist-tagline">The voice that disappeared - and came back with everything to say.</p>
+          </div>
         </div>
-        <div class="artist-grid" role="group" aria-label="Artist selection">
-
-          <button class="artist-chip" data-slug="shamanic-resin" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=1kcz39l37rB2aQ1mfeqnCr_5o-ecu30lv&sz=w400-h400" alt="Shamanic Resin" onerror="this.onerror=null;this.parentElement.style.background='#b548c6'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Shamanic Resin</span>
+        <div class="artist-nav">
+          <button class="artist-nav-btn" id="btn-prev" aria-label="Previous artist" onclick="changeArtist(-1)">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            Prev
           </button>
-
-          <button class="artist-chip" data-slug="lex-from-brixton" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=15ShZYrdAwpeke_N46AkNLX2ozHOsIl_F&sz=w400-h400" alt="Lex from Brixton" onerror="this.onerror=null;this.parentElement.style.background='#e84d1a'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Lex from Brixton</span>
-          </button>
-
-          <button class="artist-chip" data-slug="riku" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=1b7izx9ZmS3bxpFbD0iF-QZu-yCuDiaXC&sz=w400-h400" alt="Riku" onerror="this.onerror=null;this.parentElement.style.background='#7fb069'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Riku</span>
-          </button>
-
-          <button class="artist-chip" data-slug="roxanne" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=1nOwxKBbq-c5xL8XWnkJxYuRkJ2VHfb4o&sz=w400-h400" alt="Roxanne" onerror="this.onerror=null;this.parentElement.style.background='#e94f8a'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Roxanne</span>
-          </button>
-
-          <button class="artist-chip" data-slug="mad-tings" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=1JNuyjt2SCH0m8PwbkXGSZynrJeOzA-vC&sz=w400-h400" alt="Mad Tings" onerror="this.onerror=null;this.parentElement.style.background='#d4a800'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Mad Tings</span>
-          </button>
-
-          <button class="artist-chip" data-slug="straight-and-narrow" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=1GojBGtoVuoQVtiS-PK8WrFjHF1cIXk07&sz=w400-h400" alt="Straight &amp; Narrow" onerror="this.onerror=null;this.parentElement.style.background='#2ec4b6'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Straight &amp; Narrow</span>
-          </button>
-
-          <button class="artist-chip" data-slug="lickle-bro" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=1YhEgV5x0p5pZJpS5QwopAjVhZfgf2cd1&sz=w400-h400" alt="Lickle Bro" onerror="this.onerror=null;this.parentElement.style.background='#9b6bcc'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Lickle Bro</span>
-          </button>
-
-          <button class="artist-chip" data-slug="nilo-wave" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=13eUQSq_5tJDErq5AOPzwKV9P0uTb5QnM&sz=w400-h400" alt="Nilo Wave" onerror="this.onerror=null;this.parentElement.style.background='#e8a020'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Nilo Wave</span>
-          </button>
-
-          <button class="artist-chip" data-slug="lickle-sis" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=1rr-u1HTk8xbC1OfWALdK2vy1G83WrtA3&sz=w400-h400" alt="Lickle Sis" onerror="this.onerror=null;this.parentElement.style.background='#ff6eb4'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Lickle Sis</span>
-          </button>
-
-          <button class="artist-chip" data-slug="rustblood-prophets" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=1F7PGb7Jidinz6SsOgVjAOaHkzKvdfW_M&sz=w400-h400" alt="Rustblood Prophets" onerror="this.onerror=null;this.parentElement.style.background='#8888ff'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Rustblood Prophets</span>
-          </button>
-
-          <button class="artist-chip" data-slug="mr-russell" onclick="toggleArtist(this)" aria-pressed="false">
-                        <div class="chip-photo">
-              <img src="https://drive.google.com/thumbnail?id=1m4D6mGkzT_1g-KYVJeN1scbeGt1VzTIt&sz=w400-h400" alt="Mr. Russell" onerror="this.onerror=null;this.parentElement.style.background='#F69820'">
-              <div class="chip-check"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
-            </div>
-            <span class="chip-name">Mr. Russell</span>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <span class="artist-nav-counter" id="artist-counter" aria-live="polite">1 of 11</span>
+            <div class="artist-dots" id="artist-dots" aria-hidden="true"></div>
+          </div>
+          <button class="artist-nav-btn" id="btn-next" aria-label="Next artist" onclick="changeArtist(1)">
+            Next
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Value callout -->
-    <div class="value-callout">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F69820" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      Unlocking all 11 artists with Passport costs <strong>$121</strong>. Lifetime covers every current and future artist for <strong>$111</strong> -- and you hear new tracks before All Access members. Offer closes July 1, 2026.
-    </div>
-
-    <!-- All Access + Lifetime -->
-    <div class="lower-tiers" style="margin-top:16px">
-
-      <a class="gfs-sub-tier featured" href="/checkout?tier=all-access" role="button" aria-label="Get All Access for $11 per month">
-        <div class="tier-badge">Most Popular</div>
-        <div class="tier-header">
-          <span class="gfs-sub-tier-name">All Access</span>
-          <div class="tier-price"><span class="tier-amount">$11</span><span class="tier-period">/mo</span></div>
-        </div>
-        <div class="tier-tagline">Every artist on the platform. New artists added automatically. Cancel any time.</div>
-        <div class="tier-features">
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>All 11 artists unlocked</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Every future track included</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Cancel any time</div>
-        </div>
-        <div class="tier-cta">Get All Access</div>
-      </a>
-
-      <a class="gfs-sub-tier" href="/checkout?tier=lifetime" role="button" aria-label="Get Lifetime membership for $111">
-        <div class="tier-badge">Closes July 1</div>
-        <div class="tier-header">
-          <span class="gfs-sub-tier-name">Lifetime</span>
-          <div class="tier-price"><span class="tier-amount">$111</span><span class="tier-period">once</span></div>
-        </div>
-        <div class="tier-tagline">Every artist, every future drop -- heard before All Access members. One payment, no renewals.</div>
-        <div class="tier-features">
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Every artist on the platform, forever</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>70+ songs before All Access hears them</div>
-          <div class="tier-feature"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>No renewals, ever</div>
-        </div>
-        <div class="tier-cta">Get Lifetime</div>
-      </a>
-
-    </div>
-  </section>
-
-  <div class="divider" aria-hidden="true"></div>
-
-  <div class="trust">
-    <div class="trust-items">
-      <div class="trust-item"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Secure checkout via Stripe</div>
-      <div class="trust-item"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Instant access on purchase</div>
-      <div class="trust-item"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Cancel All Access any time</div>
-    </div>
-  </div>
-
-  <section class="faq" aria-label="Frequently asked questions">
-    <div class="faq-title">Questions</div>
-    <div class="faq-item">
-      <div class="faq-q">How does Passport work?</div>
-      <div class="faq-a">Passport is $11 per artist, paid once. You get lifetime access to that artist's current tracks and every future release they put on GFS. Pick as many artists as you want at checkout, or come back and add more later.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">Can I add more artists later?</div>
-      <div class="faq-a">Yes. Come back to this page and select any artists you have not unlocked yet. Each new artist is $11 and adds to your existing access.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">What is the difference between Passport and All Access?</div>
-      <div class="faq-a">Passport is $11 once per artist -- lifetime access to their current and future tracks. All Access is $11/month and covers every artist on the platform. Lifetime is $111 once and covers every current and future artist, with early access to new tracks before All Access members hear them. Lifetime sunsets July 1, 2026.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">What happens after I pay?</div>
-      <div class="faq-a">You land on the GFS welcome page with your login details. Access to the artists you selected is live immediately.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q">Is there a free option?</div>
-      <div class="faq-a">You can preview two 30-second sample tracks and browse public artist pages without a Passport. The group chat, full library, and drops require membership.</div>
-    </div>
   </section>
 
 </main>
 
 <script>
-var selected = new Set();
+const ARTISTS = [
+  { name: "Roxanne", initial: "R", accent: "#E91E8C", genre: "J-Pop / Pop", tagline: "The voice that disappeared - and came back with everything to say." },
+  { name: "Lex from Brixton", initial: "L", accent: "#F69820", genre: "Grime / Hip-Hop", tagline: "Brixton in the bloodline. Grime in the grammar. No translations needed." },
+  { name: "Nilo Wave", initial: "N", accent: "#00BCD4", genre: "Caribbean / Electronic", tagline: "Caribbean rhythms rebuilt from the ground up. The wave is the message." },
+  { name: "Shamanic Resin", initial: "S", accent: "#9C27B0", genre: "K-Pop / Electronics", tagline: "Where K-Pop architecture meets ritual electronics. This is not a performance. It is a ceremony." },
+  { name: "Riku Hayasaka", initial: "RH", accent: "#2196F3", genre: "Indie Pop / Bilingual", tagline: "Indie pop built in two languages. The melody is the translation." },
+  { name: "Lickle Bro", initial: "LB", accent: "#4CAF50", genre: "R&B / Dancehall", tagline: "R&B and dancehall raised in the same house. The harmony was inevitable." },
+  { name: "Lickle Sis", initial: "LS", accent: "#FF5722", genre: "Soul / R&B", tagline: "Soul at full volume. She is not asking for permission." },
+  { name: "Mad Tings", initial: "MT", accent: "#E91E63", genre: "Grime / Dubstep", tagline: "Grime energy. Dubstep weight. The whole thing turned up to a frequency most systems cannot handle." },
+  { name: "Mr. Russell", initial: "MR", accent: "#90A4AE", genre: "Hip-Hop", tagline: "Hip-hop that knows where it has been and does not need to prove where it is going." },
+  { name: "Rustblood Prophets", initial: "RP", accent: "#F44336", genre: "Alternative / Dark", tagline: "Alternative and dark and not sorry about either one." },
+  { name: "Straight and Narrow", initial: "SN", accent: "#A1887F", genre: "Hip-Hop / Alternative", tagline: "Hip-hop with a double meaning and alternative instincts. The name is the story." },
+];
 
-function toggleArtist(chip) {
-  var slug = chip.dataset.slug;
-  if (selected.has(slug)) {
-    selected.delete(slug);
-    chip.classList.remove('selected');
-    chip.setAttribute('aria-pressed', 'false');
-  } else {
-    selected.add(slug);
-    chip.classList.add('selected');
-    chip.setAttribute('aria-pressed', 'true');
-  }
-  updateSummary();
+let current = 0;
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
 }
 
-function updateSummary() {
-  var n = selected.size;
-  var countEl = document.getElementById('summaryCount');
-  var totalEl = document.getElementById('summaryTotal');
-  var ctaEl   = document.getElementById('passportCta');
-  var clearEl = document.getElementById('clearBtn');
-  if (n === 0) {
-    countEl.textContent = 'No artists selected';
-    totalEl.textContent = '';
-    ctaEl.disabled = true;
-    ctaEl.textContent = 'Select artists to continue';
-    clearEl.style.display = 'none';
-  } else {
-    countEl.textContent = n + ' artist' + (n === 1 ? '' : 's') + ' selected';
-    totalEl.textContent = '$' + (n * 11);
-    ctaEl.disabled = false;
-    ctaEl.textContent = 'Checkout -- $' + (n * 11);
-    clearEl.style.display = '';
-  }
-}
-
-function clearAll() {
-  selected.clear();
-  document.querySelectorAll('.artist-chip.selected').forEach(function(c) {
-    c.classList.remove('selected');
-    c.setAttribute('aria-pressed', 'false');
+function buildDots() {
+  const container = document.getElementById('artist-dots');
+  container.innerHTML = '';
+  ARTISTS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'artist-dot' + (i === current ? ' active' : '');
+    d.style.background = i === current ? ARTISTS[current].accent : 'rgba(255,255,255,.15)';
+    container.appendChild(d);
   });
-  updateSummary();
 }
 
-function checkoutPassport() {
-  if (selected.size === 0) return;
-  var artists = Array.from(selected).join(',');
-  var qty = selected.size;
-  var params = new URLSearchParams({ tier: 'passport', quantity: qty, artists: artists });
-  window.location.href = '/checkout?' + params.toString();
+function render() {
+  const a = ARTISTS[current];
+  const rgb = hexToRgb(a.accent);
+
+  document.getElementById('artist-name').textContent = a.name;
+  document.getElementById('artist-genre').textContent = a.genre;
+  document.getElementById('artist-tagline').textContent = a.tagline;
+  document.getElementById('artist-counter').textContent = (current + 1) + ' of ' + ARTISTS.length;
+
+  const block = document.getElementById('artist-initial');
+  block.textContent = a.initial;
+  block.style.background = `rgba(${rgb},.15)`;
+  block.style.border = `2px solid rgba(${rgb},.35)`;
+
+  buildDots();
 }
+
+function changeArtist(dir) {
+  current = (current + dir + ARTISTS.length) % ARTISTS.length;
+  render();
+}
+
+// Auto-advance every 6 seconds
+let autoTimer = setInterval(() => changeArtist(1), 6000);
+document.getElementById('artist-panel')?.addEventListener('mouseenter', () => clearInterval(autoTimer));
+document.getElementById('artist-panel')?.addEventListener('mouseleave', () => {
+  autoTimer = setInterval(() => changeArtist(1), 6000);
+});
+
+// Keyboard nav
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') changeArtist(-1);
+  if (e.key === 'ArrowRight') changeArtist(1);
+});
+
+buildDots();
 </script>
-
-<script src="/stripe-js.js"></script>
-<script src="/footer.js"></script>
 </body>
 </html>
