@@ -167,7 +167,12 @@ export default function RosterPage() {
         <span className="r-city-name">{city.name}</span>
       </div>
 
-      <SiteChrome crumb={[{ label: "GeekFon", href: "/" }, { label: "Roster" }]}>
+      <SiteChrome>
+        <nav className="r-crumb" aria-label="Breadcrumb">
+          <a href="/">GeekFon</a>
+          <span className="r-crumb-sep">/</span>
+          <span className="r-crumb-cur">Roster</span>
+        </nav>
         <div className="r-page">
 
           <div className="r-header">
@@ -277,6 +282,14 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .gcrumb-cur { color: rgba(255,255,255,0.9) !important; }
 .gcrumb-sep { color: rgba(255,255,255,0.3) !important; }
 .gbody { background: transparent !important; min-height: 100vh; }
+
+/* ---- Roster breadcrumb bar ---- */
+.r-crumb{display:flex;align-items:center;gap:9px;padding:11px 40px;border-bottom:1px solid rgba(255,255,255,.07);font-family:'Montserrat',sans-serif;position:relative;z-index:2}
+.r-crumb a{font-size:13px;font-weight:700;color:rgba(255,255,255,.5);text-decoration:none;letter-spacing:.01em}
+.r-crumb a:hover{color:rgba(255,255,255,.9)}
+.r-crumb-cur{font-size:13px;font-weight:800;color:rgba(255,255,255,.9);letter-spacing:.01em}
+.r-crumb-sep{color:rgba(255,255,255,.22);font-size:13px;font-weight:400}
+@media(max-width:600px){.r-crumb{padding:10px 16px}}
 
 /* ---- Aurora ---- */
 .r-aurora { position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
