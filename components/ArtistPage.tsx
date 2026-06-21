@@ -10,6 +10,14 @@ type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
 type News = { tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string };
 type Audit = { title: string; status?: string; pillar?: string; theme?: string; emotion?: string; scores?: Record<string, number> };
+type PulsePost = {
+  type: 'voice_message' | 'music_drop' | 'article';
+  date?: string;
+  caption?: string;
+  audioUrl?: string;
+  trackName?: string; trackEra?: string; trackUrl?: string; trackVisibility?: string;
+  tag?: string; title?: string; blurb?: string; href?: string; thumb?: string;
+};
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
   heroUrl?: string; initial?: string; tagline?: string;
@@ -21,13 +29,12 @@ export type ArtistContent = {
   sonic?: { primaryGenre?: string; secondaryGenre?: string; vocalAge?: string; tone?: string; delivery?: string; songPrompt?: string; songPromptNote?: string };
   visual?: { visualIdentity?: string; houseStyle?: string; imagePrompt?: string; imagePromptNote?: string };
   songAudits?: Audit[];
+  pulse?: PulsePost[];
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
-  { key: "about", label: "About" },
-  { key: "news", label: "News" },
-  { key: "music", label: "Music" },
   { key: "pulse", label: "Pulse" },
+  { key: "music", label: "Music" },
   { key: "media", label: "Media" },
   { key: "brief", label: "Brief", admin: true },
 ];
@@ -64,7 +71,7 @@ const PLACEHOLDER_NEWS: News[] = [
 ];
 
 export default function ArtistPage({ content, cityBg }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null }) {
-  const [tab, setTab] = useState("about");
+  const [tab, setTab] = useState("pulse");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -168,56 +175,109 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
           <div className="body-layout">
             <div className="body-main">
 
-              {/* About tab */}
-              {tab === "about" && (
+              {/* Pulse tab - social feed */}
+              {tab === "pulse" && (
                 <section className="panel">
-                  {hasMsg && (
-                    <div className="rxp">
-                      {c.heroUrl && <img className="rxp-img" src={c.heroUrl} alt="" />}
-                      <div className="rxp-body">
-                        <p className="rxp-label">A Message from {name}</p>
-                        <div className="rxp-wave">{Array.from({ length: 22 }).map((_, i) => (<span key={i} style={{ height: 6 + Math.round(Math.abs(Math.sin(i * 1.1)) * 22) }} />))}</div>
-                        <p className="rxp-cap">{lang === "ja" ? msg.ja : msg.en}</p>
-                        {msg.en && msg.ja && (
-                          <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
-                            {lang === "ja" ? "🇺🇸 Listen in English" : "🇯🇵 日本語で聴く"}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {c.quote && <blockquote className="about-quote">{"“" + c.quote + "”"}</blockquote>}
-                  <div className="card about-bio">
-                    {(c.bio || []).map((p, i) => (<p key={i} style={i ? { marginTop: 14 } : undefined} dangerouslySetInnerHTML={{ __html: emph(p) }} />))}
-                  </div>
-                </section>
-              )}
+                  <div className="pulse-feed">
 
-              {/* News tab */}
-              {tab === "news" && (
-                <section className="panel">
-                  <p className="bsec">Latest</p>
-                  <div className="article-grid">
-                    {(c.news && c.news.length > 0 ? c.news : PLACEHOLDER_NEWS).map((n, i) => (
-                      <div key={i} className="article-card">
-                        <div className="article-thumb">
-                          {n.thumb
-                            ? <img src={n.thumb} alt={n.title || ""} />
-                            : <div className="article-thumb-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 88%)` }} />
-                          }
-                          {n.tag && <span className="article-tag">{n.tag}</span>}
+                    {/* Voice message post */}
+                    {hasMsg && (
+                      <div className="pf-post pf-voice">
+                        <div className="pf-meta">
+                          <span className="pf-type-badge pf-type-voice">Voice Message</span>
+                          <span className="pf-date">Season 1 &middot; Jul 2026</span>
                         </div>
-                        <div className="article-body">
-                          <div className="article-date">{n.date || "Coming Soon"}</div>
-                          {n.title && <div className="article-title">{n.title}</div>}
-                          {n.blurb && <p className="article-blurb">{n.blurb}</p>}
-                          <a href={n.href || "#"} className="article-cta">
-                            Read more
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                          </a>
+                        {c.heroUrl && <img className="pf-voice-img" src={c.heroUrl} alt="" />}
+                        <div className="pf-voice-body">
+                          <div className="pf-wave">{Array.from({ length: 30 }).map((_, i) => (
+                            <span key={i} style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.9 + 1)) * 24) }} />
+                          ))}</div>
+                          <p className="pf-caption">{lang === "ja" ? msg.ja : msg.en}</p>
+                          {msg.en && msg.ja && (
+                            <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
+                              {lang === "ja" ? "🇺🇸 English" : "🇯🇵 日本語"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bio post */}
+                    {(c.bio || c.quote) && (
+                      <div className="pf-post pf-bio">
+                        <div className="pf-meta">
+                          <span className="pf-type-badge pf-type-bio">About</span>
+                        </div>
+                        {c.quote && <blockquote className="pf-quote">{"“" + c.quote + "”"}</blockquote>}
+                        {(c.bio || []).slice(0, 2).map((p, i) => (
+                          <p key={i} className="pf-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Music drop posts */}
+                    {(c.tracks || []).map((t, i) => {
+                      const url = t.url ? AUDIO + t.url : null;
+                      const locked = t.v !== "public" || !url;
+                      const isPlaying = !!url && playing === url;
+                      return (
+                        <div key={i} className="pf-post pf-drop">
+                          <div className="pf-meta">
+                            <span className="pf-type-badge pf-type-drop">Music Drop</span>
+                            <span className="pf-date">{t.m}</span>
+                          </div>
+                          <div className="pf-drop-card">
+                            <div className="pf-drop-art">
+                              <svg viewBox="0 0 48 48" fill="none">
+                                <circle cx="24" cy="24" r="14" stroke="var(--rx)" strokeWidth="2"/>
+                                <circle cx="24" cy="24" r="5" fill="var(--rx)"/>
+                                <path d="M24 10V6M24 42v-4M10 24H6M42 24h-4" stroke="var(--rx)" strokeWidth="2" strokeLinecap="round"/>
+                              </svg>
+                            </div>
+                            <div className="pf-drop-info">
+                              <div className="pf-drop-name">{t.n}</div>
+                              <div className="pf-drop-era">{t.m}</div>
+                              <button
+                                className={"pf-drop-play" + (locked ? " locked" : "") + (isPlaying ? " on" : "")}
+                                disabled={locked}
+                                onClick={() => url && togglePlay(url)}
+                                aria-label={locked ? "Members only" : isPlaying ? "Pause" : "Play"}
+                              >
+                                {locked ? <>{LOCK}<span>Members only</span></> : isPlaying ? <>{PAUSE}<span>Pause</span></> : <>{PLAY}<span>Play</span></>}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Article posts from news */}
+                    {(c.news && c.news.length > 0 ? c.news : PLACEHOLDER_NEWS).map((n, i) => (
+                      <div key={i} className="pf-post pf-article">
+                        <div className="pf-meta">
+                          <span className="pf-type-badge pf-type-article">Article</span>
+                          {n.date && <span className="pf-date">{n.date}</span>}
+                        </div>
+                        <div className="pf-article-card">
+                          <div className="pf-article-img">
+                            {n.thumb
+                              ? <img src={n.thumb} alt={n.title || ""} />
+                              : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
+                            }
+                            {n.tag && <span className="article-tag">{n.tag}</span>}
+                          </div>
+                          <div className="pf-article-body">
+                            {n.title && <div className="pf-article-title">{n.title}</div>}
+                            {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
+                            <a href={n.href || "#"} className="article-cta">
+                              Read more
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                            </a>
+                          </div>
                         </div>
                       </div>
                     ))}
+
                   </div>
                 </section>
               )}
@@ -242,7 +302,6 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                 </section>
               )}
 
-              {tab === "pulse" && (<section className="panel"><p className="empty-note">Pulse feed renders here (parity with the data model in progress).</p></section>)}
               {tab === "media" && (<section className="panel"><p className="empty-note">Media gallery renders here (wire to storage on rollout).</p></section>)}
 
               {tab === "brief" && (
@@ -400,19 +459,10 @@ const CSS = `
 .bb-ph-dim{font-size:10px;font-weight:600;color:var(--lr-text-30);opacity:.7}
 .bb-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-30);text-align:center;padding:8px 0}
 
-.rxp{display:flex;gap:18px;align-items:center;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;padding:18px 22px;margin-bottom:26px}
-.rxp-img{width:88px;height:88px;border-radius:12px;object-fit:cover;flex-shrink:0}
-.rxp-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
-.rxp-label{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--lr-text-50)}
-.rxp-wave{display:flex;align-items:center;gap:3px;height:30px}
-.rxp-wave span{width:3px;border-radius:2px;background:rgba(233,30,140,.32);display:block}
-.rxp-cap{font-size:13px;color:var(--lr-text-50);font-style:italic}
 .rxp-lang{align-self:flex-start;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--rx-text);border:1px solid var(--lr-border);background:#fff;border-radius:100px;padding:6px 13px;cursor:pointer}
 .rxp-lang:hover{border-color:var(--rx)}
-.about-quote{font-size:clamp(19px,2.6vw,24px);font-weight:900;color:var(--rx-text);line-height:1.25;margin:0 0 28px;border-left:3px solid var(--rx);padding-left:18px;font-style:italic}
 .card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:22px 24px;margin-bottom:14px}
 .card p{font-size:15px;color:var(--lr-text-75);line-height:1.75}
-.about-bio p+p{margin-top:10px}
 @media(max-width:900px){
   .body-layout{flex-direction:column;padding:0 16px}
   .body-main{padding-right:0}
@@ -422,24 +472,10 @@ const CSS = `
   .head-topbar{padding:14px 16px 16px}
   .tabbar{padding:0 16px}
 }
-.article-grid{display:flex;flex-direction:column;gap:20px}
-.article-card{display:flex;gap:20px;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden}
-.article-thumb{width:200px;min-width:200px;aspect-ratio:16/10;position:relative;overflow:hidden;flex-shrink:0}
-.article-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.article-thumb-ph{width:100%;height:100%;background:#eee}
-.article-tag{position:absolute;top:10px;left:10px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 10px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text);backdrop-filter:blur(4px)}
-.article-body{flex:1;padding:18px 20px 18px 0;display:flex;flex-direction:column;gap:8px;justify-content:center}
-.article-date{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-50)}
-.article-title{font-size:17px;font-weight:900;line-height:1.25;color:var(--lr-text)}
-.article-blurb{font-size:13px;color:var(--lr-text-75);line-height:1.6;margin:0}
 .article-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);text-decoration:none;margin-top:4px}
 .article-cta svg{width:14px;height:14px;transition:transform .15s}
 .article-cta:hover svg{transform:translateX(3px)}
-@media(max-width:700px){
-  .article-card{flex-direction:column}
-  .article-thumb{width:100%;min-width:unset;aspect-ratio:16/9}
-  .article-body{padding:14px 16px 16px}
-}
+.article-tag{position:absolute;top:10px;left:10px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 10px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text);backdrop-filter:blur(4px)}
 .panel-intro{font-size:13px;color:var(--lr-text-50);margin-bottom:18px}
 .track{display:flex;align-items:center;gap:16px;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:10px;padding:13px 18px;margin-bottom:9px}
 .tplay{width:42px;height:42px;border-radius:50%;border:none;background:var(--rx);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0}
@@ -476,6 +512,44 @@ const CSS = `
 .cat th{text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);padding:8px 10px;border-bottom:2px solid var(--lr-border)}
 .cat td{padding:9px 10px;border-bottom:1px solid var(--lr-border);color:var(--lr-text-75)}
 .cat td.song{font-weight:700;color:var(--lr-text)}
+
+/* ---- Pulse Feed ---- */
+.pulse-feed{display:flex;flex-direction:column;gap:20px}
+.pf-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden;padding:20px 22px}
+.pf-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.pf-type-badge{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;padding:3px 9px;border-radius:20px}
+.pf-type-voice,.pf-type-drop{background:var(--rx-tint);color:var(--rx-text)}
+.pf-type-bio,.pf-type-article{background:rgba(0,0,0,.05);color:var(--lr-text-50)}
+.pf-date{font-size:11px;font-weight:700;color:var(--lr-text-30);text-transform:uppercase;letter-spacing:.06em}
+/* Voice message */
+.pf-voice-img{width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-bottom:14px}
+.pf-voice-body{display:flex;flex-direction:column;gap:10px}
+.pf-wave{display:flex;align-items:center;gap:3px;height:36px}
+.pf-wave span{width:3px;border-radius:2px;background:rgba(233,30,140,.28);display:block}
+.pf-caption{font-size:15px;line-height:1.7;color:var(--lr-text-75);font-style:italic}
+/* Bio post */
+.pf-quote{font-size:clamp(18px,2.4vw,22px);font-weight:900;color:var(--rx-text);line-height:1.3;margin:0 0 14px;border-left:3px solid var(--rx);padding-left:16px;font-style:italic}
+.pf-bio-p{font-size:14px;color:var(--lr-text-75);line-height:1.75;margin-top:10px}
+.pf-bio-p:first-of-type{margin-top:0}
+/* Music drop */
+.pf-drop-card{display:flex;gap:16px;align-items:center;border:1px solid var(--lr-border);border-radius:10px;padding:14px 16px;background:var(--lr-bg)}
+.pf-drop-art{width:64px;height:64px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--rx-tint)}
+.pf-drop-art svg{width:36px;height:36px}
+.pf-drop-info{flex:1;display:flex;flex-direction:column;gap:4px}
+.pf-drop-name{font-size:16px;font-weight:900}
+.pf-drop-era{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-50)}
+.pf-drop-play{display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-family:inherit;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:7px 14px;border-radius:100px;border:none;cursor:pointer;background:var(--rx);color:#fff}
+.pf-drop-play svg{width:12px;height:12px;fill:currentColor}
+.pf-drop-play.locked{background:var(--lr-bg);color:var(--lr-text-50);border:1px solid var(--lr-border);cursor:not-allowed}
+.pf-drop-play.locked svg{fill:none;width:13px;height:13px;stroke:currentColor;stroke-width:2}
+.pf-drop-play.on{filter:brightness(.9)}
+/* Article post */
+.pf-article-card{border:1px solid var(--lr-border);border-radius:10px;overflow:hidden;background:var(--lr-bg)}
+.pf-article-img{aspect-ratio:16/8;position:relative;overflow:hidden}
+.pf-article-img img,.pf-article-ph{width:100%;height:100%;object-fit:cover;display:block}
+.pf-article-body{padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.pf-article-title{font-size:17px;font-weight:900;line-height:1.25;color:var(--lr-text)}
+.pf-article-blurb{font-size:13px;color:var(--lr-text-75);line-height:1.6;margin:0}
 `;
 
 const CITY_CSS = `
