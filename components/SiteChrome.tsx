@@ -8,11 +8,18 @@ const NAV = [
   { label: "Passport", href: "/passport" },
 ];
 
+const NAV_MEMBER = [
+  { label: "Roster", href: "/roster" },
+  { label: "GeekFon Radio", href: "/radio" },
+  { label: "Library", href: "/library" },
+  { label: "Passport", href: "/passport" },
+  { label: "Dashboard", href: "/dashboard" },
+];
+
 type Crumb = { label: string; href?: string };
+type MemberInfo = { name: string; balance: number; initial: string; tier?: string };
 
 // Logo: circle icon + GEEKFON wordmark
-// "GEEK" = black (topbar) or white (drawer)
-// "FON" = all one color, slowly hue-cycling via CSS animation
 function GeekFonLogo() {
   return (
     <span className="gfs-logo" aria-label="GeekFon Society">
@@ -22,13 +29,24 @@ function GeekFonLogo() {
   );
 }
 
-export default function SiteChrome({ children, crumb }: { children: React.ReactNode; crumb?: Crumb[] }) {
+export default function SiteChrome({
+  children,
+  crumb,
+  member,
+}: {
+  children: React.ReactNode;
+  crumb?: Crumb[];
+  member?: MemberInfo;
+}) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  const nav = member ? NAV_MEMBER : NAV;
+
   return (
     <>
       <style>{CHROME_CSS}</style>
@@ -49,7 +67,17 @@ export default function SiteChrome({ children, crumb }: { children: React.ReactN
             ))}
           </nav>
         )}
-        <a href="/passport" className="gcta">Get Passport</a>
+        {member ? (
+          <div className="gmember-chip">
+            <div className="gmember-balance">
+              <span className="gmember-balance-num">{member.balance.toLocaleString()}</span>
+              <span className="gmember-balance-label">LESARs</span>
+            </div>
+            <div className="gmember-avatar" aria-label={member.name}>{member.initial}</div>
+          </div>
+        ) : (
+          <a href="/passport" className="gcta">Get Passport</a>
+        )}
       </header>
 
       <div className={"gscrim" + (open ? " open" : "")} onClick={() => setOpen(false)} aria-hidden="true" />
@@ -61,8 +89,21 @@ export default function SiteChrome({ children, crumb }: { children: React.ReactN
           </button>
         </div>
         <nav className="gnav">
-          {NAV.map((n) => (<a key={n.href} href={n.href} className="gitem" onClick={() => setOpen(false)}>{n.label}</a>))}
+          {nav.map((n) => (<a key={n.href} href={n.href} className="gitem" onClick={() => setOpen(false)}>{n.label}</a>))}
         </nav>
+        {member && (
+          <div className="gdrawer-member">
+            <div className="gdm-avatar">{member.initial}</div>
+            <div className="gdm-info">
+              <div className="gdm-name">{member.name}</div>
+              <div className="gdm-tier">{member.tier ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1) : "Passport"} Member</div>
+            </div>
+            <div className="gdm-balance">
+              <div className="gdm-balance-num">{member.balance.toLocaleString()}</div>
+              <div className="gdm-balance-label">LESARs</div>
+            </div>
+          </div>
+        )}
       </aside>
 
       <div className="gbody">{children}</div>
@@ -106,7 +147,6 @@ const CHROME_CSS = `
   user-select:none;
   text-decoration:none;
 }
-/* GEEK+FON wrapped together so flex gap only separates icon from wordmark */
 .gfs-word{ display:inline; }
 .gfs-geek, .gfs-fon{ display:inline; }
 .gfs-icon{
@@ -120,25 +160,22 @@ const CHROME_CSS = `
 .gfs-fon{
   animation: fonHue 6s ease-in-out infinite;
 }
-
-/* Drawer version — GEEK goes white */
 .gdrawer .gfs-geek{ color:#fff; }
 
 .glogo{
   display:flex;align-items:center;
   flex-shrink:0;
   text-decoration:none;
-  /* tight gap to hamburger is handled by gap:8px on .gtop */
 }
 
-/* Breadcrumb — only shown when explicitly passed */
+/* Breadcrumb */
 .gcrumb{display:flex;align-items:center;gap:9px;min-width:0;overflow:hidden;font-family:'Montserrat',sans-serif}
 .gcrumb a,.gcrumb .gcrumb-cur{font-size:14px;font-weight:800;letter-spacing:.01em;color:var(--lr-text);white-space:nowrap}
 .gcrumb a:hover{color:var(--rx-text,#9c1458)}
 .gcrumb .gcrumb-cur{color:var(--rx-text,#9c1458)}
 .gcrumb-sep{color:var(--lr-text-30);font-weight:600}
 
-/* CTA */
+/* CTA - logged out */
 .gcta{
   margin-left:auto;flex-shrink:0;
   font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;
@@ -148,6 +185,29 @@ const CHROME_CSS = `
   text-decoration:none;
 }
 .gcta:hover{background:var(--rx-tint,rgba(233,30,140,.1))}
+
+/* Member chip - logged in */
+.gmember-chip{
+  margin-left:auto;flex-shrink:0;
+  display:flex;align-items:center;gap:10px;
+}
+.gmember-balance{
+  display:flex;flex-direction:column;align-items:flex-end;line-height:1;
+}
+.gmember-balance-num{
+  font-size:15px;font-weight:900;color:#1a1a1a;letter-spacing:-.01em;
+}
+.gmember-balance-label{
+  font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;
+  color:var(--rx-text,#9c1458);margin-top:2px;
+}
+.gmember-avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--rx,#E91E8C);color:#fff;
+  font-size:14px;font-weight:900;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;cursor:pointer;
+}
 
 /* Scrim */
 .gscrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:50}
@@ -160,7 +220,27 @@ const CHROME_CSS = `
 .gx{width:34px;height:34px;border:none;background:none;cursor:pointer;color:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;border-radius:7px}
 .gx:hover{background:rgba(255,255,255,.08);color:#fff}
 .gx svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
-.gnav{padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.gnav{padding:10px 8px;display:flex;flex-direction:column;gap:2px;flex:1}
 .gitem{display:block;padding:12px 14px;border-radius:8px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.7);text-decoration:none}
 .gitem:hover{background:rgba(255,255,255,.07);color:#fff}
+
+/* Drawer member status footer */
+.gdrawer-member{
+  margin-top:auto;padding:16px;
+  border-top:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:12px;
+}
+.gdm-avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--rx,#E91E8C);color:#fff;
+  font-size:15px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.gdm-info{flex:1;min-width:0}
+.gdm-name{font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gdm-tier{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);margin-top:2px}
+.gdm-balance{text-align:right;flex-shrink:0}
+.gdm-balance-num{font-size:14px;font-weight:900;color:#fff}
+.gdm-balance-label{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--rx,#E91E8C);margin-top:1px}
 `;
