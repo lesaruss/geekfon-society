@@ -84,6 +84,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const [audioDuration, setAudioDuration] = useState<Record<string, number>>({});
   const [playingV, setPlayingV] = useState<string | null>(null);
   const [bbSlot, setBbSlot] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -106,11 +107,20 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
     });
   }, []);
 
-  // Billboard auto-rotate every 6s (2 slots only)
+  // Track mobile breakpoint for billboard slots
   useEffect(() => {
-    bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 2), 6000);
-    return () => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); };
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Billboard auto-rotate every 6s
+  useEffect(() => {
+    const slots = isMobile ? 3 : 2;
+    bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000);
+    return () => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); };
+  }, [isMobile]);
 
   // Audio helpers
   function fmtTime(s: number): string {
