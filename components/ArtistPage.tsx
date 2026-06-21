@@ -38,6 +38,8 @@ export type ArtistContent = {
   skyscraperLink?: string;
   primaryAdUrl?: string;
   primaryAdLink?: string;
+  featureAdUrl?: string;
+  featureAdLink?: string;
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
@@ -760,12 +762,18 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                         <div className="bb-ph-dim">300 x 250</div>
                       </div>
                     )}
-                    {/* Feature Ad - placeholder */}
-                    <div className="bb-placeholder">
-                      <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                      <div className="bb-ph-text">Feature Ad</div>
-                      <div className="bb-ph-dim">300 x 250</div>
-                    </div>
+                    {/* Feature Ad - live or placeholder */}
+                    {c.featureAdUrl ? (
+                      <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                        <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
+                      </a>
+                    ) : (
+                      <div className="bb-placeholder">
+                        <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                        <div className="bb-ph-text">Feature Ad</div>
+                        <div className="bb-ph-dim">300 x 250</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
