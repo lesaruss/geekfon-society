@@ -151,7 +151,8 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   function onTimeUpdate() {
     const a = audioRef.current;
     if (!a || !playing) return;
-    if (playingV === "preview" && a.currentTime >= 20) {
+    // Enforce 20s clip only for non-members; passport+ gets the full track
+    if (playingV === "preview" && !userTier && a.currentTime >= 20) {
       a.pause(); a.currentTime = 0; setPlaying(null); setPlayingV(null); return;
     }
     setAudioProgress(prev => ({ ...prev, [playing]: a.currentTime }));
@@ -442,9 +443,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                             <div className={"pf-drop-card" + (locked ? " locked-card" : "")}>
                               {/* Left: play button or lock */}
                               {locked ? (
-                                <a href="/dashboard" className="pf-drop-lock-btn" aria-label="Unlock with Passport">
-                                  {LOCK}
-                                </a>
+                                <div className="pf-drop-lock-btn pf-lock-static" aria-hidden="true">{LOCK}</div>
                               ) : (
                                 <button
                                   className={"pf-drop-play-btn" + (isPlaying ? " on" : "")}
@@ -459,10 +458,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                               <div className="pf-drop-info">
                                 <div className="pf-drop-name">{t.n}</div>
                                 {locked ? (
-                                  <a href="/dashboard" className="pf-drop-unlock-cta">
-                                    Get Passport to unlock
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                                  </a>
+                                  <span className="pf-coming-soon">Coming soon</span>
                                 ) : (
                                   <>
                                     <div
@@ -478,8 +474,14 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                                     </div>
                                     <div className="pf-scrubber-times">
                                       <span>{fmtTime(progress)}</span>
-                                      <span>{t.v === "preview" ? "0:20 Preview" : (maxTime > 0 ? fmtTime(maxTime) : "--:--")}</span>
+                                      <span>{(t.v === "preview" && !userTier) ? "0:20 Preview" : (maxTime > 0 ? fmtTime(maxTime) : "--:--")}</span>
                                     </div>
+                                    {t.v === "preview" && !userTier && (
+                                      <a href="/dashboard" className="pf-drop-unlock-cta">
+                                        25 LESARs &middot; Unlock early
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                      </a>
+                                    )}
                                   </>
                                 )}
                               </div>
@@ -562,7 +564,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                     return (
                       <div key={i} className={"track" + (locked ? " track-locked" : "")}>
                         {locked ? (
-                          <a href="/dashboard" className="tplay locked" aria-label="Unlock with Passport">{LOCK}</a>
+                          <div className="tplay locked" aria-hidden="true">{LOCK}</div>
                         ) : (
                           <button
                             className={"tplay" + (isPlaying ? " on" : "")}
@@ -581,10 +583,13 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                                 <div className="ts-fill" style={{ width: `${pct}%` }} />
                                 <div className="ts-thumb" style={{ left: `${pct}%` }} />
                               </div>
-                              <span className="ts-time">{isPlaying ? fmtTime(progress) : ""}{maxTime > 0 ? ` / ${t.v === "preview" ? "0:20" : fmtTime(maxTime)}` : ""}</span>
+                              <span className="ts-time">{isPlaying ? fmtTime(progress) : ""}{maxTime > 0 ? ` / ${(t.v === "preview" && !userTier) ? "0:20" : fmtTime(maxTime)}` : ""}</span>
                             </div>
                           )}
-                          {locked && <div className="track-locked-msg"><a href="/dashboard">Get Passport to unlock</a></div>}
+                          {!locked && t.v === "preview" && !userTier && (
+                            <div className="track-locked-msg"><a href="/dashboard">25 LESARs &middot; Unlock early</a></div>
+                          )}
+                          {locked && <div className="track-locked-msg track-coming-soon">Coming soon</div>}
                         </div>
                         <span className={"vis-badge " + badge.cls}>{badge.label}</span>
                       </div>
@@ -936,6 +941,9 @@ const CSS = `
 .track-locked-msg{font-size:11px;color:var(--lr-text-30)}
 .track-locked-msg a{color:var(--rx-text);text-decoration:none;font-weight:700}
 .track-locked-msg a:hover{text-decoration:underline}
+.track-coming-soon{color:var(--lr-text-30);font-style:italic}
+.pf-lock-static{cursor:default;pointer-events:none;border-style:solid;opacity:.45}
+.pf-coming-soon{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-30);font-style:italic}
 /* Article post */
 .pf-article-card{border:1px solid var(--lr-border);border-radius:10px;overflow:hidden;background:var(--lr-bg)}
 .pf-article-img{aspect-ratio:16/8;position:relative;overflow:hidden}
