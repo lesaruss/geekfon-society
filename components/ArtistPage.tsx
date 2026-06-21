@@ -190,14 +190,14 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   }
   function trackBadge(v: string): { label: string; cls: string } {
     if (v === "public")   return { label: "Free",     cls: "vb-public" };
-    if (v === "preview")  return { label: "Preview",  cls: "vb-preview" };
+    if (v === "preview")  return { label: "Sneak Preview",  cls: "vb-preview" };
     if (v === "passport") return { label: "Passport", cls: "vb-passport" };
     if (v === "members")  return { label: "Members",  cls: "vb-members" };
     return                       { label: "Locked",   cls: "vb-locked" };
   }
   function trackPlayLabel(v: string, isPlaying: boolean): string {
     if (isPlaying) return "Pause";
-    if (v === "preview") return "Play Preview";
+    if (v === "preview") return "Play";
     return "Play";
   }
   function trackLockedLabel(v: string): string {
@@ -448,15 +448,16 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                               {/* Left: play button or lock */}
                               {locked ? (
                                 <div className="pf-drop-lock-btn pf-lock-static" aria-hidden="true">{LOCK}</div>
-                              ) : (
+                              ) : url ? (
                                 <button
                                   className={"pf-drop-play-btn" + (isPlaying ? " on" : "")}
-                                  disabled={!url}
-                                  onClick={() => url && togglePlay(url, t.v)}
+                                  onClick={() => togglePlay(url, t.v)}
                                   aria-label={isPlaying ? "Pause" : "Play"}
                                 >
                                   {isPlaying ? PAUSE : PLAY}
                                 </button>
+                              ) : (
+                                <div className="pf-drop-lock-btn pf-lock-static" aria-hidden="true">{LOCK}</div>
                               )}
                               {/* Right: track info + scrubber */}
                               <div className="pf-drop-info">
@@ -478,11 +479,11 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                                     </div>
                                     <div className="pf-scrubber-times">
                                       <span>{fmtTime(progress)}</span>
-                                      <span>{(t.v === "preview" && !userTier) ? "0:20 Preview" : (maxTime > 0 ? fmtTime(maxTime) : "--:--")}</span>
+                                      <span>{(t.v === "preview" && !userTier) ? "0:20 Sneak Preview" : (maxTime > 0 ? fmtTime(maxTime) : "--:--")}</span>
                                     </div>
                                     {t.v === "preview" && !userTier && (
                                       <a href="/dashboard" className="pf-drop-unlock-cta">
-                                        25 LESARs &middot; Unlock early
+                                        Unlock
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                                       </a>
                                     )}
@@ -569,15 +570,16 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                       <div key={i} className={"track" + (locked ? " track-locked" : "")}>
                         {locked ? (
                           <div className="tplay locked" aria-hidden="true">{LOCK}</div>
-                        ) : (
+                        ) : url ? (
                           <button
                             className={"tplay" + (isPlaying ? " on" : "")}
-                            disabled={!url}
                             aria-label={isPlaying ? "Pause" : "Play"}
-                            onClick={() => url && togglePlay(url, t.v)}
+                            onClick={() => togglePlay(url, t.v)}
                           >
                             {isPlaying ? PAUSE : PLAY}
                           </button>
+                        ) : (
+                          <div className="tplay locked" aria-hidden="true">{LOCK}</div>
                         )}
                         <div className="ti">
                           <div className="tn">{t.n}</div>
@@ -591,7 +593,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                             </div>
                           )}
                           {!locked && t.v === "preview" && !userTier && (
-                            <div className="track-locked-msg"><a href="/dashboard">25 LESARs &middot; Unlock early</a></div>
+                            <div className="track-locked-msg"><a href="/dashboard">Unlock</a></div>
                           )}
                           {locked && <div className="track-locked-msg track-coming-soon">Coming soon</div>}
                         </div>
