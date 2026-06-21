@@ -8,7 +8,7 @@ const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 const AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
 
-type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: string };
+type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: string; hasRemix?: boolean };
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
@@ -622,7 +622,10 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                             <div className={"sch-dot" + (isAvailable ? " on" : "")} />
                           </div>
                           <div className="sch-body">
-                            <div className="sch-track-name">{t.n}</div>
+                            <div className="sch-track-name">
+                              {t.n}
+                              {t.hasRemix && <span className="sch-remix-badge">+ Remix</span>}
+                            </div>
                             <div className="sch-track-meta">
                               <span className="sch-era">{t.m}</span>
                               <span className="sch-sep" aria-hidden="true">&middot;</span>
@@ -976,6 +979,7 @@ const CSS = `
 .sch-status{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--lr-text-30)}
 .sch-status-live{color:#2e7d32}
 .sch-footnote{font-size:11px;color:var(--lr-text-30);font-style:italic;margin-top:22px;border-top:1px solid var(--lr-border);padding-top:16px}
+.sch-remix-badge{display:inline-block;margin-left:8px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;padding:2px 7px;border-radius:20px;background:rgba(99,102,241,.13);color:#4338ca;vertical-align:middle;position:relative;top:-1px}
 `;
 
 const CITY_CSS = `
