@@ -17,19 +17,42 @@ type AdminMember = {
 };
 type Referral = {
   id: string; ref_code: string; commission_rate: number;
-  window_expires_at: string | null; total_earned_cents: number;
-  pending_earned_cents: number; referred_id?: string | null; converted_at?: string | null;
+  window_expires_at: string | null; total_earned_cents: number; pending_earned_cents: number;
 };
 
+const GOAL = 1_000_000;
+
 const PASSPORT_TIERS = [
-  { id: "passport", label: "Passport", price: "$11/mo", lesars: 1000, desc: "1,000 LESARs per month. Full access to all artists and content." },
-  { id: "plus", label: "Passport Plus", price: "$22/mo", lesars: 2500, desc: "2,500 LESARs/mo + 10% affiliate commission on every referral for 1 year." },
-  { id: "pro", label: "Community Manager", price: "$44/mo", lesars: 6000, desc: "6,000 LESARs/mo + 25% affiliate commission. Convention, enrollment, and talent partner role." },
+  {
+    id: "passport",
+    label: "Passport",
+    price: "$11/mo",
+    lesars: 1000,
+    desc: "Fan access. Stream, explore, and collect LESARs. The first step into the GeekFon universe.",
+    cta: "Get Passport",
+  },
+  {
+    id: "promoter",
+    label: "Promoter",
+    price: "$22/mo",
+    lesars: 2500,
+    desc: "You believe in this. Share your link, back the movement, and earn 10% on every member you bring in for a full year. Help us reach one million.",
+    cta: "Become a Promoter",
+  },
+  {
+    id: "pro",
+    label: "Community Manager",
+    price: "$44/mo",
+    lesars: 6000,
+    desc: "This is your side hustle. You show up, you spread the word, we do the work. 25% commission for a full year on everyone you bring to the movement.",
+    cta: "Join as Community Manager",
+  },
 ];
 
-const TIER_DEFAULT_LESARS: Record<string, number> = { passport: 100, plus: 1000, pro: 0 };
-const TIER_RATE: Record<string, number> = { plus: 0.10, pro: 0.25 };
-const TIER_OPTIONS = ["passport", "plus", "pro"];
+const TIER_DEFAULT_LESARS: Record<string, number> = { passport: 100, promoter: 1000, pro: 0 };
+const TIER_RATE: Record<string, number> = { promoter: 0.10, pro: 0.25 };
+const TIER_OPTIONS = ["passport", "promoter", "pro"];
+const TIER_LABEL: Record<string, string> = { passport: "Passport", promoter: "Promoter", pro: "Community Manager" };
 const ADMIN_EMAIL = "contact@lesaruss.com";
 
 export default function DashboardPage() {
@@ -40,11 +63,9 @@ export default function DashboardPage() {
   const [points, setPoints] = useState<MemberPoints | null>(null);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [referral, setReferral] = useState<Referral | null>(null);
+  const [memberCount, setMemberCount] = useState<number>(0);
 
-  /* Passport panel */
   const [passportOpen, setPassportOpen] = useState(false);
-
-  /* Admin */
   const [adminMembers, setAdminMembers] = useState<AdminMember[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -53,8 +74,6 @@ export default function DashboardPage() {
   const [inviteTier, setInviteTier] = useState("passport");
   const [inviteStatus, setInviteStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [inviteError, setInviteError] = useState("");
-
-  /* Affiliate copy */
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -65,17 +84,19 @@ export default function DashboardPage() {
       setUserId(u.id);
       setUserEmail(u.email || null);
 
-      const [memberRes, pointsRes, purchasesRes, referralRes] = await Promise.all([
+      const [memberRes, pointsRes, purchasesRes, referralRes, countRes] = await Promise.all([
         supabase.from("gfs_members").select("*").eq("user_id", u.id).maybeSingle(),
         supabase.from("member_points").select("available_points,total_points,spent_points").eq("user_id", u.id).maybeSingle(),
         supabase.from("point_purchases").select("id,amount_cents,status,created_at").eq("buyer_id", u.id).order("created_at", { ascending: false }).limit(10),
         supabase.from("referrals").select("*").eq("referrer_id", u.id).maybeSingle(),
+        supabase.from("gfs_members").select("*", { count: "exact", head: true }),
       ]);
 
       setMember(memberRes.data ?? null);
       setPoints(pointsRes.data ?? null);
       setPurchases(purchasesRes.data ?? []);
       setReferral(referralRes.data ?? null);
+      setMemberCount(countRes.count ?? 0);
       setLoading(false);
 
       if (u.email === ADMIN_EMAIL) loadAdminMembers();
@@ -89,7 +110,7 @@ export default function DashboardPage() {
       const res = await fetch("/api/admin/members");
       const json = await res.json();
       setAdminMembers(json.members || []);
-    } catch (_) {/* silent */}
+    } catch (_) {}
     setAdminLoading(false);
   }
 
@@ -134,14 +155,14 @@ export default function DashboardPage() {
   const displayName = member?.name || userEmail || "Member";
   const initial = displayName.charAt(0).toUpperCase();
   const tier = member?.tier || "passport";
-  const tierLabel = tier === "pro" ? "Community Manager" : tier.charAt(0).toUpperCase() + tier.slice(1);
+  const tierLabel = TIER_LABEL[tier] || tier;
   const passportArtists = member?.passport_artists || [];
   const isAdmin = userEmail === ADMIN_EMAIL;
-  const isAffiliate = tier === "plus" || tier === "pro";
-  const commissionRate = TIER_RATE[tier] ? (TIER_RATE[tier] * 100).toFixed(0) : null;
+  const isAffiliate = tier === "promoter" || tier === "pro";
+  const commissionPct = TIER_RATE[tier] ? (TIER_RATE[tier] * 100).toFixed(0) : null;
+  const progressPct = Math.min((memberCount / GOAL) * 100, 100);
   const memberProp = userId ? { name: displayName, balance: lesars, initial, tier } : undefined;
 
-  /* ── Loading ── */
   if (loading) return (
     <SiteChrome>
       <style>{CSS}</style>
@@ -149,7 +170,6 @@ export default function DashboardPage() {
     </SiteChrome>
   );
 
-  /* ── Gate ── */
   if (!userId) return (
     <SiteChrome>
       <style>{CSS}</style>
@@ -174,7 +194,6 @@ export default function DashboardPage() {
     </SiteChrome>
   );
 
-  /* ── Dashboard ── */
   return (
     <SiteChrome member={memberProp}>
       <style>{CSS}</style>
@@ -199,7 +218,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Inline passport panel */}
+        {/* Passport panel */}
         {passportOpen && (
           <div className="dash-passport-panel">
             <div className="dash-passport-inner">
@@ -218,9 +237,7 @@ export default function DashboardPage() {
                     <div className="dash-pt-lesars">{t.lesars.toLocaleString()} LESARs/mo</div>
                     <div className="dash-pt-desc">{t.desc}</div>
                     {tier !== t.id && (
-                      <a href={`/passport?tier=${t.id}`} className="dash-pt-cta">
-                        {tier === "passport" ? "Upgrade" : "Switch"} to {t.label}
-                      </a>
+                      <a href={`/passport?tier=${t.id}`} className="dash-pt-cta">{t.cta}</a>
                     )}
                   </div>
                 ))}
@@ -231,32 +248,41 @@ export default function DashboardPage() {
 
         <div className="dash-body">
 
-          {/* Affiliate portal - Plus and Pro */}
+          {/* Affiliate / Promoter portal */}
           {isAffiliate && (
             <section className="dash-section dash-affiliate-section">
-              <div className="dash-affiliate-head">
-                <div>
-                  <h2 className="dash-section-title dash-affiliate-title">
-                    {tier === "pro" ? "Affiliate Portal" : "Your Referral Link"}
-                  </h2>
+              <div className="dash-affiliate-top">
+                <div className="dash-affiliate-copy">
+                  <div className="dash-affiliate-eyebrow">{tier === "pro" ? "Community Manager Portal" : "Promoter Portal"}</div>
+                  <h2 className="dash-affiliate-heading">Help us reach 1,000,000 members.</h2>
                   <p className="dash-affiliate-sub">
-                    Earn <strong>{commissionRate}% commission</strong> on every member you bring in - for a full year from their join date.
+                    Our success is your success. Every person you bring in earns you <strong>{commissionPct}% commission</strong> on their transactions for a full year. Not everyone gets this link. You do because you believed early.
                   </p>
                 </div>
-                <div className="dash-affiliate-rate-badge">{commissionRate}%</div>
+                <div className="dash-affiliate-rate-badge">{commissionPct}%</div>
+              </div>
+
+              {/* Movement progress */}
+              <div className="dash-progress-block">
+                <div className="dash-progress-labels">
+                  <span className="dash-progress-label">Movement progress</span>
+                  <span className="dash-progress-count">{memberCount.toLocaleString()} / 1,000,000 members</span>
+                </div>
+                <div className="dash-progress-track">
+                  <div className="dash-progress-fill" style={{ width: `${Math.max(progressPct, 0.4)}%` }} />
+                </div>
+                <div className="dash-progress-goal">Goal: 1,000,000 by Dec 31, 2026</div>
               </div>
 
               {referral ? (
                 <>
                   <div className="dash-link-row">
-                    <div className="dash-link-display">
-                      geekfon.ai/join?ref={referral.ref_code}
-                    </div>
+                    <div className="dash-link-display">geekfon.ai/join?ref={referral.ref_code}</div>
                     <button className="dash-copy-btn" onClick={copyLink}>
                       {copied ? (
-                        <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg> Copied</>
+                        <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>Copied</>
                       ) : (
-                        <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy link</>
+                        <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy link</>
                       )}
                     </button>
                   </div>
@@ -280,9 +306,7 @@ export default function DashboardPage() {
                   </div>
                 </>
               ) : (
-                <div className="dash-empty">
-                  <p>Your affiliate link is being generated. Check back shortly.</p>
-                </div>
+                <div className="dash-affiliate-pending">Your unique link is being generated. Check back shortly.</div>
               )}
             </section>
           )}
@@ -372,7 +396,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Admin: Members Console */}
+          {/* Admin */}
           {isAdmin && (
             <section className="dash-section dash-admin-section">
               <div className="dash-section-header">
@@ -394,9 +418,7 @@ export default function DashboardPage() {
                       <label className="dash-invite-label">Tier</label>
                       <select className="dash-invite-select" value={inviteTier} onChange={e => handleTierChange(e.target.value)}>
                         {TIER_OPTIONS.map(t => (
-                          <option key={t} value={t}>
-                            {t === "pro" ? "Community Manager (Pro)" : t.charAt(0).toUpperCase() + t.slice(1)}
-                          </option>
+                          <option key={t} value={t}>{TIER_LABEL[t]}</option>
                         ))}
                       </select>
                     </div>
@@ -407,9 +429,9 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="dash-invite-tier-note">
-                    {inviteTier === "pro" && <span>Community Manager - 25% affiliate commission, 1 year window. Seeded 0 LESARs by default.</span>}
-                    {inviteTier === "plus" && <span>Plus - 10% affiliate commission, 1 year window. Seeded 1,000 LESARs by default.</span>}
-                    {inviteTier === "passport" && <span>Passport - basic fan. Seeded 100 LESARs (enough to sample a few songs).</span>}
+                    {inviteTier === "pro" && <span>Community Manager - 25% commission, 1-year window. Default 0 LESARs (they earn through the work).</span>}
+                    {inviteTier === "promoter" && <span>Promoter - 10% commission, 1-year window. Default 1,000 LESARs to start exploring.</span>}
+                    {inviteTier === "passport" && <span>Passport - standard fan. 100 LESARs seeded - enough to sample, then they upgrade.</span>}
                   </div>
                   <div className="dash-invite-actions">
                     <button type="submit" className="dash-invite-submit" disabled={inviteStatus === "sending"}>
@@ -436,7 +458,7 @@ export default function DashboardPage() {
                         <tr key={m.id}>
                           <td className="dash-member-name">{m.name || "-"}</td>
                           <td className="dash-member-email">{m.email || "-"}</td>
-                          <td><span className={"dash-member-tier t-" + (m.tier || "passport")}>{m.tier === "pro" ? "CM" : m.tier || "passport"}</span></td>
+                          <td><span className={"dash-member-tier t-" + (m.tier || "passport")}>{TIER_LABEL[m.tier || "passport"] || m.tier}</span></td>
                           <td className="dash-member-lesars">{(m.available_points || 0).toLocaleString()}</td>
                           <td className="dash-member-date">{m.created_at ? new Date(m.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "-"}</td>
                           <td className="dash-member-date">{m.last_sign_in ? new Date(m.last_sign_in).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "Never"}</td>
@@ -483,12 +505,7 @@ const CSS = `
 .dash-balance-num{font-size:32px;font-weight:900;letter-spacing:-.02em;line-height:1}
 .dash-topup{display:block;margin-top:10px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#E91E8C;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;text-align:right;width:100%}
 .dash-topup:hover{text-decoration:underline}
-@media(max-width:640px){
-  .dash-hero{padding:24px 16px}
-  .dash-hero-inner{flex-wrap:wrap}
-  .dash-balance-card{width:100%;text-align:left;display:flex;align-items:center;gap:16px}
-  .dash-balance-num{font-size:26px}
-}
+@media(max-width:640px){.dash-hero{padding:24px 16px}.dash-hero-inner{flex-wrap:wrap}.dash-balance-card{width:100%;text-align:left;display:flex;align-items:center;gap:16px}.dash-balance-num{font-size:26px}}
 .dash-passport-panel{background:#f9f9f9;border-bottom:1px solid var(--lr-border)}
 .dash-passport-inner{max-width:1100px;margin:0 auto;padding:32px 40px}
 .dash-passport-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
@@ -497,7 +514,7 @@ const CSS = `
 .dash-passport-close:hover{background:var(--lr-border)}
 .dash-passport-close svg{width:16px;height:16px}
 .dash-passport-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.dash-passport-tier{background:#fff;border:1.5px solid var(--lr-border);border-radius:14px;padding:22px 20px;position:relative;transition:border-color .15s}
+.dash-passport-tier{background:#fff;border:1.5px solid var(--lr-border);border-radius:14px;padding:22px 20px;position:relative}
 .dash-passport-tier.current{border-color:#E91E8C;box-shadow:0 0 0 3px rgba(233,30,140,.08)}
 .dash-passport-cur-badge{position:absolute;top:-10px;left:16px;background:#E91E8C;color:#fff;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 10px;border-radius:20px}
 .dash-pt-name{font-size:16px;font-weight:900;margin-bottom:4px}
@@ -515,14 +532,24 @@ const CSS = `
 .dash-section-header .dash-section-title{margin-bottom:0;border-bottom:none;padding-bottom:0}
 .dash-section-cta{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#9c1458;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
 .dash-section-cta:hover{text-decoration:underline}
-/* Affiliate */
+/* Affiliate portal */
 .dash-affiliate-section{background:linear-gradient(135deg,#0d0d0d 0%,#1a0a12 100%);border-radius:16px;padding:28px 28px 24px;color:#fff;margin-bottom:40px}
-.dash-affiliate-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
-.dash-affiliate-title{color:#E91E8C !important;border-bottom-color:rgba(233,30,140,.3) !important}
-.dash-affiliate-sub{font-size:14px;color:rgba(255,255,255,.65);margin:8px 0 0;line-height:1.5}
+.dash-affiliate-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:22px}
+.dash-affiliate-eyebrow{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(233,30,140,.8);margin-bottom:8px}
+.dash-affiliate-heading{font-size:22px;font-weight:900;letter-spacing:-.01em;line-height:1.2;margin:0 0 10px}
+.dash-affiliate-sub{font-size:13px;color:rgba(255,255,255,.6);line-height:1.6;margin:0}
 .dash-affiliate-sub strong{color:#fff}
-.dash-affiliate-rate-badge{flex-shrink:0;width:60px;height:60px;border-radius:50%;background:rgba(233,30,140,.2);border:2px solid #E91E8C;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#E91E8C}
-.dash-link-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.dash-affiliate-rate-badge{flex-shrink:0;width:64px;height:64px;border-radius:50%;background:rgba(233,30,140,.15);border:2px solid #E91E8C;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#E91E8C}
+/* Progress */
+.dash-progress-block{margin-bottom:20px}
+.dash-progress-labels{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.dash-progress-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.45)}
+.dash-progress-count{font-size:13px;font-weight:800;color:#fff}
+.dash-progress-track{height:6px;background:rgba(255,255,255,.1);border-radius:100px;overflow:hidden}
+.dash-progress-fill{height:100%;background:linear-gradient(90deg,#E91E8C,#ff6ab0);border-radius:100px;transition:width .6s ease}
+.dash-progress-goal{font-size:10px;color:rgba(255,255,255,.35);margin-top:6px;font-weight:600}
+/* Link row */
+.dash-link-row{display:flex;align-items:center;gap:10px;margin-bottom:18px}
 .dash-link-display{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:rgba(255,255,255,.8);font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dash-copy-btn{display:flex;align-items:center;gap:6px;flex-shrink:0;background:#E91E8C;color:#fff;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:12px 18px;border-radius:100px;transition:background .15s}
 .dash-copy-btn:hover{background:#c4146f}
@@ -531,12 +558,14 @@ const CSS = `
 .dash-aff-stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 16px}
 .dash-aff-stat-num{font-size:22px;font-weight:900;letter-spacing:-.01em}
 .dash-aff-stat-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.4);margin-top:3px}
+.dash-affiliate-pending{font-size:13px;color:rgba(255,255,255,.4);padding:16px 0}
+@media(max-width:700px){.dash-affiliate-top{flex-wrap:wrap}.dash-affiliate-stats{grid-template-columns:1fr}.dash-affiliate-rate-badge{display:none}}
 /* Stats */
 .dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .dash-stat{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:18px 20px}
 .dash-stat-num{font-size:28px;font-weight:900;letter-spacing:-.02em;color:#1a1a1a}
 .dash-stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);margin-top:4px}
-@media(max-width:700px){.dash-stats{grid-template-columns:repeat(2,1fr)}.dash-affiliate-stats{grid-template-columns:1fr}}
+@media(max-width:700px){.dash-stats{grid-template-columns:repeat(2,1fr)}}
 .dash-artist-chips{display:flex;flex-wrap:wrap;gap:10px}
 .dash-artist-chip{font-size:12px;font-weight:800;text-transform:capitalize;padding:8px 16px;border-radius:100px;background:rgba(233,30,140,.1);border:1px solid rgba(233,30,140,.25);color:#9c1458;text-decoration:none;letter-spacing:.04em}
 .dash-artist-chip:hover{background:rgba(233,30,140,.18)}
