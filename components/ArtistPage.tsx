@@ -36,6 +36,8 @@ export type ArtistContent = {
   pulse?: PulsePost[];
   skyscraperUrl?: string;
   skyscraperLink?: string;
+  primaryAdUrl?: string;
+  primaryAdLink?: string;
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
@@ -744,13 +746,24 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                 {/* Slot 1: Two featured 300x250 stacked */}
                 <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
                   <div className="bb-stacked">
-                    {["Primary Ad", "Feature Ad"].map((label, i) => (
-                      <div key={i} className="bb-placeholder">
+                    {/* Primary Ad - live or placeholder */}
+                    {c.primaryAdUrl ? (
+                      <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                        <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
+                      </a>
+                    ) : (
+                      <div className="bb-placeholder">
                         <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                        <div className="bb-ph-text">{label}</div>
+                        <div className="bb-ph-text">Primary Ad</div>
                         <div className="bb-ph-dim">300 x 250</div>
                       </div>
-                    ))}
+                    )}
+                    {/* Feature Ad - placeholder */}
+                    <div className="bb-placeholder">
+                      <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                      <div className="bb-ph-text">Feature Ad</div>
+                      <div className="bb-ph-dim">300 x 250</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -825,6 +838,7 @@ const CSS = `
 .bb-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-30);text-align:center;padding:4px 0 0}
 .bb-ad-link{display:block;line-height:0;border-radius:10px;overflow:hidden}
 .bb-ad-img{width:300px;height:600px;display:block;object-fit:cover;border-radius:10px}
+.bb-ad-img-sm{width:300px;height:250px;display:block;object-fit:cover;border-radius:10px}
 
 .rxp-lang{align-self:flex-start;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--rx-text);border:1px solid var(--lr-border);background:#fff;border-radius:100px;padding:6px 13px;cursor:pointer}
 .rxp-lang:hover{border-color:var(--rx)}
