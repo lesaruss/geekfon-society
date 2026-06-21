@@ -14,8 +14,11 @@ interface SlideData {
   isArtistSlide?: boolean;
 }
 
-// ── City backgrounds (same CDN as homepage) ──────────────────────────────────
+// ── CDN / storage bases ───────────────────────────────────────────────────────
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
+const SUPA_AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
+const SUPA_MEDIA = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/artists/";
+
 const CITY_IMAGES = [
   { desktop: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", mobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png" },
   { desktop: CDN + "hf_20260619_061001_82fbd428-6543-4a12-ba50-fe80d6255515.png", mobile: CDN + "hf_20260619_061949_d919c8f7-448a-48c4-aa18-a5487e4ae4a0.png" },
@@ -25,25 +28,135 @@ const CITY_IMAGES = [
   { desktop: CDN + "hf_20260619_061618_b63a68e5-ec0d-4f6a-8473-0e9652db85bf.png", mobile: CDN + "hf_20260619_064547_2906c350-a205-4c96-9bb1-114dc53fc237.png" },
 ];
 
-// ── Artist roster (hardcoded to avoid blocking fetch) ─────────────────────────
-const SUPA_AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
+// ── Artist roster ─────────────────────────────────────────────────────────────
 type ArtistCard = {
   slug: string; name: string; initial: string; accent: string;
-  tagline: string; genre: string;
+  tagline: string; genre: string; heroUrl?: string;
   tracks: { title: string; url: string; full?: boolean }[];
 };
+
 const ARTISTS: ArtistCard[] = [
-  { slug: "roxanne", name: "Roxanne", initial: "R", accent: "#E91E8C", genre: "J-Pop / Pop", tagline: "The voice that disappeared — and came back with everything to say.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "roxanne/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "roxanne/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "roxanne/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "roxanne/full.mp3", full: true }] },
-  { slug: "lex-from-brixton", name: "Lex from Brixton", initial: "L", accent: "#F69820", genre: "Grime / Hip-Hop", tagline: "Brixton in the bloodline. Grime in the grammar. No translations needed.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "lex-from-brixton/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "lex-from-brixton/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "lex-from-brixton/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "lex-from-brixton/full.mp3", full: true }] },
-  { slug: "nilo-wave", name: "Nilo Wave", initial: "N", accent: "#00BCD4", genre: "Caribbean / Electronic", tagline: "Caribbean rhythms rebuilt from the ground up. The wave is the message.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "nilo-wave/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "nilo-wave/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "nilo-wave/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "nilo-wave/full.mp3", full: true }] },
-  { slug: "shamanic-resin", name: "Shamanic Resin", initial: "S", accent: "#9C27B0", genre: "K-Pop / Electronics", tagline: "Where K-Pop architecture meets ritual electronics. This is not a performance. It is a ceremony.", tracks: [{ title: "Real Dream", url: SUPA_AUDIO + "shamanic-resin/real-dream.mp3" }, { title: "It's Okay", url: SUPA_AUDIO + "shamanic-resin/its-okay.mp3" }, { title: "Cat Dance", url: SUPA_AUDIO + "shamanic-resin/cat-dance.mp3" }, { title: "All I Do Is Eat", url: SUPA_AUDIO + "shamanic-resin/all-i-do-is-eat.mp3", full: true }] },
-  { slug: "riku", name: "Riku Hayasaka", initial: "RH", accent: "#2196F3", genre: "Indie Pop / Bilingual", tagline: "Indie pop built in two languages. The melody is the translation.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "riku/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "riku/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "riku/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "riku/full.mp3", full: true }] },
-  { slug: "lickle-bro", name: "Lickle Bro", initial: "LB", accent: "#4CAF50", genre: "R&B / Dancehall", tagline: "R&B and dancehall raised in the same house. The harmony was inevitable.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "lickle-bro/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "lickle-bro/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "lickle-bro/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "lickle-bro/full.mp3", full: true }] },
-  { slug: "lickle-sis", name: "Lickle Sis", initial: "LS", accent: "#FF5722", genre: "Soul / R&B", tagline: "Soul at full volume. She is not asking for permission.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "lickle-sis/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "lickle-sis/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "lickle-sis/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "lickle-sis/full.mp3", full: true }] },
-  { slug: "mad-tings", name: "Mad Tings", initial: "MT", accent: "#E91E63", genre: "Grime / Dubstep", tagline: "Grime energy. Dubstep weight. The whole thing turned up to a frequency most systems cannot handle.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "mad-tings/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "mad-tings/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "mad-tings/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "mad-tings/full.mp3", full: true }] },
-  { slug: "mr-russell", name: "Mr. Russell", initial: "MR", accent: "#90A4AE", genre: "Hip-Hop", tagline: "Hip-hop that knows where it has been and does not need to prove where it is going.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "mr-russell/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "mr-russell/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "mr-russell/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "mr-russell/full.mp3", full: true }] },
-  { slug: "rustblood-prophets", name: "Rustblood Prophets", initial: "RP", accent: "#F44336", genre: "Alternative / Dark", tagline: "Alternative and dark and not sorry about either one.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "rustblood-prophets/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "rustblood-prophets/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "rustblood-prophets/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "rustblood-prophets/full.mp3", full: true }] },
-  { slug: "straight-and-narrow", name: "Straight and Narrow", initial: "SN", accent: "#A1887F", genre: "Hip-Hop / Alternative", tagline: "Hip-hop with a double meaning and alternative instincts. The name is the story.", tracks: [{ title: "Sample A", url: SUPA_AUDIO + "straight-and-narrow/sample-a.mp3" }, { title: "Sample B", url: SUPA_AUDIO + "straight-and-narrow/sample-b.mp3" }, { title: "Sample C", url: SUPA_AUDIO + "straight-and-narrow/sample-c.mp3" }, { title: "Full Song", url: SUPA_AUDIO + "straight-and-narrow/full.mp3", full: true }] },
+  {
+    slug: "roxanne", name: "Roxanne", initial: "R", accent: "#E91E8C",
+    genre: "J-Pop / Pop", tagline: "The voice that disappeared — and came back with everything to say.",
+    heroUrl: SUPA_MEDIA + "roxanne/hero.png",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "roxanne/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "roxanne/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "roxanne/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "roxanne/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "lex-from-brixton", name: "Lex from Brixton", initial: "L", accent: "#F69820",
+    genre: "Grime / Hip-Hop", tagline: "Brixton in the bloodline. Grime in the grammar. No translations needed.",
+    heroUrl: SUPA_MEDIA + "lex-from-brixton/hero.png",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "lex-from-brixton/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "lex-from-brixton/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "lex-from-brixton/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "lex-from-brixton/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "nilo-wave", name: "Nilo Wave", initial: "N", accent: "#00BCD4",
+    genre: "Caribbean / Electronic", tagline: "Caribbean rhythms rebuilt from the ground up. The wave is the message.",
+    heroUrl: SUPA_MEDIA + "nilo-wave/hero.png",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "nilo-wave/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "nilo-wave/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "nilo-wave/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "nilo-wave/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "shamanic-resin", name: "Shamanic Resin", initial: "S", accent: "#9C27B0",
+    genre: "K-Pop / Electronics", tagline: "Where K-Pop architecture meets ritual electronics. This is not a performance. It is a ceremony.",
+    heroUrl: SUPA_MEDIA + "shamanic-resin/hero.png",
+    tracks: [
+      { title: "All I Do Is Eat", url: SUPA_AUDIO + "shamanic-resin/all-i-do-is-eat.mp3", full: true },
+      { title: "Real Dream", url: SUPA_AUDIO + "shamanic-resin/real-dream.mp3" },
+      { title: "It's Okay", url: SUPA_AUDIO + "shamanic-resin/its-okay.mp3" },
+      { title: "Cat Dance", url: SUPA_AUDIO + "shamanic-resin/cat-dance.mp3" },
+    ],
+  },
+  {
+    slug: "riku", name: "Riku Hayasaka", initial: "RH", accent: "#2196F3",
+    genre: "Indie Pop / Bilingual", tagline: "Indie pop built in two languages. The melody is the translation.",
+    heroUrl: SUPA_MEDIA + "riku/hero.png",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "riku/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "riku/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "riku/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "riku/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "lickle-bro", name: "Lickle Bro", initial: "LB", accent: "#4CAF50",
+    genre: "R&B / Dancehall", tagline: "R&B and dancehall raised in the same house. The harmony was inevitable.",
+    heroUrl: SUPA_MEDIA + "lickle-bro/hero.png",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "lickle-bro/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "lickle-bro/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "lickle-bro/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "lickle-bro/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "lickle-sis", name: "Lickle Sis", initial: "LS", accent: "#FF5722",
+    genre: "Soul / R&B", tagline: "Soul at full volume. She is not asking for permission.",
+    heroUrl: SUPA_MEDIA + "lickle-sis/hero.png",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "lickle-sis/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "lickle-sis/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "lickle-sis/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "lickle-sis/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "mad-tings", name: "Mad Tings", initial: "MT", accent: "#E91E63",
+    genre: "Grime / Dubstep", tagline: "Grime energy. Dubstep weight. The whole thing turned up to a frequency most systems cannot handle.",
+    heroUrl: SUPA_MEDIA + "mad-tings/hero.png",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "mad-tings/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "mad-tings/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "mad-tings/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "mad-tings/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "mr-russell", name: "Mr. Russell", initial: "MR", accent: "#90A4AE",
+    genre: "Hip-Hop", tagline: "Hip-hop that knows where it has been and does not need to prove where it is going.",
+    heroUrl: SUPA_MEDIA + "mr-russell/hero.jpg",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "mr-russell/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "mr-russell/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "mr-russell/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "mr-russell/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "rustblood-prophets", name: "Rustblood Prophets", initial: "RP", accent: "#F44336",
+    genre: "Alternative / Dark", tagline: "Alternative and dark and not sorry about either one.",
+    heroUrl: SUPA_MEDIA + "rustblood-prophets/hero.png",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "rustblood-prophets/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "rustblood-prophets/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "rustblood-prophets/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "rustblood-prophets/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "straight-and-narrow", name: "Straight and Narrow", initial: "SN", accent: "#A1887F",
+    genre: "Hip-Hop / Alternative", tagline: "Hip-hop with a double meaning and alternative instincts. The name is the story.",
+    heroUrl: SUPA_MEDIA + "straight-and-narrow/hero.png",
+    tracks: [
+      { title: "Full Song", url: SUPA_AUDIO + "straight-and-narrow/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "straight-and-narrow/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "straight-and-narrow/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "straight-and-narrow/sample-c.mp3" },
+    ],
+  },
 ];
 
 const ROLE_META: Record<Role, { label: string; tagline: string; accent: string; icon: ReactElement }> = {
@@ -81,7 +194,6 @@ const PATH_SLIDES: Record<Role, SlideData[]> = {
   ],
 };
 
-// Pick a random city image on mount
 function useRandomCity() {
   const [city, setCity] = useState(CITY_IMAGES[0]);
   useEffect(() => {
@@ -95,7 +207,7 @@ function TrackPlayer({ track, accent }: { track: ArtistCard["tracks"][number]; a
   const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const SAMPLE_LIMIT = track.full ? 0 : 20; // 20s cap for samples
+  const SAMPLE_LIMIT = track.full ? 0 : 20;
 
   function toggle() {
     if (state === "unavailable") return;
@@ -126,7 +238,7 @@ function TrackPlayer({ track, accent }: { track: ArtistCard["tracks"][number]; a
   const unavailable = state === "unavailable";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "rgba(255,255,255,0.06)", borderRadius: "10px", border: `1px solid ${unavailable ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.12)"}` }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: track.full ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)", borderRadius: "10px", border: `1px solid ${track.full ? "rgba(255,255,255,0.22)" : (unavailable ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.12)")}` }}>
       <button
         onClick={toggle}
         disabled={unavailable}
@@ -142,10 +254,10 @@ function TrackPlayer({ track, accent }: { track: ArtistCard["tracks"][number]; a
       </button>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
-          <span style={{ fontSize: "11px", fontWeight: 700, color: unavailable ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.85)", letterSpacing: "0.03em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: "11px", fontWeight: track.full ? 900 : 700, color: unavailable ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.9)", letterSpacing: "0.03em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {track.title}
           </span>
-          <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: unavailable ? "rgba(255,255,255,0.2)" : accent, flexShrink: 0, marginLeft: "8px" }}>
+          <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: unavailable ? "rgba(255,255,255,0.2)" : accent, flexShrink: 0, marginLeft: "8px" }}>
             {unavailable ? "COMING" : track.full ? "FULL" : "20s"}
           </span>
         </div>
@@ -178,7 +290,7 @@ function ArtistPanel({ onClose, accent }: { onClose: () => void; accent: string 
           </button>
         </div>
 
-        {/* Artist selector */}
+        {/* Artist selector pills */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
           {ARTISTS.map((a, i) => (
             <button
@@ -204,43 +316,58 @@ function ArtistPanel({ onClose, accent }: { onClose: () => void; accent: string 
         </div>
 
         {/* Artist detail */}
-        <div style={{ flex: 1, padding: "28px 24px", display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* Identity */}
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div style={{ width: "64px", height: "64px", borderRadius: "12px", background: artist.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 900, color: "#fff", flexShrink: 0 }}>
-              {artist.initial}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          {/* Hero image - full width */}
+          {artist.heroUrl ? (
+            <div style={{ width: "100%", aspectRatio: "1 / 1", overflow: "hidden", flexShrink: 0, borderBottom: `3px solid ${artist.accent}` }}>
+              <img
+                src={artist.heroUrl}
+                alt={artist.name}
+                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
+              />
             </div>
+          ) : null}
+
+          <div style={{ flex: 1, padding: "24px 24px", display: "flex", flexDirection: "column", gap: "18px" }}>
+            {/* Identity */}
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              {!artist.heroUrl && (
+                <div style={{ width: "64px", height: "64px", borderRadius: "12px", background: artist.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 900, color: "#fff", flexShrink: 0 }}>
+                  {artist.initial}
+                </div>
+              )}
+              <div>
+                <div style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{artist.name}</div>
+                <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: artist.accent, marginTop: "4px" }}>{artist.genre}</div>
+              </div>
+            </div>
+
+            {/* Tagline */}
+            <p style={{ fontSize: "14px", lineHeight: 1.65, color: "rgba(255,255,255,0.7)", margin: 0 }}>
+              {artist.tagline}
+            </p>
+
+            {/* Tracks */}
             <div>
-              <div style={{ fontSize: "20px", fontWeight: 900, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{artist.name}</div>
-              <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: artist.accent, marginTop: "4px" }}>{artist.genre}</div>
+              <div style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "10px" }}>
+                1 FULL TRACK + 3 PREVIEWS (20s)
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {artist.tracks.map((t) => (
+                  <TrackPlayer key={t.title} track={t} accent={artist.accent} />
+                ))}
+              </div>
             </div>
+
+            {/* CTA */}
+            <a
+              href={`/${artist.slug}`}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: artist.accent, fontSize: "12px", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", textDecoration: "none", marginTop: "4px" }}
+            >
+              Full Artist Profile
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
           </div>
-
-          {/* Tagline */}
-          <p style={{ fontSize: "14px", lineHeight: 1.65, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-            {artist.tagline}
-          </p>
-
-          {/* Tracks */}
-          <div>
-            <div style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "10px" }}>
-              SAMPLE — 3 PREVIEWS + 1 FULL TRACK
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {artist.tracks.map((t) => (
-                <TrackPlayer key={t.title} track={t} accent={artist.accent} />
-              ))}
-            </div>
-          </div>
-
-          {/* CTA */}
-          <a
-            href={`/${artist.slug}`}
-            style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: artist.accent, fontSize: "12px", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", textDecoration: "none", marginTop: "4px" }}
-          >
-            Full Artist Profile
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </a>
         </div>
       </div>
     </div>
@@ -269,7 +396,6 @@ export default function WelcomePage() {
   const [slideCity, setSlideCity] = useState(CITY_IMAGES[0]);
   const cityBg = useRandomCity();
 
-  // Assign a random city image per slide transition
   const transition = useCallback((fn: () => void) => {
     setVisible(false);
     setTimeout(() => {
@@ -323,11 +449,8 @@ export default function WelcomePage() {
           <source media="(max-width:768px)" srcSet={activeBg.mobile} />
           <img src={activeBg.desktop} alt="" aria-hidden="true" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center bottom", opacity: 0.88, transition: "opacity 0.6s ease" }} />
         </picture>
-        {/* Left-to-right overlay: dark on left (text), clear on right (city) */}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(7,7,18,0.95) 0%, rgba(7,7,18,0.92) 28%, rgba(7,7,18,0.55) 55%, rgba(7,7,18,0.08) 100%)" }} />
-        {/* Bottom vignette so nav stays readable */}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(7,7,18,0.7) 0%, transparent 20%)" }} />
-        {/* Mobile: dark on top so text is readable over portrait image */}
         <style>{`@media(max-width:768px){.city-left-overlay{background:linear-gradient(to bottom,rgba(7,7,18,0.92) 0%,rgba(7,7,18,0.75) 50%,rgba(7,7,18,0.2) 100%) !important}}`}</style>
         <div className="city-left-overlay" style={{ position: "absolute", inset: 0 }} />
       </div>
@@ -351,9 +474,8 @@ export default function WelcomePage() {
         .gfs-fon-hue { animation: fonHue 6s ease-in-out infinite; }
       `}</style>
 
-      {/* ── Top bar ── */}
+      {/* Top bar */}
       <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 28px", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(7,7,18,0.6)", backdropFilter: "blur(12px)" }}>
-        {/* Logo — matches SiteChrome style */}
         <a href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
           <img src="/geekfon-logo.png" alt="" style={{ height: "28px", width: "28px", objectFit: "contain" }} aria-hidden="true" />
           <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "18px", fontWeight: 900, letterSpacing: "0.02em", textTransform: "uppercase", lineHeight: 1, userSelect: "none" }}>
@@ -362,15 +484,13 @@ export default function WelcomePage() {
             <span style={{ color: "rgba(255,255,255,0.5)", marginLeft: "6px", fontSize: "12px", fontWeight: 700, letterSpacing: "0.18em" }}>SOCIETY</span>
           </span>
         </a>
-
         <ProgressDots total={totalSteps} current={currentStep} accent={roleAccent} />
-
         <a href="/passport" style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", color: "rgba(255,255,255,0.45)", textDecoration: "none", textTransform: "uppercase" }}>
           Skip
         </a>
       </div>
 
-      {/* ── Main content ── */}
+      {/* Main content */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: "40px 60px 100px", position: "relative", zIndex: 10, maxWidth: "900px" }}>
         <div
           key={`${phase}-${pathSlide}`}
@@ -378,7 +498,7 @@ export default function WelcomePage() {
           style={{ width: "100%", opacity: visible ? 1 : 0, transition: "opacity 0.3s ease" }}
         >
 
-          {/* ── PICKER ── */}
+          {/* PICKER */}
           {phase === "picker" && (
             <div>
               <div style={{ marginBottom: "36px" }}>
@@ -415,7 +535,7 @@ export default function WelcomePage() {
             </div>
           )}
 
-          {/* ── PATH SLIDES ── */}
+          {/* PATH SLIDES */}
           {phase === "path" && currentSlide && role && (
             <div style={{ maxWidth: "620px" }}>
               <div style={{ marginBottom: "12px" }}>
@@ -438,7 +558,6 @@ export default function WelcomePage() {
                 </p>
               )}
 
-              {/* Artist slide — "See Artists" CTA */}
               {currentSlide.isArtistSlide && (
                 <button
                   onClick={() => setArtistPanelOpen(true)}
@@ -451,7 +570,6 @@ export default function WelcomePage() {
                 </button>
               )}
 
-              {/* Last-slide CTA */}
               {isLastSlide && currentSlide.cta && !currentSlide.isArtistSlide && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
                   <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
@@ -487,7 +605,7 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      {/* ── Bottom nav ── */}
+      {/* Bottom nav */}
       {phase === "path" && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 28px 28px", background: "linear-gradient(to top, rgba(7,7,18,0.95) 0%, transparent 100%)", zIndex: 20 }}>
           <button
@@ -509,7 +627,7 @@ export default function WelcomePage() {
         </div>
       )}
 
-      {/* ── Artist panel overlay ── */}
+      {/* Artist panel overlay */}
       {artistPanelOpen && (
         <ArtistPanel accent={roleAccent} onClose={() => setArtistPanelOpen(false)} />
       )}
