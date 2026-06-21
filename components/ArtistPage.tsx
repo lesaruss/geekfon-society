@@ -393,7 +393,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                       <div className="pf-meta">
                         <span className="pf-type-badge pf-type-bio">About</span>
                       </div>
-                      {c.quote && <blockquote className="pf-quote">{“ + c.quote + ”}</blockquote>}
+                      {c.quote && <blockquote className="pf-quote">{"\u201c" + c.quote + "\u201d"}</blockquote>}
                       {(c.bio || []).slice(0, 2).map((p, i) => (
                         <p key={i} className="pf-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
                       ))}
