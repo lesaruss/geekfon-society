@@ -34,12 +34,6 @@ export type ArtistContent = {
   visual?: { visualIdentity?: string; houseStyle?: string; imagePrompt?: string; imagePromptNote?: string };
   songAudits?: Audit[];
   pulse?: PulsePost[];
-  skyscraperUrl?: string;
-  skyscraperLink?: string;
-  primaryAdUrl?: string;
-  primaryAdLink?: string;
-  featureAdUrl?: string;
-  featureAdLink?: string;
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
@@ -85,13 +79,11 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const [tab, setTab] = useState("pulse");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
-  const [pulsePage, setPulsePage] = useState(0);
   const [userTier, setUserTier] = useState<string | null>(null);
   const [audioProgress, setAudioProgress] = useState<Record<string, number>>({});
   const [audioDuration, setAudioDuration] = useState<Record<string, number>>({});
   const [playingV, setPlayingV] = useState<string | null>(null);
   const [bbSlot, setBbSlot] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -114,25 +106,11 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
     });
   }, []);
 
-  // Reset pulse page when switching tabs
-  useEffect(() => { setPulsePage(0); }, [tab]);
-
-  // Detect mobile
+  // Billboard auto-rotate every 6s (2 slots only)
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 900);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-
-  // Billboard auto-rotate — 2 slots on desktop, 3 on mobile
-  useEffect(() => {
-    setBbSlot(0);
-    if (bbTimerRef.current) clearInterval(bbTimerRef.current);
-    const slots = isMobile ? 3 : 2;
-    bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000);
+    bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 2), 6000);
     return () => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); };
-  }, [isMobile]);
+  }, []);
 
   // Audio helpers
   function fmtTime(s: number): string {
@@ -204,14 +182,14 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   }
   function trackBadge(v: string): { label: string; cls: string } {
     if (v === "public")   return { label: "Free",     cls: "vb-public" };
-    if (v === "preview")  return { label: "Sneak Preview",  cls: "vb-preview" };
+    if (v === "preview")  return { label: "Preview",  cls: "vb-preview" };
     if (v === "passport") return { label: "Passport", cls: "vb-passport" };
     if (v === "members")  return { label: "Members",  cls: "vb-members" };
     return                       { label: "Locked",   cls: "vb-locked" };
   }
   function trackPlayLabel(v: string, isPlaying: boolean): string {
     if (isPlaying) return "Pause";
-    if (v === "preview") return "Play";
+    if (v === "preview") return "Play Preview";
     return "Play";
   }
   function trackLockedLabel(v: string): string {
@@ -247,24 +225,10 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
     { label: name },
   ];
 
-  // ── Pulse pagination ──────────────────────────────────────────────────────────
-  const PULSE_PER_PAGE = 5;
-  type PulseItem =
-    | { kind: "voice"; key: string }
-    | { kind: "bio"; key: string }
-    | { kind: "drop"; t: Track; i: number; key: string }
-    | { kind: "article"; n: News; i: number; key: string };
-
+  // ── Pulse feed ────────────────────────────────────────────────────────────────
   const msg = c.message || {};
   const hasMsg = !!(msg.ja || msg.en);
   const pulseArticles = c.news && c.news.length > 0 ? c.news : PLACEHOLDER_NEWS;
-  const allPulseItems: PulseItem[] = [];
-  if (hasMsg) allPulseItems.push({ kind: "voice", key: "voice" });
-  if (c.bio || c.quote) allPulseItems.push({ kind: "bio", key: "bio" });
-  (c.tracks || []).forEach((t, i) => allPulseItems.push({ kind: "drop", t, i, key: `drop-${i}` }));
-  pulseArticles.forEach((n, i) => allPulseItems.push({ kind: "article", n, i, key: `article-${i}` }));
-  const pulseTotalPages = Math.ceil(allPulseItems.length / PULSE_PER_PAGE);
-  const pulseVisible = allPulseItems.slice(pulsePage * PULSE_PER_PAGE, (pulsePage + 1) * PULSE_PER_PAGE);
 
   return (
     <SiteChrome>
@@ -333,244 +297,132 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                 {t.label}{t.admin && <span className="adminbadge">Admin</span>}
               </button>
             ))}
-            <div className="tab-select-wrap">
-              <select className="tab-select" value={tab} onChange={e => setTab(e.target.value)} aria-label="Select section">
-                {TABS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
-              </select>
-              <span className="tab-arrow" aria-hidden="true">▾</span>
-            </div>
           </div>
 
           {/* Two-column body: content + billboard */}
           <div className="body-layout">
             <div className="body-main">
 
-              {/* Pulse tab - paginated social feed */}
+              {/* Pulse tab */}
               {tab === "pulse" && (
                 <section className="panel">
-                  <div className="pulse-feed">
-                    {pulseVisible.map((post) => {
-                      if (post.kind === "voice") {
-                        const voiceAudioKey = lang === "ja" ? (msg.audioJa || msg.audioEn) : (msg.audioEn || msg.audioJa);
-                        const audioUrl = voiceAudioKey ? AUDIO + voiceAudioKey : null;
-                        const hasAudio = !!audioUrl;
-                        const isPlayingVoice = !!(audioUrl && playing === audioUrl);
-                        const vProgress = audioUrl ? (audioProgress[audioUrl] || 0) : 0;
-                        const vDuration = audioUrl ? (audioDuration[audioUrl] || 0) : 0;
-                        const NUM_BARS = 40;
-                        const voiceText = lang === "ja" ? msg.ja : msg.en;
-                        const chunks = voiceText ? splitCaption(voiceText) : [];
-                        return (
-                          <div key={post.key} className="pf-post pf-voice">
-                            <div className="pf-meta">
-                              <span className="pf-type-badge pf-type-voice">Voice Message</span>
-                              <span className="pf-date">Season 1 &middot; Jul 2026</span>
+                  {/* Voice message - always at top */}
+                  {hasMsg && (() => {
+                    const voiceAudioKey = lang === "ja" ? (msg.audioJa || msg.audioEn) : (msg.audioEn || msg.audioJa);
+                    const audioUrl = voiceAudioKey ? AUDIO + voiceAudioKey : null;
+                    const hasAudio = !!audioUrl;
+                    const isPlayingVoice = !!(audioUrl && playing === audioUrl);
+                    const vProgress = audioUrl ? (audioProgress[audioUrl] || 0) : 0;
+                    const vDuration = audioUrl ? (audioDuration[audioUrl] || 0) : 0;
+                    const NUM_BARS = 40;
+                    const voiceText = lang === "ja" ? msg.ja : msg.en;
+                    const chunks = voiceText ? splitCaption(voiceText) : [];
+                    return (
+                      <div className="pf-post pf-voice" style={{ marginBottom: 20 }}>
+                        <div className="pf-meta">
+                          <span className="pf-type-badge pf-type-voice">Voice Message</span>
+                          <span className="pf-date">Season 1 &middot; Jul 2026</span>
+                        </div>
+                        <div className="pf-voice-card">
+                          {c.heroUrl && (
+                            <div className="pf-voice-avatar">
+                              <img src={c.heroUrl} alt={name} />
                             </div>
-                            <div className="pf-voice-card">
-                              {/* Square avatar */}
-                              {c.heroUrl && (
-                                <div className="pf-voice-avatar">
-                                  <img src={c.heroUrl} alt={name} />
-                                </div>
-                              )}
-                              {/* Player side */}
-                              <div className="pf-voice-right">
-                                {/* Waveform scrubber */}
-                                <div
-                                  className="pf-waveform"
-                                  onClick={(e) => audioUrl && seekVoice(e, audioUrl)}
-                                  role="slider"
-                                  aria-label="Voice message progress"
-                                >
-                                  {Array.from({ length: NUM_BARS }).map((_, i) => {
-                                    const barPct = i / NUM_BARS;
-                                    const progressPct = vDuration > 0 ? vProgress / vDuration : 0;
-                                    const isActive = barPct <= progressPct;
-                                    return (
-                                      <span
-                                        key={i}
-                                        className={isActive ? "wf-active" : ""}
-                                        style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.72 + 0.5)) * 30) }}
-                                      />
-                                    );
-                                  })}
-                                </div>
-                                {/* Controls row */}
-                                <div className="pf-voice-controls">
-                                  {hasAudio && (
-                                    <button
-                                      className={"pf-voice-play-btn" + (isPlayingVoice ? " on" : "")}
-                                      onClick={() => audioUrl && togglePlay(audioUrl, "voice")}
-                                      aria-label={isPlayingVoice ? "Pause" : "Play"}
-                                    >
-                                      {isPlayingVoice ? PAUSE : PLAY}
-                                    </button>
-                                  )}
-                                  <span className="pf-voice-time">
-                                    {fmtTime(vProgress)}{vDuration > 0 ? ` / ${fmtTime(vDuration)}` : ""}
-                                  </span>
-                                  {msg.en && msg.ja && (
-                                    <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
-                                      {lang === "ja" ? "EN" : "JA"}
-                                    </button>
-                                  )}
-                                </div>
-                                {/* Karaoke caption */}
-                                <p className="pf-karaoke">
-                                  {chunks.map((chunk, i) => {
-                                    const chunkStart = vDuration > 0 ? (i / chunks.length) * vDuration : Infinity;
-                                    const chunkEnd = vDuration > 0 ? ((i + 1) / chunks.length) * vDuration : Infinity;
-                                    const isCurrent = vProgress >= chunkStart && vProgress < chunkEnd;
-                                    const isPast = vProgress >= chunkEnd;
-                                    return (
-                                      <span key={i} className={"kc" + (isCurrent ? " kc-active" : isPast ? " kc-past" : "")}>
-                                        {chunk}{" "}
-                                      </span>
-                                    );
-                                  })}
-                                </p>
-                              </div>
+                          )}
+                          <div className="pf-voice-right">
+                            <div
+                              className="pf-waveform"
+                              onClick={(e) => audioUrl && seekVoice(e, audioUrl)}
+                              role="slider"
+                              aria-label="Voice message progress"
+                            >
+                              {Array.from({ length: NUM_BARS }).map((_, i) => {
+                                const barPct = i / NUM_BARS;
+                                const progressPct = vDuration > 0 ? vProgress / vDuration : 0;
+                                const isActive = barPct <= progressPct;
+                                return (
+                                  <span
+                                    key={i}
+                                    className={isActive ? "wf-active" : ""}
+                                    style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.72 + 0.5)) * 30) }}
+                                  />
+                                );
+                              })}
                             </div>
-                          </div>
-                        );
-                      }
-                      if (post.kind === "bio") {
-                        return (
-                          <div key={post.key} className="pf-post pf-bio">
-                            <div className="pf-meta">
-                              <span className="pf-type-badge pf-type-bio">About</span>
-                            </div>
-                            {c.quote && <blockquote className="pf-quote">{"“" + c.quote + "”"}</blockquote>}
-                            {(c.bio || []).slice(0, 2).map((p, i) => (
-                              <p key={i} className="pf-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
-                            ))}
-                          </div>
-                        );
-                      }
-                      if (post.kind === "drop") {
-                        const { t } = post;
-                        const url = t.url ? AUDIO + t.url : null;
-                        const locked = trackLocked(t.v);
-                        const isPlaying = !!url && playing === url;
-                        const badge = trackBadge(t.v);
-                        const progress = url ? (audioProgress[url] || 0) : 0;
-                        const duration = url ? (audioDuration[url] || 0) : 0;
-                        const maxTime = t.v === "preview" ? 20 : duration;
-                        const pct = maxTime > 0 ? Math.min(100, (progress / maxTime) * 100) : 0;
-                        return (
-                          <div key={post.key} className="pf-post pf-drop">
-                            <div className="pf-meta">
-                              <span className="pf-type-badge pf-type-drop">Music Drop</span>
-                              <span className="pf-date">{t.m}</span>
-                              <span className={"vis-badge " + badge.cls}>{badge.label}</span>
-                            </div>
-                            <div className={"pf-drop-card" + (locked ? " locked-card" : "")}>
-                              {/* Left: play button or lock */}
-                              {locked ? (
-                                <div className="pf-drop-lock-btn pf-lock-static" aria-hidden="true">{LOCK}</div>
-                              ) : url ? (
+                            <div className="pf-voice-controls">
+                              {hasAudio && (
                                 <button
-                                  className={"pf-drop-play-btn" + (isPlaying ? " on" : "")}
-                                  onClick={() => togglePlay(url, t.v)}
-                                  aria-label={isPlaying ? "Pause" : "Play"}
+                                  className={"pf-voice-play-btn" + (isPlayingVoice ? " on" : "")}
+                                  onClick={() => audioUrl && togglePlay(audioUrl, "voice")}
+                                  aria-label={isPlayingVoice ? "Pause" : "Play"}
                                 >
-                                  {isPlaying ? PAUSE : PLAY}
+                                  {isPlayingVoice ? PAUSE : PLAY}
                                 </button>
-                              ) : (
-                                <div className="pf-drop-lock-btn pf-lock-static" aria-hidden="true">{LOCK}</div>
                               )}
-                              {/* Right: track info + scrubber */}
-                              <div className="pf-drop-info">
-                                <div className="pf-drop-name">{t.n}</div>
-                                {locked ? (
-                                  <span className="pf-coming-soon">Coming soon</span>
-                                ) : (
-                                  <>
-                                    <div
-                                      className="pf-scrubber"
-                                      onClick={(e) => url && seekTo(e, url)}
-                                      role="slider"
-                                      aria-label="Seek"
-                                    >
-                                      <div className="pf-scrubber-track">
-                                        <div className="pf-scrubber-fill" style={{ width: `${pct}%` }} />
-                                        <div className="pf-scrubber-thumb" style={{ left: `${pct}%` }} />
-                                      </div>
-                                    </div>
-                                    <div className="pf-scrubber-times">
-                                      <span>{fmtTime(progress)}</span>
-                                      <span>{(t.v === "preview" && !userTier) ? "0:20 Sneak Preview" : (maxTime > 0 ? fmtTime(maxTime) : "--:--")}</span>
-                                    </div>
-                                    {t.v === "preview" && !userTier && (
-                                      <a href="/dashboard" className="pf-drop-unlock-cta">
-                                        Unlock
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                                      </a>
-                                    )}
-                                  </>
-                                )}
-                              </div>
+                              <span className="pf-voice-time">
+                                {fmtTime(vProgress)}{vDuration > 0 ? ` / ${fmtTime(vDuration)}` : ""}
+                              </span>
+                              {msg.en && msg.ja && (
+                                <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
+                                  {lang === "ja" ? "EN" : "JA"}
+                                </button>
+                              )}
                             </div>
+                            <p className="pf-karaoke">
+                              {chunks.map((chunk, i) => {
+                                const chunkStart = vDuration > 0 ? (i / chunks.length) * vDuration : Infinity;
+                                const chunkEnd = vDuration > 0 ? ((i + 1) / chunks.length) * vDuration : Infinity;
+                                const isCurrent = vProgress >= chunkStart && vProgress < chunkEnd;
+                                const isPast = vProgress >= chunkEnd;
+                                return (
+                                  <span key={i} className={"kc" + (isCurrent ? " kc-active" : isPast ? " kc-past" : "")}>
+                                    {chunk}{" "}
+                                  </span>
+                                );
+                              })}
+                            </p>
                           </div>
-                        );
-                      }
-                      if (post.kind === "article") {
-                        const { n, i } = post;
-                        return (
-                          <div key={post.key} className="pf-post pf-article">
-                            <div className="pf-meta">
-                              <span className="pf-type-badge pf-type-article">Article</span>
-                              {n.date && <span className="pf-date">{n.date}</span>}
-                            </div>
-                            <div className="pf-article-card">
-                              <div className="pf-article-img">
-                                {n.thumb
-                                  ? <img src={n.thumb} alt={n.title || ""} />
-                                  : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
-                                }
-                                {n.tag && <span className="article-tag">{n.tag}</span>}
-                              </div>
-                              <div className="pf-article-body">
-                                {n.title && <div className="pf-article-title">{n.title}</div>}
-                                {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
-                                <a href={n.href || "#"} className="article-cta">
-                                  Read more
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
-
-                  {pulseTotalPages > 1 && (
-                    <div className="pulse-pagination">
-                      <button
-                        className="pulse-page-btn"
-                        onClick={() => { setPulsePage(p => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                        disabled={pulsePage === 0}
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                        Prev
-                      </button>
-                      <div className="pulse-page-info">
-                        <span className="pulse-page-cur">{pulsePage + 1}</span>
-                        <span className="pulse-page-sep">/</span>
-                        <span className="pulse-page-tot">{pulseTotalPages}</span>
+                        </div>
                       </div>
-                      <button
-                        className="pulse-page-btn"
-                        onClick={() => { setPulsePage(p => Math.min(pulseTotalPages - 1, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                        disabled={pulsePage === pulseTotalPages - 1}
-                      >
-                        Next
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                      </button>
+                    );
+                  })()}
+
+                  {/* About blurb */}
+                  {(c.bio || c.quote) && (
+                    <div className="pf-post pf-bio" style={{ marginBottom: 28 }}>
+                      <div className="pf-meta">
+                        <span className="pf-type-badge pf-type-bio">About</span>
+                      </div>
+                      {c.quote && <blockquote className="pf-quote">{“ + c.quote + ”}</blockquote>}
+                      {(c.bio || []).slice(0, 2).map((p, i) => (
+                        <p key={i} className="pf-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
+                      ))}
                     </div>
                   )}
+
+                  {/* Articles - 3-column grid */}
+                  <div className="pulse-articles-grid">
+                    {pulseArticles.map((n, i) => (
+                      <div key={i} className="pulse-article-card">
+                        <div className="pf-article-img">
+                          {n.thumb
+                            ? <img src={n.thumb} alt={n.title || ""} />
+                            : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
+                          }
+                          {n.tag && <span className="article-tag">{n.tag}</span>}
+                        </div>
+                        <div className="pf-article-body">
+                          {n.date && <div className="pf-article-date">{n.date}</div>}
+                          {n.title && <div className="pf-article-title">{n.title}</div>}
+                          {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
+                          <a href={n.href || "#"} className="article-cta">
+                            Read more
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </section>
               )}
 
@@ -590,16 +442,15 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                       <div key={i} className={"track" + (locked ? " track-locked" : "")}>
                         {locked ? (
                           <div className="tplay locked" aria-hidden="true">{LOCK}</div>
-                        ) : url ? (
+                        ) : (
                           <button
                             className={"tplay" + (isPlaying ? " on" : "")}
+                            disabled={!url}
                             aria-label={isPlaying ? "Pause" : "Play"}
-                            onClick={() => togglePlay(url, t.v)}
+                            onClick={() => url && togglePlay(url, t.v)}
                           >
                             {isPlaying ? PAUSE : PLAY}
                           </button>
-                        ) : (
-                          <div className="tplay locked" aria-hidden="true">{LOCK}</div>
                         )}
                         <div className="ti">
                           <div className="tn">{t.n}</div>
@@ -613,7 +464,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                             </div>
                           )}
                           {!locked && t.v === "preview" && !userTier && (
-                            <div className="track-locked-msg"><a href="/dashboard">Unlock</a></div>
+                            <div className="track-locked-msg"><a href="/dashboard">25 LESARs &middot; Unlock early</a></div>
                           )}
                           {locked && <div className="track-locked-msg track-coming-soon">Coming soon</div>}
                         </div>
@@ -643,10 +494,16 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                     </div>
                   </div>
                   <div className="sch-timeline">
-                    {(c.tracks || []).map((t, i) => {
+                    {[...(c.tracks || [])].sort((a, b) => {
+                      const aAvail = (a.v === "public" || (a.v === "preview" && !!a.url)) ? 0 : 1;
+                      const bAvail = (b.v === "public" || (b.v === "preview" && !!b.url)) ? 0 : 1;
+                      if (aAvail !== bAvail) return aAvail - bAvail;
+                      return (a.scheduledFor || "").localeCompare(b.scheduledFor || "");
+                    }).map((t, i) => {
                       const tier = scheduleTier(t.v);
                       const isAvailable = t.v === "public" || (t.v === "preview" && !!t.url);
-                      const statusLabel = isAvailable ? "Available now" : (t.scheduledFor || "Season 1 · Coming soon");
+                      const releasedLabel = t.scheduledFor ? `Released ${t.scheduledFor}` : "Available now";
+                      const statusLabel = isAvailable ? releasedLabel : (t.scheduledFor || "Season 1 - Coming soon");
                       return (
                         <div key={i} className={"sch-row" + (isAvailable ? " sch-live" : "")}>
                           <div className="sch-dot-wrap" aria-hidden="true">
@@ -658,9 +515,8 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                               {t.hasRemix && <span className="sch-remix-badge">+ Remix</span>}
                             </div>
                             <div className="sch-track-meta">
-                              <span className="sch-era">{t.m}</span>
-                              <span className="sch-sep" aria-hidden="true">&middot;</span>
                               <span className={"sch-status" + (isAvailable ? " sch-status-live" : "")}>{statusLabel}</span>
+                              {t.m && <><span className="sch-sep" aria-hidden="true">&middot;</span><span className="sch-era">{t.m}</span></>}
                             </div>
                           </div>
                           <span className={"sch-tier-pill " + tier.cls}>{tier.label}</span>
@@ -744,88 +600,37 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
 
             </div>
 
-            {/* Billboard rotator sidebar — 2 slots desktop, 3 slots mobile */}
+            {/* Billboard rotator sidebar — 2 slots */}
             <aside className="billboard"
               onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }}
-              onMouseLeave={() => { const slots = isMobile ? 3 : 2; bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000); }}
+              onMouseLeave={() => { bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 2), 6000); }}
             >
               <div className="bb-label">Billboard</div>
               <div className="bb-rotator">
-                {/* Slide 0: Skyscraper 300x600 */}
+                {/* Slot 0: Two featured 300x250 stacked */}
                 <div className={"bb-slide" + (bbSlot === 0 ? " active" : "")}>
-                  {c.skyscraperUrl ? (
-                    <a href={c.skyscraperLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
-                      <img src={c.skyscraperUrl} alt="Advertisement" className="bb-ad-img" />
-                    </a>
-                  ) : (
-                    <div className="bb-placeholder bb-tall">
-                      <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                      <div className="bb-ph-text">Skyscraper</div>
-                      <div className="bb-ph-dim">300 x 600</div>
-                    </div>
-                  )}
-                </div>
-                {/* Slide 1: Desktop=both stacked / Mobile=primary ad only */}
-                <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
-                  {isMobile ? (
-                    c.primaryAdUrl ? (
-                      <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
-                        <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
-                      </a>
-                    ) : (
-                      <div className="bb-placeholder">
+                  <div className="bb-stacked">
+                    {["Primary Ad", "Feature Ad"].map((label, i) => (
+                      <div key={i} className="bb-placeholder">
                         <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                        <div className="bb-ph-text">Primary Ad</div>
+                        <div className="bb-ph-text">{label}</div>
                         <div className="bb-ph-dim">300 x 250</div>
                       </div>
-                    )
-                  ) : (
-                    <div className="bb-stacked">
-                      {c.primaryAdUrl ? (
-                        <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
-                          <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
-                        </a>
-                      ) : (
-                        <div className="bb-placeholder">
-                          <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                          <div className="bb-ph-text">Primary Ad</div>
-                          <div className="bb-ph-dim">300 x 250</div>
-                        </div>
-                      )}
-                      {c.featureAdUrl ? (
-                        <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
-                          <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
-                        </a>
-                      ) : (
-                        <div className="bb-placeholder">
-                          <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                          <div className="bb-ph-text">Feature Ad</div>
-                          <div className="bb-ph-dim">300 x 250</div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {/* Slide 2: Mobile only — feature ad */}
-                {isMobile && (
-                  <div className={"bb-slide" + (bbSlot === 2 ? " active" : "")}>
-                    {c.featureAdUrl ? (
-                      <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
-                        <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
-                      </a>
-                    ) : (
-                      <div className="bb-placeholder">
-                        <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                        <div className="bb-ph-text">Feature Ad</div>
-                        <div className="bb-ph-dim">300 x 250</div>
-                      </div>
-                    )}
+                    ))}
                   </div>
-                )}
+                </div>
+                {/* Slot 1: Skyscraper 300x600 */}
+                <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
+                  <div className="bb-placeholder bb-tall">
+                    <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                    <div className="bb-ph-text">Skyscraper</div>
+                    <div className="bb-ph-dim">300 x 600</div>
+                  </div>
+                </div>
               </div>
               <div className="bb-dots">
-                {Array.from({ length: isMobile ? 3 : 2 }, (_, i) => (
-                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={`Ad ${i + 1}`} />
+                {[0, 1].map(i => (
+                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={i === 0 ? "Featured ads" : "Skyscraper"} />
                 ))}
               </div>
               <div className="bb-tag">Powered by LESARUSS Advertising</div>
@@ -892,39 +697,19 @@ const CSS = `
 .bb-dot{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--lr-text-30);background:transparent;cursor:pointer;padding:0;transition:background .15s,border-color .15s}
 .bb-dot.active{background:var(--rx);border-color:var(--rx)}
 .bb-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-30);text-align:center;padding:4px 0 0}
-.bb-ad-link{display:block;line-height:0;border-radius:10px;overflow:hidden}
-.bb-ad-img{width:300px;height:600px;display:block;object-fit:cover;border-radius:10px}
-.bb-ad-img-sm{width:300px;height:250px;display:block;object-fit:cover;border-radius:10px}
 
 .rxp-lang{align-self:flex-start;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--rx-text);border:1px solid var(--lr-border);background:#fff;border-radius:100px;padding:6px 13px;cursor:pointer}
 .rxp-lang:hover{border-color:var(--rx)}
 .card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:22px 24px;margin-bottom:14px}
 .card p{font-size:15px;color:var(--lr-text-75);line-height:1.75}
-/* Tab select — hidden on desktop, shown on mobile */
-.tab-select-wrap{display:none}
-@keyframes tab-arrow-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @media(max-width:900px){
   .body-layout{flex-direction:column;padding:0 16px}
   .body-main{padding-right:0}
   .billboard{width:100%;position:static;padding-top:0}
   .bb-slot-tall{display:none}
-  /* Hero: 50/50 two columns on mobile */
-  .head-grid{flex-direction:row;padding:0 12px;gap:12px;align-items:center}
-  .head-art,.head-art-fallback{width:50%;min-width:0;flex-shrink:0;aspect-ratio:1}
-  .head-meta{width:50%;padding-top:0}
-  .head-name{font-size:clamp(18px,5vw,32px)}
-  .head-tagline{font-size:12px;line-height:1.5;margin-top:6px}
+  .head-grid{flex-direction:column;padding:0 16px}
   .head-topbar{padding:14px 16px 16px}
-  /* Tabs: hide buttons, show select wrapper */
-  .tabbar{padding:0 12px;display:block}
-  .tabbar .tab{display:none}
-  .tab-select-wrap{display:block;position:relative;border-bottom:2px solid var(--rx)}
-  .tab-select{display:block;width:100%;font-family:inherit;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);background:transparent;border:none;padding:16px 40px 16px 0;cursor:pointer;appearance:none;-webkit-appearance:none;outline:none}
-  .tab-select:focus{outline:none;box-shadow:none}
-  .tab-arrow{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:22px;color:var(--rx-text);pointer-events:none;animation:tab-arrow-bounce 1.2s ease-in-out infinite;line-height:1}
-  /* Billboard images full-width on mobile */
-  .bb-ad-img{width:100%;height:auto;object-fit:cover}
-  .bb-ad-img-sm{width:100%;height:auto;object-fit:cover}
+  .tabbar{padding:0 16px}
 }
 .article-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);text-decoration:none;margin-top:4px}
 .article-cta svg{width:14px;height:14px;transition:transform .15s}
@@ -973,6 +758,16 @@ const CSS = `
 
 /* ---- Pulse Feed ---- */
 .pulse-feed{display:flex;flex-direction:column;gap:20px}
+/* Article grid */
+.pulse-articles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pulse-article-card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.pulse-article-card .pf-article-img{position:relative;aspect-ratio:16/9;overflow:hidden;flex-shrink:0}
+.pulse-article-card .pf-article-img img{width:100%;height:100%;object-fit:cover;display:block}
+.pulse-article-card .pf-article-ph{width:100%;height:100%}
+.pulse-article-card .pf-article-body{padding:14px 16px 16px;flex:1;display:flex;flex-direction:column}
+.pf-article-date{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-30);margin-bottom:6px}
+@media(max-width:900px){.pulse-articles-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.pulse-articles-grid{grid-template-columns:1fr}}
 .pf-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden;padding:20px 22px}
 .pf-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .pf-type-badge{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;padding:3px 9px;border-radius:20px}
