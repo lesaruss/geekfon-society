@@ -753,6 +753,8 @@ const CSS = `
 .bb-slide{display:none}
 .bb-slide.active{display:block}
 .bb-placeholder{border:1px dashed var(--lr-border);border-radius:10px;background:var(--lr-surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px 16px;color:var(--lr-text-30);min-height:250px}
+.bb-ad-img{width:100%;border-radius:12px;display:block;object-fit:cover}
+.bb-ad-img-sm{width:100%;border-radius:10px;display:block;object-fit:cover}
 .bb-slide.tall .bb-placeholder{min-height:500px}
 .bb-ph-icon svg{width:28px;height:28px;opacity:.4}
 .bb-ph-text{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-30)}
