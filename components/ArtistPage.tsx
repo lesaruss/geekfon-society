@@ -8,7 +8,7 @@ const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 const AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
 
-type Track = { n: string; m: string; v: string; url?: string };
+type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: string };
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
@@ -40,6 +40,7 @@ const TABS: { key: string; label: string; admin?: boolean }[] = [
   { key: "pulse", label: "Pulse" },
   { key: "music", label: "Music" },
   { key: "media", label: "Media" },
+  { key: "schedule", label: "Schedule" },
   { key: "brief", label: "Brief", admin: true },
 ];
 
@@ -198,6 +199,14 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
     if (v === "passport") return "Passport members";
     if (v === "members")  return "Members only";
     return "Locked";
+  }
+  // Schedule tab: maps visibility to user-facing tier label + style
+  function scheduleTier(v: string): { label: string; cls: string } {
+    if (v === "public")   return { label: "Free",     cls: "st-free" };
+    if (v === "preview")  return { label: "Preview",  cls: "st-preview" };
+    if (v === "passport" || v === "locked") return { label: "Passport", cls: "st-passport" };
+    if (v === "members")  return { label: "Plus",     cls: "st-plus" };
+    return                       { label: "Pro",      cls: "st-pro" };
   }
 
   function copy(e: React.MouseEvent<HTMLButtonElement>, text: string) {
@@ -586,6 +595,49 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
 
               {tab === "media" && (<section className="panel"><p className="empty-note">Media gallery renders here (wire to storage on rollout).</p></section>)}
 
+              {tab === "schedule" && (
+                <section className="panel">
+                  <div className="sch-header">
+                    <div className="sch-season-label">Season 1 &middot; Jul &ndash; Sep 2026</div>
+                    <div className="sch-tier-legend">
+                      {[
+                        { cls: "st-free",    l: "Free" },
+                        { cls: "st-preview", l: "Preview" },
+                        { cls: "st-passport",l: "Passport" },
+                        { cls: "st-plus",    l: "Plus" },
+                        { cls: "st-pro",     l: "Pro" },
+                      ].map(t => (
+                        <span key={t.l} className={"sch-tier-pill " + t.cls}>{t.l}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="sch-timeline">
+                    {(c.tracks || []).map((t, i) => {
+                      const tier = scheduleTier(t.v);
+                      const isAvailable = t.v === "public" || (t.v === "preview" && !!t.url);
+                      const statusLabel = isAvailable ? "Available now" : (t.scheduledFor || "Season 1 · Coming soon");
+                      return (
+                        <div key={i} className={"sch-row" + (isAvailable ? " sch-live" : "")}>
+                          <div className="sch-dot-wrap" aria-hidden="true">
+                            <div className={"sch-dot" + (isAvailable ? " on" : "")} />
+                          </div>
+                          <div className="sch-body">
+                            <div className="sch-track-name">{t.n}</div>
+                            <div className="sch-track-meta">
+                              <span className="sch-era">{t.m}</span>
+                              <span className="sch-sep" aria-hidden="true">&middot;</span>
+                              <span className={"sch-status" + (isAvailable ? " sch-status-live" : "")}>{statusLabel}</span>
+                            </div>
+                          </div>
+                          <span className={"sch-tier-pill " + tier.cls}>{tier.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="sch-footnote">Release windows update as the season progresses. Upgrade your membership to unlock early access.</p>
+                </section>
+              )}
+
               {tab === "brief" && (
                 <section className="panel">
                   <div className="adminbar"><span className="t">Admin only.</span> <span className="s">The Brief tab is the internal World Bible.</span></div>
@@ -898,6 +950,32 @@ const CSS = `
 .pulse-page-cur{font-size:18px;font-weight:900;color:var(--rx-text)}
 .pulse-page-sep{color:var(--lr-text-30)}
 .pulse-page-tot{color:var(--lr-text-50)}
+
+/* ---- Schedule tab ---- */
+.sch-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px}
+.sch-season-label{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;color:var(--lr-text-50)}
+.sch-tier-legend{display:flex;gap:7px;flex-wrap:wrap}
+.sch-tier-pill{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 11px;border-radius:20px;white-space:nowrap}
+.st-free    {background:rgba(76,175,80,.14);color:#2e7d32}
+.st-preview {background:rgba(246,152,32,.16);color:#b45309}
+.st-passport{background:var(--rx-tint);color:var(--rx-text)}
+.st-plus    {background:rgba(99,102,241,.13);color:#4338ca}
+.st-pro     {background:rgba(0,0,0,.07);color:var(--lr-text-50)}
+.sch-timeline{display:flex;flex-direction:column;border-left:2px solid var(--lr-border);margin-left:7px;padding-left:0}
+.sch-row{display:flex;align-items:center;gap:16px;padding:16px 0 16px 28px;position:relative;border-bottom:1px solid var(--lr-border)}
+.sch-row:last-child{border-bottom:none}
+.sch-dot-wrap{position:absolute;left:-7px;top:50%;transform:translateY(-50%)}
+.sch-dot{width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--lr-border);transition:background .2s,border-color .2s}
+.sch-dot.on{background:var(--rx);border-color:var(--rx)}
+.sch-body{flex:1;min-width:0}
+.sch-track-name{font-size:15px;font-weight:900;color:var(--lr-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sch-row:not(.sch-live) .sch-track-name{color:var(--lr-text-50)}
+.sch-track-meta{display:flex;align-items:center;gap:7px;margin-top:3px}
+.sch-era{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-30)}
+.sch-sep{color:var(--lr-text-30);font-size:10px}
+.sch-status{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--lr-text-30)}
+.sch-status-live{color:#2e7d32}
+.sch-footnote{font-size:11px;color:var(--lr-text-30);font-style:italic;margin-top:22px;border-top:1px solid var(--lr-border);padding-top:16px}
 `;
 
 const CITY_CSS = `
