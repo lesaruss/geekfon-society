@@ -91,6 +91,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const [audioDuration, setAudioDuration] = useState<Record<string, number>>({});
   const [playingV, setPlayingV] = useState<string | null>(null);
   const [bbSlot, setBbSlot] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -116,11 +117,22 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   // Reset pulse page when switching tabs
   useEffect(() => { setPulsePage(0); }, [tab]);
 
-  // Billboard auto-rotate every 6s (2 slots only)
+  // Detect mobile
   useEffect(() => {
-    bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 2), 6000);
-    return () => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); };
+    const check = () => setIsMobile(window.innerWidth <= 900);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
   }, []);
+
+  // Billboard auto-rotate — 2 slots on desktop, 3 on mobile
+  useEffect(() => {
+    setBbSlot(0);
+    if (bbTimerRef.current) clearInterval(bbTimerRef.current);
+    const slots = isMobile ? 3 : 2;
+    bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000);
+    return () => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); };
+  }, [isMobile]);
 
   // Audio helpers
   function fmtTime(s: number): string {
@@ -321,6 +333,9 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                 {t.label}{t.admin && <span className="adminbadge">Admin</span>}
               </button>
             ))}
+            <select className="tab-select" value={tab} onChange={e => setTab(e.target.value)} aria-label="Select section">
+              {TABS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+            </select>
           </div>
 
           {/* Two-column body: content + billboard */}
@@ -726,14 +741,14 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
 
             </div>
 
-            {/* Billboard rotator sidebar — 2 slots */}
+            {/* Billboard rotator sidebar — 2 slots desktop, 3 slots mobile */}
             <aside className="billboard"
               onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }}
-              onMouseLeave={() => { bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 2), 6000); }}
+              onMouseLeave={() => { const slots = isMobile ? 3 : 2; bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000); }}
             >
               <div className="bb-label">Billboard</div>
               <div className="bb-rotator">
-                {/* Slot 0: Skyscraper 300x600 */}
+                {/* Slide 0: Skyscraper 300x600 */}
                 <div className={"bb-slide" + (bbSlot === 0 ? " active" : "")}>
                   {c.skyscraperUrl ? (
                     <a href={c.skyscraperLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
@@ -747,11 +762,10 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                     </div>
                   )}
                 </div>
-                {/* Slot 1: Two featured 300x250 stacked */}
+                {/* Slide 1: Desktop=both stacked / Mobile=primary ad only */}
                 <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
-                  <div className="bb-stacked">
-                    {/* Primary Ad - live or placeholder */}
-                    {c.primaryAdUrl ? (
+                  {isMobile ? (
+                    c.primaryAdUrl ? (
                       <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
                         <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
                       </a>
@@ -761,8 +775,37 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                         <div className="bb-ph-text">Primary Ad</div>
                         <div className="bb-ph-dim">300 x 250</div>
                       </div>
-                    )}
-                    {/* Feature Ad - live or placeholder */}
+                    )
+                  ) : (
+                    <div className="bb-stacked">
+                      {c.primaryAdUrl ? (
+                        <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                          <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
+                        </a>
+                      ) : (
+                        <div className="bb-placeholder">
+                          <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                          <div className="bb-ph-text">Primary Ad</div>
+                          <div className="bb-ph-dim">300 x 250</div>
+                        </div>
+                      )}
+                      {c.featureAdUrl ? (
+                        <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                          <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
+                        </a>
+                      ) : (
+                        <div className="bb-placeholder">
+                          <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                          <div className="bb-ph-text">Feature Ad</div>
+                          <div className="bb-ph-dim">300 x 250</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Slide 2: Mobile only — feature ad */}
+                {isMobile && (
+                  <div className={"bb-slide" + (bbSlot === 2 ? " active" : "")}>
                     {c.featureAdUrl ? (
                       <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
                         <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
@@ -775,11 +818,11 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                       </div>
                     )}
                   </div>
-                </div>
+                )}
               </div>
               <div className="bb-dots">
-                {[0, 1].map(i => (
-                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={i === 0 ? "Skyscraper ad" : "Featured ads"} />
+                {Array.from({ length: isMobile ? 3 : 2 }, (_, i) => (
+                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={`Ad ${i + 1}`} />
                 ))}
               </div>
               <div className="bb-tag">Powered by LESARUSS Advertising</div>
@@ -854,14 +897,27 @@ const CSS = `
 .rxp-lang:hover{border-color:var(--rx)}
 .card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:22px 24px;margin-bottom:14px}
 .card p{font-size:15px;color:var(--lr-text-75);line-height:1.75}
+/* Tab select — hidden on desktop, shown on mobile */
+.tab-select{display:none}
 @media(max-width:900px){
   .body-layout{flex-direction:column;padding:0 16px}
   .body-main{padding-right:0}
   .billboard{width:100%;position:static;padding-top:0}
   .bb-slot-tall{display:none}
-  .head-grid{flex-direction:column;padding:0 16px}
+  /* Hero: 50/50 two columns on mobile */
+  .head-grid{flex-direction:row;padding:0 12px;gap:12px;align-items:center}
+  .head-art,.head-art-fallback{width:50%;min-width:0;flex-shrink:0;aspect-ratio:1}
+  .head-meta{width:50%;padding-top:0}
+  .head-name{font-size:clamp(18px,5vw,32px)}
+  .head-tagline{font-size:12px;line-height:1.5;margin-top:6px}
   .head-topbar{padding:14px 16px 16px}
-  .tabbar{padding:0 16px}
+  /* Tabs: hide buttons, show select */
+  .tabbar{padding:0 12px;display:block}
+  .tabbar .tab{display:none}
+  .tab-select{display:block;width:100%;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);background:#fff;border:none;border-bottom:2px solid var(--rx);padding:14px 0;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center}
+  /* Billboard images full-width on mobile */
+  .bb-ad-img{width:100%;height:auto}
+  .bb-ad-img-sm{width:100%;height:auto}
 }
 .article-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);text-decoration:none;margin-top:4px}
 .article-cta svg{width:14px;height:14px;transition:transform .15s}
