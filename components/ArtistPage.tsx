@@ -603,34 +603,85 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
             {/* Billboard rotator sidebar — 2 slots */}
             <aside className="billboard"
               onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }}
-              onMouseLeave={() => { bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 2), 6000); }}
+              onMouseLeave={() => { const slots = isMobile ? 3 : 2; bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000); }}
             >
               <div className="bb-label">Billboard</div>
               <div className="bb-rotator">
-                {/* Slot 0: Two featured 300x250 stacked */}
+                {/* Slide 0: Skyscraper 300x600 */}
                 <div className={"bb-slide" + (bbSlot === 0 ? " active" : "")}>
-                  <div className="bb-stacked">
-                    {["Primary Ad", "Feature Ad"].map((label, i) => (
-                      <div key={i} className="bb-placeholder">
+                  {c.skyscraperUrl ? (
+                    <a href={c.skyscraperLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                      <img src={c.skyscraperUrl} alt="Advertisement" className="bb-ad-img" />
+                    </a>
+                  ) : (
+                    <div className="bb-placeholder bb-tall">
+                      <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                      <div className="bb-ph-text">Skyscraper</div>
+                      <div className="bb-ph-dim">300 x 600</div>
+                    </div>
+                  )}
+                </div>
+                {/* Slide 1: Desktop=both stacked / Mobile=primary ad only */}
+                <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
+                  {isMobile ? (
+                    c.primaryAdUrl ? (
+                      <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                        <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
+                      </a>
+                    ) : (
+                      <div className="bb-placeholder">
                         <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                        <div className="bb-ph-text">{label}</div>
+                        <div className="bb-ph-text">Primary Ad</div>
                         <div className="bb-ph-dim">300 x 250</div>
                       </div>
-                    ))}
-                  </div>
+                    )
+                  ) : (
+                    <div className="bb-stacked">
+                      {c.primaryAdUrl ? (
+                        <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                          <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
+                        </a>
+                      ) : (
+                        <div className="bb-placeholder">
+                          <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                          <div className="bb-ph-text">Primary Ad</div>
+                          <div className="bb-ph-dim">300 x 250</div>
+                        </div>
+                      )}
+                      {c.featureAdUrl ? (
+                        <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                          <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
+                        </a>
+                      ) : (
+                        <div className="bb-placeholder">
+                          <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                          <div className="bb-ph-text">Feature Ad</div>
+                          <div className="bb-ph-dim">300 x 250</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {/* Slot 1: Skyscraper 300x600 */}
-                <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
-                  <div className="bb-placeholder bb-tall">
-                    <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                    <div className="bb-ph-text">Skyscraper</div>
-                    <div className="bb-ph-dim">300 x 600</div>
+                {/* Slide 2: Mobile only — feature ad */}
+                {isMobile && (
+                  <div className={"bb-slide" + (bbSlot === 2 ? " active" : "")}>
+                    {c.featureAdUrl ? (
+                      <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                        <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
+                      </a>
+                    ) : (
+                      <div className="bb-placeholder">
+                        <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                        <div className="bb-ph-text">Feature Ad</div>
+                        <div className="bb-ph-dim">300 x 250</div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
               <div className="bb-dots">
-                {[0, 1].map(i => (
-                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={i === 0 ? "Featured ads" : "Skyscraper"} />
+                {Array.from({ length: isMobile ? 3 : 2 }, (_, i) => (
+                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={`Ad ${i + 1}`} />
                 ))}
               </div>
               <div className="bb-tag">Powered by LESARUSS Advertising</div>
