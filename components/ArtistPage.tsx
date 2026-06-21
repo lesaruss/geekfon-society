@@ -34,6 +34,8 @@ export type ArtistContent = {
   visual?: { visualIdentity?: string; houseStyle?: string; imagePrompt?: string; imagePromptNote?: string };
   songAudits?: Audit[];
   pulse?: PulsePost[];
+  skyscraperUrl?: string;
+  skyscraperLink?: string;
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
@@ -725,8 +727,22 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
             >
               <div className="bb-label">Billboard</div>
               <div className="bb-rotator">
-                {/* Slot 0: Two featured 300x250 stacked */}
+                {/* Slot 0: Skyscraper 300x600 */}
                 <div className={"bb-slide" + (bbSlot === 0 ? " active" : "")}>
+                  {c.skyscraperUrl ? (
+                    <a href={c.skyscraperLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                      <img src={c.skyscraperUrl} alt="Advertisement" className="bb-ad-img" />
+                    </a>
+                  ) : (
+                    <div className="bb-placeholder bb-tall">
+                      <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                      <div className="bb-ph-text">Skyscraper</div>
+                      <div className="bb-ph-dim">300 x 600</div>
+                    </div>
+                  )}
+                </div>
+                {/* Slot 1: Two featured 300x250 stacked */}
+                <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
                   <div className="bb-stacked">
                     {["Primary Ad", "Feature Ad"].map((label, i) => (
                       <div key={i} className="bb-placeholder">
@@ -737,18 +753,10 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                     ))}
                   </div>
                 </div>
-                {/* Slot 1: Skyscraper 300x600 */}
-                <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
-                  <div className="bb-placeholder bb-tall">
-                    <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                    <div className="bb-ph-text">Skyscraper</div>
-                    <div className="bb-ph-dim">300 x 600</div>
-                  </div>
-                </div>
               </div>
               <div className="bb-dots">
                 {[0, 1].map(i => (
-                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={i === 0 ? "Featured ads" : "Skyscraper"} />
+                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={i === 0 ? "Skyscraper ad" : "Featured ads"} />
                 ))}
               </div>
               <div className="bb-tag">Powered by LESARUSS Advertising</div>
@@ -815,6 +823,8 @@ const CSS = `
 .bb-dot{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--lr-text-30);background:transparent;cursor:pointer;padding:0;transition:background .15s,border-color .15s}
 .bb-dot.active{background:var(--rx);border-color:var(--rx)}
 .bb-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-30);text-align:center;padding:4px 0 0}
+.bb-ad-link{display:block;line-height:0;border-radius:10px;overflow:hidden}
+.bb-ad-img{width:300px;height:600px;display:block;object-fit:cover;border-radius:10px}
 
 .rxp-lang{align-self:flex-start;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--rx-text);border:1px solid var(--lr-border);background:#fff;border-radius:100px;padding:6px 13px;cursor:pointer}
 .rxp-lang:hover{border-color:var(--rx)}
