@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import SiteChrome from "@/components/SiteChrome";
 
 const AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
@@ -74,6 +74,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const [tab, setTab] = useState("pulse");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
+  const [pulsePage, setPulsePage] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const c = content || {};
   const name = c.name || "Artist";
@@ -83,6 +84,10 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
     ["--rx-tint" as string]: c.accentTint || "rgba(233,30,140,0.10)",
   } as React.CSSProperties;
   const emph = (t: string) => t.replace(/\{\{(.+?)\}\}/g, '<em style="color:var(--rx-text);font-style:normal;font-weight:800">$1</em>');
+
+  // Reset pulse page when switching tabs
+  useEffect(() => { setPulsePage(0); }, [tab]);
+
   function copy(e: React.MouseEvent<HTMLButtonElement>, text: string) {
     const b = e.currentTarget; const prev = b.textContent;
     if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
@@ -93,14 +98,30 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
     if (playing === url) { a.pause(); setPlaying(null); return; }
     a.src = url; a.play().then(() => setPlaying(url)).catch(() => setPlaying(null));
   }
-  const msg = c.message || {};
-  const hasMsg = !!(msg.ja || msg.en);
-
   const crumb = [
     { label: "GeekFon", href: "/" },
     { label: "Roster", href: "/roster" },
     { label: name },
   ];
+
+  // ── Pulse pagination ──────────────────────────────────────────────────────────
+  const PULSE_PER_PAGE = 5;
+  type PulseItem =
+    | { kind: "voice"; key: string }
+    | { kind: "bio"; key: string }
+    | { kind: "drop"; t: Track; i: number; key: string }
+    | { kind: "article"; n: News; i: number; key: string };
+
+  const msg = c.message || {};
+  const hasMsg = !!(msg.ja || msg.en);
+  const pulseArticles = c.news && c.news.length > 0 ? c.news : PLACEHOLDER_NEWS;
+  const allPulseItems: PulseItem[] = [];
+  if (hasMsg) allPulseItems.push({ kind: "voice", key: "voice" });
+  if (c.bio || c.quote) allPulseItems.push({ kind: "bio", key: "bio" });
+  (c.tracks || []).forEach((t, i) => allPulseItems.push({ kind: "drop", t, i, key: `drop-${i}` }));
+  pulseArticles.forEach((n, i) => allPulseItems.push({ kind: "article", n, i, key: `article-${i}` }));
+  const pulseTotalPages = Math.ceil(allPulseItems.length / PULSE_PER_PAGE);
+  const pulseVisible = allPulseItems.slice(pulsePage * PULSE_PER_PAGE, (pulsePage + 1) * PULSE_PER_PAGE);
 
   return (
     <SiteChrome>
@@ -175,110 +196,138 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
           <div className="body-layout">
             <div className="body-main">
 
-              {/* Pulse tab - social feed */}
+              {/* Pulse tab - paginated social feed */}
               {tab === "pulse" && (
                 <section className="panel">
                   <div className="pulse-feed">
-
-                    {/* Voice message post */}
-                    {hasMsg && (
-                      <div className="pf-post pf-voice">
-                        <div className="pf-meta">
-                          <span className="pf-type-badge pf-type-voice">Voice Message</span>
-                          <span className="pf-date">Season 1 &middot; Jul 2026</span>
-                        </div>
-                        {c.heroUrl && <img className="pf-voice-img" src={c.heroUrl} alt="" />}
-                        <div className="pf-voice-body">
-                          <div className="pf-wave">{Array.from({ length: 30 }).map((_, i) => (
-                            <span key={i} style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.9 + 1)) * 24) }} />
-                          ))}</div>
-                          <p className="pf-caption">{lang === "ja" ? msg.ja : msg.en}</p>
-                          {msg.en && msg.ja && (
-                            <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
-                              {lang === "ja" ? "🇺🇸 English" : "🇯🇵 日本語"}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Bio post */}
-                    {(c.bio || c.quote) && (
-                      <div className="pf-post pf-bio">
-                        <div className="pf-meta">
-                          <span className="pf-type-badge pf-type-bio">About</span>
-                        </div>
-                        {c.quote && <blockquote className="pf-quote">{"“" + c.quote + "”"}</blockquote>}
-                        {(c.bio || []).slice(0, 2).map((p, i) => (
-                          <p key={i} className="pf-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Music drop posts */}
-                    {(c.tracks || []).map((t, i) => {
-                      const url = t.url ? AUDIO + t.url : null;
-                      const locked = t.v !== "public" || !url;
-                      const isPlaying = !!url && playing === url;
-                      return (
-                        <div key={i} className="pf-post pf-drop">
-                          <div className="pf-meta">
-                            <span className="pf-type-badge pf-type-drop">Music Drop</span>
-                            <span className="pf-date">{t.m}</span>
-                          </div>
-                          <div className="pf-drop-card">
-                            <div className="pf-drop-art">
-                              <svg viewBox="0 0 48 48" fill="none">
-                                <circle cx="24" cy="24" r="14" stroke="var(--rx)" strokeWidth="2"/>
-                                <circle cx="24" cy="24" r="5" fill="var(--rx)"/>
-                                <path d="M24 10V6M24 42v-4M10 24H6M42 24h-4" stroke="var(--rx)" strokeWidth="2" strokeLinecap="round"/>
-                              </svg>
+                    {pulseVisible.map((post) => {
+                      if (post.kind === "voice") {
+                        return (
+                          <div key={post.key} className="pf-post pf-voice">
+                            <div className="pf-meta">
+                              <span className="pf-type-badge pf-type-voice">Voice Message</span>
+                              <span className="pf-date">Season 1 &middot; Jul 2026</span>
                             </div>
-                            <div className="pf-drop-info">
-                              <div className="pf-drop-name">{t.n}</div>
-                              <div className="pf-drop-era">{t.m}</div>
-                              <button
-                                className={"pf-drop-play" + (locked ? " locked" : "") + (isPlaying ? " on" : "")}
-                                disabled={locked}
-                                onClick={() => url && togglePlay(url)}
-                                aria-label={locked ? "Members only" : isPlaying ? "Pause" : "Play"}
-                              >
-                                {locked ? <>{LOCK}<span>Members only</span></> : isPlaying ? <>{PAUSE}<span>Pause</span></> : <>{PLAY}<span>Play</span></>}
-                              </button>
+                            {c.heroUrl && <img className="pf-voice-img" src={c.heroUrl} alt="" />}
+                            <div className="pf-voice-body">
+                              <div className="pf-wave">{Array.from({ length: 30 }).map((_, i) => (
+                                <span key={i} style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.9 + 1)) * 24) }} />
+                              ))}</div>
+                              <p className="pf-caption">{lang === "ja" ? msg.ja : msg.en}</p>
+                              {msg.en && msg.ja && (
+                                <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
+                                  {lang === "ja" ? "EN English" : "JA Japanese"}
+                                </button>
+                              )}
                             </div>
                           </div>
-                        </div>
-                      );
+                        );
+                      }
+                      if (post.kind === "bio") {
+                        return (
+                          <div key={post.key} className="pf-post pf-bio">
+                            <div className="pf-meta">
+                              <span className="pf-type-badge pf-type-bio">About</span>
+                            </div>
+                            {c.quote && <blockquote className="pf-quote">{"“" + c.quote + "”"}</blockquote>}
+                            {(c.bio || []).slice(0, 2).map((p, i) => (
+                              <p key={i} className="pf-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
+                            ))}
+                          </div>
+                        );
+                      }
+                      if (post.kind === "drop") {
+                        const { t, i } = post;
+                        const url = t.url ? AUDIO + t.url : null;
+                        const locked = t.v !== "public" || !url;
+                        const isPlaying = !!url && playing === url;
+                        return (
+                          <div key={post.key} className="pf-post pf-drop">
+                            <div className="pf-meta">
+                              <span className="pf-type-badge pf-type-drop">Music Drop</span>
+                              <span className="pf-date">{t.m}</span>
+                            </div>
+                            <div className="pf-drop-card">
+                              <div className="pf-drop-art">
+                                <svg viewBox="0 0 48 48" fill="none">
+                                  <circle cx="24" cy="24" r="14" stroke="var(--rx)" strokeWidth="2"/>
+                                  <circle cx="24" cy="24" r="5" fill="var(--rx)"/>
+                                  <path d="M24 10V6M24 42v-4M10 24H6M42 24h-4" stroke="var(--rx)" strokeWidth="2" strokeLinecap="round"/>
+                                </svg>
+                              </div>
+                              <div className="pf-drop-info">
+                                <div className="pf-drop-name">{t.n}</div>
+                                <div className="pf-drop-era">{t.m}</div>
+                                <button
+                                  className={"pf-drop-play" + (locked ? " locked" : "") + (isPlaying ? " on" : "")}
+                                  disabled={locked}
+                                  onClick={() => url && togglePlay(url)}
+                                  aria-label={locked ? "Members only" : isPlaying ? "Pause" : "Play"}
+                                >
+                                  {locked ? <>{LOCK}<span>Members only</span></> : isPlaying ? <>{PAUSE}<span>Pause</span></> : <>{PLAY}<span>Play</span></>}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (post.kind === "article") {
+                        const { n, i } = post;
+                        return (
+                          <div key={post.key} className="pf-post pf-article">
+                            <div className="pf-meta">
+                              <span className="pf-type-badge pf-type-article">Article</span>
+                              {n.date && <span className="pf-date">{n.date}</span>}
+                            </div>
+                            <div className="pf-article-card">
+                              <div className="pf-article-img">
+                                {n.thumb
+                                  ? <img src={n.thumb} alt={n.title || ""} />
+                                  : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
+                                }
+                                {n.tag && <span className="article-tag">{n.tag}</span>}
+                              </div>
+                              <div className="pf-article-body">
+                                {n.title && <div className="pf-article-title">{n.title}</div>}
+                                {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
+                                <a href={n.href || "#"} className="article-cta">
+                                  Read more
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
                     })}
-
-                    {/* Article posts from news */}
-                    {(c.news && c.news.length > 0 ? c.news : PLACEHOLDER_NEWS).map((n, i) => (
-                      <div key={i} className="pf-post pf-article">
-                        <div className="pf-meta">
-                          <span className="pf-type-badge pf-type-article">Article</span>
-                          {n.date && <span className="pf-date">{n.date}</span>}
-                        </div>
-                        <div className="pf-article-card">
-                          <div className="pf-article-img">
-                            {n.thumb
-                              ? <img src={n.thumb} alt={n.title || ""} />
-                              : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
-                            }
-                            {n.tag && <span className="article-tag">{n.tag}</span>}
-                          </div>
-                          <div className="pf-article-body">
-                            {n.title && <div className="pf-article-title">{n.title}</div>}
-                            {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
-                            <a href={n.href || "#"} className="article-cta">
-                              Read more
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
                   </div>
+
+                  {pulseTotalPages > 1 && (
+                    <div className="pulse-pagination">
+                      <button
+                        className="pulse-page-btn"
+                        onClick={() => { setPulsePage(p => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        disabled={pulsePage === 0}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                        Prev
+                      </button>
+                      <div className="pulse-page-info">
+                        <span className="pulse-page-cur">{pulsePage + 1}</span>
+                        <span className="pulse-page-sep">/</span>
+                        <span className="pulse-page-tot">{pulseTotalPages}</span>
+                      </div>
+                      <button
+                        className="pulse-page-btn"
+                        onClick={() => { setPulsePage(p => Math.min(pulseTotalPages - 1, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        disabled={pulsePage === pulseTotalPages - 1}
+                      >
+                        Next
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                      </button>
+                    </div>
+                  )}
                 </section>
               )}
 
@@ -550,6 +599,16 @@ const CSS = `
 .pf-article-body{padding:16px 18px;display:flex;flex-direction:column;gap:8px}
 .pf-article-title{font-size:17px;font-weight:900;line-height:1.25;color:var(--lr-text)}
 .pf-article-blurb{font-size:13px;color:var(--lr-text-75);line-height:1.6;margin:0}
+/* Pagination controls */
+.pulse-pagination{display:flex;align-items:center;justify-content:space-between;margin-top:28px;padding:18px 0;border-top:1px solid var(--lr-border)}
+.pulse-page-btn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--rx-text);background:none;border:1.5px solid var(--lr-border);border-radius:100px;padding:10px 20px;cursor:pointer;transition:border-color .15s,background .15s}
+.pulse-page-btn:hover:not(:disabled){border-color:var(--rx);background:var(--rx-tint)}
+.pulse-page-btn:disabled{opacity:.35;cursor:not-allowed}
+.pulse-page-btn svg{width:14px;height:14px}
+.pulse-page-info{display:flex;align-items:baseline;gap:4px;font-size:13px;font-weight:700}
+.pulse-page-cur{font-size:18px;font-weight:900;color:var(--rx-text)}
+.pulse-page-sep{color:var(--lr-text-30)}
+.pulse-page-tot{color:var(--lr-text-50)}
 `;
 
 const CITY_CSS = `
