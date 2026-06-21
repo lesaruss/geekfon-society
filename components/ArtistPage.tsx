@@ -109,9 +109,9 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   // Reset pulse page when switching tabs
   useEffect(() => { setPulsePage(0); }, [tab]);
 
-  // Billboard auto-rotate every 6s, pause on hover handled via CSS
+  // Billboard auto-rotate every 6s (2 slots only)
   useEffect(() => {
-    bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 3), 6000);
+    bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 2), 6000);
     return () => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); };
   }, []);
 
@@ -119,6 +119,33 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   function fmtTime(s: number): string {
     if (!s || isNaN(s)) return "0:00";
     return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+  }
+  // Split text into caption chunks (karaoke-style)
+  function splitCaption(text: string): string[] {
+    const isCJK = /[　-鿿一-龯]/.test(text);
+    if (isCJK) {
+      const segs = text.split(/([。、！？…])/).filter(Boolean);
+      const chunks: string[] = []; let cur = "";
+      segs.forEach(s => { cur += s; if (cur.length >= 5 || /[。！？]/.test(s)) { chunks.push(cur.trim()); cur = ""; } });
+      if (cur.trim()) chunks.push(cur.trim());
+      return chunks;
+    }
+    const words = text.split(/\s+/).filter(Boolean);
+    const chunks: string[] = [];
+    for (let i = 0; i < words.length; i += 3) chunks.push(words.slice(i, i + 3).join(" "));
+    return chunks;
+  }
+  function seekVoice(e: React.MouseEvent<HTMLDivElement>, url: string) {
+    const a = audioRef.current; if (!a) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    if (playing !== url) {
+      // Not playing yet — start from this position
+      a.src = url;
+      a.addEventListener("canplay", () => { a.currentTime = pct * (a.duration || 0); a.play().then(() => { setPlaying(url); setPlayingV("voice"); }).catch(() => {}); }, { once: true });
+    } else {
+      a.currentTime = pct * (a.duration || 0);
+    }
   }
   function onTimeUpdate() {
     const a = audioRef.current;
@@ -290,47 +317,85 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                   <div className="pulse-feed">
                     {pulseVisible.map((post) => {
                       if (post.kind === "voice") {
-                        const audioUrl = AUDIO + (lang === "ja" ? (msg.audioJa || msg.audioEn) : (msg.audioEn || msg.audioJa));
-                        const hasAudio = !!(msg.audioEn || msg.audioJa);
-                        const isPlayingVoice = hasAudio && playing === audioUrl;
+                        const voiceAudioKey = lang === "ja" ? (msg.audioJa || msg.audioEn) : (msg.audioEn || msg.audioJa);
+                        const audioUrl = voiceAudioKey ? AUDIO + voiceAudioKey : null;
+                        const hasAudio = !!audioUrl;
+                        const isPlayingVoice = !!(audioUrl && playing === audioUrl);
+                        const vProgress = audioUrl ? (audioProgress[audioUrl] || 0) : 0;
+                        const vDuration = audioUrl ? (audioDuration[audioUrl] || 0) : 0;
+                        const NUM_BARS = 40;
+                        const voiceText = lang === "ja" ? msg.ja : msg.en;
+                        const chunks = voiceText ? splitCaption(voiceText) : [];
                         return (
                           <div key={post.key} className="pf-post pf-voice">
                             <div className="pf-meta">
                               <span className="pf-type-badge pf-type-voice">Voice Message</span>
                               <span className="pf-date">Season 1 &middot; Jul 2026</span>
                             </div>
-                            {c.heroUrl && <img className="pf-voice-img" src={c.heroUrl} alt="" />}
-                            <div className="pf-voice-body">
-                              {hasAudio && (
-                                <div className="pf-voice-player">
-                                  <button
-                                    className={"pf-voice-play" + (isPlayingVoice ? " on" : "")}
-                                    onClick={() => togglePlay(audioUrl)}
-                                    aria-label={isPlayingVoice ? "Pause" : "Play voice message"}
-                                  >
-                                    {isPlayingVoice ? PAUSE : PLAY}
-                                  </button>
-                                  <div className="pf-wave">
-                                    {Array.from({ length: 30 }).map((_, i) => (
-                                      <span key={i} className={isPlayingVoice ? "playing" : ""} style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.9 + 1)) * 24) }} />
-                                    ))}
-                                  </div>
+                            <div className="pf-voice-card">
+                              {/* Square avatar */}
+                              {c.heroUrl && (
+                                <div className="pf-voice-avatar">
+                                  <img src={c.heroUrl} alt={name} />
                                 </div>
                               )}
-                              <p className="pf-caption">{lang === "ja" ? msg.ja : msg.en}</p>
-                              {msg.en && msg.ja && (
-                                <button className="rxp-lang" onClick={() => {
-                                  const next = lang === "ja" ? "en" : "ja";
-                                  setLang(next);
-                                  // Switch audio track if playing
-                                  if (isPlayingVoice) {
-                                    const nextUrl = AUDIO + (next === "ja" ? (msg.audioJa || msg.audioEn) : (msg.audioEn || msg.audioJa));
-                                    if (nextUrl) togglePlay(nextUrl);
-                                  }
-                                }}>
-                                  {lang === "ja" ? "EN English" : "JA Japanese"}
-                                </button>
-                              )}
+                              {/* Player side */}
+                              <div className="pf-voice-right">
+                                {/* Waveform scrubber */}
+                                <div
+                                  className="pf-waveform"
+                                  onClick={(e) => audioUrl && seekVoice(e, audioUrl)}
+                                  role="slider"
+                                  aria-label="Voice message progress"
+                                >
+                                  {Array.from({ length: NUM_BARS }).map((_, i) => {
+                                    const barPct = i / NUM_BARS;
+                                    const progressPct = vDuration > 0 ? vProgress / vDuration : 0;
+                                    const isActive = barPct <= progressPct;
+                                    return (
+                                      <span
+                                        key={i}
+                                        className={isActive ? "wf-active" : ""}
+                                        style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.72 + 0.5)) * 30) }}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                                {/* Controls row */}
+                                <div className="pf-voice-controls">
+                                  {hasAudio && (
+                                    <button
+                                      className={"pf-voice-play-btn" + (isPlayingVoice ? " on" : "")}
+                                      onClick={() => audioUrl && togglePlay(audioUrl, "voice")}
+                                      aria-label={isPlayingVoice ? "Pause" : "Play"}
+                                    >
+                                      {isPlayingVoice ? PAUSE : PLAY}
+                                    </button>
+                                  )}
+                                  <span className="pf-voice-time">
+                                    {fmtTime(vProgress)}{vDuration > 0 ? ` / ${fmtTime(vDuration)}` : ""}
+                                  </span>
+                                  {msg.en && msg.ja && (
+                                    <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
+                                      {lang === "ja" ? "EN" : "JA"}
+                                    </button>
+                                  )}
+                                </div>
+                                {/* Karaoke caption */}
+                                <p className="pf-karaoke">
+                                  {chunks.map((chunk, i) => {
+                                    const chunkStart = vDuration > 0 ? (i / chunks.length) * vDuration : Infinity;
+                                    const chunkEnd = vDuration > 0 ? ((i + 1) / chunks.length) * vDuration : Infinity;
+                                    const isCurrent = vProgress >= chunkStart && vProgress < chunkEnd;
+                                    const isPast = vProgress >= chunkEnd;
+                                    return (
+                                      <span key={i} className={"kc" + (isCurrent ? " kc-active" : isPast ? " kc-past" : "")}>
+                                        {chunk}{" "}
+                                      </span>
+                                    );
+                                  })}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         );
@@ -593,27 +658,37 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
 
             </div>
 
-            {/* Billboard rotator sidebar */}
-            <aside className="billboard" onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }} onMouseLeave={() => { bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 3), 6000); }}>
+            {/* Billboard rotator sidebar — 2 slots */}
+            <aside className="billboard"
+              onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }}
+              onMouseLeave={() => { bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 2), 6000); }}
+            >
               <div className="bb-label">Billboard</div>
               <div className="bb-rotator">
-                {[
-                  { label: "Primary Ad",  dim: "300 x 250", tall: false },
-                  { label: "Feature Ad",  dim: "300 x 250", tall: false },
-                  { label: "Skyscraper",  dim: "300 x 600", tall: true  },
-                ].map((ad, i) => (
-                  <div key={i} className={"bb-slide" + (bbSlot === i ? " active" : "") + (ad.tall ? " tall" : "")}>
-                    <div className="bb-placeholder">
-                      <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                      <div className="bb-ph-text">{ad.label}</div>
-                      <div className="bb-ph-dim">{ad.dim}</div>
-                    </div>
+                {/* Slot 0: Two featured 300x250 stacked */}
+                <div className={"bb-slide" + (bbSlot === 0 ? " active" : "")}>
+                  <div className="bb-stacked">
+                    {["Primary Ad", "Feature Ad"].map((label, i) => (
+                      <div key={i} className="bb-placeholder">
+                        <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                        <div className="bb-ph-text">{label}</div>
+                        <div className="bb-ph-dim">300 x 250</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+                {/* Slot 1: Skyscraper 300x600 */}
+                <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
+                  <div className="bb-placeholder bb-tall">
+                    <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                    <div className="bb-ph-text">Skyscraper</div>
+                    <div className="bb-ph-dim">300 x 600</div>
+                  </div>
+                </div>
               </div>
               <div className="bb-dots">
-                {[0, 1, 2].map(i => (
-                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={`Ad ${i + 1}`} />
+                {[0, 1].map(i => (
+                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={i === 0 ? "Featured ads" : "Skyscraper"} />
                 ))}
               </div>
               <div className="bb-tag">Powered by LESARUSS Advertising</div>
@@ -747,18 +822,29 @@ const CSS = `
 .pf-type-voice,.pf-type-drop{background:var(--rx-tint);color:var(--rx-text)}
 .pf-type-bio,.pf-type-article{background:rgba(0,0,0,.05);color:var(--lr-text-50)}
 .pf-date{font-size:11px;font-weight:700;color:var(--lr-text-30);text-transform:uppercase;letter-spacing:.06em}
-/* Voice message */
-.pf-voice-img{width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-bottom:14px}
-.pf-voice-body{display:flex;flex-direction:column;gap:12px}
-.pf-voice-player{display:flex;align-items:center;gap:12px;background:var(--lr-bg);border:1px solid var(--lr-border);border-radius:10px;padding:10px 14px}
-.pf-voice-play{width:38px;height:38px;border-radius:50%;border:none;background:var(--rx);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0}
-.pf-voice-play svg{width:14px;height:14px;fill:currentColor}
-.pf-voice-play.on{filter:brightness(.88)}
-.pf-wave{display:flex;align-items:center;gap:3px;height:36px;flex:1}
-.pf-wave span{width:3px;border-radius:2px;background:rgba(233,30,140,.28);display:block;transition:background .2s}
-.pf-wave span.playing{background:var(--rx);animation:pulse-bar .6s ease-in-out infinite alternate}
-@keyframes pulse-bar{from{opacity:.5}to{opacity:1}}
-.pf-caption{font-size:15px;line-height:1.7;color:var(--lr-text-75);font-style:italic}
+/* Voice message card — square image + player side by side */
+.pf-voice-card{display:flex;gap:16px;align-items:flex-start}
+.pf-voice-avatar{width:120px;height:120px;border-radius:12px;overflow:hidden;flex-shrink:0;border:2px solid var(--rx)}
+.pf-voice-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.pf-voice-right{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+/* Waveform scrubber */
+.pf-waveform{display:flex;align-items:center;gap:2px;height:48px;cursor:pointer;padding:4px 0}
+.pf-waveform span{flex-shrink:0;width:4px;border-radius:3px;background:rgba(233,30,140,.18);display:block;transition:background .1s}
+.pf-waveform span.wf-active{background:var(--rx)}
+/* Controls row */
+.pf-voice-controls{display:flex;align-items:center;gap:10px}
+.pf-voice-play-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--rx);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;transition:filter .15s}
+.pf-voice-play-btn svg{width:13px;height:13px;fill:currentColor}
+.pf-voice-play-btn.on{filter:brightness(.88)}
+.pf-voice-time{font-size:11px;font-weight:700;color:var(--lr-text-50);font-variant-numeric:tabular-nums;flex:1}
+/* Karaoke caption */
+.pf-karaoke{font-size:14px;line-height:1.75;color:var(--lr-text-30);font-style:italic;margin:0}
+.kc{transition:color .35s,font-weight .35s}
+.kc-past{color:var(--lr-text-50)}
+.kc-active{color:var(--rx-text);font-weight:800;font-style:normal}
+/* Billboard stacked + tall */
+.bb-stacked{display:flex;flex-direction:column;gap:12px}
+.bb-placeholder.bb-tall{min-height:500px}
 /* Bio post */
 .pf-quote{font-size:clamp(18px,2.4vw,22px);font-weight:900;color:var(--rx-text);line-height:1.3;margin:0 0 14px;border-left:3px solid var(--rx);padding-left:16px;font-style:italic}
 .pf-bio-p{font-size:14px;color:var(--lr-text-75);line-height:1.75;margin-top:10px}
