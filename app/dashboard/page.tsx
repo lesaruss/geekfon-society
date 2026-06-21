@@ -15,14 +15,20 @@ type AdminMember = {
   id: string; user_id: string; name: string | null; email: string | null;
   tier: string | null; available_points: number; created_at: string; last_sign_in: string | null;
 };
+type Referral = {
+  id: string; ref_code: string; commission_rate: number;
+  window_expires_at: string | null; total_earned_cents: number;
+  pending_earned_cents: number; referred_id?: string | null; converted_at?: string | null;
+};
 
 const PASSPORT_TIERS = [
-  { id: "passport", label: "Passport", price: "$11/mo", lesars: 1000, desc: "1,000 LESARs per month. Access all artists." },
-  { id: "plus", label: "Passport Plus", price: "$22/mo", lesars: 2500, desc: "2,500 LESARs per month. Priority access + early drops." },
-  { id: "pro", label: "Passport Pro", price: "$44/mo", lesars: 6000, desc: "6,000 LESARs per month. VIP access + exclusive content." },
+  { id: "passport", label: "Passport", price: "$11/mo", lesars: 1000, desc: "1,000 LESARs per month. Full access to all artists and content." },
+  { id: "plus", label: "Passport Plus", price: "$22/mo", lesars: 2500, desc: "2,500 LESARs/mo + 10% affiliate commission on every referral for 1 year." },
+  { id: "pro", label: "Community Manager", price: "$44/mo", lesars: 6000, desc: "6,000 LESARs/mo + 25% affiliate commission. Convention, enrollment, and talent partner role." },
 ];
 
-const INITIAL_LESARS_OPTIONS = [0, 500, 1000, 2500, 5000];
+const TIER_DEFAULT_LESARS: Record<string, number> = { passport: 100, plus: 1000, pro: 0 };
+const TIER_RATE: Record<string, number> = { plus: 0.10, pro: 0.25 };
 const TIER_OPTIONS = ["passport", "plus", "pro"];
 const ADMIN_EMAIL = "contact@lesaruss.com";
 
@@ -33,19 +39,23 @@ export default function DashboardPage() {
   const [member, setMember] = useState<GfsMember | null>(null);
   const [points, setPoints] = useState<MemberPoints | null>(null);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [referral, setReferral] = useState<Referral | null>(null);
 
   /* Passport panel */
   const [passportOpen, setPassportOpen] = useState(false);
 
-  /* Admin state */
+  /* Admin */
   const [adminMembers, setAdminMembers] = useState<AdminMember[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteLesars, setInviteLesars] = useState(0);
+  const [inviteLesars, setInviteLesars] = useState(100);
   const [inviteTier, setInviteTier] = useState("passport");
   const [inviteStatus, setInviteStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [inviteError, setInviteError] = useState("");
+
+  /* Affiliate copy */
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -55,15 +65,17 @@ export default function DashboardPage() {
       setUserId(u.id);
       setUserEmail(u.email || null);
 
-      const [memberRes, pointsRes, purchasesRes] = await Promise.all([
+      const [memberRes, pointsRes, purchasesRes, referralRes] = await Promise.all([
         supabase.from("gfs_members").select("*").eq("user_id", u.id).maybeSingle(),
         supabase.from("member_points").select("available_points,total_points,spent_points").eq("user_id", u.id).maybeSingle(),
         supabase.from("point_purchases").select("id,amount_cents,status,created_at").eq("buyer_id", u.id).order("created_at", { ascending: false }).limit(10),
+        supabase.from("referrals").select("*").eq("referrer_id", u.id).maybeSingle(),
       ]);
 
       setMember(memberRes.data ?? null);
       setPoints(pointsRes.data ?? null);
       setPurchases(purchasesRes.data ?? []);
+      setReferral(referralRes.data ?? null);
       setLoading(false);
 
       if (u.email === ADMIN_EMAIL) loadAdminMembers();
@@ -81,10 +93,14 @@ export default function DashboardPage() {
     setAdminLoading(false);
   }
 
+  function handleTierChange(t: string) {
+    setInviteTier(t);
+    setInviteLesars(TIER_DEFAULT_LESARS[t] ?? 0);
+  }
+
   async function sendInvite(e: React.FormEvent) {
     e.preventDefault();
-    setInviteStatus("sending");
-    setInviteError("");
+    setInviteStatus("sending"); setInviteError("");
     try {
       const res = await fetch("/api/invite", {
         method: "POST",
@@ -94,10 +110,17 @@ export default function DashboardPage() {
       const json = await res.json();
       if (!res.ok) { setInviteError(json.error || "Failed"); setInviteStatus("error"); return; }
       setInviteStatus("done");
-      setInviteEmail(""); setInviteLesars(0); setInviteTier("passport");
+      setInviteEmail(""); setInviteLesars(100); setInviteTier("passport");
       loadAdminMembers();
-      setTimeout(() => { setInviteOpen(false); setInviteStatus("idle"); }, 2000);
+      setTimeout(() => { setInviteOpen(false); setInviteStatus("idle"); }, 2500);
     } catch (_) { setInviteError("Network error"); setInviteStatus("error"); }
+  }
+
+  function copyLink() {
+    if (!referral?.ref_code) return;
+    navigator.clipboard.writeText(`https://geekfon.ai/join?ref=${referral.ref_code}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   async function signInWithGoogle() {
@@ -111,10 +134,11 @@ export default function DashboardPage() {
   const displayName = member?.name || userEmail || "Member";
   const initial = displayName.charAt(0).toUpperCase();
   const tier = member?.tier || "passport";
-  const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+  const tierLabel = tier === "pro" ? "Community Manager" : tier.charAt(0).toUpperCase() + tier.slice(1);
   const passportArtists = member?.passport_artists || [];
   const isAdmin = userEmail === ADMIN_EMAIL;
-
+  const isAffiliate = tier === "plus" || tier === "pro";
+  const commissionRate = TIER_RATE[tier] ? (TIER_RATE[tier] * 100).toFixed(0) : null;
   const memberProp = userId ? { name: displayName, balance: lesars, initial, tier } : undefined;
 
   /* ── Loading ── */
@@ -163,7 +187,7 @@ export default function DashboardPage() {
             <div className="dash-hero-info">
               <div className="dash-welcome">Welcome back</div>
               <div className="dash-name">{displayName}</div>
-              <div className="dash-tier-badge">{tierLabel} Member</div>
+              <div className="dash-tier-badge">{tierLabel}</div>
             </div>
             <div className="dash-balance-card">
               <div className="dash-balance-label">LESARs Balance</div>
@@ -207,6 +231,62 @@ export default function DashboardPage() {
 
         <div className="dash-body">
 
+          {/* Affiliate portal - Plus and Pro */}
+          {isAffiliate && (
+            <section className="dash-section dash-affiliate-section">
+              <div className="dash-affiliate-head">
+                <div>
+                  <h2 className="dash-section-title dash-affiliate-title">
+                    {tier === "pro" ? "Affiliate Portal" : "Your Referral Link"}
+                  </h2>
+                  <p className="dash-affiliate-sub">
+                    Earn <strong>{commissionRate}% commission</strong> on every member you bring in - for a full year from their join date.
+                  </p>
+                </div>
+                <div className="dash-affiliate-rate-badge">{commissionRate}%</div>
+              </div>
+
+              {referral ? (
+                <>
+                  <div className="dash-link-row">
+                    <div className="dash-link-display">
+                      geekfon.ai/join?ref={referral.ref_code}
+                    </div>
+                    <button className="dash-copy-btn" onClick={copyLink}>
+                      {copied ? (
+                        <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg> Copied</>
+                      ) : (
+                        <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy link</>
+                      )}
+                    </button>
+                  </div>
+                  <div className="dash-affiliate-stats">
+                    <div className="dash-aff-stat">
+                      <div className="dash-aff-stat-num">${((referral.total_earned_cents || 0) / 100).toFixed(2)}</div>
+                      <div className="dash-aff-stat-label">Total Earned</div>
+                    </div>
+                    <div className="dash-aff-stat">
+                      <div className="dash-aff-stat-num">${((referral.pending_earned_cents || 0) / 100).toFixed(2)}</div>
+                      <div className="dash-aff-stat-label">Pending</div>
+                    </div>
+                    <div className="dash-aff-stat">
+                      <div className="dash-aff-stat-num">
+                        {referral.window_expires_at
+                          ? Math.max(0, Math.ceil((new Date(referral.window_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                          : "-"}
+                      </div>
+                      <div className="dash-aff-stat-label">Days remaining</div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="dash-empty">
+                  <p>Your affiliate link is being generated. Check back shortly.</p>
+                </div>
+              )}
+            </section>
+          )}
+
           {/* Passport artists */}
           {passportArtists.length > 0 && (
             <section className="dash-section">
@@ -245,7 +325,7 @@ export default function DashboardPage() {
           <section className="dash-section">
             <div className="dash-section-header">
               <h2 className="dash-section-title">Purchase History</h2>
-              <button className="dash-section-cta" onClick={() => setPassportOpen(v => !v)}>+ Top up LESARs</button>
+              <button className="dash-section-cta" onClick={() => { setPassportOpen(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>+ Top up LESARs</button>
             </div>
             {purchases.length === 0 ? (
               <div className="dash-empty">
@@ -272,7 +352,7 @@ export default function DashboardPage() {
             )}
           </section>
 
-          {/* Explore quick links */}
+          {/* Explore */}
           <section className="dash-section">
             <h2 className="dash-section-title">Explore</h2>
             <div className="dash-quick-links">
@@ -292,7 +372,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* ── Admin: Members ── */}
+          {/* Admin: Members Console */}
           {isAdmin && (
             <section className="dash-section dash-admin-section">
               <div className="dash-section-header">
@@ -302,34 +382,34 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              {/* Invite form */}
               {inviteOpen && (
                 <form className="dash-invite-form" onSubmit={sendInvite}>
                   <div className="dash-invite-row">
                     <div className="dash-invite-field">
                       <label className="dash-invite-label">Email address</label>
-                      <input
-                        className="dash-invite-input"
-                        type="email" required
-                        placeholder="member@example.com"
-                        value={inviteEmail}
-                        onChange={e => setInviteEmail(e.target.value)}
-                      />
+                      <input className="dash-invite-input" type="email" required placeholder="member@example.com"
+                        value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
                     </div>
                     <div className="dash-invite-field">
-                      <label className="dash-invite-label">Initial LESARs</label>
-                      <select className="dash-invite-select" value={inviteLesars} onChange={e => setInviteLesars(Number(e.target.value))}>
-                        {INITIAL_LESARS_OPTIONS.map(n => (
-                          <option key={n} value={n}>{n === 0 ? "0 (none)" : n.toLocaleString()}</option>
+                      <label className="dash-invite-label">Tier</label>
+                      <select className="dash-invite-select" value={inviteTier} onChange={e => handleTierChange(e.target.value)}>
+                        {TIER_OPTIONS.map(t => (
+                          <option key={t} value={t}>
+                            {t === "pro" ? "Community Manager (Pro)" : t.charAt(0).toUpperCase() + t.slice(1)}
+                          </option>
                         ))}
                       </select>
                     </div>
                     <div className="dash-invite-field">
-                      <label className="dash-invite-label">Tier</label>
-                      <select className="dash-invite-select" value={inviteTier} onChange={e => setInviteTier(e.target.value)}>
-                        {TIER_OPTIONS.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
-                      </select>
+                      <label className="dash-invite-label">Seed LESARs <span className="dash-invite-hint">(auto by tier)</span></label>
+                      <input className="dash-invite-input" type="number" min={0} step={100}
+                        value={inviteLesars} onChange={e => setInviteLesars(Number(e.target.value))} />
                     </div>
+                  </div>
+                  <div className="dash-invite-tier-note">
+                    {inviteTier === "pro" && <span>Community Manager - 25% affiliate commission, 1 year window. Seeded 0 LESARs by default.</span>}
+                    {inviteTier === "plus" && <span>Plus - 10% affiliate commission, 1 year window. Seeded 1,000 LESARs by default.</span>}
+                    {inviteTier === "passport" && <span>Passport - basic fan. Seeded 100 LESARs (enough to sample a few songs).</span>}
                   </div>
                   <div className="dash-invite-actions">
                     <button type="submit" className="dash-invite-submit" disabled={inviteStatus === "sending"}>
@@ -341,7 +421,6 @@ export default function DashboardPage() {
                 </form>
               )}
 
-              {/* Members table */}
               {adminLoading ? (
                 <div className="dash-admin-loading"><div className="dash-spinner" /></div>
               ) : adminMembers.length === 0 ? (
@@ -350,21 +429,14 @@ export default function DashboardPage() {
                 <div className="dash-members-table-wrap">
                   <table className="dash-members-table">
                     <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Tier</th>
-                        <th>LESARs</th>
-                        <th>Joined</th>
-                        <th>Last login</th>
-                      </tr>
+                      <tr><th>Name</th><th>Email</th><th>Tier</th><th>LESARs</th><th>Joined</th><th>Last login</th></tr>
                     </thead>
                     <tbody>
                       {adminMembers.map((m) => (
                         <tr key={m.id}>
                           <td className="dash-member-name">{m.name || "-"}</td>
                           <td className="dash-member-email">{m.email || "-"}</td>
-                          <td><span className={"dash-member-tier t-" + (m.tier || "passport")}>{m.tier || "passport"}</span></td>
+                          <td><span className={"dash-member-tier t-" + (m.tier || "passport")}>{m.tier === "pro" ? "CM" : m.tier || "passport"}</span></td>
                           <td className="dash-member-lesars">{(m.available_points || 0).toLocaleString()}</td>
                           <td className="dash-member-date">{m.created_at ? new Date(m.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "-"}</td>
                           <td className="dash-member-date">{m.last_sign_in ? new Date(m.last_sign_in).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "Never"}</td>
@@ -384,26 +456,21 @@ export default function DashboardPage() {
 }
 
 const CSS = `
-/* Google btn */
 .dash-google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border:1px solid #dadce0;border-radius:100px;background:#fff;font-family:inherit;font-size:14px;font-weight:700;color:#3c4043;cursor:pointer;transition:box-shadow .15s,border-color .15s}
 .dash-google-btn:hover{box-shadow:0 1px 6px rgba(0,0,0,.14);border-color:#bbb}
 .dash-gate-divider{display:flex;align-items:center;gap:12px;width:100%;color:var(--lr-text-30);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em}
 .dash-gate-divider::before,.dash-gate-divider::after{content:"";flex:1;height:1px;background:var(--lr-border)}
 .dash-gate-cta-outline{display:inline-block;border:1px solid #E91E8C;color:#9c1458;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:11px 24px;border-radius:100px;text-decoration:none}
 .dash-gate-cta-outline:hover{background:rgba(233,30,140,.06)}
-/* Loading */
 .dash-loading{display:flex;align-items:center;justify-content:center;min-height:60vh}
 .dash-spinner{width:40px;height:40px;border:3px solid var(--lr-border);border-top-color:#E91E8C;border-radius:50%;animation:dashSpin .8s linear infinite}
 @keyframes dashSpin{to{transform:rotate(360deg)}}
-/* Gate */
 .dash-gate{display:flex;align-items:center;justify-content:center;min-height:60vh;padding:40px 20px}
 .dash-gate-card{max-width:400px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
 .dash-gate-icon svg{width:64px;height:64px}
 .dash-gate-title{font-size:28px;font-weight:900;margin:0}
 .dash-gate-sub{font-size:15px;color:var(--lr-text-75);line-height:1.6;margin:0}
-/* Dashboard */
 .dash{padding-bottom:80px}
-/* Hero */
 .dash-hero{background:#111;color:#fff;padding:32px 40px}
 .dash-hero-inner{display:flex;align-items:center;gap:24px;max-width:1100px;margin:0 auto}
 .dash-avatar{width:64px;height:64px;border-radius:50%;background:#E91E8C;color:#fff;font-size:26px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid rgba(255,255,255,.15)}
@@ -420,10 +487,8 @@ const CSS = `
   .dash-hero{padding:24px 16px}
   .dash-hero-inner{flex-wrap:wrap}
   .dash-balance-card{width:100%;text-align:left;display:flex;align-items:center;gap:16px}
-  .dash-balance-label{margin-bottom:0}
   .dash-balance-num{font-size:26px}
 }
-/* Inline passport panel */
 .dash-passport-panel{background:#f9f9f9;border-bottom:1px solid var(--lr-border)}
 .dash-passport-inner{max-width:1100px;margin:0 auto;padding:32px 40px}
 .dash-passport-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
@@ -432,7 +497,7 @@ const CSS = `
 .dash-passport-close:hover{background:var(--lr-border)}
 .dash-passport-close svg{width:16px;height:16px}
 .dash-passport-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.dash-passport-tier{background:#fff;border:1.5px solid var(--lr-border);border-radius:14px;padding:22px 20px;position:relative;transition:border-color .15s,box-shadow .15s}
+.dash-passport-tier{background:#fff;border:1.5px solid var(--lr-border);border-radius:14px;padding:22px 20px;position:relative;transition:border-color .15s}
 .dash-passport-tier.current{border-color:#E91E8C;box-shadow:0 0 0 3px rgba(233,30,140,.08)}
 .dash-passport-cur-badge{position:absolute;top:-10px;left:16px;background:#E91E8C;color:#fff;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 10px;border-radius:20px}
 .dash-pt-name{font-size:16px;font-weight:900;margin-bottom:4px}
@@ -441,11 +506,7 @@ const CSS = `
 .dash-pt-desc{font-size:13px;color:var(--lr-text-75);line-height:1.5;margin-bottom:16px}
 .dash-pt-cta{display:block;text-align:center;background:#111;color:#fff;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:12px;border-radius:100px;text-decoration:none;transition:background .15s}
 .dash-pt-cta:hover{background:#E91E8C}
-@media(max-width:700px){
-  .dash-passport-inner{padding:24px 16px}
-  .dash-passport-tiers{grid-template-columns:1fr}
-}
-/* Body */
+@media(max-width:700px){.dash-passport-inner{padding:24px 16px}.dash-passport-tiers{grid-template-columns:1fr}}
 .dash-body{max-width:1100px;margin:0 auto;padding:32px 40px 0}
 @media(max-width:700px){.dash-body{padding:24px 16px 0}}
 .dash-section{margin-bottom:40px}
@@ -454,17 +515,31 @@ const CSS = `
 .dash-section-header .dash-section-title{margin-bottom:0;border-bottom:none;padding-bottom:0}
 .dash-section-cta{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#9c1458;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
 .dash-section-cta:hover{text-decoration:underline}
+/* Affiliate */
+.dash-affiliate-section{background:linear-gradient(135deg,#0d0d0d 0%,#1a0a12 100%);border-radius:16px;padding:28px 28px 24px;color:#fff;margin-bottom:40px}
+.dash-affiliate-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+.dash-affiliate-title{color:#E91E8C !important;border-bottom-color:rgba(233,30,140,.3) !important}
+.dash-affiliate-sub{font-size:14px;color:rgba(255,255,255,.65);margin:8px 0 0;line-height:1.5}
+.dash-affiliate-sub strong{color:#fff}
+.dash-affiliate-rate-badge{flex-shrink:0;width:60px;height:60px;border-radius:50%;background:rgba(233,30,140,.2);border:2px solid #E91E8C;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#E91E8C}
+.dash-link-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.dash-link-display{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;color:rgba(255,255,255,.8);font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-copy-btn{display:flex;align-items:center;gap:6px;flex-shrink:0;background:#E91E8C;color:#fff;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:12px 18px;border-radius:100px;transition:background .15s}
+.dash-copy-btn:hover{background:#c4146f}
+.dash-copy-btn svg{width:14px;height:14px}
+.dash-affiliate-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.dash-aff-stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 16px}
+.dash-aff-stat-num{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.dash-aff-stat-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.4);margin-top:3px}
 /* Stats */
 .dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .dash-stat{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:18px 20px}
 .dash-stat-num{font-size:28px;font-weight:900;letter-spacing:-.02em;color:#1a1a1a}
 .dash-stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);margin-top:4px}
-@media(max-width:700px){.dash-stats{grid-template-columns:repeat(2,1fr)}}
-/* Artist chips */
+@media(max-width:700px){.dash-stats{grid-template-columns:repeat(2,1fr)}.dash-affiliate-stats{grid-template-columns:1fr}}
 .dash-artist-chips{display:flex;flex-wrap:wrap;gap:10px}
 .dash-artist-chip{font-size:12px;font-weight:800;text-transform:capitalize;padding:8px 16px;border-radius:100px;background:rgba(233,30,140,.1);border:1px solid rgba(233,30,140,.25);color:#9c1458;text-decoration:none;letter-spacing:.04em}
 .dash-artist-chip:hover{background:rgba(233,30,140,.18)}
-/* Purchases */
 .dash-purchases{display:flex;flex-direction:column;gap:1px;background:var(--lr-border);border:1px solid var(--lr-border);border-radius:12px;overflow:hidden}
 .dash-purchase-row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#fff}
 .dash-purchase-info{display:flex;flex-direction:column;gap:3px}
@@ -476,12 +551,10 @@ const CSS = `
 .dash-purchase-status.s-succeeded,.dash-purchase-status.s-complete{background:rgba(76,175,80,.12);color:#2e7d32}
 .dash-purchase-status.s-pending{background:rgba(246,152,32,.14);color:#b45309}
 .dash-purchase-status.s-failed{background:rgba(239,68,68,.1);color:#b91c1c}
-/* Empty */
 .dash-empty{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
 .dash-empty p{font-size:14px;color:var(--lr-text-50);margin:0}
 .dash-empty-cta{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#9c1458;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
 .dash-empty-cta:hover{text-decoration:underline}
-/* Quick links */
 .dash-quick-links{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .dash-quick-card{display:flex;flex-direction:column;gap:4px;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:18px 18px 16px;text-decoration:none;transition:border-color .15s,box-shadow .15s;position:relative}
 .dash-quick-card:hover{border-color:#E91E8C;box-shadow:0 0 0 3px rgba(233,30,140,.07)}
@@ -491,18 +564,19 @@ const CSS = `
 .dash-quick-arrow svg{width:16px;height:16px}
 .dash-quick-card:hover .dash-quick-arrow{color:#E91E8C}
 @media(max-width:700px){.dash-quick-links{grid-template-columns:repeat(2,1fr)}}
-
-/* ── Admin ── */
+/* Admin */
 .dash-admin-section{border-top:2px solid #111;padding-top:24px}
 .dash-admin-title{color:#1a1a1a !important;border-bottom-color:#1a1a1a !important}
 .dash-invite-btn{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:#111;border:none;cursor:pointer;font-family:inherit;padding:9px 18px;border-radius:100px}
 .dash-invite-btn:hover{background:#E91E8C}
 .dash-invite-form{background:#f5f5f5;border:1px solid var(--lr-border);border-radius:12px;padding:20px 22px;margin-bottom:20px}
-.dash-invite-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:14px}
+.dash-invite-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:10px}
 @media(max-width:700px){.dash-invite-row{grid-template-columns:1fr}}
 .dash-invite-label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-50);margin-bottom:6px}
+.dash-invite-hint{font-weight:600;text-transform:none;letter-spacing:0;color:var(--lr-text-30)}
 .dash-invite-input,.dash-invite-select{width:100%;padding:10px 12px;border:1px solid var(--lr-border);border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;background:#fff;color:#1a1a1a;box-sizing:border-box}
 .dash-invite-input:focus,.dash-invite-select:focus{outline:none;border-color:#E91E8C}
+.dash-invite-tier-note{font-size:12px;color:var(--lr-text-50);margin-bottom:14px;padding:8px 12px;background:#fff;border-radius:8px;border:1px solid var(--lr-border)}
 .dash-invite-actions{display:flex;align-items:center;gap:14px}
 .dash-invite-submit{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#fff;background:#111;border:none;cursor:pointer;font-family:inherit;padding:11px 24px;border-radius:100px;transition:background .15s}
 .dash-invite-submit:hover:not(:disabled){background:#E91E8C}
