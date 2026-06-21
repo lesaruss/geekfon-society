@@ -1,6 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
 import SiteChrome from "@/components/SiteChrome";
+
+const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
+const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 const AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
 
@@ -75,6 +79,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const [pulsePage, setPulsePage] = useState(0);
+  const [userTier, setUserTier] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const c = content || {};
   const name = c.name || "Artist";
@@ -85,8 +90,50 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   } as React.CSSProperties;
   const emph = (t: string) => t.replace(/\{\{(.+?)\}\}/g, '<em style="color:var(--rx-text);font-style:normal;font-weight:800">$1</em>');
 
+  // Fetch current user's membership tier
+  useEffect(() => {
+    if (!SUPA_ANON) return;
+    const sb = createClient(SUPA_URL, SUPA_ANON);
+    sb.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      sb.from("gfs_members").select("tier").eq("user_id", user.id).single()
+        .then(({ data }) => { if (data?.tier) setUserTier(data.tier); });
+    });
+  }, []);
+
   // Reset pulse page when switching tabs
   useEffect(() => { setPulsePage(0); }, [tab]);
+
+  // Visibility helpers
+  // public   - free for everyone
+  // preview  - 20s clip, playable by everyone (not yet released)
+  // passport - full for passport+; locked for visitors
+  // members  - full for promoter/pro; locked for passport & visitors
+  // locked   - admin only
+  const TIER_RANK: Record<string, number> = { passport: 1, promoter: 2, pro: 3 };
+  function trackLocked(v: string): boolean {
+    if (v === "public" || v === "preview") return false;
+    if (v === "passport") return !userTier;
+    if (v === "members")  return !userTier || (TIER_RANK[userTier] || 0) < 2;
+    return true; // locked / admin
+  }
+  function trackBadge(v: string): { label: string; cls: string } {
+    if (v === "public")   return { label: "Free",     cls: "vb-public" };
+    if (v === "preview")  return { label: "Preview",  cls: "vb-preview" };
+    if (v === "passport") return { label: "Passport", cls: "vb-passport" };
+    if (v === "members")  return { label: "Members",  cls: "vb-members" };
+    return                       { label: "Locked",   cls: "vb-locked" };
+  }
+  function trackPlayLabel(v: string, isPlaying: boolean): string {
+    if (isPlaying) return "Pause";
+    if (v === "preview") return "Play Preview";
+    return "Play";
+  }
+  function trackLockedLabel(v: string): string {
+    if (v === "passport") return "Passport members";
+    if (v === "members")  return "Members only";
+    return "Locked";
+  }
 
   function copy(e: React.MouseEvent<HTMLButtonElement>, text: string) {
     const b = e.currentTarget; const prev = b.textContent;
@@ -237,15 +284,17 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                         );
                       }
                       if (post.kind === "drop") {
-                        const { t, i } = post;
+                        const { t } = post;
                         const url = t.url ? AUDIO + t.url : null;
-                        const locked = t.v !== "public" || !url;
+                        const locked = trackLocked(t.v);
                         const isPlaying = !!url && playing === url;
+                        const badge = trackBadge(t.v);
                         return (
                           <div key={post.key} className="pf-post pf-drop">
                             <div className="pf-meta">
                               <span className="pf-type-badge pf-type-drop">Music Drop</span>
                               <span className="pf-date">{t.m}</span>
+                              <span className={"vis-badge " + badge.cls}>{badge.label}</span>
                             </div>
                             <div className="pf-drop-card">
                               <div className="pf-drop-art">
@@ -260,11 +309,18 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                                 <div className="pf-drop-era">{t.m}</div>
                                 <button
                                   className={"pf-drop-play" + (locked ? " locked" : "") + (isPlaying ? " on" : "")}
-                                  disabled={locked}
+                                  disabled={locked || (!url && !locked)}
                                   onClick={() => url && togglePlay(url)}
-                                  aria-label={locked ? "Members only" : isPlaying ? "Pause" : "Play"}
+                                  aria-label={locked ? trackLockedLabel(t.v) : isPlaying ? "Pause" : trackPlayLabel(t.v, false)}
                                 >
-                                  {locked ? <>{LOCK}<span>Members only</span></> : isPlaying ? <>{PAUSE}<span>Pause</span></> : <>{PLAY}<span>Play</span></>}
+                                  {locked
+                                    ? <>{LOCK}<span>{trackLockedLabel(t.v)}</span></>
+                                    : !url
+                                      ? <><span>Coming soon</span></>
+                                      : isPlaying
+                                        ? <>{PAUSE}<span>Pause</span></>
+                                        : <>{PLAY}<span>{trackPlayLabel(t.v, false)}</span></>
+                                  }
                                 </button>
                               </div>
                             </div>
@@ -336,15 +392,24 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                   <div className="panel-intro"><span>Full catalog. What plays adapts to the viewer&apos;s permissions.</span></div>
                   {(c.tracks || []).map((t, i) => {
                     const url = t.url ? AUDIO + t.url : null;
-                    const locked = t.v !== "public" || !url;
+                    const locked = trackLocked(t.v);
                     const isPlaying = !!url && playing === url;
+                    const badge = trackBadge(t.v);
                     return (
                       <div key={i} className="track">
-                        <button className={"tplay" + (locked ? " locked" : "") + (isPlaying ? " on" : "")} disabled={locked} aria-label={locked ? "Locked" : isPlaying ? "Pause" : "Play"} onClick={() => url && togglePlay(url)}>
+                        <button
+                          className={"tplay" + (locked ? " locked" : "") + (isPlaying ? " on" : "")}
+                          disabled={locked || (!url && !locked)}
+                          aria-label={locked ? trackLockedLabel(t.v) : isPlaying ? "Pause" : "Play"}
+                          onClick={() => url && togglePlay(url)}
+                        >
                           {locked ? LOCK : isPlaying ? PAUSE : PLAY}
                         </button>
-                        <div className="ti"><div className="tn">{t.n}</div><div className="tm">{t.m}</div></div>
-                        <span className={"vis " + t.v}>{t.v}</span>
+                        <div className="ti">
+                          <div className="tn">{t.n}</div>
+                          <div className="tm">{t.m}</div>
+                        </div>
+                        <span className={"vis-badge " + badge.cls}>{badge.label}</span>
                       </div>
                     );
                   })}
@@ -417,7 +482,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                     <>
                       <p className="bsec">Catalog &amp; Status</p>
                       <div className="card"><table className="cat"><thead><tr><th>Song</th><th>Era / Tier</th><th>Visibility</th></tr></thead>
-                      <tbody>{(c.tracks || []).map((t, i) => (<tr key={i}><td className="song">{t.n}</td><td>{t.m}</td><td><span className={"vis " + t.v}>{t.v}</span></td></tr>))}</tbody></table></div>
+                      <tbody>{(c.tracks || []).map((t, i) => { const b = trackBadge(t.v); return (<tr key={i}><td className="song">{t.n}</td><td>{t.m}</td><td><span className={"vis-badge " + b.cls}>{b.label}</span></td></tr>); })}</tbody></table></div>
                     </>
                   )}
                 </section>
@@ -533,8 +598,12 @@ const CSS = `
 .tplay.locked{background:var(--lr-bg);color:var(--lr-text-30);border:1px solid var(--lr-border);cursor:not-allowed}
 .tplay.locked svg{fill:none;width:15px;height:15px}
 .track .ti{flex:1}.track .tn{font-size:15px;font-weight:800}.track .tm{font-size:11px;color:var(--lr-text-50);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
-.vis{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;padding:3px 8px;border-radius:20px}
-.vis.public{background:rgba(76,175,80,.14);color:#2e7d32}.vis.members{background:rgba(246,152,32,.16);color:var(--lr-orange-text)}.vis.admin{background:var(--rx-tint);color:var(--rx-text)}
+.vis-badge{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.vb-public  {background:rgba(76,175,80,.14);color:#2e7d32}
+.vb-preview {background:rgba(246,152,32,.16);color:#b45309}
+.vb-passport{background:var(--rx-tint);color:var(--rx-text)}
+.vb-members {background:rgba(99,102,241,.13);color:#4338ca}
+.vb-locked  {background:rgba(0,0,0,.06);color:var(--lr-text-30)}
 .adminbar{display:flex;gap:10px;background:#111;color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:22px;font-size:12px}
 .adminbar .t{font-weight:800;text-transform:uppercase;letter-spacing:.08em}.adminbar .s{color:rgba(255,255,255,.7)}
 .bsec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:var(--rx-text);margin:26px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--lr-border)}
