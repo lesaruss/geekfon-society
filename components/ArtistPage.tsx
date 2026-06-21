@@ -333,9 +333,12 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                 {t.label}{t.admin && <span className="adminbadge">Admin</span>}
               </button>
             ))}
-            <select className="tab-select" value={tab} onChange={e => setTab(e.target.value)} aria-label="Select section">
-              {TABS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
-            </select>
+            <div className="tab-select-wrap">
+              <select className="tab-select" value={tab} onChange={e => setTab(e.target.value)} aria-label="Select section">
+                {TABS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+              </select>
+              <span className="tab-arrow" aria-hidden="true">▾</span>
+            </div>
           </div>
 
           {/* Two-column body: content + billboard */}
@@ -898,7 +901,8 @@ const CSS = `
 .card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:22px 24px;margin-bottom:14px}
 .card p{font-size:15px;color:var(--lr-text-75);line-height:1.75}
 /* Tab select — hidden on desktop, shown on mobile */
-.tab-select{display:none}
+.tab-select-wrap{display:none}
+@keyframes tab-arrow-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @media(max-width:900px){
   .body-layout{flex-direction:column;padding:0 16px}
   .body-main{padding-right:0}
@@ -911,13 +915,16 @@ const CSS = `
   .head-name{font-size:clamp(18px,5vw,32px)}
   .head-tagline{font-size:12px;line-height:1.5;margin-top:6px}
   .head-topbar{padding:14px 16px 16px}
-  /* Tabs: hide buttons, show select */
+  /* Tabs: hide buttons, show select wrapper */
   .tabbar{padding:0 12px;display:block}
   .tabbar .tab{display:none}
-  .tab-select{display:block;width:100%;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);background:#fff;border:none;border-bottom:2px solid var(--rx);padding:14px 0;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center}
+  .tab-select-wrap{display:block;position:relative;border-bottom:2px solid var(--rx)}
+  .tab-select{display:block;width:100%;font-family:inherit;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);background:transparent;border:none;padding:16px 40px 16px 0;cursor:pointer;appearance:none;-webkit-appearance:none;outline:none}
+  .tab-select:focus{outline:none;box-shadow:none}
+  .tab-arrow{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:22px;color:var(--rx-text);pointer-events:none;animation:tab-arrow-bounce 1.2s ease-in-out infinite;line-height:1}
   /* Billboard images full-width on mobile */
-  .bb-ad-img{width:100%;height:auto}
-  .bb-ad-img-sm{width:100%;height:auto}
+  .bb-ad-img{width:100%;height:auto;object-fit:cover}
+  .bb-ad-img-sm{width:100%;height:auto;object-fit:cover}
 }
 .article-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);text-decoration:none;margin-top:4px}
 .article-cta svg{width:14px;height:14px;transition:transform .15s}
