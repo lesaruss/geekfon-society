@@ -80,7 +80,12 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const [playing, setPlaying] = useState<string | null>(null);
   const [pulsePage, setPulsePage] = useState(0);
   const [userTier, setUserTier] = useState<string | null>(null);
+  const [audioProgress, setAudioProgress] = useState<Record<string, number>>({});
+  const [audioDuration, setAudioDuration] = useState<Record<string, number>>({});
+  const [playingV, setPlayingV] = useState<string | null>(null);
+  const [bbSlot, setBbSlot] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
   const name = c.name || "Artist";
   const vars = {
@@ -103,6 +108,39 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
 
   // Reset pulse page when switching tabs
   useEffect(() => { setPulsePage(0); }, [tab]);
+
+  // Billboard auto-rotate every 6s, pause on hover handled via CSS
+  useEffect(() => {
+    bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 3), 6000);
+    return () => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); };
+  }, []);
+
+  // Audio helpers
+  function fmtTime(s: number): string {
+    if (!s || isNaN(s)) return "0:00";
+    return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+  }
+  function onTimeUpdate() {
+    const a = audioRef.current;
+    if (!a || !playing) return;
+    if (playingV === "preview" && a.currentTime >= 20) {
+      a.pause(); a.currentTime = 0; setPlaying(null); setPlayingV(null); return;
+    }
+    setAudioProgress(prev => ({ ...prev, [playing]: a.currentTime }));
+  }
+  function onLoadedMetadata() {
+    const a = audioRef.current;
+    if (!a || !playing) return;
+    setAudioDuration(prev => ({ ...prev, [playing]: a.duration }));
+  }
+  function seekTo(e: React.MouseEvent<HTMLDivElement>, url: string) {
+    const a = audioRef.current;
+    if (!a || playing !== url) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const maxTime = playingV === "preview" ? 20 : (a.duration || 0);
+    a.currentTime = pct * maxTime;
+  }
 
   // Visibility helpers
   // public   - free for everyone
@@ -140,10 +178,13 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
     if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
     b.textContent = "Copied"; setTimeout(() => { b.textContent = prev; }, 1400);
   }
-  function togglePlay(url: string) {
+  function togglePlay(url: string, v?: string) {
     const a = audioRef.current; if (!a) return;
-    if (playing === url) { a.pause(); setPlaying(null); return; }
-    a.src = url; a.play().then(() => setPlaying(url)).catch(() => setPlaying(null));
+    if (playing === url) { a.pause(); setPlaying(null); setPlayingV(null); return; }
+    a.src = url;
+    a.play()
+      .then(() => { setPlaying(url); setPlayingV(v || null); })
+      .catch(() => { setPlaying(null); setPlayingV(null); });
   }
   const crumb = [
     { label: "GeekFon", href: "/" },
@@ -174,7 +215,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
     <SiteChrome>
       <div style={vars}>
         <style>{CSS}{cityBg ? CITY_CSS : ""}</style>
-        <audio ref={audioRef} onEnded={() => setPlaying(null)} />
+        <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
         <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
           {/* Black header - city bg is scoped inside here */}
@@ -313,6 +354,10 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                         const locked = trackLocked(t.v);
                         const isPlaying = !!url && playing === url;
                         const badge = trackBadge(t.v);
+                        const progress = url ? (audioProgress[url] || 0) : 0;
+                        const duration = url ? (audioDuration[url] || 0) : 0;
+                        const maxTime = t.v === "preview" ? 20 : duration;
+                        const pct = maxTime > 0 ? Math.min(100, (progress / maxTime) * 100) : 0;
                         return (
                           <div key={post.key} className="pf-post pf-drop">
                             <div className="pf-meta">
@@ -320,32 +365,49 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                               <span className="pf-date">{t.m}</span>
                               <span className={"vis-badge " + badge.cls}>{badge.label}</span>
                             </div>
-                            <div className="pf-drop-card">
-                              <div className="pf-drop-art">
-                                <svg viewBox="0 0 48 48" fill="none">
-                                  <circle cx="24" cy="24" r="14" stroke="var(--rx)" strokeWidth="2"/>
-                                  <circle cx="24" cy="24" r="5" fill="var(--rx)"/>
-                                  <path d="M24 10V6M24 42v-4M10 24H6M42 24h-4" stroke="var(--rx)" strokeWidth="2" strokeLinecap="round"/>
-                                </svg>
-                              </div>
+                            <div className={"pf-drop-card" + (locked ? " locked-card" : "")}>
+                              {/* Left: play button or lock */}
+                              {locked ? (
+                                <a href="/dashboard" className="pf-drop-lock-btn" aria-label="Unlock with Passport">
+                                  {LOCK}
+                                </a>
+                              ) : (
+                                <button
+                                  className={"pf-drop-play-btn" + (isPlaying ? " on" : "")}
+                                  disabled={!url}
+                                  onClick={() => url && togglePlay(url, t.v)}
+                                  aria-label={isPlaying ? "Pause" : "Play"}
+                                >
+                                  {isPlaying ? PAUSE : PLAY}
+                                </button>
+                              )}
+                              {/* Right: track info + scrubber */}
                               <div className="pf-drop-info">
                                 <div className="pf-drop-name">{t.n}</div>
-                                <div className="pf-drop-era">{t.m}</div>
-                                <button
-                                  className={"pf-drop-play" + (locked ? " locked" : "") + (isPlaying ? " on" : "")}
-                                  disabled={locked || (!url && !locked)}
-                                  onClick={() => url && togglePlay(url)}
-                                  aria-label={locked ? trackLockedLabel(t.v) : isPlaying ? "Pause" : trackPlayLabel(t.v, false)}
-                                >
-                                  {locked
-                                    ? <>{LOCK}<span>{trackLockedLabel(t.v)}</span></>
-                                    : !url
-                                      ? <><span>Coming soon</span></>
-                                      : isPlaying
-                                        ? <>{PAUSE}<span>Pause</span></>
-                                        : <>{PLAY}<span>{trackPlayLabel(t.v, false)}</span></>
-                                  }
-                                </button>
+                                {locked ? (
+                                  <a href="/dashboard" className="pf-drop-unlock-cta">
+                                    Get Passport to unlock
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                  </a>
+                                ) : (
+                                  <>
+                                    <div
+                                      className="pf-scrubber"
+                                      onClick={(e) => url && seekTo(e, url)}
+                                      role="slider"
+                                      aria-label="Seek"
+                                    >
+                                      <div className="pf-scrubber-track">
+                                        <div className="pf-scrubber-fill" style={{ width: `${pct}%` }} />
+                                        <div className="pf-scrubber-thumb" style={{ left: `${pct}%` }} />
+                                      </div>
+                                    </div>
+                                    <div className="pf-scrubber-times">
+                                      <span>{fmtTime(progress)}</span>
+                                      <span>{t.v === "preview" ? "0:20 Preview" : (maxTime > 0 ? fmtTime(maxTime) : "--:--")}</span>
+                                    </div>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -413,25 +475,42 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
 
               {tab === "music" && (
                 <section className="panel">
-                  <div className="panel-intro"><span>Full catalog. What plays adapts to the viewer&apos;s permissions.</span></div>
+                  <div className="panel-intro"><span>Full catalog. What plays adapts to your membership.</span></div>
                   {(c.tracks || []).map((t, i) => {
                     const url = t.url ? AUDIO + t.url : null;
                     const locked = trackLocked(t.v);
                     const isPlaying = !!url && playing === url;
                     const badge = trackBadge(t.v);
+                    const progress = url ? (audioProgress[url] || 0) : 0;
+                    const duration = url ? (audioDuration[url] || 0) : 0;
+                    const maxTime = t.v === "preview" ? 20 : duration;
+                    const pct = maxTime > 0 ? Math.min(100, (progress / maxTime) * 100) : 0;
                     return (
-                      <div key={i} className="track">
-                        <button
-                          className={"tplay" + (locked ? " locked" : "") + (isPlaying ? " on" : "")}
-                          disabled={locked || (!url && !locked)}
-                          aria-label={locked ? trackLockedLabel(t.v) : isPlaying ? "Pause" : "Play"}
-                          onClick={() => url && togglePlay(url)}
-                        >
-                          {locked ? LOCK : isPlaying ? PAUSE : PLAY}
-                        </button>
+                      <div key={i} className={"track" + (locked ? " track-locked" : "")}>
+                        {locked ? (
+                          <a href="/dashboard" className="tplay locked" aria-label="Unlock with Passport">{LOCK}</a>
+                        ) : (
+                          <button
+                            className={"tplay" + (isPlaying ? " on" : "")}
+                            disabled={!url}
+                            aria-label={isPlaying ? "Pause" : "Play"}
+                            onClick={() => url && togglePlay(url, t.v)}
+                          >
+                            {isPlaying ? PAUSE : PLAY}
+                          </button>
+                        )}
                         <div className="ti">
                           <div className="tn">{t.n}</div>
-                          <div className="tm">{t.m}</div>
+                          {!locked && (
+                            <div className="track-scrubber" onClick={(e) => url && seekTo(e, url)}>
+                              <div className="ts-track">
+                                <div className="ts-fill" style={{ width: `${pct}%` }} />
+                                <div className="ts-thumb" style={{ left: `${pct}%` }} />
+                              </div>
+                              <span className="ts-time">{isPlaying ? fmtTime(progress) : ""}{maxTime > 0 ? ` / ${t.v === "preview" ? "0:20" : fmtTime(maxTime)}` : ""}</span>
+                            </div>
+                          )}
+                          {locked && <div className="track-locked-msg"><a href="/dashboard">Get Passport to unlock</a></div>}
                         </div>
                         <span className={"vis-badge " + badge.cls}>{badge.label}</span>
                       </div>
@@ -514,29 +593,28 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
 
             </div>
 
-            {/* Billboard sidebar */}
-            <aside className="billboard">
+            {/* Billboard rotator sidebar */}
+            <aside className="billboard" onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }} onMouseLeave={() => { bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % 3), 6000); }}>
               <div className="bb-label">Billboard</div>
-              <div className="bb-slot bb-slot-primary">
-                <div className="bb-placeholder">
-                  <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                  <div className="bb-ph-text">Primary Ad</div>
-                  <div className="bb-ph-dim">300 x 250</div>
-                </div>
+              <div className="bb-rotator">
+                {[
+                  { label: "Primary Ad",  dim: "300 x 250", tall: false },
+                  { label: "Feature Ad",  dim: "300 x 250", tall: false },
+                  { label: "Skyscraper",  dim: "300 x 600", tall: true  },
+                ].map((ad, i) => (
+                  <div key={i} className={"bb-slide" + (bbSlot === i ? " active" : "") + (ad.tall ? " tall" : "")}>
+                    <div className="bb-placeholder">
+                      <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                      <div className="bb-ph-text">{ad.label}</div>
+                      <div className="bb-ph-dim">{ad.dim}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="bb-slot">
-                <div className="bb-placeholder">
-                  <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                  <div className="bb-ph-text">Feature Ad</div>
-                  <div className="bb-ph-dim">300 x 250</div>
-                </div>
-              </div>
-              <div className="bb-slot bb-slot-tall">
-                <div className="bb-placeholder">
-                  <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                  <div className="bb-ph-text">Skyscraper</div>
-                  <div className="bb-ph-dim">300 x 600</div>
-                </div>
+              <div className="bb-dots">
+                {[0, 1, 2].map(i => (
+                  <button key={i} className={"bb-dot" + (bbSlot === i ? " active" : "")} onClick={() => setBbSlot(i)} aria-label={`Ad ${i + 1}`} />
+                ))}
               </div>
               <div className="bb-tag">Powered by LESARUSS Advertising</div>
             </aside>
@@ -588,14 +666,20 @@ const CSS = `
 .panel{max-width:none}
 
 .billboard{width:300px;flex-shrink:0;position:sticky;top:120px;padding-top:30px;display:flex;flex-direction:column;gap:16px}
-.bb-label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;color:var(--lr-text-30);margin-bottom:4px}
-.bb-slot{width:100%}
+.bb-label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;color:var(--lr-text-30);margin-bottom:8px}
+/* Rotator */
+.bb-rotator{position:relative;width:100%}
+.bb-slide{display:none}
+.bb-slide.active{display:block}
 .bb-placeholder{border:1px dashed var(--lr-border);border-radius:10px;background:var(--lr-surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px 16px;color:var(--lr-text-30);min-height:250px}
-.bb-slot-tall .bb-placeholder{min-height:500px}
+.bb-slide.tall .bb-placeholder{min-height:500px}
 .bb-ph-icon svg{width:28px;height:28px;opacity:.4}
 .bb-ph-text{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-30)}
 .bb-ph-dim{font-size:10px;font-weight:600;color:var(--lr-text-30);opacity:.7}
-.bb-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-30);text-align:center;padding:8px 0}
+.bb-dots{display:flex;justify-content:center;gap:7px;padding:12px 0 4px}
+.bb-dot{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--lr-text-30);background:transparent;cursor:pointer;padding:0;transition:background .15s,border-color .15s}
+.bb-dot.active{background:var(--rx);border-color:var(--rx)}
+.bb-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-30);text-align:center;padding:4px 0 0}
 
 .rxp-lang{align-self:flex-start;font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--rx-text);border:1px solid var(--lr-border);background:#fff;border-radius:100px;padding:6px 13px;cursor:pointer}
 .rxp-lang:hover{border-color:var(--rx)}
@@ -680,17 +764,37 @@ const CSS = `
 .pf-bio-p{font-size:14px;color:var(--lr-text-75);line-height:1.75;margin-top:10px}
 .pf-bio-p:first-of-type{margin-top:0}
 /* Music drop */
-.pf-drop-card{display:flex;gap:16px;align-items:center;border:1px solid var(--lr-border);border-radius:10px;padding:14px 16px;background:var(--lr-bg)}
-.pf-drop-art{width:64px;height:64px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--rx-tint)}
-.pf-drop-art svg{width:36px;height:36px}
-.pf-drop-info{flex:1;display:flex;flex-direction:column;gap:4px}
-.pf-drop-name{font-size:16px;font-weight:900}
-.pf-drop-era{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-50)}
-.pf-drop-play{display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-family:inherit;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:7px 14px;border-radius:100px;border:none;cursor:pointer;background:var(--rx);color:#fff}
-.pf-drop-play svg{width:12px;height:12px;fill:currentColor}
-.pf-drop-play.locked{background:var(--lr-bg);color:var(--lr-text-50);border:1px solid var(--lr-border);cursor:not-allowed}
-.pf-drop-play.locked svg{fill:none;width:13px;height:13px;stroke:currentColor;stroke-width:2}
-.pf-drop-play.on{filter:brightness(.9)}
+.pf-drop-card{display:flex;gap:14px;align-items:center;border:1px solid var(--lr-border);border-radius:10px;padding:14px 16px;background:var(--lr-bg)}
+.pf-drop-card.locked-card{background:rgba(0,0,0,.02);border-style:dashed}
+.pf-drop-play-btn{width:44px;height:44px;border-radius:50%;border:none;background:var(--rx);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;transition:filter .15s}
+.pf-drop-play-btn svg{width:16px;height:16px;fill:currentColor}
+.pf-drop-play-btn.on{filter:brightness(.88)}
+.pf-drop-play-btn:disabled{background:var(--lr-border);cursor:not-allowed}
+.pf-drop-lock-btn{width:44px;height:44px;border-radius:50%;border:1.5px dashed var(--lr-text-30);background:transparent;color:var(--lr-text-30);display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;transition:border-color .15s,color .15s}
+.pf-drop-lock-btn:hover{border-color:var(--rx);color:var(--rx-text)}
+.pf-drop-lock-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+.pf-drop-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.pf-drop-name{font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-drop-unlock-cta{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-30);text-decoration:none;transition:color .15s}
+.pf-drop-unlock-cta:hover{color:var(--rx-text)}
+.pf-drop-unlock-cta svg{width:12px;height:12px;flex-shrink:0}
+/* Scrubber */
+.pf-scrubber{cursor:pointer;padding:4px 0}
+.pf-scrubber-track{position:relative;height:4px;background:var(--lr-border);border-radius:2px}
+.pf-scrubber-fill{position:absolute;left:0;top:0;height:100%;background:var(--rx);border-radius:2px;transition:width .1s linear}
+.pf-scrubber-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:var(--rx);box-shadow:0 0 0 2px #fff;transition:left .1s linear}
+.pf-scrubber-times{display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--lr-text-30);margin-top:3px;letter-spacing:.02em}
+/* Music tab scrubber */
+.track-scrubber{display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0}
+.ts-track{flex:1;position:relative;height:3px;background:var(--lr-border);border-radius:2px}
+.ts-fill{position:absolute;left:0;top:0;height:100%;background:var(--rx);border-radius:2px;transition:width .1s linear}
+.ts-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;background:var(--rx);box-shadow:0 0 0 2px #fff;transition:left .1s linear;opacity:0}
+.track:hover .ts-thumb{opacity:1}
+.ts-time{font-size:10px;font-weight:700;color:var(--lr-text-30);white-space:nowrap;min-width:60px;text-align:right}
+.track-locked .tplay{text-decoration:none}
+.track-locked-msg{font-size:11px;color:var(--lr-text-30)}
+.track-locked-msg a{color:var(--rx-text);text-decoration:none;font-weight:700}
+.track-locked-msg a:hover{text-decoration:underline}
 /* Article post */
 .pf-article-card{border:1px solid var(--lr-border);border-radius:10px;overflow:hidden;background:var(--lr-bg)}
 .pf-article-img{aspect-ratio:16/8;position:relative;overflow:hidden}
