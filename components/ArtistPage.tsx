@@ -26,7 +26,7 @@ export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
   heroUrl?: string; initial?: string; tagline?: string;
   crumb?: { label: string; href?: string }[]; pills?: Pill[];
-  message?: { ja?: string; en?: string; audio?: string };
+  message?: { ja?: string; en?: string; audio?: string; audioEn?: string; audioJa?: string };
   quote?: string; bio?: string[]; stats?: Stat[]; tracks?: Track[]; news?: News[];
   relationships?: Rel[]; identity?: Record<string, string>;
   brief?: Record<string, string>; universe?: Record<string, string>;
@@ -249,6 +249,9 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                   <div className="pulse-feed">
                     {pulseVisible.map((post) => {
                       if (post.kind === "voice") {
+                        const audioUrl = AUDIO + (lang === "ja" ? (msg.audioJa || msg.audioEn) : (msg.audioEn || msg.audioJa));
+                        const hasAudio = !!(msg.audioEn || msg.audioJa);
+                        const isPlayingVoice = hasAudio && playing === audioUrl;
                         return (
                           <div key={post.key} className="pf-post pf-voice">
                             <div className="pf-meta">
@@ -257,12 +260,33 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                             </div>
                             {c.heroUrl && <img className="pf-voice-img" src={c.heroUrl} alt="" />}
                             <div className="pf-voice-body">
-                              <div className="pf-wave">{Array.from({ length: 30 }).map((_, i) => (
-                                <span key={i} style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.9 + 1)) * 24) }} />
-                              ))}</div>
+                              {hasAudio && (
+                                <div className="pf-voice-player">
+                                  <button
+                                    className={"pf-voice-play" + (isPlayingVoice ? " on" : "")}
+                                    onClick={() => togglePlay(audioUrl)}
+                                    aria-label={isPlayingVoice ? "Pause" : "Play voice message"}
+                                  >
+                                    {isPlayingVoice ? PAUSE : PLAY}
+                                  </button>
+                                  <div className="pf-wave">
+                                    {Array.from({ length: 30 }).map((_, i) => (
+                                      <span key={i} className={isPlayingVoice ? "playing" : ""} style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.9 + 1)) * 24) }} />
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                               <p className="pf-caption">{lang === "ja" ? msg.ja : msg.en}</p>
                               {msg.en && msg.ja && (
-                                <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
+                                <button className="rxp-lang" onClick={() => {
+                                  const next = lang === "ja" ? "en" : "ja";
+                                  setLang(next);
+                                  // Switch audio track if playing
+                                  if (isPlayingVoice) {
+                                    const nextUrl = AUDIO + (next === "ja" ? (msg.audioJa || msg.audioEn) : (msg.audioEn || msg.audioJa));
+                                    if (nextUrl) togglePlay(nextUrl);
+                                  }
+                                }}>
                                   {lang === "ja" ? "EN English" : "JA Japanese"}
                                 </button>
                               )}
@@ -641,9 +665,15 @@ const CSS = `
 .pf-date{font-size:11px;font-weight:700;color:var(--lr-text-30);text-transform:uppercase;letter-spacing:.06em}
 /* Voice message */
 .pf-voice-img{width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-bottom:14px}
-.pf-voice-body{display:flex;flex-direction:column;gap:10px}
-.pf-wave{display:flex;align-items:center;gap:3px;height:36px}
-.pf-wave span{width:3px;border-radius:2px;background:rgba(233,30,140,.28);display:block}
+.pf-voice-body{display:flex;flex-direction:column;gap:12px}
+.pf-voice-player{display:flex;align-items:center;gap:12px;background:var(--lr-bg);border:1px solid var(--lr-border);border-radius:10px;padding:10px 14px}
+.pf-voice-play{width:38px;height:38px;border-radius:50%;border:none;background:var(--rx);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0}
+.pf-voice-play svg{width:14px;height:14px;fill:currentColor}
+.pf-voice-play.on{filter:brightness(.88)}
+.pf-wave{display:flex;align-items:center;gap:3px;height:36px;flex:1}
+.pf-wave span{width:3px;border-radius:2px;background:rgba(233,30,140,.28);display:block;transition:background .2s}
+.pf-wave span.playing{background:var(--rx);animation:pulse-bar .6s ease-in-out infinite alternate}
+@keyframes pulse-bar{from{opacity:.5}to{opacity:1}}
 .pf-caption{font-size:15px;line-height:1.7;color:var(--lr-text-75);font-style:italic}
 /* Bio post */
 .pf-quote{font-size:clamp(18px,2.4vw,22px);font-weight:900;color:var(--rx-text);line-height:1.3;margin:0 0 14px;border-left:3px solid var(--rx);padding-left:16px;font-style:italic}
