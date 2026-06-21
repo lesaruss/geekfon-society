@@ -34,6 +34,9 @@ export type ArtistContent = {
   visual?: { visualIdentity?: string; houseStyle?: string; imagePrompt?: string; imagePromptNote?: string };
   songAudits?: Audit[];
   pulse?: PulsePost[];
+  skyscraperUrl?: string; skyscraperLink?: string;
+  primaryAdUrl?: string; primaryAdLink?: string;
+  featureAdUrl?: string; featureAdLink?: string;
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
