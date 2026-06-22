@@ -90,6 +90,9 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const [bbSlot, setBbSlot] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [tabDropOpen, setTabDropOpen] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [viewAs, setViewAs] = useState<"real" | "visitor" | "passport" | "plus" | "pro">("real");
+  const [viewDropOpen, setViewDropOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -101,12 +104,21 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   } as React.CSSProperties;
   const emph = (t: string) => t.replace(/\{\{(.+?)\}\}/g, '<em style="color:var(--rx-text);font-style:normal;font-weight:800">$1</em>');
 
-  // Fetch current user's membership tier
+  // Super admin view-as override: maps the selected preview tier to an actual tier value
+  const effectiveTier: string | null = isSuperAdmin && viewAs !== "real"
+    ? viewAs === "visitor" ? null
+    : viewAs === "passport" ? "passport"
+    : viewAs === "plus" ? "promoter"
+    : "pro"
+    : userTier;
+
+  // Fetch current user's membership tier + super admin check
   useEffect(() => {
     if (!SUPA_ANON) return;
     const sb = createClient(SUPA_URL, SUPA_ANON);
     sb.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
+      if (user.email === "contact@lesaruss.com") setIsSuperAdmin(true);
       sb.from("gfs_members").select("tier").eq("user_id", user.id).single()
         .then(({ data }) => { if (data?.tier) setUserTier(data.tier); });
     });
@@ -191,15 +203,15 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const TIER_RANK: Record<string, number> = { passport: 1, promoter: 2, pro: 3 };
   function trackLocked(v: string): boolean {
     if (v === "public" || v === "preview") return false;
-    if (v === "passport") return !userTier;
-    if (v === "members")  return !userTier || (TIER_RANK[userTier] || 0) < 2;
+    if (v === "passport") return !effectiveTier;
+    if (v === "members")  return !effectiveTier || (TIER_RANK[effectiveTier] || 0) < 2;
     return true; // locked / admin
   }
   function trackBadge(v: string): { label: string; cls: string } {
     if (v === "public")   return { label: "Public",   cls: "vb-public" };
     if (v === "preview")  return { label: "Preview",  cls: "vb-preview" };
     if (v === "passport") return { label: "Passport", cls: "vb-passport" };
-    if (v === "members")  return { label: "Members",  cls: "vb-members" };
+    if (v === "members")  return { label: "Plus",     cls: "vb-members" };
     return                       { label: "Locked",   cls: "vb-locked" };
   }
   function trackPlayLabel(v: string, isPlaying: boolean): string {
@@ -223,8 +235,8 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   // Which tracks are visible in the schedule for the current user
   function scheduleVisible(v: string): boolean {
     if (v === "public" || v === "preview") return true;
-    if (v === "passport") return !!userTier;
-    if (v === "members") return !!userTier && (TIER_RANK[userTier] || 0) >= 2;
+    if (v === "passport") return !!effectiveTier;
+    if (v === "members") return !!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 2;
     return false;
   }
 
@@ -293,6 +305,25 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                   </span>
                 ))}
               </nav>
+              {isSuperAdmin && (
+                <div className="va-wrap">
+                  <button className="va-btn" onClick={() => setViewDropOpen(o => !o)}>
+                    <span className="va-dot" />
+                    <span>{viewAs === "real" ? "My View" : viewAs === "visitor" ? "Visitor" : viewAs === "passport" ? "Passport" : viewAs === "plus" ? "Plus" : "Pro"}</span>
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth={2.5} style={{transform: viewDropOpen ? "rotate(180deg)" : "none", transition:"transform .15s"}}><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  {viewDropOpen && (
+                    <div className="va-menu">
+                      {(["real","visitor","passport","plus","pro"] as const).map(v => (
+                        <button key={v} className={"va-item" + (viewAs === v ? " active" : "")}
+                          onClick={() => { setViewAs(v); setViewDropOpen(false); }}>
+                          {v === "real" ? "My View" : v.charAt(0).toUpperCase() + v.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Artist hero + meta */}
@@ -314,7 +345,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
 
           {/* Tab bar */}
           {(() => {
-            const canSeeBrief = !!userTier && (TIER_RANK[userTier] || 0) >= 2;
+            const canSeeBrief = isSuperAdmin || (!!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 2);
             const visibleTabs = TABS.filter(t => !t.admin || canSeeBrief);
             const currentLabel = visibleTabs.find(t => t.key === tab)?.label || visibleTabs[0]?.label || "Music";
             if (isMobile) {
@@ -811,6 +842,16 @@ const CSS = `
   border-bottom:1px solid rgba(255,255,255,.07);
   margin-bottom:28px;
 }
+/* Super admin view-as pill */
+.va-wrap{margin-left:auto;position:relative}
+.va-btn{display:flex;align-items:center;gap:7px;font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:100px;padding:5px 12px 5px 10px;cursor:pointer;white-space:nowrap}
+.va-btn:hover{background:rgba(255,255,255,.14)}
+.va-dot{width:7px;height:7px;border-radius:50%;background:var(--rx);flex-shrink:0}
+.va-menu{position:absolute;top:calc(100% + 6px);right:0;background:#1a1a1a;border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;min-width:130px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.va-item{display:block;width:100%;padding:10px 16px;font-family:inherit;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.65);background:none;border:none;cursor:pointer;text-align:left;border-top:1px solid rgba(255,255,255,.06)}
+.va-item:first-child{border-top:none}
+.va-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.va-item.active{color:var(--rx);background:rgba(233,30,140,.08)}
 .head-crumb{display:flex;align-items:center;gap:8px}
 .head-crumb-item{display:flex;align-items:center;gap:8px}
 .head-crumb a{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);text-decoration:none;letter-spacing:.01em}
