@@ -486,12 +486,20 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                       )}
                     </div>
                     <div className="ov-bio">
-                      {c.quote && <blockquote className="ov-quote">{"\u201c" + c.quote + "\u201d"}</blockquote>}
                       {(c.bio || []).slice(0, 2).map((p, i) => (
                         <p key={i} className="ov-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
                       ))}
                     </div>
                   </div>
+
+                  {/* Pull quote - between intro and news */}
+                  {c.quote && (
+                    <div className="ov-pull-quote">
+                      <span className="ov-pull-mark open">{"\u201c"}</span>
+                      <p className="ov-pull-text">{c.quote}</p>
+                      <span className="ov-pull-mark close">{"\u201d"}</span>
+                    </div>
+                  )}
 
                   {/* News & Updates section */}
                   <div className="ov-news-head">News &amp; Updates</div>
@@ -888,8 +896,12 @@ const CSS = `
 .ov-video-el{width:100%;height:100%;display:block;object-fit:cover}
 .ov-video-ph{width:100%;height:100%;min-height:200px;background:var(--lr-surface);border:1px dashed var(--lr-border);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--lr-text-30);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
 .ov-bio{padding-top:4px}
-.ov-quote{font-size:19px;font-weight:800;line-height:1.4;color:var(--lr-text);margin:0 0 16px;font-style:italic;letter-spacing:-.01em}
 .ov-bio-p{font-size:15px;color:var(--lr-text-75);line-height:1.75;margin-bottom:12px}
+.ov-pull-quote{position:relative;margin:8px 0 40px;padding:36px 48px;background:var(--lr-surface);border-left:4px solid var(--lr-accent,#a78bfa);border-radius:4px}
+.ov-pull-mark{display:block;font-size:72px;line-height:1;font-weight:900;color:var(--lr-accent,#a78bfa);opacity:.35;font-style:normal;user-select:none}
+.ov-pull-mark.open{margin-bottom:-12px}
+.ov-pull-mark.close{text-align:right;margin-top:-12px}
+.ov-pull-text{font-size:22px;font-weight:700;line-height:1.55;color:var(--lr-text);font-style:italic;letter-spacing:-.015em;margin:0;text-align:center}
 .ov-news-head{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;color:var(--lr-text-50);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--lr-border)}
 @media(max-width:900px){.ov-intro{grid-template-columns:1fr}}
 .tabbar-drop-item{display:block;width:100%;padding:13px 22px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text-75);background:none;border:none;border-top:1px solid var(--lr-border);cursor:pointer;text-align:left}
