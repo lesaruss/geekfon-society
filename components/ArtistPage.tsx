@@ -859,9 +859,10 @@ const CSS = `
 .head-crumb .cur{font-size:13px;font-weight:800;color:var(--rx);letter-spacing:.01em}
 .head-crumb .sep{color:rgba(255,255,255,.22);font-size:13px;font-weight:400}
 
-.head-grid{display:flex;gap:32px;align-items:flex-start;padding:0 40px}
-.head-art,.head-art-fallback{width:clamp(280px,34vw,460px);aspect-ratio:1;border-radius:20px;border:2px solid var(--rx);object-fit:cover;object-position:top;background:var(--rx);display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:#fff;flex-shrink:0}
-.head-meta{flex:1;min-width:0;padding-top:6px}
+.head-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0;align-items:stretch}
+.head-art{width:100%;height:100%;min-height:460px;object-fit:cover;object-position:top center;border-radius:0;border:none;display:block;flex-shrink:0}
+.head-art-fallback{width:100%;height:100%;min-height:460px;border-radius:0;border:none;background:var(--rx);display:flex;align-items:center;justify-content:center;font-size:120px;font-weight:900;color:#fff}
+.head-meta{min-width:0;padding:40px}
 .head-name{font-size:clamp(36px,6vw,60px);font-weight:900;letter-spacing:-.02em;text-transform:uppercase;line-height:.98}
 .head-tagline{font-size:17px;color:rgba(255,255,255,.85);margin-top:14px;max-width:680px;line-height:1.55}
 .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
@@ -905,17 +906,19 @@ const CSS = `
   .body-main{padding-right:0}
   .billboard{width:100%;position:static;padding-top:0}
   .bb-slot-tall{display:none}
-  .head-grid{flex-direction:row;align-items:flex-start;gap:16px;padding:0 16px}
-  .head-art,.head-art-fallback{width:100px;height:100px;border-radius:12px;font-size:36px;flex-shrink:0}
+  .head-grid{display:flex;flex-direction:row;align-items:flex-start;gap:16px;padding:0 16px}
+  .head-art{width:100px;height:100px;min-height:unset;border-radius:12px;border:2px solid var(--rx);flex-shrink:0;object-position:top center}
+  .head-art-fallback{width:100px;height:100px;min-height:unset;border-radius:12px;border:2px solid var(--rx);font-size:36px;flex-shrink:0}
+  .head-meta{padding:0}
   .head-name{font-size:clamp(18px,5vw,28px)}
   .head-tagline{font-size:13px;margin-top:6px}
   .pill-row{margin-top:10px}
   .head-topbar{padding:14px 16px 16px}
   .tabbar{padding:0 16px}
 }
-.tabbar-mobile{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);padding:0 16px;position:relative}
+.tabbar-mobile{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:2px solid var(--rx);padding:0 16px}
 .tabbar-drop-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 0;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text);background:none;border:none;cursor:pointer}
-.tabbar-drop-menu{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--lr-border);z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.09)}
+.tabbar-drop-menu{position:absolute;left:-16px;right:-16px;top:100%;background:#fff;border-bottom:1px solid var(--lr-border);z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.09);margin-top:0}
 .tabbar-drop-item{display:block;width:100%;padding:13px 16px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text-75);background:none;border:none;border-top:1px solid var(--lr-border);cursor:pointer;text-align:left}
 .tabbar-drop-item.active{color:var(--rx);font-weight:900;background:var(--rx-tint)}
 .tabbar-drop-item:hover:not(.active){background:var(--lr-bg)}
