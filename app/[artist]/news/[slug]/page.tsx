@@ -42,7 +42,7 @@ const ARTICLE_CSS = `
 `;
 
 export default function ArticleDetailPage() {
-  const params = useParams();
+  const params = useParams()!;
   const artist = params.artist as string;
   const slug   = params.slug   as string;
 
