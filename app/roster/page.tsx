@@ -219,16 +219,6 @@ export default function RosterPage() {
                   </a>
                 );
               })}
-
-              {/* Teaser card - mobile only 4th slot */}
-              <div className="r-card r-card-teaser" aria-label="More artists coming">
-                <div className="r-teaser-inner">
-                  <div className="r-teaser-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 8v4M12 16h.01" />
-                    </svg>
-                  </div>
                   <span className="r-teaser-label">More artists coming</span>
                   <span className="r-teaser-sub">Check back for announcements</span>
                 </div>
@@ -354,9 +344,6 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
   gap:14px;
 }
 
-/* Hide teaser card on desktop */
-.r-card-teaser { display:none; }
-
 /* ---- Artist card ---- */
 .r-card {
   display:block; text-decoration:none; border-radius:10px; overflow:hidden;
@@ -406,29 +393,6 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 
-/* ---- Teaser card ---- */
-.r-card-teaser {
-  border:1px dashed rgba(255,255,255,.15);
-  background:rgba(255,255,255,.03);
-  cursor:default;
-  aspect-ratio:3/4;
-}
-.r-card-teaser:hover { transform:none; box-shadow:none; }
-.r-teaser-inner {
-  width:100%; height:100%; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:10px; padding:16px;
-}
-.r-teaser-icon { width:28px; height:28px; color:rgba(255,255,255,.25); }
-.r-teaser-icon svg { width:100%; height:100%; }
-.r-teaser-label {
-  font-size:10px; font-weight:800; color:rgba(255,255,255,.35);
-  text-transform:uppercase; letter-spacing:.12em; text-align:center; line-height:1.4;
-}
-.r-teaser-sub {
-  font-size:9px; font-weight:600; color:rgba(255,255,255,.2);
-  text-transform:uppercase; letter-spacing:.1em; text-align:center; line-height:1.4;
-}
-
 /* ---- Loading state ---- */
 .r-loading {
   display:flex; flex-direction:column; align-items:center; gap:16px;
@@ -445,7 +409,6 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 @media(max-width:768px) {
   /* Mobile: 2x2 grid - 3 artist cards + 1 teaser */
   .r-grid { grid-template-columns: repeat(2, 1fr); gap:10px; }
-  .r-card-teaser { display:block; }
   .r-page { padding:32px 16px 80px; }
   .r-city-stage { height:100vh; }
   .r-city-stage::before { height:30%; }
