@@ -695,7 +695,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                 </section>
               )}
 
-            </></> )}
+            </> )}
 
             </div>
 
