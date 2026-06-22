@@ -1,125 +1,57 @@
 import { notFound } from "next/navigation";
-import SiteChrome from "@/components/SiteChrome";
+import ArtistPage from "@/components/ArtistPage";
+import type { ArtistContent } from "@/components/ArtistPage";
 
-type NewsItem = {
-  slug?: string;
-  tag?: string;
-  date?: string;
-  title?: string;
-  blurb?: string;
-  content?: string;
-  href?: string;
-  thumb?: string;
+const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
+
+const ARTIST_CITY: Record<string, { desktop: string; mobile: string }> = {
+  "roxanne":             { desktop: CDN + "hf_20260619_061254_7c730145-acef-4518-a816-64c5846ffb1b.png", mobile: CDN + "hf_20260619_062028_83b5584e-2bc2-4879-ac28-ec59b79962f8.png" },
+  "riku-hayasaka":       { desktop: CDN + "hf_20260619_061254_7c730145-acef-4518-a816-64c5846ffb1b.png", mobile: CDN + "hf_20260619_062028_83b5584e-2bc2-4879-ac28-ec59b79962f8.png" },
+  "rustblood-prophets":  { desktop: CDN + "hf_20260619_061452_342ffc31-9332-438d-b032-c581bbfc5205.png", mobile: CDN + "hf_20260619_062309_26ba4c35-6221-47ff-844e-a8cab948cdab.png" },
+  "lex-from-brixton":    { desktop: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", mobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png" },
+  "lickle-sis":          { desktop: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", mobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png" },
+  "lickle-bro":          { desktop: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", mobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png" },
+  "shamanic-resin":      { desktop: CDN + "hf_20260619_061116_c00ea5ca-cad0-4b95-b593-c9d5d4a7f654.png", mobile: CDN + "hf_20260619_062102_df16b724-a594-440e-a35d-3a96406fabf7.png" },
+  "straight-and-narrow": { desktop: CDN + "hf_20260619_061001_82fbd428-6543-4a12-ba50-fe80d6255515.png", mobile: CDN + "hf_20260619_061949_d919c8f7-448a-48c4-aa18-a5487e4ae4a0.png" },
+  "nilo-wave":           { desktop: CDN + "hf_20260619_125302_4c4f6747-3bcb-45b2-a743-610912078942.png", mobile: CDN + "hf_20260619_125452_ad933e6f-0b03-43a4-b111-341e76b9efd9.jpeg" },
+  "lord-zorlot":         { desktop: CDN + "hf_20260620_234313_10dea700-d199-4e4a-bc73-0b276a46d266.png", mobile: CDN + "hf_20260620_234318_0c97a0f3-1396-4f24-9de7-327ccec5d0bf.png" },
 };
 
-const ARTICLE_CSS = `
-.art-page{max-width:720px;margin:0 auto;padding:0 20px 80px}
-.art-hero{width:100%;border-radius:16px;overflow:hidden;margin-bottom:32px;aspect-ratio:16/9;background:var(--lr-surface)}
-.art-hero img{width:100%;height:100%;object-fit:cover;display:block}
-.art-meta{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-.art-tag{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;background:var(--rx,#c084fc);color:#fff;padding:4px 10px;border-radius:99px}
-.art-date{font-size:12px;font-weight:600;color:var(--lr-text-30);letter-spacing:.04em}
-.art-title{font-size:clamp(22px,4vw,36px);font-weight:900;line-height:1.2;letter-spacing:-.01em;color:var(--lr-text);margin-bottom:28px}
-.art-body{font-size:16px;line-height:1.75;color:var(--lr-text-70)}
-.art-body p{margin:0 0 20px}
-.art-body p:last-child{margin-bottom:0}
-.art-body .art-quote{font-style:italic;font-size:18px;line-height:1.6;color:var(--lr-text);border-left:3px solid var(--rx,#c084fc);padding-left:20px;margin:28px 0}
-.art-back{display:inline-flex;align-items:center;gap:8px;margin-top:48px;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rx,#c084fc);text-decoration:none;transition:opacity .15s}
-.art-back:hover{opacity:.7}
-.art-back svg{width:16px;height:16px}
-@media(max-width:600px){.art-page{padding:0 16px 60px}.art-title{font-size:22px}}
-`;
-
-async function getArticle(artistSlug: string, newsSlug: string) {
+async function getArtistAndArticle(artistSlug: string, newsSlug: string) {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
   if (!url || !key) return null;
 
   const res = await fetch(
     `${url}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(artistSlug)}&select=profile&limit=1`,
-    {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-      next: { revalidate: 300 },
-    }
+    { headers: { apikey: key, Authorization: `Bearer ${key}` }, next: { revalidate: 300 } }
   );
   if (!res.ok) return null;
   const rows = await res.json();
   if (!rows?.length) return null;
 
-  const profile = rows[0].profile || {};
-  const news: NewsItem[] = profile.news || [];
+  const profile: ArtistContent = rows[0].profile || {};
+  const news = (profile.news || []) as Array<{ slug?: string; [k: string]: unknown }>;
   const article = news.find((n) => n.slug === newsSlug);
   if (!article) return null;
 
-  return {
-    article,
-    artistName: (profile.name as string) || artistSlug,
-    accent: (profile.accent as string) || "#c084fc",
-  };
+  return { content: profile, article };
 }
 
 type Props = { params: Promise<{ artist: string; slug: string }> };
 
 export default async function ArticleDetailPage({ params }: Props) {
   const { artist, slug } = await params;
-  const result = await getArticle(artist, slug);
+  const result = await getArtistAndArticle(artist, slug);
   if (!result) return notFound();
 
-  const { article, artistName, accent } = result;
-
-  const crumb = [
-    { label: "GeekFon Society", href: "/" },
-    { label: artistName, href: `/${artist}` },
-    { label: article.title || "Article" },
-  ];
-
-  const paragraphs = (article.content || "").split(/\n\n+/).filter(Boolean);
+  const cityBg = ARTIST_CITY[artist] ?? null;
 
   return (
-    <SiteChrome crumb={crumb}>
-      <style>{ARTICLE_CSS}</style>
-      <style>{`:root{--rx:${accent}}`}</style>
-      <div className="art-page">
-        {article.thumb && (
-          <div className="art-hero">
-            <img src={article.thumb} alt={article.title || ""} />
-          </div>
-        )}
-
-        <div className="art-meta">
-          {article.tag  && <span className="art-tag">{article.tag}</span>}
-          {article.date && <span className="art-date">{article.date}</span>}
-        </div>
-
-        {article.title && <h1 className="art-title">{article.title}</h1>}
-
-        <div className="art-body">
-          {paragraphs.map((block, i) => {
-            const t = block.trim();
-            if (t.startsWith('"') && t.endsWith('"')) {
-              return <p key={i} className="art-quote">{t}</p>;
-            }
-            const lines = t.split("\n").filter(Boolean);
-            return (
-              <p key={i}>
-                {lines.map((line, j) => (
-                  <span key={j}>
-                    {line}
-                    {j < lines.length - 1 ? <br /> : null}
-                  </span>
-                ))}
-              </p>
-            );
-          })}
-        </div>
-
-        <a href={`/${artist}`} className="art-back">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M11 6l-6 6 6 6" />
-          </svg>
-          Back to {artistName}
-        </a>
-      </div>
-    </SiteChrome>
+    <ArtistPage
+      content={result.content}
+      cityBg={cityBg}
+      activeArticle={result.article as Parameters<typeof ArtistPage>[0]["activeArticle"]}
+    />
   );
 }
