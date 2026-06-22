@@ -12,7 +12,7 @@ type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: str
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
-type News = { tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string };
+type News = { slug?: string; tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string; content?: string };
 type Audit = { title: string; status?: string; pillar?: string; theme?: string; emotion?: string; scores?: Record<string, number> };
 type PulsePost = {
   type: 'voice_message' | 'music_drop' | 'article';
@@ -466,13 +466,13 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                   <div className="pulse-articles-grid">
                     {pulseArticles.map((n, i) => (
                       <div key={i} className="pulse-article-card">
-                        <div className="pf-article-img">
+                        <a href={n.href || "#"} className="pf-article-img">
                           {n.thumb
                             ? <img src={n.thumb} alt={n.title || ""} />
                             : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
                           }
                           {n.tag && <span className="article-tag">{n.tag}</span>}
-                        </div>
+                        </a>
                         <div className="pf-article-body">
                           {n.date && <div className="pf-article-date">{n.date}</div>}
                           {n.title && <div className="pf-article-title">{n.title}</div>}
