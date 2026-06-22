@@ -81,7 +81,7 @@ const PLACEHOLDER_NEWS: News[] = [
   },
 ];
 
-export default function ArtistPage({ content, cityBg }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null }) {
+export default function ArtistPage({ content, cityBg, activeArticle }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null; activeArticle?: News }) {
   const [tab, setTab] = useState("news");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
@@ -385,7 +385,39 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
           <div className="body-layout">
             <div className="body-main">
 
-              {/* Pulse tab - social feed */}
+              {/* Article detail view — rendered when activeArticle is passed */}
+              {activeArticle ? (
+                <div className="art-view">
+                  <nav className="art-crumb">
+                    <a href="/" className="art-crumb-link">GeekFon Society</a>
+                    <span className="art-crumb-sep">›</span>
+                    <a href={`/${typeof window !== "undefined" ? window.location.pathname.split("/")[1] : ""}`} className="art-crumb-link">{c.name || ""}</a>
+                    <span className="art-crumb-sep">›</span>
+                    <span className="art-crumb-cur">{activeArticle.title}</span>
+                  </nav>
+                  {activeArticle.thumb && (
+                    <div className="art-hero"><img src={activeArticle.thumb} alt={activeArticle.title || ""} /></div>
+                  )}
+                  <div className="art-meta">
+                    {activeArticle.tag  && <span className="art-tag">{activeArticle.tag}</span>}
+                    {activeArticle.date && <span className="art-date">{activeArticle.date}</span>}
+                  </div>
+                  {activeArticle.title && <h1 className="art-title">{activeArticle.title}</h1>}
+                  <div className="art-body">
+                    {(activeArticle.content || "").split(/\n\n+/).filter(Boolean).map((block: string, i: number) => {
+                      const t = block.trim();
+                      if (t.startsWith('"') && t.endsWith('"')) return <p key={i} className="art-quote">{t}</p>;
+                      const lines = t.split("\n").filter(Boolean);
+                      return <p key={i}>{lines.map((line: string, j: number) => <span key={j}>{line}{j < lines.length - 1 ? <br /> : null}</span>)}</p>;
+                    })}
+                  </div>
+                  <a href={typeof window !== "undefined" ? "/" + window.location.pathname.split("/")[1] : "/"} className="art-back">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16}}><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+                    Back to {c.name || "Artist"}
+                  </a>
+                </div>
+              ) : (
+              <>{/* Pulse tab - social feed */}
               {tab === "pulse" && (
                 <section className="panel">
                   {(!c.pulse || c.pulse.length === 0) ? (
@@ -662,6 +694,8 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                   )}
                 </section>
               )}
+
+            </></> )}
 
             </div>
 
@@ -1127,4 +1161,19 @@ const CITY_CSS = `
 .sch-season-block { margin-bottom:36px; }
 .sch-season-block:last-child { margin-bottom:0; }
 .sch-season-heading { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.18em; color:var(--lr-text-50); padding-bottom:14px; border-bottom:2px solid var(--lr-border); margin-bottom:4px; }
+
+/* Article detail view inside body-main */
+.art-view{padding:0 0 40px}
+.art-crumb{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--lr-text-30);padding-bottom:24px;flex-wrap:wrap}
+.art-crumb-link{color:var(--lr-text-30);text-decoration:none;transition:color .15s}.art-crumb-link:hover{color:var(--lr-text)}
+.art-crumb-sep{opacity:.4}
+.art-crumb-cur{color:var(--lr-text-50)}
+.art-hero{width:100%;border-radius:14px;overflow:hidden;margin-bottom:28px;aspect-ratio:16/9;background:var(--lr-surface)}.art-hero img{width:100%;height:100%;object-fit:cover;display:block}
+.art-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.art-tag{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;background:var(--rx,#c084fc);color:#fff;padding:3px 10px;border-radius:99px}
+.art-date{font-size:12px;font-weight:600;color:var(--lr-text-30)}
+.art-title{font-size:clamp(20px,3.5vw,32px);font-weight:900;line-height:1.2;color:var(--lr-text);margin-bottom:24px}
+.art-body{font-size:15px;line-height:1.8;color:var(--lr-text-70)}.art-body p{margin:0 0 18px}.art-body p:last-child{margin-bottom:0}
+.art-body .art-quote{font-style:italic;font-size:17px;line-height:1.6;color:var(--lr-text);border-left:3px solid var(--rx,#c084fc);padding-left:18px;margin:24px 0}
+.art-back{display:inline-flex;align-items:center;gap:8px;margin-top:40px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rx,#c084fc);text-decoration:none;transition:opacity .15s}.art-back:hover{opacity:.7}
 `;
