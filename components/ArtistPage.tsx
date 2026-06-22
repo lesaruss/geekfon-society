@@ -195,7 +195,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
     return true; // locked / admin
   }
   function trackBadge(v: string): { label: string; cls: string } {
-    if (v === "public")   return { label: "Free",     cls: "vb-public" };
+    if (v === "public")   return { label: "Public",   cls: "vb-public" };
     if (v === "preview")  return { label: "Preview",  cls: "vb-preview" };
     if (v === "passport") return { label: "Passport", cls: "vb-passport" };
     if (v === "members")  return { label: "Members",  cls: "vb-members" };
@@ -213,11 +213,18 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   }
   // Schedule tab: maps visibility to user-facing tier label + style
   function scheduleTier(v: string): { label: string; cls: string } {
-    if (v === "public")   return { label: "Free",     cls: "st-free" };
+    if (v === "public")   return { label: "Public",   cls: "st-free" };
     if (v === "preview")  return { label: "Preview",  cls: "st-preview" };
     if (v === "passport" || v === "locked") return { label: "Passport", cls: "st-passport" };
     if (v === "members")  return { label: "Plus",     cls: "st-plus" };
     return                       { label: "Pro",      cls: "st-pro" };
+  }
+  // Which tracks are visible in the schedule for the current user
+  function scheduleVisible(v: string): boolean {
+    if (v === "public" || v === "preview") return true;
+    if (v === "passport") return !!userTier;
+    if (v === "members") return !!userTier && (TIER_RANK[userTier] || 0) >= 2;
+    return false;
   }
 
   function copy(e: React.MouseEvent<HTMLButtonElement>, text: string) {
@@ -543,59 +550,59 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
 
               {tab === "media" && (<section className="panel"><p className="empty-note">Media gallery renders here (wire to storage on rollout).</p></section>)}
 
-              {tab === "schedule" && (
-                <section className="panel">
-                  <div className="sch-header">
-                    <div className="sch-season-label">Season 1 &middot; Jul &ndash; Sep 2026</div>
-                    <div className="sch-tier-legend">
-                      {[
-                        { cls: "st-free",    l: "Free" },
-                        { cls: "st-preview", l: "Preview" },
-                        { cls: "st-passport",l: "Passport" },
-                        { cls: "st-plus",    l: "Plus" },
-                        { cls: "st-pro",     l: "Pro" },
-                      ].map(t => (
-                        <span key={t.l} className={"sch-tier-pill " + t.cls}>{t.l}</span>
-                      ))}
+              {tab === "schedule" && (() => {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const sorted = [...(c.tracks || [])]
+                  .filter(t => scheduleVisible(t.v))
+                  .sort((a, b) => {
+                    const toMs = (s?: string) => s ? new Date(s).getTime() : Infinity;
+                    return toMs(a.scheduledFor) - toMs(b.scheduledFor);
+                  });
+                const seasons = Array.from(new Set(sorted.map(t => t.m || "Season 1")));
+                function renderRow(t: Track, i: number) {
+                  const tier = scheduleTier(t.v);
+                  const releaseDate = t.scheduledFor ? new Date(t.scheduledFor) : null;
+                  const isReleased = releaseDate ? releaseDate <= today : false;
+                  const isAvailable = t.v === "public" || (t.v === "preview" && !!t.url && isReleased);
+                  const releasedLabel = t.scheduledFor ? `Released ${t.scheduledFor}` : "Available now";
+                  const statusLabel = isAvailable ? releasedLabel : (t.scheduledFor || "Coming soon");
+                  return (
+                    <div key={i} className={"sch-row" + (isAvailable ? " sch-live" : "")}>
+                      <div className="sch-dot-wrap" aria-hidden="true">
+                        <div className={"sch-dot" + (isAvailable ? " on" : "")} />
+                      </div>
+                      <div className="sch-body">
+                        <div className="sch-track-name">
+                          {t.n}
+                          {t.isRemix && <span className="sch-remix-badge">Remix</span>}
+                          {t.isFinale && <span className="sch-remix-badge sch-finale-badge">Season Finale</span>}
+                          {t.isPremiere && <span className="sch-remix-badge sch-premiere-badge">Season Premiere</span>}
+                        </div>
+                        <div className="sch-track-meta">
+                          <span className={"sch-status" + (isAvailable ? " sch-status-live" : "")}>{statusLabel}</span>
+                        </div>
+                      </div>
+                      <span className={"sch-tier-pill " + tier.cls}>{tier.label}</span>
                     </div>
-                  </div>
-                  <div className="sch-timeline">
-                    {[...(c.tracks || [])].sort((a, b) => {
-                      const toMs = (s?: string) => s ? new Date(s).getTime() : Infinity;
-                      return toMs(a.scheduledFor) - toMs(b.scheduledFor);
-                    }).map((t, i) => {
-                      const tier = scheduleTier(t.v);
-                      const today = new Date(); today.setHours(0,0,0,0);
-                      const releaseDate = t.scheduledFor ? new Date(t.scheduledFor) : null;
-                      const isReleased = releaseDate ? releaseDate <= today : false;
-                      const isAvailable = t.v === "public" || (t.v === "preview" && !!t.url && isReleased);
-                      const releasedLabel = t.scheduledFor ? `Released ${t.scheduledFor}` : "Available now";
-                      const statusLabel = isAvailable ? releasedLabel : (t.scheduledFor || "Season 1 - Coming soon");
+                  );
+                }
+                return (
+                  <section className="panel">
+                    {seasons.map((season, si) => {
+                      const rows = sorted.filter(t => (t.m || "Season 1") === season);
                       return (
-                        <div key={i} className={"sch-row" + (isAvailable ? " sch-live" : "")}>
-                          <div className="sch-dot-wrap" aria-hidden="true">
-                            <div className={"sch-dot" + (isAvailable ? " on" : "")} />
+                        <div key={si} className="sch-season-block">
+                          <div className="sch-season-heading">{season}</div>
+                          <div className="sch-timeline">
+                            {rows.map((t, i) => renderRow(t, i))}
                           </div>
-                          <div className="sch-body">
-                            <div className="sch-track-name">
-                              {t.n}
-                              {t.isRemix && <span className="sch-remix-badge">Remix</span>}
-                              {t.isFinale && <span className="sch-remix-badge sch-finale-badge">Season Finale</span>}
-                              {t.isPremiere && <span className="sch-remix-badge sch-premiere-badge">Season Premiere</span>}
-                            </div>
-                            <div className="sch-track-meta">
-                              <span className={"sch-status" + (isAvailable ? " sch-status-live" : "")}>{statusLabel}</span>
-                              {t.m && <><span className="sch-sep" aria-hidden="true">&middot;</span><span className="sch-era">{t.m}</span></>}
-                            </div>
-                          </div>
-                          <span className={"sch-tier-pill " + tier.cls}>{tier.label}</span>
                         </div>
                       );
                     })}
-                  </div>
-                  <p className="sch-footnote">Release windows update as the season progresses. Upgrade your membership to unlock early access.</p>
-                </section>
-              )}
+                    <p className="sch-footnote">Release windows update as the season progresses. Upgrade your membership to unlock early access.</p>
+                  </section>
+                );
+              })()}
 
               {tab === "brief" && (
                 <section className="panel">
@@ -1096,4 +1103,7 @@ const CITY_CSS = `
 .feed-empty-text { font-size:14px; color:var(--lr-text-50); margin:0; }
 .sch-finale-badge { background:rgba(233,30,140,.13); color:#9c1458; }
 .sch-premiere-badge { background:rgba(99,102,241,.13); color:#4338ca; }
+.sch-season-block { margin-bottom:36px; }
+.sch-season-block:last-child { margin-bottom:0; }
+.sch-season-heading { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.18em; color:var(--lr-text-50); padding-bottom:14px; border-bottom:2px solid var(--lr-border); margin-bottom:4px; }
 `;
