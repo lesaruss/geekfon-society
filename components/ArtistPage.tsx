@@ -475,7 +475,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                         </a>
                         <div className="pf-article-body">
                           {n.date && <div className="pf-article-date">{n.date}</div>}
-                          {n.title && <div className="pf-article-title">{n.title}</div>}
+                          {n.title && <a href={n.href || "#"} className="pf-article-title pf-article-title-link">{n.title}</a>}
                           {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
                           <a href={n.href || "#"} className="article-cta">
                             Read more
@@ -991,7 +991,7 @@ const CSS = `
 .pf-article-img{aspect-ratio:16/8;position:relative;overflow:hidden}
 .pf-article-img img,.pf-article-ph{width:100%;height:100%;object-fit:cover;display:block}
 .pf-article-body{padding:16px 18px;display:flex;flex-direction:column;gap:8px}
-.pf-article-title{font-size:17px;font-weight:900;line-height:1.25;color:var(--lr-text)}
+.pf-article-title{font-size:17px;font-weight:900;line-height:1.25;color:var(--lr-text)}.pf-article-title-link{display:block;text-decoration:none;color:inherit;margin-bottom:6px;cursor:pointer;transition:opacity .15s}.pf-article-title-link:hover{opacity:.75}
 .pf-article-blurb{font-size:13px;color:var(--lr-text-75);line-height:1.6;margin:0}
 /* Pagination controls */
 .pulse-pagination{display:flex;align-items:center;justify-content:space-between;margin-top:28px;padding:18px 0;border-top:1px solid var(--lr-border)}
