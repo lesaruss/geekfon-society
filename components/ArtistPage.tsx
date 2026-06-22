@@ -859,10 +859,9 @@ const CSS = `
 .head-crumb .cur{font-size:13px;font-weight:800;color:var(--rx);letter-spacing:.01em}
 .head-crumb .sep{color:rgba(255,255,255,.22);font-size:13px;font-weight:400}
 
-.head-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0;align-items:stretch}
-.head-art{width:100%;height:100%;min-height:460px;object-fit:cover;object-position:top center;border-radius:0;border:none;display:block;flex-shrink:0}
-.head-art-fallback{width:100%;height:100%;min-height:460px;border-radius:0;border:none;background:var(--rx);display:flex;align-items:center;justify-content:center;font-size:120px;font-weight:900;color:#fff}
-.head-meta{min-width:0;padding:40px}
+.head-grid{display:flex;gap:32px;align-items:flex-start;padding:0 40px}
+.head-art,.head-art-fallback{width:clamp(280px,34vw,460px);aspect-ratio:1;border-radius:20px;border:2px solid var(--rx);object-fit:cover;object-position:top;background:var(--rx);display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:#fff;flex-shrink:0}
+.head-meta{flex:1;min-width:0;padding-top:6px}
 .head-name{font-size:clamp(36px,6vw,60px);font-weight:900;letter-spacing:-.02em;text-transform:uppercase;line-height:.98}
 .head-tagline{font-size:17px;color:rgba(255,255,255,.85);margin-top:14px;max-width:680px;line-height:1.55}
 .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
