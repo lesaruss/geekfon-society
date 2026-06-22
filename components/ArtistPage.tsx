@@ -8,7 +8,7 @@ const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 const AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
 
-type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: string; hasRemix?: boolean };
+type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: string; hasRemix?: boolean; isRemix?: boolean; isFinale?: boolean; isPremiere?: boolean };
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
@@ -579,7 +579,9 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                           <div className="sch-body">
                             <div className="sch-track-name">
                               {t.n}
-                              {t.hasRemix && <span className="sch-remix-badge">+ Remix</span>}
+                              {t.isRemix && <span className="sch-remix-badge">Remix</span>}
+                              {t.isFinale && <span className="sch-remix-badge sch-finale-badge">Season Finale</span>}
+                              {t.isPremiere && <span className="sch-remix-badge sch-premiere-badge">Season Premiere</span>}
                             </div>
                             <div className="sch-track-meta">
                               <span className={"sch-status" + (isAvailable ? " sch-status-live" : "")}>{statusLabel}</span>
@@ -1092,4 +1094,6 @@ const CITY_CSS = `
 .feed-empty-icon { width:44px; height:44px; color:var(--lr-text-50); }
 .feed-empty-icon svg { width:100%; height:100%; }
 .feed-empty-text { font-size:14px; color:var(--lr-text-50); margin:0; }
+.sch-finale-badge { background:rgba(233,30,140,.13); color:#9c1458; }
+.sch-premiere-badge { background:rgba(99,102,241,.13); color:#4338ca; }
 `;
