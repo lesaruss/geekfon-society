@@ -35,6 +35,7 @@ export type ArtistContent = {
   songAudits?: Audit[];
   pulse?: PulsePost[];
   introVideoUrl?: string;
+  videoThumbUrl?: string;
   skyscraperUrl?: string; skyscraperLink?: string;
   primaryAdUrl?: string; primaryAdLink?: string;
   featureAdUrl?: string; featureAdLink?: string;
@@ -444,7 +445,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                   <div className="ov-intro">
                     <div className="ov-video-wrap">
                       {c.introVideoUrl ? (
-                        <video src={c.introVideoUrl} controls playsInline preload="metadata" poster={c.heroUrl || undefined} className="ov-video-el" />
+                        <video src={c.introVideoUrl} controls playsInline preload="metadata" poster={c.videoThumbUrl || c.heroUrl || undefined} className="ov-video-el" />
                       ) : (
                         <div className="ov-video-ph">
                           <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="15" height="10" rx="2"/><path d="M17 9l5-3v12l-5-3"/></svg>
