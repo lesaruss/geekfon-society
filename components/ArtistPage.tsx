@@ -508,13 +508,14 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
                   </div>
                   <div className="sch-timeline">
                     {[...(c.tracks || [])].sort((a, b) => {
-                      const aAvail = (a.v === "public" || (a.v === "preview" && !!a.url)) ? 0 : 1;
-                      const bAvail = (b.v === "public" || (b.v === "preview" && !!b.url)) ? 0 : 1;
-                      if (aAvail !== bAvail) return aAvail - bAvail;
-                      return (a.scheduledFor || "").localeCompare(b.scheduledFor || "");
+                      const toMs = (s?: string) => s ? new Date(s).getTime() : Infinity;
+                      return toMs(a.scheduledFor) - toMs(b.scheduledFor);
                     }).map((t, i) => {
                       const tier = scheduleTier(t.v);
-                      const isAvailable = t.v === "public" || (t.v === "preview" && !!t.url);
+                      const today = new Date(); today.setHours(0,0,0,0);
+                      const releaseDate = t.scheduledFor ? new Date(t.scheduledFor) : null;
+                      const isReleased = releaseDate ? releaseDate <= today : false;
+                      const isAvailable = t.v === "public" || (t.v === "preview" && !!t.url && isReleased);
                       const releasedLabel = t.scheduledFor ? `Released ${t.scheduledFor}` : "Available now";
                       const statusLabel = isAvailable ? releasedLabel : (t.scheduledFor || "Season 1 - Coming soon");
                       return (
