@@ -40,12 +40,12 @@ export type ArtistContent = {
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
-  { key: "pulse", label: "Pulse" },
-  { key: "music", label: "Music" },
-  { key: "news", label: "News" },
-  { key: "media", label: "Media" },
+  { key: "music",    label: "Music" },
+  { key: "news",     label: "News" },
+  { key: "pulse",    label: "Pulse" },
+  { key: "media",    label: "Media" },
   { key: "schedule", label: "Schedule" },
-  { key: "brief", label: "Brief", admin: true },
+  { key: "brief",    label: "Brief", admin: true },
 ];
 
 const PLAY = <svg viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4" /></svg>;
@@ -80,7 +80,7 @@ const PLACEHOLDER_NEWS: News[] = [
 ];
 
 export default function ArtistPage({ content, cityBg }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null }) {
-  const [tab, setTab] = useState("pulse");
+  const [tab, setTab] = useState("music");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string | null>(null);
@@ -89,6 +89,7 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
   const [playingV, setPlayingV] = useState<string | null>(null);
   const [bbSlot, setBbSlot] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [tabDropOpen, setTabDropOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -312,13 +313,40 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
           </div>
 
           {/* Tab bar */}
-          <div className="tabbar" role="tablist">
-            {TABS.map((t) => (
-              <button key={t.key} className="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}>
-                {t.label}{t.admin && <span className="adminbadge">Admin</span>}
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const canSeeBrief = !!userTier && (TIER_RANK[userTier] || 0) >= 2;
+            const visibleTabs = TABS.filter(t => !t.admin || canSeeBrief);
+            const currentLabel = visibleTabs.find(t => t.key === tab)?.label || visibleTabs[0]?.label || "Music";
+            if (isMobile) {
+              return (
+                <div className="tabbar-mobile">
+                  <button className="tabbar-drop-btn" onClick={() => setTabDropOpen(o => !o)}>
+                    <span>{currentLabel}</span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.5} style={{transform: tabDropOpen ? "rotate(180deg)" : "none", transition:"transform .2s"}}><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  {tabDropOpen && (
+                    <div className="tabbar-drop-menu">
+                      {visibleTabs.map(t => (
+                        <button key={t.key} className={"tabbar-drop-item" + (tab === t.key ? " active" : "")}
+                          onClick={() => { setTab(t.key); setTabDropOpen(false); }}>
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return (
+              <div className="tabbar" role="tablist">
+                {visibleTabs.map(t => (
+                  <button key={t.key} className="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Two-column body: content + billboard */}
           <div className="body-layout">
@@ -836,10 +864,20 @@ const CSS = `
   .body-main{padding-right:0}
   .billboard{width:100%;position:static;padding-top:0}
   .bb-slot-tall{display:none}
-  .head-grid{flex-direction:column;padding:0 16px}
+  .head-grid{flex-direction:row;align-items:flex-start;gap:16px;padding:0 16px}
+  .head-art,.head-art-fallback{width:100px;height:100px;border-radius:12px;font-size:36px;flex-shrink:0}
+  .head-name{font-size:clamp(18px,5vw,28px)}
+  .head-tagline{font-size:13px;margin-top:6px}
+  .pill-row{margin-top:10px}
   .head-topbar{padding:14px 16px 16px}
   .tabbar{padding:0 16px}
 }
+.tabbar-mobile{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);padding:0 16px;position:relative}
+.tabbar-drop-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 0;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text);background:none;border:none;cursor:pointer}
+.tabbar-drop-menu{position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--lr-border);z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.09)}
+.tabbar-drop-item{display:block;width:100%;padding:13px 16px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text-75);background:none;border:none;border-top:1px solid var(--lr-border);cursor:pointer;text-align:left}
+.tabbar-drop-item.active{color:var(--rx);font-weight:900;background:var(--rx-tint)}
+.tabbar-drop-item:hover:not(.active){background:var(--lr-bg)}
 .article-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);text-decoration:none;margin-top:4px}
 .article-cta svg{width:14px;height:14px;transition:transform .15s}
 .article-cta:hover svg{transform:translateX(3px)}
