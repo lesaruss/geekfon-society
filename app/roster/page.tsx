@@ -62,15 +62,11 @@ type Artist = {
     initial?: string;
     accent?: string;
     tagline?: string;
-    visibility?: string;
   };
 };
 
-const PER_PAGE = 3;
-
 export default function RosterPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [page, setPage] = useState(0);
   const [current, setCurrent] = useState(0);
   const currentRef = useRef(0);
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -78,11 +74,16 @@ export default function RosterPage() {
 
   useEffect(() => {
     fetch(
-      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=neq.v&order=created_at.asc`,
+      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=in.(${LAUNCH_TRIO.map(s => `"${s}"`).join(",")})`,
       { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } }
     )
       .then((r) => r.json())
-      .then((data: Artist[]) => setArtists(Array.isArray(data) ? data : []))
+      .then((data: Artist[]) => {
+        if (!Array.isArray(data)) return;
+        // Preserve LAUNCH_TRIO order
+        const ordered = LAUNCH_TRIO.map(slug => data.find(a => a.slug === slug)).filter(Boolean) as Artist[];
+        setArtists(ordered);
+      })
       .catch(() => {});
   }, []);
 
@@ -123,16 +124,7 @@ export default function RosterPage() {
     });
   }, []);
 
-  // Split into launch trio (in fixed order) and the rest
-  const featured = LAUNCH_TRIO.map((slug) => artists.find((a) => a.slug === slug)).filter(Boolean) as Artist[];
-  const rest = artists.filter((a) => !LAUNCH_TRIO.includes(a.slug));
-
-  const totalPages = Math.max(1, Math.ceil(rest.length / PER_PAGE));
-  const visible = rest.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
   const city = CITIES[current];
-
-  function prev() { setPage((p) => Math.max(0, p - 1)); }
-  function next() { setPage((p) => Math.min(totalPages - 1, p + 1)); }
 
   return (
     <>
@@ -185,7 +177,7 @@ export default function RosterPage() {
               Season 1 - Now Live
             </p>
             <h1 className="r-title">The Roster</h1>
-            <p className="r-sub">New artists dropping every week</p>
+            <p className="r-sub">Check back for new artist announcements</p>
           </div>
 
           {artists.length === 0 ? (
@@ -194,126 +186,54 @@ export default function RosterPage() {
               <span>Loading artists...</span>
             </div>
           ) : (
-            <>
-              {/* Launch trio */}
-              <div className="r-grid r-grid-featured">
-                {featured.map((a) => {
-                  const accent = a.profile?.accent || "#E91E8C";
-                  return (
-                    <a
-                      key={a.slug}
-                      href={`/${a.slug}`}
-                      className="r-card r-card-featured"
-                      style={{ "--r-accent": accent } as React.CSSProperties}
-                    >
-                      <div className="r-card-img">
-                        {a.profile?.heroUrl ? (
-                          <img src={a.profile.heroUrl} alt={a.name} />
-                        ) : (
-                          <div
-                            className="r-card-fallback"
-                            style={{ backgroundColor: accent + "33" }}
-                          >
-                            {a.profile?.initial || a.name.charAt(0)}
-                          </div>
-                        )}
-                        <div className="r-card-grad" />
-                      </div>
-                      <div className="r-now-live-badge" aria-label="Now live">NOW LIVE</div>
-                      <div className="r-card-info">
-                        <span className="r-card-name">{a.name}</span>
-                        {a.profile?.tagline && (
-                          <span className="r-card-tag">{a.profile.tagline}</span>
-                        )}
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-
-              {/* Rest of roster */}
-              {rest.length > 0 && (
-                <>
-                  <div className="r-section-divider">
-                    <span className="r-section-label">More artists coming</span>
-                  </div>
-
-                  <div className="r-grid">
-                    {visible.map((a) => {
-                      const accent = a.profile?.accent || "#E91E8C";
-                      return (
-                        <a
-                          key={a.slug}
-                          href={`/${a.slug}`}
-                          className="r-card"
-                          style={{ "--r-accent": accent } as React.CSSProperties}
+            <div className="r-grid">
+              {artists.map((a) => {
+                const accent = a.profile?.accent || "#E91E8C";
+                return (
+                  <a
+                    key={a.slug}
+                    href={`/${a.slug}`}
+                    className="r-card"
+                    style={{ "--r-accent": accent } as React.CSSProperties}
+                  >
+                    <div className="r-card-img">
+                      {a.profile?.heroUrl ? (
+                        <img src={a.profile.heroUrl} alt={a.name} />
+                      ) : (
+                        <div
+                          className="r-card-fallback"
+                          style={{ backgroundColor: accent + "33" }}
                         >
-                          <div className="r-card-img">
-                            {a.profile?.heroUrl ? (
-                              <img src={a.profile.heroUrl} alt={a.name} />
-                            ) : (
-                              <div
-                                className="r-card-fallback"
-                                style={{ backgroundColor: accent + "33" }}
-                              >
-                                {a.profile?.initial || a.name.charAt(0)}
-                              </div>
-                            )}
-                            <div className="r-card-grad" />
-                          </div>
-                          <div className="r-card-info">
-                            <span className="r-card-name">{a.name}</span>
-                            {a.profile?.tagline && (
-                              <span className="r-card-tag">{a.profile.tagline}</span>
-                            )}
-                          </div>
-                        </a>
-                      );
-                    })}
-                    {visible.length < PER_PAGE &&
-                      Array.from({ length: PER_PAGE - visible.length }).map((_, i) => (
-                        <div key={`sp-${i}`} className="r-card r-card-spacer" aria-hidden="true" />
-                      ))}
-                  </div>
-
-                  {totalPages > 1 && (
-                    <div className="r-nav" role="navigation" aria-label="Artist pagination">
-                      <button
-                        className="r-arrow"
-                        onClick={prev}
-                        disabled={page === 0}
-                        aria-label="Previous artists"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M15 18l-6-6 6-6" />
-                        </svg>
-                      </button>
-                      <div className="r-page-info">
-                        {Array.from({ length: totalPages }).map((_, i) => (
-                          <button
-                            key={i}
-                            className={"r-dot" + (i === page ? " on" : "")}
-                            onClick={() => setPage(i)}
-                            aria-label={`Page ${i + 1}`}
-                            aria-current={i === page ? "true" : undefined}
-                          />
-                        ))}
-                      </div>
-                      <button
-                        className="r-arrow"
-                        onClick={next}
-                        disabled={page === totalPages - 1}
-                        aria-label="Next artists"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M9 18l6-6-6-6" />
-                        </svg>
-                      </button>
+                          {a.profile?.initial || a.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="r-card-grad" />
                     </div>
-                  )}
-                </>
-              )}
-            </>
+                    <div className="r-now-live-badge">NOW LIVE</div>
+                    <div className="r-card-info">
+                      <span className="r-card-name">{a.name}</span>
+                      {a.profile?.tagline && (
+                        <span className="r-card-tag">{a.profile.tagline}</span>
+                      )}
+                    </div>
+                  </a>
+                );
+              })}
+
+              {/* Teaser card - mobile only 4th slot */}
+              <div className="r-card r-card-teaser" aria-label="More artists coming">
+                <div className="r-teaser-inner">
+                  <div className="r-teaser-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 8v4M12 16h.01" />
+                    </svg>
+                  </div>
+                  <span className="r-teaser-label">More artists coming</span>
+                  <span className="r-teaser-sub">Check back for announcements</span>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </SiteChrome>
@@ -427,25 +347,15 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 }
 
 /* ---- Artist grid ---- */
+/* Desktop: 3 columns (trio only, no teaser) */
 .r-grid {
-  display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:14px;
 }
-.r-grid-featured { margin-bottom:0; }
 
-/* ---- Section divider ---- */
-.r-section-divider {
-  display:flex; align-items:center; gap:16px;
-  margin:44px 0 24px;
-}
-.r-section-divider::before,
-.r-section-divider::after {
-  content:''; flex:1; height:1px;
-  background:linear-gradient(to right, transparent, rgba(255,255,255,.15), transparent);
-}
-.r-section-label {
-  font-size:9px; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
-  color:rgba(255,255,255,.35); white-space:nowrap;
-}
+/* Hide teaser card on desktop */
+.r-card-teaser { display:none; }
 
 /* ---- Artist card ---- */
 .r-card {
@@ -459,13 +369,6 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
   box-shadow:0 16px 48px rgba(0,0,0,.6), 0 0 0 1.5px var(--r-accent, #E91E8C);
 }
 .r-card:focus-visible { outline:3px solid #F69820; outline-offset:3px; }
-.r-card-spacer { pointer-events:none; background:transparent; }
-.r-card-featured {
-  box-shadow:0 0 0 1px rgba(255,255,255,.1);
-}
-.r-card-featured:hover {
-  box-shadow:0 16px 48px rgba(0,0,0,.7), 0 0 0 2px var(--r-accent, #E91E8C);
-}
 
 /* Now Live badge */
 .r-now-live-badge {
@@ -503,33 +406,28 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 
-/* ---- Pagination nav ---- */
-.r-nav {
-  display:flex; align-items:center; justify-content:center;
-  gap:16px; margin-top:44px;
+/* ---- Teaser card ---- */
+.r-card-teaser {
+  border:1px dashed rgba(255,255,255,.15);
+  background:rgba(255,255,255,.03);
+  cursor:default;
+  aspect-ratio:3/4;
 }
-.r-arrow {
-  width:48px; height:48px; border-radius:50%;
-  border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.05);
-  color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
-  transition:background .15s, border-color .15s, transform .1s;
-  flex-shrink:0;
+.r-card-teaser:hover { transform:none; box-shadow:none; }
+.r-teaser-inner {
+  width:100%; height:100%; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:10px; padding:16px;
 }
-.r-arrow:hover:not(:disabled) {
-  background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.38);
-  transform:scale(1.05);
+.r-teaser-icon { width:28px; height:28px; color:rgba(255,255,255,.25); }
+.r-teaser-icon svg { width:100%; height:100%; }
+.r-teaser-label {
+  font-size:10px; font-weight:800; color:rgba(255,255,255,.35);
+  text-transform:uppercase; letter-spacing:.12em; text-align:center; line-height:1.4;
 }
-.r-arrow:disabled { opacity:.25; cursor:not-allowed; }
-.r-arrow:focus-visible { outline:3px solid #F69820; outline-offset:3px; }
-.r-arrow svg { width:22px; height:22px; }
-.r-page-info { display:flex; gap:8px; align-items:center; }
-.r-dot {
-  width:7px; height:7px; border-radius:50%;
-  background:rgba(255,255,255,.2); border:none; cursor:pointer; padding:0;
-  transition:all .3s ease;
+.r-teaser-sub {
+  font-size:9px; font-weight:600; color:rgba(255,255,255,.2);
+  text-transform:uppercase; letter-spacing:.1em; text-align:center; line-height:1.4;
 }
-.r-dot.on { width:22px; border-radius:4px; background:rgba(255,255,255,.55); }
-.r-dot:focus-visible { outline:2px solid #F69820; outline-offset:2px; }
 
 /* ---- Loading state ---- */
 .r-loading {
@@ -545,21 +443,15 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 
 /* ---- Responsive ---- */
 @media(max-width:768px) {
-  .r-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
-  .r-grid-featured { grid-template-columns:repeat(3,1fr); }
+  /* Mobile: 2x2 grid - 3 artist cards + 1 teaser */
+  .r-grid { grid-template-columns: repeat(2, 1fr); gap:10px; }
+  .r-card-teaser { display:block; }
   .r-page { padding:32px 16px 80px; }
   .r-city-stage { height:100vh; }
   .r-city-stage::before { height:30%; }
   .r-city-panel img { object-position:center center; }
   .r-header { margin-bottom:36px; }
-}
-@media(max-width:600px) {
-  .r-grid-featured { grid-template-columns:1fr 1fr 1fr; gap:6px; }
-  .r-card-name { font-size:10px; }
-  .r-card-tag { display:none; }
-  .r-now-live-badge { font-size:6px; padding:3px 5px; letter-spacing:.12em; }
-}
-@media(max-width:480px) {
-  .r-grid { grid-template-columns:1fr 1fr; gap:8px; }
+  .r-card-name { font-size:13px; }
+  .r-now-live-badge { font-size:7px; padding:3px 6px; }
 }
 `;
