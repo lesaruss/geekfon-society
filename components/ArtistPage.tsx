@@ -34,14 +34,15 @@ export type ArtistContent = {
   visual?: { visualIdentity?: string; houseStyle?: string; imagePrompt?: string; imagePromptNote?: string };
   songAudits?: Audit[];
   pulse?: PulsePost[];
+  introVideoUrl?: string;
   skyscraperUrl?: string; skyscraperLink?: string;
   primaryAdUrl?: string; primaryAdLink?: string;
   featureAdUrl?: string; featureAdLink?: string;
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
+  { key: "news",     label: "Overview" },
   { key: "music",    label: "Music" },
-  { key: "news",     label: "News" },
   { key: "pulse",    label: "Pulse" },
   { key: "media",    label: "Media" },
   { key: "schedule", label: "Schedule" },
@@ -80,7 +81,7 @@ const PLACEHOLDER_NEWS: News[] = [
 ];
 
 export default function ArtistPage({ content, cityBg }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null }) {
-  const [tab, setTab] = useState("music");
+  const [tab, setTab] = useState("news");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string | null>(null);
@@ -438,101 +439,29 @@ export default function ArtistPage({ content, cityBg }: { content: ArtistContent
               {/* News tab - editorial / blog content (former Pulse) */}
               {tab === "news" && (
                 <section className="panel">
-                  {/* Voice message - always at top */}
-                  {hasMsg && (() => {
-                    const voiceAudioKey = lang === "ja" ? (msg.audioJa || msg.audioEn) : (msg.audioEn || msg.audioJa);
-                    const audioUrl = voiceAudioKey ? AUDIO + voiceAudioKey : null;
-                    const hasAudio = !!audioUrl;
-                    const isPlayingVoice = !!(audioUrl && playing === audioUrl);
-                    const vProgress = audioUrl ? (audioProgress[audioUrl] || 0) : 0;
-                    const vDuration = audioUrl ? (audioDuration[audioUrl] || 0) : 0;
-                    const NUM_BARS = 40;
-                    const voiceText = lang === "ja" ? msg.ja : msg.en;
-                    const chunks = voiceText ? splitCaption(voiceText) : [];
-                    return (
-                      <div className="pf-post pf-voice" style={{ marginBottom: 20 }}>
-                        <div className="pf-meta">
-                          <span className="pf-type-badge pf-type-voice">Voice Message</span>
-                          <span className="pf-date">Season 1 &middot; Jul 2026</span>
-                        </div>
-                        <div className="pf-voice-card">
-                          {c.heroUrl && (
-                            <div className="pf-voice-avatar">
-                              <img src={c.heroUrl} alt={name} />
-                            </div>
-                          )}
-                          <div className="pf-voice-right">
-                            <div
-                              className="pf-waveform"
-                              onClick={(e) => audioUrl && seekVoice(e, audioUrl)}
-                              role="slider"
-                              aria-label="Voice message progress"
-                            >
-                              {Array.from({ length: NUM_BARS }).map((_, i) => {
-                                const barPct = i / NUM_BARS;
-                                const progressPct = vDuration > 0 ? vProgress / vDuration : 0;
-                                const isActive = barPct <= progressPct;
-                                return (
-                                  <span
-                                    key={i}
-                                    className={isActive ? "wf-active" : ""}
-                                    style={{ height: 4 + Math.round(Math.abs(Math.sin(i * 0.72 + 0.5)) * 30) }}
-                                  />
-                                );
-                              })}
-                            </div>
-                            <div className="pf-voice-controls">
-                              {hasAudio && (
-                                <button
-                                  className={"pf-voice-play-btn" + (isPlayingVoice ? " on" : "")}
-                                  onClick={() => audioUrl && togglePlay(audioUrl, "voice")}
-                                  aria-label={isPlayingVoice ? "Pause" : "Play"}
-                                >
-                                  {isPlayingVoice ? PAUSE : PLAY}
-                                </button>
-                              )}
-                              <span className="pf-voice-time">
-                                {fmtTime(vProgress)}{vDuration > 0 ? ` / ${fmtTime(vDuration)}` : ""}
-                              </span>
-                              {msg.en && msg.ja && (
-                                <button className="rxp-lang" onClick={() => setLang(lang === "ja" ? "en" : "ja")}>
-                                  {lang === "ja" ? "EN" : "JA"}
-                                </button>
-                              )}
-                            </div>
-                            <p className="pf-karaoke">
-                              {chunks.map((chunk, i) => {
-                                const chunkStart = vDuration > 0 ? (i / chunks.length) * vDuration : Infinity;
-                                const chunkEnd = vDuration > 0 ? ((i + 1) / chunks.length) * vDuration : Infinity;
-                                const isCurrent = vProgress >= chunkStart && vProgress < chunkEnd;
-                                const isPast = vProgress >= chunkEnd;
-                                return (
-                                  <span key={i} className={"kc" + (isCurrent ? " kc-active" : isPast ? " kc-past" : "")}>
-                                    {chunk}{" "}
-                                  </span>
-                                );
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
 
-                  {/* About blurb */}
-                  {(c.bio || c.quote) && (
-                    <div className="pf-post pf-bio" style={{ marginBottom: 28 }}>
-                      <div className="pf-meta">
-                        <span className="pf-type-badge pf-type-bio">About</span>
-                      </div>
-                      {c.quote && <blockquote className="pf-quote">{"\u201c" + c.quote + "\u201d"}</blockquote>}
+                  {/* Intro: video (left) + bio blurb (right) */}
+                  <div className="ov-intro">
+                    <div className="ov-video-wrap">
+                      {c.introVideoUrl ? (
+                        <video src={c.introVideoUrl} controls playsInline className="ov-video-el" />
+                      ) : (
+                        <div className="ov-video-ph">
+                          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="15" height="10" rx="2"/><path d="M17 9l5-3v12l-5-3"/></svg>
+                          <span>Video coming soon</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="ov-bio">
+                      {c.quote && <blockquote className="ov-quote">{"\u201c" + c.quote + "\u201d"}</blockquote>}
                       {(c.bio || []).slice(0, 2).map((p, i) => (
-                        <p key={i} className="pf-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
+                        <p key={i} className="ov-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
                       ))}
                     </div>
-                  )}
+                  </div>
 
-                  {/* Articles - 3-column grid */}
+                  {/* News & Updates section */}
+                  <div className="ov-news-head">News &amp; Updates</div>
                   <div className="pulse-articles-grid">
                     {pulseArticles.map((n, i) => (
                       <div key={i} className="pulse-article-card">
@@ -918,7 +847,17 @@ const CSS = `
 .tabbar-mobile{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:2px solid var(--rx);padding:0 16px}
 .tabbar-drop-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 0;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text);background:none;border:none;cursor:pointer}
 .tabbar-drop-menu{position:absolute;left:-16px;right:-16px;top:100%;background:#fff;border-bottom:1px solid var(--lr-border);z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.09);margin-top:0}
-.tabbar-drop-item{display:block;width:100%;padding:13px 16px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text-75);background:none;border:none;border-top:1px solid var(--lr-border);cursor:pointer;text-align:left}
+/* Overview tab */
+.ov-intro{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:flex-start;margin-bottom:36px}
+.ov-video-wrap{border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/9;width:100%}
+.ov-video-el{width:100%;height:100%;display:block;object-fit:cover}
+.ov-video-ph{width:100%;height:100%;min-height:200px;background:var(--lr-surface);border:1px dashed var(--lr-border);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--lr-text-30);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.ov-bio{padding-top:4px}
+.ov-quote{font-size:19px;font-weight:800;line-height:1.4;color:var(--lr-text);margin:0 0 16px;font-style:italic;letter-spacing:-.01em}
+.ov-bio-p{font-size:15px;color:var(--lr-text-75);line-height:1.75;margin-bottom:12px}
+.ov-news-head{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;color:var(--lr-text-50);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--lr-border)}
+@media(max-width:900px){.ov-intro{grid-template-columns:1fr}}
+.tabbar-drop-item{display:block;width:100%;padding:13px 22px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text-75);background:none;border:none;border-top:1px solid var(--lr-border);cursor:pointer;text-align:left}
 .tabbar-drop-item.active{color:var(--rx);font-weight:900;background:var(--rx-tint)}
 .tabbar-drop-item:hover:not(.active){background:var(--lr-bg)}
 .article-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);text-decoration:none;margin-top:4px}
