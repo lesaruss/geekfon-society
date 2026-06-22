@@ -1,12 +1,5 @@
-"use client";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { notFound } from "next/navigation";
 import SiteChrome from "@/components/SiteChrome";
-
-const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
-const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase  = createClient(SUPA_URL, SUPA_ANON);
 
 type NewsItem = {
   slug?: string;
@@ -34,59 +27,51 @@ const ARTICLE_CSS = `
 .art-back{display:inline-flex;align-items:center;gap:8px;margin-top:48px;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rx,#c084fc);text-decoration:none;transition:opacity .15s}
 .art-back:hover{opacity:.7}
 .art-back svg{width:16px;height:16px}
-.art-loading{padding:80px 20px;text-align:center;color:var(--lr-text-30);font-size:14px}
 @media(max-width:600px){.art-page{padding:0 16px 60px}.art-title{font-size:22px}}
 `;
 
-export default function ArticleDetailPage() {
-  const params     = useParams()!;
-  const artist     = params.artist as string;
-  const slug       = params.slug   as string;
+async function getArticle(artistSlug: string, newsSlug: string) {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+  if (!url || !key) return null;
 
-  const [article,    setArticle]    = useState<NewsItem | null>(null);
-  const [artistName, setArtistName] = useState<string>("");
-  const [accent,     setAccent]     = useState<string>("#c084fc");
-  const [loading,    setLoading]    = useState(true);
+  const res = await fetch(
+    `${url}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(artistSlug)}&select=profile&limit=1`,
+    {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      next: { revalidate: 300 },
+    }
+  );
+  if (!res.ok) return null;
+  const rows = await res.json();
+  if (!rows?.length) return null;
 
-  useEffect(() => {
-    if (!artist || !slug) return;
-    supabase
-      .from("gfs_artists")
-      .select("profile")
-      .eq("slug", artist)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) { setLoading(false); return; }
-        const profile = data.profile || {};
-        setArtistName(profile.name || artist);
-        if (profile.accent) setAccent(profile.accent);
-        const found = (profile.news || []).find((n: NewsItem) => n.slug === slug);
-        setArticle(found || null);
-        setLoading(false);
-      });
-  }, [artist, slug]);
+  const profile = rows[0].profile || {};
+  const news: NewsItem[] = profile.news || [];
+  const article = news.find((n) => n.slug === newsSlug);
+  if (!article) return null;
+
+  return {
+    article,
+    artistName: (profile.name as string) || artistSlug,
+    accent: (profile.accent as string) || "#c084fc",
+  };
+}
+
+type Props = { params: Promise<{ artist: string; slug: string }> };
+
+export default async function ArticleDetailPage({ params }: Props) {
+  const { artist, slug } = await params;
+  const result = await getArticle(artist, slug);
+  if (!result) return notFound();
+
+  const { article, artistName, accent } = result;
 
   const crumb = [
     { label: "GeekFon Society", href: "/" },
-    { label: artistName || artist, href: `/${artist}` },
-    { label: article?.title || "Article" },
+    { label: artistName, href: `/${artist}` },
+    { label: article.title || "Article" },
   ];
-
-  if (loading) {
-    return (
-      <SiteChrome>
-        <div className="art-loading">Loading...</div>
-      </SiteChrome>
-    );
-  }
-
-  if (!article) {
-    return (
-      <SiteChrome>
-        <div className="art-loading">Article not found.</div>
-      </SiteChrome>
-    );
-  }
 
   const paragraphs = (article.content || "").split(/\n\n+/).filter(Boolean);
 
@@ -132,7 +117,7 @@ export default function ArticleDetailPage() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M11 6l-6 6 6 6" />
           </svg>
-          Back to {artistName || artist}
+          Back to {artistName}
         </a>
       </div>
     </SiteChrome>
