@@ -52,6 +52,8 @@ const CITIES = [
 const SUPA = "https://fwbhwfxpncrsfhttimna.supabase.co";
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA";
 
+const LAUNCH_TRIO = ["roxanne", "lex-from-brixton", "shamanic-resin"];
+
 type Artist = {
   slug: string;
   name: string;
@@ -74,7 +76,6 @@ export default function RosterPage() {
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch artists from Supabase
   useEffect(() => {
     fetch(
       `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=neq.v&order=created_at.asc`,
@@ -85,7 +86,6 @@ export default function RosterPage() {
       .catch(() => {});
   }, []);
 
-  // City slideshow transition
   const goTo = useCallback((next: number) => {
     const prev = currentRef.current;
     if (next === prev) return;
@@ -123,8 +123,12 @@ export default function RosterPage() {
     });
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(artists.length / PER_PAGE));
-  const visible = artists.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+  // Split into launch trio (in fixed order) and the rest
+  const featured = LAUNCH_TRIO.map((slug) => artists.find((a) => a.slug === slug)).filter(Boolean) as Artist[];
+  const rest = artists.filter((a) => !LAUNCH_TRIO.includes(a.slug));
+
+  const totalPages = Math.max(1, Math.ceil(rest.length / PER_PAGE));
+  const visible = rest.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
   const city = CITIES[current];
 
   function prev() { setPage((p) => Math.max(0, p - 1)); }
@@ -176,9 +180,12 @@ export default function RosterPage() {
         <div className="r-page">
 
           <div className="r-header">
-            <p className="r-eyebrow">GeekFon Society</p>
+            <p className="r-eyebrow">
+              <span className="r-live-dot" aria-hidden="true" />
+              Season 1 - Now Live
+            </p>
             <h1 className="r-title">The Roster</h1>
-            <p className="r-sub">Original artists of the GeekFon Society universe</p>
+            <p className="r-sub">New artists dropping every week</p>
           </div>
 
           {artists.length === 0 ? (
@@ -188,14 +195,15 @@ export default function RosterPage() {
             </div>
           ) : (
             <>
-              <div className="r-grid">
-                {visible.map((a) => {
+              {/* Launch trio */}
+              <div className="r-grid r-grid-featured">
+                {featured.map((a) => {
                   const accent = a.profile?.accent || "#E91E8C";
                   return (
                     <a
                       key={a.slug}
                       href={`/${a.slug}`}
-                      className="r-card"
+                      className="r-card r-card-featured"
                       style={{ "--r-accent": accent } as React.CSSProperties}
                     >
                       <div className="r-card-img">
@@ -211,6 +219,7 @@ export default function RosterPage() {
                         )}
                         <div className="r-card-grad" />
                       </div>
+                      <div className="r-now-live-badge" aria-label="Now live">NOW LIVE</div>
                       <div className="r-card-info">
                         <span className="r-card-name">{a.name}</span>
                         {a.profile?.tagline && (
@@ -220,47 +229,89 @@ export default function RosterPage() {
                     </a>
                   );
                 })}
-                {/* Spacer cards to maintain grid shape on last page */}
-                {visible.length < PER_PAGE &&
-                  Array.from({ length: PER_PAGE - visible.length }).map((_, i) => (
-                    <div key={`sp-${i}`} className="r-card r-card-spacer" aria-hidden="true" />
-                  ))}
               </div>
 
-              {totalPages > 1 && (
-                <div className="r-nav" role="navigation" aria-label="Artist pagination">
-                  <button
-                    className="r-arrow"
-                    onClick={prev}
-                    disabled={page === 0}
-                    aria-label="Previous artists"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M15 18l-6-6 6-6" />
-                    </svg>
-                  </button>
-                  <div className="r-page-info">
-                    {Array.from({ length: totalPages }).map((_, i) => (
-                      <button
-                        key={i}
-                        className={"r-dot" + (i === page ? " on" : "")}
-                        onClick={() => setPage(i)}
-                        aria-label={`Page ${i + 1}`}
-                        aria-current={i === page ? "true" : undefined}
-                      />
-                    ))}
+              {/* Rest of roster */}
+              {rest.length > 0 && (
+                <>
+                  <div className="r-section-divider">
+                    <span className="r-section-label">More artists coming</span>
                   </div>
-                  <button
-                    className="r-arrow"
-                    onClick={next}
-                    disabled={page === totalPages - 1}
-                    aria-label="Next artists"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M9 18l6-6-6-6" />
-                    </svg>
-                  </button>
-                </div>
+
+                  <div className="r-grid">
+                    {visible.map((a) => {
+                      const accent = a.profile?.accent || "#E91E8C";
+                      return (
+                        <a
+                          key={a.slug}
+                          href={`/${a.slug}`}
+                          className="r-card"
+                          style={{ "--r-accent": accent } as React.CSSProperties}
+                        >
+                          <div className="r-card-img">
+                            {a.profile?.heroUrl ? (
+                              <img src={a.profile.heroUrl} alt={a.name} />
+                            ) : (
+                              <div
+                                className="r-card-fallback"
+                                style={{ backgroundColor: accent + "33" }}
+                              >
+                                {a.profile?.initial || a.name.charAt(0)}
+                              </div>
+                            )}
+                            <div className="r-card-grad" />
+                          </div>
+                          <div className="r-card-info">
+                            <span className="r-card-name">{a.name}</span>
+                            {a.profile?.tagline && (
+                              <span className="r-card-tag">{a.profile.tagline}</span>
+                            )}
+                          </div>
+                        </a>
+                      );
+                    })}
+                    {visible.length < PER_PAGE &&
+                      Array.from({ length: PER_PAGE - visible.length }).map((_, i) => (
+                        <div key={`sp-${i}`} className="r-card r-card-spacer" aria-hidden="true" />
+                      ))}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="r-nav" role="navigation" aria-label="Artist pagination">
+                      <button
+                        className="r-arrow"
+                        onClick={prev}
+                        disabled={page === 0}
+                        aria-label="Previous artists"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                      </button>
+                      <div className="r-page-info">
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                          <button
+                            key={i}
+                            className={"r-dot" + (i === page ? " on" : "")}
+                            onClick={() => setPage(i)}
+                            aria-label={`Page ${i + 1}`}
+                            aria-current={i === page ? "true" : undefined}
+                          />
+                        ))}
+                      </div>
+                      <button
+                        className="r-arrow"
+                        onClick={next}
+                        disabled={page === totalPages - 1}
+                        aria-label="Next artists"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
@@ -351,8 +402,19 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 /* Header */
 .r-header { text-align:center; margin-bottom:52px; }
 .r-eyebrow {
+  display:inline-flex; align-items:center; gap:8px;
   font-size:9px; font-weight:700; letter-spacing:.22em; text-transform:uppercase;
-  color:rgba(255,255,255,.45); margin:0 0 14px;
+  color:rgba(255,255,255,.55); margin:0 0 14px;
+}
+.r-live-dot {
+  display:inline-block; width:6px; height:6px; border-radius:50%;
+  background:#00e676; box-shadow:0 0 8px rgba(0,230,118,.7);
+  animation:rpulse 2s ease-in-out infinite;
+  flex-shrink:0;
+}
+@keyframes rpulse {
+  0%,100% { box-shadow:0 0 6px rgba(0,230,118,.6); }
+  50% { box-shadow:0 0 14px rgba(0,230,118,.9); }
 }
 .r-title {
   font-size:clamp(40px,7vw,72px); font-weight:900; color:#fff;
@@ -368,6 +430,22 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .r-grid {
   display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
 }
+.r-grid-featured { margin-bottom:0; }
+
+/* ---- Section divider ---- */
+.r-section-divider {
+  display:flex; align-items:center; gap:16px;
+  margin:44px 0 24px;
+}
+.r-section-divider::before,
+.r-section-divider::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(to right, transparent, rgba(255,255,255,.15), transparent);
+}
+.r-section-label {
+  font-size:9px; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
+  color:rgba(255,255,255,.35); white-space:nowrap;
+}
 
 /* ---- Artist card ---- */
 .r-card {
@@ -380,15 +458,25 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
   transform:translateY(-5px) scale(1.01);
   box-shadow:0 16px 48px rgba(0,0,0,.6), 0 0 0 1.5px var(--r-accent, #E91E8C);
 }
-.r-card:focus-visible {
-  outline:3px solid #F69820; outline-offset:3px;
+.r-card:focus-visible { outline:3px solid #F69820; outline-offset:3px; }
+.r-card-spacer { pointer-events:none; background:transparent; }
+.r-card-featured {
+  box-shadow:0 0 0 1px rgba(255,255,255,.1);
 }
-.r-card-spacer {
-  pointer-events:none; background:transparent;
+.r-card-featured:hover {
+  box-shadow:0 16px 48px rgba(0,0,0,.7), 0 0 0 2px var(--r-accent, #E91E8C);
 }
-.r-card-img {
-  position:absolute; inset:0;
+
+/* Now Live badge */
+.r-now-live-badge {
+  position:absolute; top:12px; left:12px; z-index:3;
+  background:rgba(0,230,118,.15); border:1px solid rgba(0,230,118,.4);
+  color:#00e676; font-size:8px; font-weight:800; letter-spacing:.18em;
+  text-transform:uppercase; padding:4px 8px; border-radius:4px;
+  backdrop-filter:blur(8px);
 }
+
+.r-card-img { position:absolute; inset:0; }
 .r-card-img img {
   width:100%; height:100%; object-fit:cover; object-position:top center; display:block;
   transition:transform .4s ease;
@@ -440,9 +528,7 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
   background:rgba(255,255,255,.2); border:none; cursor:pointer; padding:0;
   transition:all .3s ease;
 }
-.r-dot.on {
-  width:22px; border-radius:4px; background:rgba(255,255,255,.55);
-}
+.r-dot.on { width:22px; border-radius:4px; background:rgba(255,255,255,.55); }
 .r-dot:focus-visible { outline:2px solid #F69820; outline-offset:2px; }
 
 /* ---- Loading state ---- */
@@ -460,11 +546,18 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 /* ---- Responsive ---- */
 @media(max-width:768px) {
   .r-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+  .r-grid-featured { grid-template-columns:repeat(3,1fr); }
   .r-page { padding:32px 16px 80px; }
   .r-city-stage { height:100vh; }
   .r-city-stage::before { height:30%; }
   .r-city-panel img { object-position:center center; }
   .r-header { margin-bottom:36px; }
+}
+@media(max-width:600px) {
+  .r-grid-featured { grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .r-card-name { font-size:10px; }
+  .r-card-tag { display:none; }
+  .r-now-live-badge { font-size:6px; padding:3px 5px; letter-spacing:.12em; }
 }
 @media(max-width:480px) {
   .r-grid { grid-template-columns:1fr 1fr; gap:8px; }
