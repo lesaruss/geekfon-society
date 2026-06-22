@@ -1,4 +1,6 @@
-import { notFound } from "next/navigation";
+"use client";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import SiteChrome from "@/components/SiteChrome";
 
 const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
@@ -35,112 +37,117 @@ const ARTICLE_CSS = `
 .art-back{display:inline-flex;align-items:center;gap:8px;margin-top:48px;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rx,#c084fc);text-decoration:none;transition:opacity .15s}
 .art-back:hover{opacity:.7}
 .art-back svg{width:16px;height:16px}
+.art-loading{padding:80px 20px;text-align:center;color:var(--lr-text-30);font-size:14px}
 @media(max-width:600px){.art-page{padding:0 16px 60px}.art-title{font-size:22px}}
 `;
 
-function renderContent(content: string, accent: string) {
-  return content.split(/\n\n+/).map((block, i) => {
-    const trimmed = block.trim();
-    if (!trimmed) return null;
-    // Detect quoted lines (starts with ")
-    if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-      return <p key={i} className="art-quote">{trimmed}</p>;
-    }
-    // Preserve single-line breaks within a paragraph
-    const lines = trimmed.split('\n').filter(Boolean);
-    return (
-      <p key={i}>
-        {lines.map((line, j) => (
-          <span key={j}>{line}{j < lines.length - 1 ? <br /> : null}</span>
-        ))}
-      </p>
-    );
-  });
-}
+export default function ArticleDetailPage() {
+  const params = useParams();
+  const artist = params.artist as string;
+  const slug   = params.slug   as string;
 
-export default async function ArticleDetailPage({
-  params,
-}: {
-  params: Promise<{ artist: string; slug: string }>;
-}) {
-  const { artist, slug } = await params;
+  const [article, setArticle] = useState<NewsItem | null>(null);
+  const [artistName, setArtistName] = useState<string>("");
+  const [accent, setAccent] = useState<string>("#c084fc");
+  const [loading, setLoading] = useState(true);
 
-  const res = await fetch(
-    `${SUPA_URL}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(artist)}&select=profile`,
-    {
-      headers: {
-        apikey: SUPA_ANON,
-        Authorization: `Bearer ${SUPA_ANON}`,
-      },
-      cache: "no-store",
-    }
-  );
-
-  if (!res.ok) return notFound();
-  const rows = await res.json();
-  if (!rows.length) return notFound();
-
-  const profile = rows[0].profile || {};
-  const artistName: string = profile.name || artist;
-  const accent: string = profile.accent || "#c084fc";
-  const news: NewsItem[] = profile.news || [];
-
-  const article = news.find((n) => n.slug === slug);
-  if (!article) return notFound();
+  useEffect(() => {
+    if (!artist || !slug) return;
+    fetch(
+      `${SUPA_URL}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(artist)}&select=profile`,
+      { headers: { apikey: SUPA_ANON, Authorization: `Bearer ${SUPA_ANON}` } }
+    )
+      .then((r) => r.json())
+      .then((rows) => {
+        if (!rows.length) { setLoading(false); return; }
+        const profile = rows[0].profile || {};
+        setArtistName(profile.name || artist);
+        if (profile.accent) setAccent(profile.accent);
+        const found = (profile.news || []).find((n: NewsItem) => n.slug === slug);
+        setArticle(found || null);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [artist, slug]);
 
   const crumb = [
     { label: "GeekFon Society", href: "/" },
-    { label: artistName, href: `/${artist}` },
-    { label: article.title || "Article" },
+    { label: artistName || artist, href: `/${artist}` },
+    { label: article?.title || "Article" },
   ];
+
+  if (loading) {
+    return (
+      <SiteChrome>
+        <div className="art-loading">Loading...</div>
+      </SiteChrome>
+    );
+  }
+
+  if (!article) {
+    return (
+      <SiteChrome>
+        <div className="art-loading">Article not found.</div>
+      </SiteChrome>
+    );
+  }
+
+  const paragraphs = (article.content || "").split(/\n\n+/).filter(Boolean);
 
   return (
     <SiteChrome crumb={crumb}>
       <style>{ARTICLE_CSS}</style>
       <style>{`:root{--rx:${accent}}`}</style>
       <div className="art-page">
-        {/* Breadcrumb */}
         <nav className="art-crumb" aria-label="Breadcrumb">
           {crumb.map((c, i) => (
             <span key={i} style={{ display: "contents" }}>
               {i > 0 && <span className="art-crumb-sep">›</span>}
               {c.href
                 ? <a href={c.href}>{c.label}</a>
-                : <span className="art-crumb-current">{c.label}</span>
-              }
+                : <span className="art-crumb-current">{c.label}</span>}
             </span>
           ))}
         </nav>
 
-        {/* Hero image */}
         {article.thumb && (
           <div className="art-hero">
             <img src={article.thumb} alt={article.title || ""} />
           </div>
         )}
 
-        {/* Meta */}
         <div className="art-meta">
-          {article.tag && <span className="art-tag">{article.tag}</span>}
+          {article.tag  && <span className="art-tag">{article.tag}</span>}
           {article.date && <span className="art-date">{article.date}</span>}
         </div>
 
-        {/* Title */}
         {article.title && <h1 className="art-title">{article.title}</h1>}
 
-        {/* Body */}
-        {article.content && (
-          <div className="art-body">
-            {renderContent(article.content, accent)}
-          </div>
-        )}
+        <div className="art-body">
+          {paragraphs.map((block, i) => {
+            const t = block.trim();
+            if (t.startsWith('"') && t.endsWith('"')) {
+              return <p key={i} className="art-quote">{t}</p>;
+            }
+            const lines = t.split("\n").filter(Boolean);
+            return (
+              <p key={i}>
+                {lines.map((line, j) => (
+                  <span key={j}>
+                    {line}
+                    {j < lines.length - 1 ? <br /> : null}
+                  </span>
+                ))}
+              </p>
+            );
+          })}
+        </div>
 
-        {/* Back link */}
         <a href={`/${artist}`} className="art-back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M11 6l-6 6 6 6" />
           </svg>
-          Back to {artistName}
+          Back to {artistName || artist}
         </a>
       </div>
     </SiteChrome>
