@@ -1,10 +1,12 @@
 "use client";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import SiteChrome from "@/components/SiteChrome";
 
 const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
 const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase  = createClient(SUPA_URL, SUPA_ANON);
 
 type NewsItem = {
   slug?: string;
@@ -19,11 +21,6 @@ type NewsItem = {
 
 const ARTICLE_CSS = `
 .art-page{max-width:720px;margin:0 auto;padding:0 20px 80px}
-.art-crumb{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--lr-text-30);padding:20px 0 32px;flex-wrap:wrap}
-.art-crumb a{color:var(--lr-text-30);text-decoration:none;transition:color .15s}
-.art-crumb a:hover{color:var(--lr-text)}
-.art-crumb-sep{opacity:.4}
-.art-crumb-current{color:var(--lr-text-50)}
 .art-hero{width:100%;border-radius:16px;overflow:hidden;margin-bottom:32px;aspect-ratio:16/9;background:var(--lr-surface)}
 .art-hero img{width:100%;height:100%;object-fit:cover;display:block}
 .art-meta{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
@@ -42,32 +39,31 @@ const ARTICLE_CSS = `
 `;
 
 export default function ArticleDetailPage() {
-  const params = useParams()!;
-  const artist = params.artist as string;
-  const slug   = params.slug   as string;
+  const params     = useParams()!;
+  const artist     = params.artist as string;
+  const slug       = params.slug   as string;
 
-  const [article, setArticle] = useState<NewsItem | null>(null);
+  const [article,    setArticle]    = useState<NewsItem | null>(null);
   const [artistName, setArtistName] = useState<string>("");
-  const [accent, setAccent] = useState<string>("#c084fc");
-  const [loading, setLoading] = useState(true);
+  const [accent,     setAccent]     = useState<string>("#c084fc");
+  const [loading,    setLoading]    = useState(true);
 
   useEffect(() => {
     if (!artist || !slug) return;
-    fetch(
-      `${SUPA_URL}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(artist)}&select=profile`,
-      { headers: { apikey: SUPA_ANON, Authorization: `Bearer ${SUPA_ANON}` } }
-    )
-      .then((r) => r.json())
-      .then((rows) => {
-        if (!rows.length) { setLoading(false); return; }
-        const profile = rows[0].profile || {};
+    supabase
+      .from("gfs_artists")
+      .select("profile")
+      .eq("slug", artist)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) { setLoading(false); return; }
+        const profile = data.profile || {};
         setArtistName(profile.name || artist);
         if (profile.accent) setAccent(profile.accent);
         const found = (profile.news || []).find((n: NewsItem) => n.slug === slug);
         setArticle(found || null);
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      });
   }, [artist, slug]);
 
   const crumb = [
@@ -99,17 +95,6 @@ export default function ArticleDetailPage() {
       <style>{ARTICLE_CSS}</style>
       <style>{`:root{--rx:${accent}}`}</style>
       <div className="art-page">
-        <nav className="art-crumb" aria-label="Breadcrumb">
-          {crumb.map((c, i) => (
-            <span key={i} style={{ display: "contents" }}>
-              {i > 0 && <span className="art-crumb-sep">›</span>}
-              {c.href
-                ? <a href={c.href}>{c.label}</a>
-                : <span className="art-crumb-current">{c.label}</span>}
-            </span>
-          ))}
-        </nav>
-
         {article.thumb && (
           <div className="art-hero">
             <img src={article.thumb} alt={article.title || ""} />
