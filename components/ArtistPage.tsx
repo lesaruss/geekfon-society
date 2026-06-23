@@ -303,7 +303,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const pulseArticles = c.news && c.news.length > 0 ? c.news : PLACEHOLDER_NEWS;
 
   return (
-    
+
       <div style={vars}>
         <style>{CSS}{cityBg ? CITY_CSS : ""}</style>
         <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
@@ -881,7 +881,6 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
         </div>
       )}
 
-    </SiteChrome>
   );
 }
 
