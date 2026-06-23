@@ -61,22 +61,22 @@ export default function JukeboxPage() {
               <div key={artist.name} style={{ marginTop: '20px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>{artist.name}</div>
                 {[1, 2, 3].map((i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                    <div style={{ width: '20px', fontSize: '11px', color: 'rgba(26,26,26,0.3)', fontWeight: 600 }}>{i}</div>
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ width: '20px', fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>{i}</div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700 }}>Song {i}</div>
-                      <div style={{ fontSize: '11px', color: 'rgba(26,26,26,0.5)' }}>{artist.name}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Song {i}</div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>{artist.name}</div>
                     </div>
-                    <button style={{ padding: '5px 12px', borderRadius: '5px', fontSize: '10px', fontWeight: 800, border: '1.5px solid rgba(0,0,0,0.12)', color: 'rgba(26,26,26,0.65)', background: '#fff', cursor: 'pointer' }}>Rent 5</button>
-                    <button style={{ padding: '5px 12px', borderRadius: '5px', fontSize: '10px', fontWeight: 800, border: 'none', color: '#fff', background: '#1a1a1a', cursor: 'pointer' }}>Buy</button>
+                    <button style={{ padding: '5px 12px', borderRadius: '5px', fontSize: '10px', fontWeight: 800, border: '1.5px solid rgba(255,255,255,0.2)', color: '#fff', background: 'transparent', cursor: 'pointer' }}>Rent 5</button>
+                    <button style={{ padding: '5px 12px', borderRadius: '5px', fontSize: '10px', fontWeight: 800, border: 'none', color: '#000', background: '#fff', cursor: 'pointer' }}>Buy</button>
                   </div>
                 ))}
               </div>
             ))}
           </div>
         )}
-        {activeTab === 'queue' && <div style={{ padding: '20px 0' }}>3 songs queued - ready to play</div>}
-        {activeTab === 'library' && <div style={{ padding: '20px 0' }}>7 owned tracks in your library</div>}
+        {activeTab === 'queue' && <div style={{ padding: '20px 0', color: 'rgba(255,255,255,0.7)' }}>3 songs queued - ready to play</div>}
+        {activeTab === 'library' && <div style={{ padding: '20px 0', color: 'rgba(255,255,255,0.7)' }}>7 owned tracks in your library</div>}
       </div>
     </>
   );
