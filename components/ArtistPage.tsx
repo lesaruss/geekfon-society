@@ -931,7 +931,7 @@ const CSS = `
 .panel{max-width:none}
 
 .billboard{width:300px;flex-shrink:0;position:sticky;top:120px;padding-top:30px;display:flex;flex-direction:column;gap:16px}
-.bb-label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;color:var(--lr-text-30);margin-bottom:8px}
+.bb-label{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;color:var(--lr-text-50);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--lr-border)}
 /* Rotator */
 .bb-rotator{position:relative;width:100%}
 .bb-slide{display:none}
@@ -955,7 +955,7 @@ const CSS = `
 @media(max-width:900px){
   .body-layout{flex-direction:column;padding:0 16px}
   .body-main{padding-right:0}
-  .billboard{width:100%;position:static;padding-top:0}
+  .billboard{width:100%;position:static;padding-top:0;margin-top:40px}
   .bb-slot-tall{display:none}
   .head-grid{display:flex;flex-direction:row;align-items:flex-start;gap:16px;padding:0 16px}
   .head-art{width:100px;height:100px;min-height:unset;border-radius:12px;border:2px solid var(--rx);flex-shrink:0;object-position:top center}
@@ -984,7 +984,7 @@ const CSS = `
 .ov-pull-text{font-size:22px;font-weight:700;line-height:1.55;color:var(--lr-text);font-style:italic;letter-spacing:-.015em;margin:0;text-align:center}
 .ov-news-head{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;color:var(--lr-text-50);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--lr-border)}
 @media(max-width:900px){.ov-intro{grid-template-columns:1fr}}
-.tabbar-drop-item{display:block;width:100%;padding:13px 22px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text-75);background:none;border:none;border-top:1px solid var(--lr-border);cursor:pointer;text-align:left}
+.tabbar-drop-item{display:block;width:100%;padding:13px 22px 13px 16px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text-75);background:none;border:none;border-top:1px solid var(--lr-border);cursor:pointer;text-align:left}
 .tabbar-drop-item.active{color:var(--rx);font-weight:900;background:var(--rx-tint)}
 .tabbar-drop-item:hover:not(.active){background:var(--lr-bg)}
 .article-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);text-decoration:none;margin-top:4px}
