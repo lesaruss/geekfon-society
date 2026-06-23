@@ -14,19 +14,12 @@ type Rel = { name: string; desc: string };
 type News = { slug?: string; tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string; content?: string };
 type Audit = { title: string; status?: string; pillar?: string; theme?: string; emotion?: string; scores?: Record<string, number> };
 type PulsePost = {
-  type: 'voice_message' | 'music_drop' | 'article' | 'voice' | 'photo' | 'video' | 'text';
+  type: 'voice_message' | 'music_drop' | 'article';
   date?: string;
   caption?: string;
-  text?: string;
-  timestamp?: string;
   audioUrl?: string;
   trackName?: string; trackEra?: string; trackUrl?: string; trackVisibility?: string;
   tag?: string; title?: string; blurb?: string; href?: string; thumb?: string;
-  media?: string;
-  duration?: string;
-  memberOnly?: boolean;
-  engagement?: { likes?: number; comments?: number; shares?: number };
-  id?: string;
 };
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
@@ -466,7 +459,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
               ) : (
               <>{/* Pulse tab - social feed */}
               {tab === "pulse" && (
-                <section className="panel pulse-section">
+                <section className="panel">
                   {(!c.pulse || c.pulse.length === 0) ? (
                     <div className="feed-empty">
                       <div className="feed-empty-icon">
@@ -475,123 +468,47 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                       <p className="feed-empty-text">Posts coming soon. Season 1 starts Jun 1.</p>
                     </div>
                   ) : (
-                    <div className="pulse-feed">
-                      {(c.pulse || []).map((post, i) => {
-                        const postType = post.type || 'text';
-                        const isNewPulse = ['voice', 'photo', 'video', 'text'].includes(postType);
-                        const postDate = post.timestamp ? new Date(post.timestamp).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        }) : post.date;
-                        
-                        return isNewPulse ? (
-                          <div key={i} className="pulse-post">
-                            <div className="pulse-header">
-                              <div className="pulse-meta">
-                                <div className="pulse-avatar">
-                                  {c.heroUrl ? (
-                                    <img src={c.heroUrl} alt={name} />
-                                  ) : (
-                                    <div className="pulse-avatar-fallback">{name.charAt(0)}</div>
-                                  )}
-                                </div>
-                                <div className="pulse-info">
-                                  <h3 className="pulse-name">{name}</h3>
-                                  <div className="pulse-timestamp">{postDate}</div>
-                                </div>
-                              </div>
-                              <div className="pulse-badges">
-                                <span className={`pulse-type pulse-type-${postType}`}>{
-                                  postType === 'voice' ? 'Voice' :
-                                  postType === 'photo' ? 'Photo' :
-                                  postType === 'video' ? 'Video' :
-                                  'Text'
-                                }</span>
-                                {post.memberOnly && (
-                                  <span className="pulse-member-lock">🔒</span>
-                                )}
-                              </div>
+                    <div className="feed">
+                      {(c.pulse || []).map((post, i) => (
+                        <div key={i} className={"feed-post" + (post.type === "music_drop" ? " feed-post-music" : post.type === "voice_message" ? " feed-post-voice" : "")}>
+                          <div className="feed-left">
+                            {c.heroUrl
+                              ? <img className="feed-avatar" src={c.heroUrl} alt={name} />
+                              : <div className="feed-avatar-fallback">{name.charAt(0)}</div>
+                            }
+                          </div>
+                          <div className="feed-body">
+                            <div className="feed-header">
+                              <span className="feed-name">{name}</span>
+                              {post.date && <span className="feed-time">{post.date}</span>}
+                              {post.type === "music_drop" && <span className="feed-badge feed-badge-music">Music Drop</span>}
+                              {post.type === "voice_message" && <span className="feed-badge feed-badge-voice">Voice</span>}
                             </div>
-                            
-                            <div className="pulse-content">
-                              {post.text && <p className="pulse-text">{post.text}</p>}
-                              
-                              {post.media && (
-                                <div className={`pulse-media pulse-media-${postType}`}>
-                                  {postType === 'voice' && `🎙️ Voice Message ${post.duration ? `(${post.duration})` : ''}`}
-                                  {postType === 'photo' && '📸 Photo'}
-                                  {postType === 'video' && `🎬 Video ${post.duration ? `(${post.duration})` : ''}`}
-                                </div>
-                              )}
-                            </div>
-                            
-                            {post.engagement && (
-                              <div className="pulse-engagement">
-                                {post.engagement.likes !== undefined && (
-                                  <div className="pulse-stat">
-                                    <span>👍</span>
-                                    <span>{post.engagement.likes.toLocaleString()} likes</span>
-                                  </div>
-                                )}
-                                {post.engagement.comments !== undefined && (
-                                  <div className="pulse-stat">
-                                    <span>💬</span>
-                                    <span>{post.engagement.comments.toLocaleString()} comments</span>
-                                  </div>
-                                )}
-                                {post.engagement.shares !== undefined && (
-                                  <div className="pulse-stat">
-                                    <span>🔁</span>
-                                    <span>{post.engagement.shares.toLocaleString()} shares</span>
-                                  </div>
-                                )}
+                            {post.caption && <p className="feed-text">{post.caption}</p>}
+                            {post.type === "music_drop" && post.trackName && (
+                              <div className="feed-music-chip">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 8V4"/><path d="M8 12H4"/><path d="M16 12h4"/><path d="M12 16v4"/></svg>
+                                <span className="feed-chip-track">{post.trackName}</span>
+                                {post.trackEra && <span className="feed-chip-era">{post.trackEra}</span>}
                               </div>
                             )}
-                          </div>
-                        ) : (
-                          // Fallback for old pulse post types
-                          <div key={i} className={"feed-post" + (post.type === "music_drop" ? " feed-post-music" : post.type === "voice_message" ? " feed-post-voice" : "")}>
-                            <div className="feed-left">
-                              {c.heroUrl
-                                ? <img className="feed-avatar" src={c.heroUrl} alt={name} />
-                                : <div className="feed-avatar-fallback">{name.charAt(0)}</div>
-                              }
-                            </div>
-                            <div className="feed-body">
-                              <div className="feed-header">
-                                <span className="feed-name">{name}</span>
-                                {post.date && <span className="feed-time">{post.date}</span>}
-                                {post.type === "music_drop" && <span className="feed-badge feed-badge-music">Music Drop</span>}
-                                {post.type === "voice_message" && <span className="feed-badge feed-badge-voice">Voice</span>}
-                              </div>
-                              {post.caption && <p className="feed-text">{post.caption}</p>}
-                              {post.type === "music_drop" && post.trackName && (
-                                <div className="feed-music-chip">
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 8V4"/><path d="M8 12H4"/><path d="M16 12h4"/><path d="M12 16v4"/></svg>
-                                  <span className="feed-chip-track">{post.trackName}</span>
-                                  {post.trackEra && <span className="feed-chip-era">{post.trackEra}</span>}
+                            {post.type === "article" && post.title && (
+                              <a href={post.href || "#"} className="feed-article-chip">
+                                {post.thumb && <img src={post.thumb} alt="" />}
+                                <div className="feed-article-chip-body">
+                                  {post.tag && <span className="feed-chip-tag">{post.tag}</span>}
+                                  <span className="feed-chip-title">{post.title}</span>
                                 </div>
-                              )}
-                              {post.type === "article" && post.title && (
-                                <a href={post.href || "#"} className="feed-article-chip">
-                                  {post.thumb && <img src={post.thumb} alt="" />}
-                                  <div className="feed-article-chip-body">
-                                    {post.tag && <span className="feed-chip-tag">{post.tag}</span>}
-                                    <span className="feed-chip-title">{post.title}</span>
-                                  </div>
-                                </a>
-                              )}
-                            </div>
+                              </a>
+                            )}
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </section>
               )}
+
               {/* News tab - editorial / blog content (former Pulse) */}
               {tab === "news" && (
                 <section className="panel">
@@ -1148,39 +1065,102 @@ const CSS = `
 .cat td.song{font-weight:700;color:var(--lr-text)}
 
 /* ---- Pulse Feed ---- */
-/* Pulse Grid Layout */
-.pulse-feed{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
-.pulse-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;aspect-ratio:1;cursor:pointer;transition:transform .2s,box-shadow .2s}
-.pulse-post:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1)}
-.pulse-header{display:flex;align-items:flex-start;justify-content:space-between;padding:12px;gap:8px;flex-shrink:0}
-.pulse-meta{display:flex;align-items:center;gap:8px;min-width:0}
-.pulse-avatar{width:32px;height:32px;border-radius:50%;background:var(--rx);border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:12px;overflow:hidden;flex-shrink:0}
-.pulse-avatar img{width:100%;height:100%;object-fit:cover}
-.pulse-info{min-width:0}
-.pulse-info h3{font-size:12px;font-weight:600;margin:0;color:var(--lr-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pulse-timestamp{font-size:10px;color:var(--lr-text-50)}
-.pulse-badges{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.pulse-type{display:inline-block;background:#e8f0fe;color:#1967d2;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:600;text-transform:uppercase;white-space:nowrap}
-.pulse-type-voice{background:#fce8e6;color:#d33b27}
-.pulse-type-photo{background:#efe6ff;color:#6f42c1}
-.pulse-type-video{background:#e6f2ff;color:#0051ba}
-.pulse-type-text{background:#e8f0fe;color:#1967d2}
-.pulse-member-lock{font-size:12px}
-.pulse-content{flex:1;padding:0 12px;display:flex;flex-direction:column;min-width:0}
-.pulse-text{font-size:13px;line-height:1.4;color:var(--lr-text);margin:8px 0;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-word}
-.pulse-media{width:100%;aspect-ratio:1;border:2px solid #1a1a1a;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px;margin:4px 0;flex-shrink:0;overflow:hidden}
-.pulse-media-voice{background:#764ba2;color:white}
-.pulse-media-photo{background:#ffc751;color:#333}
-.pulse-media-video{background:#0051ba;color:white}
-.pulse-engagement{display:flex;gap:8px;padding:8px 12px;border-top:1px solid #ddd;font-size:11px;color:var(--lr-text-75);flex-wrap:wrap}
-.pulse-stat{display:flex;align-items:center;gap:3px}
-.pulse-stat span:first-child{font-size:12px}
-.pulse-pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:32px;padding:16px 0}
-.pulse-page-btn{padding:8px 16px;background:var(--rx);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px}
-.pulse-page-btn:disabled{opacity:.5;cursor:not-allowed}
-.pulse-page-info{font-size:13px;color:var(--lr-text-50)}
-@media(max-width:1024px){.pulse-feed{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:640px){.pulse-feed{grid-template-columns:1fr}}
+.pulse-feed{display:flex;flex-direction:column;gap:20px}
+/* Article grid */
+.pulse-articles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pulse-article-card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.pulse-article-card .pf-article-img{position:relative;aspect-ratio:16/9;overflow:hidden;flex-shrink:0}
+.pulse-article-card .pf-article-img img{width:100%;height:100%;object-fit:cover;display:block}
+.pulse-article-card .pf-article-ph{width:100%;height:100%}
+.pulse-article-card .pf-article-body{padding:14px 16px 16px;flex:1;display:flex;flex-direction:column}
+.pf-article-date{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-30);margin-bottom:6px}
+@media(max-width:900px){.pulse-articles-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.pulse-articles-grid{grid-template-columns:1fr}}
+.pf-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden;padding:20px 22px}
+.pf-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.pf-type-badge{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;padding:3px 9px;border-radius:20px}
+.pf-type-voice,.pf-type-drop{background:var(--rx-tint);color:var(--rx-text)}
+.pf-type-bio,.pf-type-article{background:rgba(0,0,0,.05);color:var(--lr-text-50)}
+.pf-date{font-size:11px;font-weight:700;color:var(--lr-text-30);text-transform:uppercase;letter-spacing:.06em}
+/* Voice message card — square image + player side by side */
+.pf-voice-card{display:flex;gap:16px;align-items:flex-start}
+.pf-voice-avatar{width:120px;height:120px;border-radius:12px;overflow:hidden;flex-shrink:0;border:2px solid var(--rx)}
+.pf-voice-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.pf-voice-right{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+/* Waveform scrubber */
+.pf-waveform{display:flex;align-items:center;gap:2px;height:48px;cursor:pointer;padding:4px 0}
+.pf-waveform span{flex-shrink:0;width:4px;border-radius:3px;background:rgba(233,30,140,.18);display:block;transition:background .1s}
+.pf-waveform span.wf-active{background:var(--rx)}
+/* Controls row */
+.pf-voice-controls{display:flex;align-items:center;gap:10px}
+.pf-voice-play-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--rx);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;transition:filter .15s}
+.pf-voice-play-btn svg{width:13px;height:13px;fill:currentColor}
+.pf-voice-play-btn.on{filter:brightness(.88)}
+.pf-voice-time{font-size:11px;font-weight:700;color:var(--lr-text-50);font-variant-numeric:tabular-nums;flex:1}
+/* Karaoke caption */
+.pf-karaoke{font-size:14px;line-height:1.75;color:var(--lr-text-30);font-style:italic;margin:0}
+.kc{transition:color .35s,font-weight .35s}
+.kc-past{color:var(--lr-text-50)}
+.kc-active{color:var(--rx-text);font-weight:800;font-style:normal}
+/* Billboard stacked + tall */
+.bb-stacked{display:flex;flex-direction:column;gap:12px}
+.bb-placeholder.bb-tall{min-height:500px}
+/* Bio post */
+.pf-quote{font-size:clamp(18px,2.4vw,22px);font-weight:900;color:var(--rx-text);line-height:1.3;margin:0 0 14px;border-left:3px solid var(--rx);padding-left:16px;font-style:italic}
+.pf-bio-p{font-size:14px;color:var(--lr-text-75);line-height:1.75;margin-top:10px}
+.pf-bio-p:first-of-type{margin-top:0}
+/* Music drop */
+.pf-drop-card{display:flex;gap:14px;align-items:center;border:1px solid var(--lr-border);border-radius:10px;padding:14px 16px;background:var(--lr-bg)}
+.pf-drop-card.locked-card{background:rgba(0,0,0,.02);border-style:dashed}
+.pf-drop-play-btn{width:44px;height:44px;border-radius:50%;border:none;background:var(--rx);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;transition:filter .15s}
+.pf-drop-play-btn svg{width:16px;height:16px;fill:currentColor}
+.pf-drop-play-btn.on{filter:brightness(.88)}
+.pf-drop-play-btn:disabled{background:var(--lr-border);cursor:not-allowed}
+.pf-drop-lock-btn{width:44px;height:44px;border-radius:50%;border:1.5px dashed var(--lr-text-30);background:transparent;color:var(--lr-text-30);display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;transition:border-color .15s,color .15s}
+.pf-drop-lock-btn:hover{border-color:var(--rx);color:var(--rx-text)}
+.pf-drop-lock-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+.pf-drop-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.pf-drop-name{font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-drop-unlock-cta{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-30);text-decoration:none;transition:color .15s}
+.pf-drop-unlock-cta:hover{color:var(--rx-text)}
+.pf-drop-unlock-cta svg{width:12px;height:12px;flex-shrink:0}
+/* Scrubber */
+.pf-scrubber{cursor:pointer;padding:4px 0}
+.pf-scrubber-track{position:relative;height:4px;background:var(--lr-border);border-radius:2px}
+.pf-scrubber-fill{position:absolute;left:0;top:0;height:100%;background:var(--rx);border-radius:2px;transition:width .1s linear}
+.pf-scrubber-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:var(--rx);box-shadow:0 0 0 2px #fff;transition:left .1s linear}
+.pf-scrubber-times{display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--lr-text-30);margin-top:3px;letter-spacing:.02em}
+/* Music tab scrubber */
+.track-scrubber{display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0}
+.ts-track{flex:1;position:relative;height:3px;background:var(--lr-border);border-radius:2px}
+.ts-fill{position:absolute;left:0;top:0;height:100%;background:var(--rx);border-radius:2px;transition:width .1s linear}
+.ts-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;background:var(--rx);box-shadow:0 0 0 2px #fff;transition:left .1s linear;opacity:0}
+.track:hover .ts-thumb{opacity:1}
+.ts-time{font-size:10px;font-weight:700;color:var(--lr-text-30);white-space:nowrap;min-width:60px;text-align:right}
+.track-locked .tplay{text-decoration:none}
+.track-locked-msg{font-size:11px;color:var(--lr-text-30)}
+.track-locked-msg a{color:var(--rx-text);text-decoration:none;font-weight:700}
+.track-locked-msg a:hover{text-decoration:underline}
+.track-coming-soon{color:var(--lr-text-30);font-style:italic}
+.pf-lock-static{cursor:default;pointer-events:none;border-style:solid;opacity:.45}
+.pf-coming-soon{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-30);font-style:italic}
+/* Article post */
+.pf-article-card{border:1px solid var(--lr-border);border-radius:10px;overflow:hidden;background:var(--lr-bg)}
+.pf-article-img{aspect-ratio:16/8;position:relative;overflow:hidden}
+.pf-article-img img,.pf-article-ph{width:100%;height:100%;object-fit:cover;display:block}
+.pf-article-body{padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.pf-article-title{font-size:17px;font-weight:900;line-height:1.25;color:var(--lr-text)}.pf-article-title-link{display:block;text-decoration:none;color:inherit;margin-bottom:6px;cursor:pointer;transition:opacity .15s}.pf-article-title-link:hover{opacity:.75}
+.pf-article-blurb{font-size:13px;color:var(--lr-text-75);line-height:1.6;margin:0}
+/* Pagination controls */
+.pulse-pagination{display:flex;align-items:center;justify-content:space-between;margin-top:28px;padding:18px 0;border-top:1px solid var(--lr-border)}
+.pulse-page-btn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--rx-text);background:none;border:1.5px solid var(--lr-border);border-radius:100px;padding:10px 20px;cursor:pointer;transition:border-color .15s,background .15s}
+.pulse-page-btn:hover:not(:disabled){border-color:var(--rx);background:var(--rx-tint)}
+.pulse-page-btn:disabled{opacity:.35;cursor:not-allowed}
+.pulse-page-btn svg{width:14px;height:14px}
+.pulse-page-info{display:flex;align-items:baseline;gap:4px;font-size:13px;font-weight:700}
+.pulse-page-cur{font-size:18px;font-weight:900;color:var(--rx-text)}
+.pulse-page-sep{color:var(--lr-text-30)}
+.pulse-page-tot{color:var(--lr-text-50)}
 
 /* ---- Schedule tab ---- */
 .sch-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px}
