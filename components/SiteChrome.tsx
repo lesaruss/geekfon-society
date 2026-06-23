@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 // ── Tier system ────────────────────────────────────────────────────────────────
@@ -7,47 +7,43 @@ type Tier = "public" | "passport" | "plus" | "pro";
 
 type NavItem = { label: string; href: string };
 
-// Public (not logged in)
 const NAV_PUBLIC: NavItem[] = [
   { label: "Roster",        href: "/roster" },
   { label: "GeekFon Radio", href: "/radio" },
 ];
 
-// Passport - basic member
 const NAV_PASSPORT: NavItem[] = [
-  { label: "Overview",      href: "/dashboard" },
-  { label: "Roster",        href: "/roster" },
-  { label: "Library",       href: "/dashboard/library" },
-  { label: "Leaderboard",   href: "/dashboard/leaderboard" },
+  { label: "Overview",        href: "/dashboard" },
+  { label: "Roster",          href: "/roster" },
+  { label: "Library",         href: "/dashboard/library" },
+  { label: "Leaderboard",     href: "/dashboard/leaderboard" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
-  { label: "GeekFon Radio", href: "/radio" },
+  { label: "GeekFon Radio",   href: "/radio" },
 ];
 
-// Plus - enhanced member
 const NAV_PLUS: NavItem[] = [
-  { label: "Overview",      href: "/dashboard" },
-  { label: "Roster",        href: "/roster" },
-  { label: "Library",       href: "/dashboard/library" },
-  { label: "Leaderboard",   href: "/dashboard/leaderboard" },
+  { label: "Overview",        href: "/dashboard" },
+  { label: "Roster",          href: "/roster" },
+  { label: "Library",         href: "/dashboard/library" },
+  { label: "Leaderboard",     href: "/dashboard/leaderboard" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
-  { label: "Plus",          href: "/plus" },
-  { label: "GeekFon Radio", href: "/radio" },
+  { label: "Plus",            href: "/plus" },
+  { label: "GeekFon Radio",   href: "/radio" },
 ];
 
-// Pro - full access (same as Plus for now, expands as features ship)
 const NAV_PRO: NavItem[] = [
-  { label: "Overview",      href: "/dashboard" },
-  { label: "Roster",        href: "/roster" },
-  { label: "Library",       href: "/dashboard/library" },
-  { label: "Leaderboard",   href: "/dashboard/leaderboard" },
+  { label: "Overview",        href: "/dashboard" },
+  { label: "Roster",          href: "/roster" },
+  { label: "Library",         href: "/dashboard/library" },
+  { label: "Leaderboard",     href: "/dashboard/leaderboard" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
-  { label: "Plus",          href: "/plus" },
-  { label: "GeekFon Radio", href: "/radio" },
+  { label: "Plus",            href: "/plus" },
+  { label: "GeekFon Radio",   href: "/radio" },
 ];
 
 function navForTier(tier: Tier): NavItem[] {
-  if (tier === "plus")    return NAV_PLUS;
-  if (tier === "pro")     return NAV_PRO;
+  if (tier === "plus")     return NAV_PLUS;
+  if (tier === "pro")      return NAV_PRO;
   if (tier === "passport") return NAV_PASSPORT;
   return NAV_PUBLIC;
 }
@@ -59,13 +55,23 @@ const TIER_ACCENT: Record<Tier, string> = {
   pro:      "#AAFF00",
 };
 
-const TIER_LABEL: Record<string, string> = {
+const TIER_LABEL: Record<Tier, string> = {
+  public:   "Public",
   passport: "Passport",
   plus:     "Plus",
   pro:      "Pro",
 };
 
 const TIERS: Tier[] = ["public", "passport", "plus", "pro"];
+
+// Map raw DB tier values to internal Tier type
+function parseTier(raw: string): Tier {
+  const r = raw.toLowerCase();
+  if (r === "all-access") return "plus";
+  if (r === "lifetime")   return "pro";
+  if (r === "passport")   return "passport";
+  return "public"; // free, or unknown
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Crumb = { label: string; href?: string };
@@ -120,37 +126,48 @@ export default function SiteChrome({
     isAdmin: false,
   });
 
-  // viewAs: admin-only override, persisted in localStorage
+  // viewAs: admin-only tier override, persisted across page loads
   const [viewAs, setViewAs] = useState<Tier | null>(null);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const adminRef = useRef<HTMLDivElement>(null);
 
+  // Load persisted viewAs from localStorage after mount
   useEffect(() => {
     const saved = localStorage.getItem("gfs-view-as") as Tier | null;
     if (saved && TIERS.includes(saved)) setViewAs(saved);
   }, []);
 
   const handleViewAs = (t: Tier) => {
-    const next = viewAs === t && t === auth.tier ? null : t;
-    setViewAs(next);
-    if (next) localStorage.setItem("gfs-view-as", next);
+    const next = t === auth.tier && viewAs === null ? null : t;
+    const final = next === auth.tier ? null : t;
+    setViewAs(final);
+    if (final) localStorage.setItem("gfs-view-as", final);
     else localStorage.removeItem("gfs-view-as");
+    setAdminOpen(false);
   };
+
+  // Close admin dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (adminRef.current && !adminRef.current.contains(e.target as Node)) {
+        setAdminOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   // Close drawer on Escape
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); setAdminOpen(false); } };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Auth: use override prop if provided; otherwise self-authenticate
+  // Auth
   useEffect(() => {
     if (member) {
-      const rawTier = (member.tier || "passport").toLowerCase();
-      const tier: Tier =
-        rawTier === "plus"    ? "plus"    :
-        rawTier === "pro"     ? "pro"     :
-        rawTier === "passport"? "passport":
-        "public";
+      const tier = parseTier(member.tier || "passport");
       setAuth({
         loading: false,
         tier,
@@ -179,12 +196,7 @@ export default function SiteChrome({
           .maybeSingle();
         if (cancelled) return;
         const displayName = data?.name || u.email || "Member";
-        const rawTier = (data?.tier || "passport").toLowerCase();
-        const tier: Tier =
-          rawTier === "plus"    ? "plus"    :
-          rawTier === "pro"     ? "pro"     :
-          rawTier === "passport"? "passport":
-          "public";
+        const tier = parseTier(data?.tier || "passport");
         const isAdmin = data?.role === "admin" || data?.role === "super_admin";
         setAuth({
           loading: false,
@@ -202,13 +214,14 @@ export default function SiteChrome({
     return () => { cancelled = true; };
   }, [member]);
 
-  // Effective tier: viewAs overrides real tier for admins only
+  // Effective tier for rendering
   const effectiveTier: Tier = (auth.isAdmin && viewAs) ? viewAs : auth.tier;
+  const isPreview = auth.isAdmin && viewAs !== null && viewAs !== auth.tier;
 
   const nav = navForTier(effectiveTier);
   const isLoggedIn = effectiveTier !== "public" && !auth.loading;
   const tierAccent = TIER_ACCENT[effectiveTier];
-  const tierLabel  = TIER_LABEL[effectiveTier] || "";
+  const tierLabel  = TIER_LABEL[effectiveTier];
 
   return (
     <>
@@ -216,91 +229,62 @@ export default function SiteChrome({
 
       {/* ── Topbar ── */}
       <header className="gtop">
+        <button
+          className="gham"
+          aria-label="Open menu"
+          aria-expanded={open}
+          onClick={() => setOpen(true)}
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
+        </button>
 
-        {/* Left: hamburger + logo + breadcrumb */}
-        <div className="gtop-left">
-          <button
-            className="gham"
-            aria-label="Open menu"
-            aria-expanded={open}
-            onClick={() => setOpen(true)}
-          >
-            <svg viewBox="0 0 24 24">
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </button>
+        <a href="/" className="glogo" aria-label="GeekFon Society home">
+          <GeekFonLogo />
+        </a>
 
-          <a href="/" className="glogo" aria-label="GeekFon Society home">
-            <GeekFonLogo />
-          </a>
-
-          {crumb && crumb.length > 0 && (
-            <nav className="gcrumb" aria-label="Breadcrumb">
-              {crumb.map((x, i, a) => (
-                <span key={i}>
-                  {x.href ? (
-                    <a href={x.href}>{x.label}</a>
-                  ) : (
-                    <span className="gcrumb-cur">{x.label}</span>
-                  )}
-                  {i < a.length - 1 && <span className="gcrumb-sep">/</span>}
-                </span>
-              ))}
-            </nav>
-          )}
-        </div>
-
-        {/* Center: view-as toggle (admin only) */}
-        {auth.isAdmin && !auth.loading && (
-          <div className="gtop-center">
-            <div className="gviewas">
-              <span className="gviewas-label">Viewing as</span>
-              <div className="gviewas-pills">
-                {TIERS.map(t => (
-                  <button
-                    key={t}
-                    className={"gviewas-pill" + (effectiveTier === t ? " active" : "")}
-                    style={effectiveTier === t ? { background: TIER_ACCENT[t] } : {}}
-                    onClick={() => handleViewAs(t)}
-                    aria-pressed={effectiveTier === t}
-                  >
-                    {t === "public" ? "Public" : TIER_LABEL[t]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+        {crumb && crumb.length > 0 && (
+          <nav className="gcrumb" aria-label="Breadcrumb">
+            {crumb.map((x, i, a) => (
+              <span key={i}>
+                {x.href ? (
+                  <a href={x.href}>{x.label}</a>
+                ) : (
+                  <span className="gcrumb-cur">{x.label}</span>
+                )}
+                {i < a.length - 1 && <span className="gcrumb-sep">/</span>}
+              </span>
+            ))}
+          </nav>
         )}
 
         {/* Right: loading shimmer | member chip | logged-out CTA */}
-        <div className="gtop-right">
-          {auth.loading ? (
-            <div className="gtop-shimmer" aria-hidden="true" />
-          ) : isLoggedIn ? (
-            <div className="gmember-chip">
-              {auth.balance > 0 && (
-                <div className="gmember-balance">
-                  <span className="gmember-balance-num">
-                    {auth.balance.toLocaleString()}
-                  </span>
-                  <span className="gmember-balance-label">LESARs</span>
-                </div>
-              )}
-              <div
-                className="gmember-avatar"
-                aria-label={auth.name}
-                style={{ background: tierAccent }}
-              >
-                {auth.initial}
+        {auth.loading ? (
+          <div className="gtop-shimmer" aria-hidden="true" />
+        ) : isLoggedIn ? (
+          <div className="gmember-chip">
+            {auth.balance > 0 && (
+              <div className="gmember-balance">
+                <span className="gmember-balance-num">
+                  {auth.balance.toLocaleString()}
+                </span>
+                <span className="gmember-balance-label">LESARs</span>
               </div>
+            )}
+            <div
+              className="gmember-avatar"
+              aria-label={auth.name}
+              style={{ background: isPreview ? TIER_ACCENT[viewAs!] : tierAccent }}
+            >
+              {auth.initial}
             </div>
-          ) : (
-            <a href="/passport" className="gcta">
-              Get Passport
-            </a>
-          )}
-        </div>
-
+          </div>
+        ) : (
+          <a href="/passport" className="gcta">
+            Get Passport
+          </a>
+        )}
       </header>
 
       {/* ── Scrim ── */}
@@ -338,13 +322,9 @@ export default function SiteChrome({
           ))}
         </nav>
 
-        {/* Drawer footer: member info if logged in, upgrade CTA if not */}
         {isLoggedIn ? (
           <div className="gdrawer-member">
-            <div
-              className="gdm-avatar"
-              style={{ background: tierAccent }}
-            >
+            <div className="gdm-avatar" style={{ background: tierAccent }}>
               {auth.initial}
             </div>
             <div className="gdm-info">
@@ -355,12 +335,8 @@ export default function SiteChrome({
             </div>
             {auth.balance > 0 && (
               <div className="gdm-balance">
-                <div className="gdm-balance-num">
-                  {auth.balance.toLocaleString()}
-                </div>
-                <div className="gdm-balance-label" style={{ color: tierAccent }}>
-                  LESARs
-                </div>
+                <div className="gdm-balance-num">{auth.balance.toLocaleString()}</div>
+                <div className="gdm-balance-label" style={{ color: tierAccent }}>LESARs</div>
               </div>
             )}
           </div>
@@ -377,6 +353,58 @@ export default function SiteChrome({
       </aside>
 
       <div className="gbody">{children}</div>
+
+      {/* ── Admin view-as bar (bottom, super_admin / admin only) ── */}
+      {auth.isAdmin && !auth.loading && (
+        <div className="gadmin-bar" ref={adminRef}>
+          <span className="gadmin-label">View as</span>
+          <button
+            className={"gadmin-btn" + (adminOpen ? " open" : "")}
+            onClick={() => setAdminOpen(v => !v)}
+            aria-haspopup="listbox"
+            aria-expanded={adminOpen}
+            style={{ color: TIER_ACCENT[effectiveTier] }}
+          >
+            {TIER_LABEL[effectiveTier]}
+            <svg viewBox="0 0 24 24" className="gadmin-caret">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+
+          {adminOpen && (
+            <div className="gadmin-menu" role="listbox">
+              {TIERS.map(t => (
+                <button
+                  key={t}
+                  className={"gadmin-option" + (effectiveTier === t ? " active" : "")}
+                  onClick={() => handleViewAs(t)}
+                  role="option"
+                  aria-selected={effectiveTier === t}
+                >
+                  <span
+                    className="gadmin-dot"
+                    style={{ background: TIER_ACCENT[t] }}
+                  />
+                  {TIER_LABEL[t]}
+                  {effectiveTier === t && (
+                    <svg viewBox="0 0 24 24" className="gadmin-check">
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+              {viewAs !== null && (
+                <button
+                  className="gadmin-reset"
+                  onClick={() => { setViewAs(null); localStorage.removeItem("gfs-view-as"); setAdminOpen(false); }}
+                >
+                  Reset to my account
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }
@@ -386,18 +414,8 @@ const CHROME_CSS = `
 /* ── Topbar ── */
 .gtop {
   position: sticky; top: 0; z-index: 40; height: 60px;
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  display: flex; align-items: center; gap: 8px;
   padding: 0 18px; background: #fff; border-bottom: 1px solid rgba(0,0,0,.08);
-  gap: 8px;
-}
-.gtop-left {
-  display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;
-}
-.gtop-center {
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.gtop-right {
-  display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0;
 }
 .gham {
   width: 40px; height: 40px; border: none; background: none; cursor: pointer;
@@ -434,8 +452,9 @@ const CHROME_CSS = `
 
 /* ── Breadcrumb ── */
 .gcrumb {
-  display: flex; align-items: center; gap: 9px; min-width: 0;
-  overflow: hidden; font-family: 'Montserrat', sans-serif;
+  display: flex; align-items: center; gap: 9px;
+  flex: 1; min-width: 0; overflow: hidden;
+  font-family: 'Montserrat', sans-serif;
 }
 .gcrumb a, .gcrumb .gcrumb-cur {
   font-size: 14px; font-weight: 800; letter-spacing: .01em;
@@ -445,41 +464,17 @@ const CHROME_CSS = `
 .gcrumb .gcrumb-cur { color: #9c1458; }
 .gcrumb-sep { color: rgba(26,26,26,.3); font-weight: 600; }
 
-/* ── View-as toggle (admin only) ── */
-.gviewas { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.gviewas-label {
-  font-size: 8px; font-weight: 800; text-transform: uppercase;
-  letter-spacing: .14em; color: rgba(26,26,26,.35);
-}
-.gviewas-pills {
-  display: flex; gap: 2px; background: #f0f0f0;
-  padding: 3px; border-radius: 20px;
-}
-.gviewas-pill {
-  font-size: 10px; font-weight: 800; text-transform: uppercase;
-  letter-spacing: .07em; color: rgba(26,26,26,.5);
-  background: none; border: none; padding: 5px 11px;
-  border-radius: 16px; cursor: pointer;
-  transition: background .15s, color .15s;
-  white-space: nowrap;
-}
-.gviewas-pill:hover:not(.active) { background: rgba(0,0,0,.07); color: #1a1a1a; }
-.gviewas-pill.active { color: #fff; }
-@media(max-width:680px) { .gviewas { display: none; } }
-
 /* ── Loading shimmer ── */
 .gtop-shimmer {
-  width: 36px; height: 36px; border-radius: 50%;
+  margin-left: auto; width: 36px; height: 36px; border-radius: 50%;
   background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
-  background-size: 200% 100%;
-  animation: gShimmer 1.4s infinite;
-  flex-shrink: 0;
+  background-size: 200% 100%; animation: gShimmer 1.4s infinite; flex-shrink: 0;
 }
 @keyframes gShimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
 
 /* ── Logged-out CTA ── */
 .gcta {
-  flex-shrink: 0;
+  margin-left: auto; flex-shrink: 0;
   font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em;
   color: #9c1458; border: 1px solid #E91E8C;
   border-radius: 20px; padding: 8px 17px; background: #fff; text-decoration: none;
@@ -487,7 +482,7 @@ const CHROME_CSS = `
 .gcta:hover { background: rgba(233,30,140,.07); }
 
 /* ── Member chip ── */
-.gmember-chip { flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+.gmember-chip { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
 .gmember-balance { display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
 .gmember-balance-num { font-size: 15px; font-weight: 900; color: #1a1a1a; letter-spacing: -.01em; }
 .gmember-balance-label {
@@ -552,16 +547,10 @@ const CHROME_CSS = `
   font-size: 13px; font-weight: 800; color: #fff;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.gdm-tier {
-  font-size: 10px; font-weight: 800; text-transform: uppercase;
-  letter-spacing: .1em; margin-top: 2px;
-}
+.gdm-tier { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; margin-top: 2px; }
 .gdm-balance { text-align: right; flex-shrink: 0; }
 .gdm-balance-num { font-size: 14px; font-weight: 900; color: #fff; }
-.gdm-balance-label {
-  font-size: 8px; font-weight: 800; text-transform: uppercase;
-  letter-spacing: .14em; margin-top: 1px;
-}
+.gdm-balance-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; margin-top: 1px; }
 
 /* ── Drawer CTA (logged out) ── */
 .gdrawer-cta {
@@ -575,7 +564,65 @@ const CHROME_CSS = `
 }
 .gdrawer-cta-btn:hover { background: #c41874; }
 .gdrawer-cta-sub {
-  font-size: 11px; font-weight: 500; line-height: 1.6;
-  color: rgba(255,255,255,.35); margin: 0;
+  font-size: 11px; font-weight: 500; line-height: 1.6; color: rgba(255,255,255,.35); margin: 0;
 }
+
+/* ── Admin view-as bar (bottom floating) ── */
+.gadmin-bar {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 200; display: flex; align-items: center; gap: 8px;
+  background: #111; border-radius: 100px;
+  padding: 9px 16px 9px 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.06);
+}
+.gadmin-label {
+  font-size: 9px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .16em; color: rgba(255,255,255,.35); white-space: nowrap;
+}
+.gadmin-btn {
+  display: flex; align-items: center; gap: 5px;
+  font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .08em;
+  background: none; border: none; cursor: pointer;
+  padding: 4px 8px; border-radius: 20px; transition: background .15s;
+}
+.gadmin-btn:hover, .gadmin-btn.open { background: rgba(255,255,255,.08); }
+.gadmin-caret {
+  width: 14px; height: 14px; stroke: currentColor; fill: none;
+  stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  opacity: .5; transition: transform .2s;
+}
+.gadmin-btn.open .gadmin-caret { transform: rotate(180deg); }
+.gadmin-menu {
+  position: absolute; bottom: calc(100% + 10px); left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
+  min-width: 180px;
+}
+.gadmin-option {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 12px 16px; font-family: 'Montserrat', sans-serif;
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+  color: rgba(255,255,255,.65); background: none; border: none; cursor: pointer;
+  text-align: left; transition: background .12s;
+}
+.gadmin-option:hover { background: rgba(255,255,255,.07); color: #fff; }
+.gadmin-option.active { color: #fff; background: rgba(255,255,255,.05); }
+.gadmin-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.gadmin-check {
+  width: 14px; height: 14px; stroke: currentColor; fill: none;
+  stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  margin-left: auto; opacity: .7;
+}
+.gadmin-reset {
+  display: block; width: 100%; padding: 10px 16px;
+  font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: rgba(255,255,255,.35); background: none; border: none;
+  border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; text-align: center;
+}
+.gadmin-reset:hover { color: rgba(255,255,255,.65); }
 `;
