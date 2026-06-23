@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import SiteChrome from "@/components/SiteChrome";
+import { supabase } from "@/lib/supabase";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 const MAX_MB = 50;
@@ -26,6 +27,35 @@ type VideoMode = "upload" | "link";
 type Status = "idle" | "uploading" | "submitting" | "success" | "error";
 
 export default function PlusApplyPage() {
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isMember, setIsMember]       = useState(false);
+
+  // Gate: must be a Passport member to apply
+  useEffect(() => {
+    let cancelled = false;
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        window.location.href = "/passport";
+        return;
+      }
+      const { data } = await supabase
+        .from("gfs_members")
+        .select("tier")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!data?.tier) {
+        window.location.href = "/passport";
+        return;
+      }
+      setIsMember(true);
+      setAuthChecked(true);
+    }
+    checkAuth();
+    return () => { cancelled = true; };
+  }, []);
+
   const [form, setForm] = useState({ name: "", email: "", city: "", reason: "" });
   const [videoMode, setVideoMode] = useState<VideoMode>("upload");
   const [videoLink, setVideoLink] = useState("");
@@ -133,6 +163,17 @@ export default function PlusApplyPage() {
   const canSubmit = !isSubmitting
     && form.name.trim() && form.email.trim() && form.city.trim() && form.reason.trim()
     && (videoMode === "link" ? !!videoLink.trim() : !!videoFile);
+
+  // Hold render until auth resolved
+  if (!authChecked || !isMember) {
+    return (
+      <SiteChrome>
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#000" }}>
+          <span style={{ color: "#666", fontFamily: "Montserrat, sans-serif", fontSize: 14, letterSpacing: 2, textTransform: "uppercase" }}>Checking access...</span>
+        </div>
+      </SiteChrome>
+    );
+  }
 
   return (
     <SiteChrome>
