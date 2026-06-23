@@ -443,6 +443,10 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                   <div className="art-body">
                     {(activeArticle.content || "").split(/\n\n+/).filter(Boolean).map((block: string, i: number) => {
                       const t = block.trim();
+                      if (t === '---') return <hr key={i} className="art-hr" />;
+                      if (t.startsWith('#')) return <p key={i} className="art-section-head">{t.slice(1).trim()}</p>;
+                      if (t.startsWith('Q:')) return <p key={i} className="art-q">{t.slice(2).trim()}</p>;
+                      if (t.startsWith('A:')) return <p key={i} className="art-a">{t.slice(2).trim()}</p>;
                       if (t.startsWith('"') && t.endsWith('"')) return <p key={i} className="art-quote">{t}</p>;
                       const lines = t.split("\n").filter(Boolean);
                       return <p key={i}>{lines.map((line: string, j: number) => <span key={j}>{line}{j < lines.length - 1 ? <br /> : null}</span>)}</p>;
@@ -1298,6 +1302,10 @@ const CITY_CSS = `
 .art-body{font-size:15px;line-height:1.8;color:var(--lr-text-70)}.art-body p{margin:0 0 18px}.art-body p:last-child{margin-bottom:0}
 .art-body .art-quote{font-style:italic;font-size:17px;line-height:1.6;color:var(--lr-text);border-left:3px solid var(--rx,#c084fc);padding-left:18px;margin:24px 0}
 .art-back{display:inline-flex;align-items:center;gap:8px;margin-top:40px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rx,#c084fc);text-decoration:none;transition:opacity .15s}.art-back:hover{opacity:.7}
+.art-hr{border:none;border-top:2px solid var(--lr-border);margin:32px 0}
+.art-section-head{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;color:var(--lr-text);margin:32px 0 12px}
+.art-q{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-50);margin:28px 0 2px}
+.art-a{font-size:15px;line-height:1.8;color:var(--lr-text);margin:0 0 4px;padding:14px 18px;background:rgba(0,0,0,.035);border-radius:10px;border-left:3px solid var(--rx,#c084fc)}
 `;
 
 
