@@ -6,8 +6,8 @@ type Tier = "public" | "passport" | "plus" | "pro";
 type NavItem = { label: string; href: string };
 
 const NAV_PUBLIC: NavItem[] = [
-  { label: "Roster",        href: "/roster" },
-  { label: "GeekFon Radio", href: "/radio" },
+  { label: "Overview",   href: "/#overview" },
+  { label: "Roster",     href: "/roster" },
 ];
 
 const NAV_PASSPORT: NavItem[] = [
@@ -37,6 +37,13 @@ const NAV_PRO: NavItem[] = [
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Plus",            href: "/plus" },
   { label: "GeekFon Radio",   href: "/radio" },
+];
+
+const STAKEHOLDERS = [
+  { label: "Music Fan", href: "/#music-fan" },
+  { label: "Record Label", href: "/#record-label" },
+  { label: "Brand", href: "/#brand" },
+  { label: "Promoter", href: "/#promoter" },
 ];
 
 function navForTier(tier: Tier): NavItem[] {
@@ -71,23 +78,8 @@ function parseTier(raw: string): Tier {
 }
 
 type Crumb = { label: string; href?: string };
-
-type MemberOverride = {
-  name: string;
-  balance: number;
-  initial: string;
-  tier?: string;
-  isAdmin?: boolean;
-};
-
-type AuthState = {
-  loading: boolean;
-  tier: Tier;
-  name: string;
-  initial: string;
-  balance: number;
-  isAdmin: boolean;
-};
+type MemberOverride = { name: string; balance: number; initial: string; tier?: string; isAdmin?: boolean };
+type AuthState = { loading: boolean; tier: Tier; name: string; initial: string; balance: number; isAdmin: boolean };
 
 function GeekFonLogo() {
   return (
@@ -213,15 +205,8 @@ export default function SiteChrome({
       <style>{CHROME_CSS}</style>
 
       <header className="gtop">
-        <button
-          className="gham"
-          aria-label="Open menu"
-          aria-expanded={open}
-          onClick={() => setOpen(true)}
-        >
-          <svg viewBox="0 0 24 24">
-            <path d="M3 6h18M3 12h18M3 18h18" />
-          </svg>
+        <button className="gham" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
         </button>
 
         <a href="/" className="glogo" aria-label="GeekFon Society home">
@@ -275,6 +260,19 @@ export default function SiteChrome({
             </a>
           ))}
         </nav>
+
+        {!isLoggedIn && (
+          <div className="gdrawer-stakeholders">
+            <div className="gds-label">Who are you?</div>
+            <div className="gds-items">
+              {STAKEHOLDERS.map((s, i) => (
+                <a key={i} href={s.href} className="gds-item" onClick={() => setOpen(false)}>
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {isLoggedIn ? (
           <div className="gdrawer-member">
@@ -371,6 +369,11 @@ const CHROME_CSS = `
 .gnav { padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .gitem { display: block; padding: 11px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.7); text-decoration: none; }
 .gitem:hover { background: rgba(255,255,255,.07); color: #fff; }
+.gdrawer-stakeholders { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.08); }
+.gds-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: rgba(255,255,255,.3); margin-bottom: 8px; }
+.gds-items { display: flex; flex-direction: column; gap: 4px; }
+.gds-item { display: block; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.65); text-decoration: none; background: none; border: none; cursor: pointer; text-align: left; }
+.gds-item:hover { background: rgba(255,255,255,.07); color: #fff; }
 .gdrawer-member { padding: 16px; border-top: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: 12px; }
 .gdm-avatar { width: 38px; height: 38px; border-radius: 50%; color: #fff; font-size: 15px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .gdm-info { flex: 1; min-width: 0; }
