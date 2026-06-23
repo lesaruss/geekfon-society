@@ -843,6 +843,8 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
             </div>
 
             {/* Billboard rotator sidebar — 2 slots */}
+            {tab !== "pulse" && (
+              <>
             <aside className="billboard"
               onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }}
               onMouseLeave={() => { const slots = isMobile ? 3 : 2; bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000); }}
@@ -928,6 +930,8 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
               </div>
               <div className="bb-tag">Powered by LESARUSS Advertising</div>
             </aside>
+              </>
+            )}
 
           </div>
 
