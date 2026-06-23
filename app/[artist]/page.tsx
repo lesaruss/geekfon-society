@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import ArtistPage from "@/components/ArtistPage";
 import type { ArtistContent } from "@/components/ArtistPage";
 
@@ -161,7 +160,7 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
   if (!url || !key) return null;
 
   const headers = { apikey: key, Authorization: `Bearer ${key}` };
-  const opts = { headers, next: { revalidate: 300 } } as RequestInit & { next: { revalidate: number } };
+  const opts = { headers, next: { revalidate: 0 } } as RequestInit & { next: { revalidate: number } };
 
   // Fetch profile and audits in parallel
   const [profileRes, auditsRes] = await Promise.all([
@@ -237,4 +236,5 @@ export async function generateMetadata({ params }: Props) {
     description: content?.tagline || `${name} is an original artist on GeekFon Society.`,
   };
 }
+
 
