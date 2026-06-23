@@ -65,16 +65,17 @@ const TIER_LABEL: Record<string, string> = {
   pro:      "Pro",
 };
 
+const TIERS: Tier[] = ["public", "passport", "plus", "pro"];
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Crumb = { label: string; href?: string };
 
-// Optional override prop — dashboard passes this since it already fetched auth data.
-// All other pages omit it; SiteChrome self-authenticates.
 type MemberOverride = {
   name: string;
   balance: number;
   initial: string;
   tier?: string;
+  isAdmin?: boolean;
 };
 
 type AuthState = {
@@ -82,7 +83,8 @@ type AuthState = {
   tier: Tier;
   name: string;
   initial: string;
-  balance: number; // only populated when member prop is passed
+  balance: number;
+  isAdmin: boolean;
 };
 
 // ── Logo ───────────────────────────────────────────────────────────────────────
@@ -110,12 +112,28 @@ export default function SiteChrome({
 }) {
   const [open, setOpen] = useState(false);
   const [auth, setAuth] = useState<AuthState>({
-    loading: !member,   // if member prop provided, skip loading
+    loading: !member,
     tier: "public",
     name: "",
     initial: "",
     balance: 0,
+    isAdmin: false,
   });
+
+  // viewAs: admin-only override, persisted in localStorage
+  const [viewAs, setViewAs] = useState<Tier | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("gfs-view-as") as Tier | null;
+    if (saved && TIERS.includes(saved)) setViewAs(saved);
+  }, []);
+
+  const handleViewAs = (t: Tier) => {
+    const next = viewAs === t && t === auth.tier ? null : t;
+    setViewAs(next);
+    if (next) localStorage.setItem("gfs-view-as", next);
+    else localStorage.removeItem("gfs-view-as");
+  };
 
   // Close drawer on Escape
   useEffect(() => {
@@ -133,7 +151,14 @@ export default function SiteChrome({
         rawTier === "pro"     ? "pro"     :
         rawTier === "passport"? "passport":
         "public";
-      setAuth({ loading: false, tier, name: member.name, initial: member.initial, balance: member.balance });
+      setAuth({
+        loading: false,
+        tier,
+        name: member.name,
+        initial: member.initial,
+        balance: member.balance,
+        isAdmin: member.isAdmin || false,
+      });
       return;
     }
 
@@ -143,13 +168,13 @@ export default function SiteChrome({
         const { data: { session } } = await supabase.auth.getSession();
         if (cancelled) return;
         if (!session?.user) {
-          setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0 });
+          setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0, isAdmin: false });
           return;
         }
         const u = session.user;
         const { data } = await supabase
           .from("gfs_members")
-          .select("name, tier")
+          .select("name, tier, role")
           .eq("user_id", u.id)
           .maybeSingle();
         if (cancelled) return;
@@ -160,25 +185,30 @@ export default function SiteChrome({
           rawTier === "pro"     ? "pro"     :
           rawTier === "passport"? "passport":
           "public";
+        const isAdmin = data?.role === "admin" || data?.role === "super_admin";
         setAuth({
           loading: false,
           tier,
           name: displayName,
           initial: displayName.charAt(0).toUpperCase(),
-          balance: 0, // balance is only loaded on dashboard (perf)
+          balance: 0,
+          isAdmin,
         });
       } catch {
-        if (!cancelled) setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0 });
+        if (!cancelled) setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0, isAdmin: false });
       }
     }
     loadAuth();
     return () => { cancelled = true; };
   }, [member]);
 
-  const nav = navForTier(auth.tier);
-  const isLoggedIn = auth.tier !== "public" && !auth.loading;
-  const tierAccent = TIER_ACCENT[auth.tier];
-  const tierLabel  = TIER_LABEL[auth.tier] || "";
+  // Effective tier: viewAs overrides real tier for admins only
+  const effectiveTier: Tier = (auth.isAdmin && viewAs) ? viewAs : auth.tier;
+
+  const nav = navForTier(effectiveTier);
+  const isLoggedIn = effectiveTier !== "public" && !auth.loading;
+  const tierAccent = TIER_ACCENT[effectiveTier];
+  const tierLabel  = TIER_LABEL[effectiveTier] || "";
 
   return (
     <>
@@ -186,62 +216,91 @@ export default function SiteChrome({
 
       {/* ── Topbar ── */}
       <header className="gtop">
-        <button
-          className="gham"
-          aria-label="Open menu"
-          aria-expanded={open}
-          onClick={() => setOpen(true)}
-        >
-          <svg viewBox="0 0 24 24">
-            <path d="M3 6h18M3 12h18M3 18h18" />
-          </svg>
-        </button>
 
-        <a href="/" className="glogo" aria-label="GeekFon Society home">
-          <GeekFonLogo />
-        </a>
+        {/* Left: hamburger + logo + breadcrumb */}
+        <div className="gtop-left">
+          <button
+            className="gham"
+            aria-label="Open menu"
+            aria-expanded={open}
+            onClick={() => setOpen(true)}
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="M3 6h18M3 12h18M3 18h18" />
+            </svg>
+          </button>
 
-        {crumb && crumb.length > 0 && (
-          <nav className="gcrumb" aria-label="Breadcrumb">
-            {crumb.map((x, i, a) => (
-              <span key={i}>
-                {x.href ? (
-                  <a href={x.href}>{x.label}</a>
-                ) : (
-                  <span className="gcrumb-cur">{x.label}</span>
-                )}
-                {i < a.length - 1 && <span className="gcrumb-sep">/</span>}
-              </span>
-            ))}
-          </nav>
-        )}
+          <a href="/" className="glogo" aria-label="GeekFon Society home">
+            <GeekFonLogo />
+          </a>
 
-        {/* Right side: loading shimmer | member chip | logged-out CTA */}
-        {auth.loading ? (
-          <div className="gtop-shimmer" aria-hidden="true" />
-        ) : isLoggedIn ? (
-          <div className="gmember-chip">
-            {auth.balance > 0 && (
-              <div className="gmember-balance">
-                <span className="gmember-balance-num">
-                  {auth.balance.toLocaleString()}
+          {crumb && crumb.length > 0 && (
+            <nav className="gcrumb" aria-label="Breadcrumb">
+              {crumb.map((x, i, a) => (
+                <span key={i}>
+                  {x.href ? (
+                    <a href={x.href}>{x.label}</a>
+                  ) : (
+                    <span className="gcrumb-cur">{x.label}</span>
+                  )}
+                  {i < a.length - 1 && <span className="gcrumb-sep">/</span>}
                 </span>
-                <span className="gmember-balance-label">LESARs</span>
+              ))}
+            </nav>
+          )}
+        </div>
+
+        {/* Center: view-as toggle (admin only) */}
+        {auth.isAdmin && !auth.loading && (
+          <div className="gtop-center">
+            <div className="gviewas">
+              <span className="gviewas-label">Viewing as</span>
+              <div className="gviewas-pills">
+                {TIERS.map(t => (
+                  <button
+                    key={t}
+                    className={"gviewas-pill" + (effectiveTier === t ? " active" : "")}
+                    style={effectiveTier === t ? { background: TIER_ACCENT[t] } : {}}
+                    onClick={() => handleViewAs(t)}
+                    aria-pressed={effectiveTier === t}
+                  >
+                    {t === "public" ? "Public" : TIER_LABEL[t]}
+                  </button>
+                ))}
               </div>
-            )}
-            <div
-              className="gmember-avatar"
-              aria-label={auth.name}
-              style={{ background: tierAccent }}
-            >
-              {auth.initial}
             </div>
           </div>
-        ) : (
-          <a href="/passport" className="gcta">
-            Get Passport
-          </a>
         )}
+
+        {/* Right: loading shimmer | member chip | logged-out CTA */}
+        <div className="gtop-right">
+          {auth.loading ? (
+            <div className="gtop-shimmer" aria-hidden="true" />
+          ) : isLoggedIn ? (
+            <div className="gmember-chip">
+              {auth.balance > 0 && (
+                <div className="gmember-balance">
+                  <span className="gmember-balance-num">
+                    {auth.balance.toLocaleString()}
+                  </span>
+                  <span className="gmember-balance-label">LESARs</span>
+                </div>
+              )}
+              <div
+                className="gmember-avatar"
+                aria-label={auth.name}
+                style={{ background: tierAccent }}
+              >
+                {auth.initial}
+              </div>
+            </div>
+          ) : (
+            <a href="/passport" className="gcta">
+              Get Passport
+            </a>
+          )}
+        </div>
+
       </header>
 
       {/* ── Scrim ── */}
@@ -327,8 +386,18 @@ const CHROME_CSS = `
 /* ── Topbar ── */
 .gtop {
   position: sticky; top: 0; z-index: 40; height: 60px;
-  display: flex; align-items: center; gap: 8px;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   padding: 0 18px; background: #fff; border-bottom: 1px solid rgba(0,0,0,.08);
+  gap: 8px;
+}
+.gtop-left {
+  display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;
+}
+.gtop-center {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.gtop-right {
+  display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0;
 }
 .gham {
   width: 40px; height: 40px; border: none; background: none; cursor: pointer;
@@ -376,9 +445,31 @@ const CHROME_CSS = `
 .gcrumb .gcrumb-cur { color: #9c1458; }
 .gcrumb-sep { color: rgba(26,26,26,.3); font-weight: 600; }
 
+/* ── View-as toggle (admin only) ── */
+.gviewas { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.gviewas-label {
+  font-size: 8px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .14em; color: rgba(26,26,26,.35);
+}
+.gviewas-pills {
+  display: flex; gap: 2px; background: #f0f0f0;
+  padding: 3px; border-radius: 20px;
+}
+.gviewas-pill {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .07em; color: rgba(26,26,26,.5);
+  background: none; border: none; padding: 5px 11px;
+  border-radius: 16px; cursor: pointer;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.gviewas-pill:hover:not(.active) { background: rgba(0,0,0,.07); color: #1a1a1a; }
+.gviewas-pill.active { color: #fff; }
+@media(max-width:680px) { .gviewas { display: none; } }
+
 /* ── Loading shimmer ── */
 .gtop-shimmer {
-  margin-left: auto; width: 36px; height: 36px; border-radius: 50%;
+  width: 36px; height: 36px; border-radius: 50%;
   background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
   background-size: 200% 100%;
   animation: gShimmer 1.4s infinite;
@@ -388,7 +479,7 @@ const CHROME_CSS = `
 
 /* ── Logged-out CTA ── */
 .gcta {
-  margin-left: auto; flex-shrink: 0;
+  flex-shrink: 0;
   font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em;
   color: #9c1458; border: 1px solid #E91E8C;
   border-radius: 20px; padding: 8px 17px; background: #fff; text-decoration: none;
@@ -396,7 +487,7 @@ const CHROME_CSS = `
 .gcta:hover { background: rgba(233,30,140,.07); }
 
 /* ── Member chip ── */
-.gmember-chip { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+.gmember-chip { flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
 .gmember-balance { display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
 .gmember-balance-num { font-size: 15px; font-weight: 900; color: #1a1a1a; letter-spacing: -.01em; }
 .gmember-balance-label {
