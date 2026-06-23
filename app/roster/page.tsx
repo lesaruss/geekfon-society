@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import SiteChrome from "@/components/SiteChrome";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -190,7 +189,6 @@ export default function RosterPage() {
         <span className="r-city-name">{city.name}</span>
       </div>
 
-      <SiteChrome>
         <nav className="r-crumb" aria-label="Breadcrumb">
           <a href="/">GeekFon</a>
           <span className="r-crumb-sep">/</span>
@@ -267,7 +265,6 @@ export default function RosterPage() {
             </>
           )}
         </div>
-      </SiteChrome>
     </>
   );
 }
