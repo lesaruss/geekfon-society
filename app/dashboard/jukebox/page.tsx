@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import SiteChrome from '@/components/SiteChrome';
 
 export default function JukeboxPage() {
   const [activeTab, setActiveTab] = useState('catalog');
@@ -14,7 +13,7 @@ export default function JukeboxPage() {
   ];
 
   return (
-    <SiteChrome>
+    <>
       {/* Hero */}
       <div style={{ background: '#1a1a1a', padding: '32px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#F69820', marginBottom: '8px' }}>GeekFon Society</div>
@@ -79,6 +78,6 @@ export default function JukeboxPage() {
         {activeTab === 'queue' && <div style={{ padding: '20px 0' }}>3 songs queued - ready to play</div>}
         {activeTab === 'library' && <div style={{ padding: '20px 0' }}>7 owned tracks in your library</div>}
       </div>
-    </SiteChrome>
+    </>
   );
 }
