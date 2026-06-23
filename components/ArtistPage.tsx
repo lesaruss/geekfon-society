@@ -14,12 +14,19 @@ type Rel = { name: string; desc: string };
 type News = { slug?: string; tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string; content?: string };
 type Audit = { title: string; status?: string; pillar?: string; theme?: string; emotion?: string; scores?: Record<string, number> };
 type PulsePost = {
-  type: 'voice_message' | 'music_drop' | 'article';
+  type: 'voice_message' | 'music_drop' | 'article' | 'voice' | 'photo' | 'video' | 'text';
   date?: string;
   caption?: string;
+  text?: string;
+  timestamp?: string;
   audioUrl?: string;
   trackName?: string; trackEra?: string; trackUrl?: string; trackVisibility?: string;
   tag?: string; title?: string; blurb?: string; href?: string; thumb?: string;
+  media?: string;
+  duration?: string;
+  memberOnly?: boolean;
+  engagement?: { likes?: number; comments?: number; shares?: number };
+  id?: string;
 };
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
@@ -459,7 +466,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
               ) : (
               <>{/* Pulse tab - social feed */}
               {tab === "pulse" && (
-                <section className="panel">
+                <section className="panel pulse-section">
                   {(!c.pulse || c.pulse.length === 0) ? (
                     <div className="feed-empty">
                       <div className="feed-empty-icon">
@@ -468,47 +475,123 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                       <p className="feed-empty-text">Posts coming soon. Season 1 starts Jun 1.</p>
                     </div>
                   ) : (
-                    <div className="feed">
-                      {(c.pulse || []).map((post, i) => (
-                        <div key={i} className={"feed-post" + (post.type === "music_drop" ? " feed-post-music" : post.type === "voice_message" ? " feed-post-voice" : "")}>
-                          <div className="feed-left">
-                            {c.heroUrl
-                              ? <img className="feed-avatar" src={c.heroUrl} alt={name} />
-                              : <div className="feed-avatar-fallback">{name.charAt(0)}</div>
-                            }
-                          </div>
-                          <div className="feed-body">
-                            <div className="feed-header">
-                              <span className="feed-name">{name}</span>
-                              {post.date && <span className="feed-time">{post.date}</span>}
-                              {post.type === "music_drop" && <span className="feed-badge feed-badge-music">Music Drop</span>}
-                              {post.type === "voice_message" && <span className="feed-badge feed-badge-voice">Voice</span>}
+                    <div className="pulse-feed">
+                      {(c.pulse || []).map((post, i) => {
+                        const postType = post.type || 'text';
+                        const isNewPulse = ['voice', 'photo', 'video', 'text'].includes(postType);
+                        const postDate = post.timestamp ? new Date(post.timestamp).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : post.date;
+                        
+                        return isNewPulse ? (
+                          <div key={i} className="pulse-post">
+                            <div className="pulse-header">
+                              <div className="pulse-meta">
+                                <div className="pulse-avatar">
+                                  {c.heroUrl ? (
+                                    <img src={c.heroUrl} alt={name} />
+                                  ) : (
+                                    <div className="pulse-avatar-fallback">{name.charAt(0)}</div>
+                                  )}
+                                </div>
+                                <div className="pulse-info">
+                                  <h3 className="pulse-name">{name}</h3>
+                                  <div className="pulse-timestamp">{postDate}</div>
+                                </div>
+                              </div>
+                              <div className="pulse-badges">
+                                <span className={`pulse-type pulse-type-${postType}`}>{
+                                  postType === 'voice' ? 'Voice' :
+                                  postType === 'photo' ? 'Photo' :
+                                  postType === 'video' ? 'Video' :
+                                  'Text'
+                                }</span>
+                                {post.memberOnly && (
+                                  <span className="pulse-member-lock">🔒</span>
+                                )}
+                              </div>
                             </div>
-                            {post.caption && <p className="feed-text">{post.caption}</p>}
-                            {post.type === "music_drop" && post.trackName && (
-                              <div className="feed-music-chip">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 8V4"/><path d="M8 12H4"/><path d="M16 12h4"/><path d="M12 16v4"/></svg>
-                                <span className="feed-chip-track">{post.trackName}</span>
-                                {post.trackEra && <span className="feed-chip-era">{post.trackEra}</span>}
+                            
+                            <div className="pulse-content">
+                              {post.text && <p className="pulse-text">{post.text}</p>}
+                              
+                              {post.media && (
+                                <div className={`pulse-media pulse-media-${postType}`}>
+                                  {postType === 'voice' && `🎙️ Voice Message ${post.duration ? `(${post.duration})` : ''}`}
+                                  {postType === 'photo' && '📸 Photo'}
+                                  {postType === 'video' && `🎬 Video ${post.duration ? `(${post.duration})` : ''}`}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {post.engagement && (
+                              <div className="pulse-engagement">
+                                {post.engagement.likes !== undefined && (
+                                  <div className="pulse-stat">
+                                    <span>👍</span>
+                                    <span>{post.engagement.likes.toLocaleString()} likes</span>
+                                  </div>
+                                )}
+                                {post.engagement.comments !== undefined && (
+                                  <div className="pulse-stat">
+                                    <span>💬</span>
+                                    <span>{post.engagement.comments.toLocaleString()} comments</span>
+                                  </div>
+                                )}
+                                {post.engagement.shares !== undefined && (
+                                  <div className="pulse-stat">
+                                    <span>🔁</span>
+                                    <span>{post.engagement.shares.toLocaleString()} shares</span>
+                                  </div>
+                                )}
                               </div>
                             )}
-                            {post.type === "article" && post.title && (
-                              <a href={post.href || "#"} className="feed-article-chip">
-                                {post.thumb && <img src={post.thumb} alt="" />}
-                                <div className="feed-article-chip-body">
-                                  {post.tag && <span className="feed-chip-tag">{post.tag}</span>}
-                                  <span className="feed-chip-title">{post.title}</span>
-                                </div>
-                              </a>
-                            )}
                           </div>
-                        </div>
-                      ))}
+                        ) : (
+                          // Fallback for old pulse post types
+                          <div key={i} className={"feed-post" + (post.type === "music_drop" ? " feed-post-music" : post.type === "voice_message" ? " feed-post-voice" : "")}>
+                            <div className="feed-left">
+                              {c.heroUrl
+                                ? <img className="feed-avatar" src={c.heroUrl} alt={name} />
+                                : <div className="feed-avatar-fallback">{name.charAt(0)}</div>
+                              }
+                            </div>
+                            <div className="feed-body">
+                              <div className="feed-header">
+                                <span className="feed-name">{name}</span>
+                                {post.date && <span className="feed-time">{post.date}</span>}
+                                {post.type === "music_drop" && <span className="feed-badge feed-badge-music">Music Drop</span>}
+                                {post.type === "voice_message" && <span className="feed-badge feed-badge-voice">Voice</span>}
+                              </div>
+                              {post.caption && <p className="feed-text">{post.caption}</p>}
+                              {post.type === "music_drop" && post.trackName && (
+                                <div className="feed-music-chip">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 8V4"/><path d="M8 12H4"/><path d="M16 12h4"/><path d="M12 16v4"/></svg>
+                                  <span className="feed-chip-track">{post.trackName}</span>
+                                  {post.trackEra && <span className="feed-chip-era">{post.trackEra}</span>}
+                                </div>
+                              )}
+                              {post.type === "article" && post.title && (
+                                <a href={post.href || "#"} className="feed-article-chip">
+                                  {post.thumb && <img src={post.thumb} alt="" />}
+                                  <div className="feed-article-chip-body">
+                                    {post.tag && <span className="feed-chip-tag">{post.tag}</span>}
+                                    <span className="feed-chip-title">{post.title}</span>
+                                  </div>
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </section>
               )}
-
               {/* News tab - editorial / blog content (former Pulse) */}
               {tab === "news" && (
                 <section className="panel">
@@ -1161,6 +1244,32 @@ const CSS = `
 .pulse-page-cur{font-size:18px;font-weight:900;color:var(--rx-text)}
 .pulse-page-sep{color:var(--lr-text-30)}
 .pulse-page-tot{color:var(--lr-text-50)}
+
+/* New Pulse post cards */
+.pulse-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;overflow:hidden;padding:20px;margin-bottom:16px}
+.pulse-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.pulse-meta{display:flex;align-items:center;gap:12px}
+.pulse-avatar{width:40px;height:40px;border-radius:50%;background:var(--rx);border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:16px;overflow:hidden}
+.pulse-avatar img{width:100%;height:100%;object-fit:cover}
+.pulse-avatar-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.pulse-info h3{font-size:14px;font-weight:600;margin:0 0 2px;color:var(--lr-text)}
+.pulse-timestamp{font-size:12px;color:var(--lr-text-50)}
+.pulse-badges{display:flex;align-items:center;gap:8px}
+.pulse-type{display:inline-block;background:#e8f0fe;color:#1967d2;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:600;text-transform:uppercase}
+.pulse-type-voice{background:#fce8e6;color:#d33b27}
+.pulse-type-photo{background:#efe6ff;color:#6f42c1}
+.pulse-type-video{background:#e6f2ff;color:#0051ba}
+.pulse-type-text{background:#e8f0fe;color:#1967d2}
+.pulse-member-lock{font-size:14px}
+.pulse-content{margin-bottom:16px}
+.pulse-text{font-size:15px;line-height:1.6;color:var(--lr-text);margin:0 0 12px}
+.pulse-media{background:#f0f0f0;border:2px solid #1a1a1a;height:200px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:14px;margin-bottom:12px}
+.pulse-media-voice{background:#764ba2;color:white}
+.pulse-media-photo{background:#ffc751;color:#333}
+.pulse-media-video{background:#0051ba;color:white}
+.pulse-engagement{display:flex;gap:24px;padding-top:12px;border-top:1px solid #ddd;font-size:13px;color:var(--lr-text-75)}
+.pulse-stat{display:flex;align-items:center;gap:6px}
+.pulse-stat span:first-child{font-size:16px}
 
 /* ---- Schedule tab ---- */
 .sch-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px}
