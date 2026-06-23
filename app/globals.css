@@ -9,3 +9,22 @@
 html,body{margin:0;padding:0}
 body{font-family:'Montserrat',-apple-system,sans-serif;background:var(--lr-bg);color:var(--lr-text);line-height:1.6}
 a{color:inherit;text-decoration:none}
+
+
+/* QA focus indicators - WCAG 2.1 AAA compliance */
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #F69820;
+  outline-offset: 2px;
+}
+
+/* Ensure focus visible works on dark backgrounds */
+button:focus,
+input:focus,
+a:focus,
+[role="button"]:focus {
+  outline: 2px solid #F69820;
+  outline-offset: 2px;
+}
