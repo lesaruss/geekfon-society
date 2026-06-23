@@ -116,9 +116,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <nav className="dl-subnav" aria-label="Dashboard sections">
           <div className="dl-subnav-inner">
             {SUBNAV.map(n => {
+              const path = pathname ?? "";
               const active = n.href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname.startsWith(n.href);
+                ? path === "/dashboard"
+                : path.startsWith(n.href);
               return (
                 <a key={n.href} href={n.href} className={"dl-tab" + (active ? " active" : "")}>
                   {n.label}
