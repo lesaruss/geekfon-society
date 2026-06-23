@@ -1206,6 +1206,7 @@ const CITY_CSS = `
   position: relative;
   z-index: 2;
 }
+.has-city-bg .head-grid::before {content: ""; position: absolute; inset: -20px -60px; background: rgba(0, 0, 0, 0.48); z-index: -1;}
 /* Aurora layer - absolute, fills bible-head */
 .apg-aurora {
   position: absolute;
