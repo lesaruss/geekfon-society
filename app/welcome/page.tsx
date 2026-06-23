@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef, type ReactElement } from "react";
+import SiteChrome from "@/components/SiteChrome";
 
 type Role = "fan" | "label" | "brand" | "promoter";
 type Phase = "picker" | "path" | "artists";
@@ -441,6 +442,7 @@ export default function WelcomePage() {
   const activeBg = phase === "path" ? slideCity : cityBg;
 
   return (
+    <SiteChrome>
     <div style={{ minHeight: "100dvh", background: "#070712", color: "white", fontFamily: "'Montserrat', sans-serif", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
 
       {/* City background */}
@@ -632,5 +634,6 @@ export default function WelcomePage() {
         <ArtistPanel accent={roleAccent} onClose={() => setArtistPanelOpen(false)} />
       )}
     </div>
+    </SiteChrome>
   );
 }
