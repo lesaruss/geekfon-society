@@ -59,7 +59,7 @@ export default function JukeboxPage() {
             <input type="text" placeholder="Search songs or artists..." style={{ width: '100%', maxWidth: '300px', padding: '8px 14px', border: '1.5px solid rgba(0,0,0,0.12)', borderRadius: '6px', fontSize: '12px', marginBottom: '20px' }} />
             {artists.map((artist) => (
               <div key={artist.name} style={{ marginTop: '20px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 900, color: '#1a1a1a', marginBottom: '10px' }}>{artist.name}</div>
+                <div style={{ fontSize: '13px', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>{artist.name}</div>
                 {[1, 2, 3].map((i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                     <div style={{ width: '20px', fontSize: '11px', color: 'rgba(26,26,26,0.3)', fontWeight: 600 }}>{i}</div>
