@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import SiteChrome from "@/components/SiteChrome";
@@ -1188,4 +1189,5 @@ const CITY_CSS = `
 .art-body .art-quote{font-style:italic;font-size:17px;line-height:1.6;color:var(--lr-text);border-left:3px solid var(--rx,#c084fc);padding-left:18px;margin:24px 0}
 .art-back{display:inline-flex;align-items:center;gap:8px;margin-top:40px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rx,#c084fc);text-decoration:none;transition:opacity .15s}.art-back:hover{opacity:.7}
 `;
+
 
