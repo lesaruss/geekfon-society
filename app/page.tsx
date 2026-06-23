@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import SiteChrome from "@/components/SiteChrome";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -148,8 +149,9 @@ export default function HomePage() {
   const city = CITIES[current];
 
   return (
-    <>
-      <style>{CSS}</style>
+    <SiteChrome>
+      <>
+        <style>{CSS}</style>
 
       {/* Aurora */}
       <div className="aurora" aria-hidden="true">
@@ -244,6 +246,7 @@ export default function HomePage() {
         </div>
       </div>
     </>
+    </SiteChrome>
   );
 }
 
