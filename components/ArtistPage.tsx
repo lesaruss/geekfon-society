@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
-import SiteChrome from "@/components/SiteChrome";
 
 const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
 const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -304,7 +303,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const pulseArticles = c.news && c.news.length > 0 ? c.news : PLACEHOLDER_NEWS;
 
   return (
-    <SiteChrome>
+    
       <div style={vars}>
         <style>{CSS}{cityBg ? CITY_CSS : ""}</style>
         <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
