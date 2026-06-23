@@ -95,6 +95,8 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [viewAs, setViewAs] = useState<"real" | "visitor" | "passport" | "plus" | "pro">("real");
   const [viewDropOpen, setViewDropOpen] = useState(false);
+  const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
+  const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -211,10 +213,45 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   }
   function trackBadge(v: string): { label: string; cls: string } {
     if (v === "public")   return { label: "Public",   cls: "vb-public" };
-    if (v === "preview")  return { label: "Preview",  cls: "vb-preview" };
+    if (v === "preview")  return { label: "Passport", cls: "vb-preview" };
     if (v === "passport") return { label: "Passport", cls: "vb-passport" };
     if (v === "members")  return { label: "Plus",     cls: "vb-members" };
     return                       { label: "Locked",   cls: "vb-locked" };
+  }
+
+  // Purchase routing: what happens when a user clicks a song badge
+  function handleBadgeClick(t: Track) {
+    const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
+    const rank = effectiveTier ? (TIER_RANK[effectiveTier] || 0) : 0;
+
+    if (t.v === "public") {
+      // Public songs: anyone with an account can purchase; visitors go to Passport
+      if (!effectiveTier) { window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`; return; }
+      setPurchaseModal({ trackName: t.n, price: 25 });
+      return;
+    }
+    if (t.v === "preview" || t.v === "passport") {
+      // Passport-tier songs: Passport+ can purchase; others go to Passport page
+      if (!effectiveTier) { window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`; return; }
+      setPurchaseModal({ trackName: t.n, price: 25 });
+      return;
+    }
+    if (t.v === "members") {
+      // Plus-tier songs: promoter/pro can purchase; Passport tier goes to Plus waitlist; visitors go to Passport
+      if (!effectiveTier) { window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`; return; }
+      if (rank < 2) { window.location.href = `/plus?return=${encodeURIComponent(returnPath)}`; return; }
+      setPurchaseModal({ trackName: t.n, price: 25 });
+      return;
+    }
+  }
+
+  async function handlePurchaseConfirm() {
+    if (!purchaseModal) return;
+    // TODO: wire to LESARs contract / API route for actual transaction
+    // Placeholder: mark as purchased and return to page
+    setPurchaseSuccess(purchaseModal.trackName);
+    setPurchaseModal(null);
+    setTimeout(() => setPurchaseSuccess(null), 4000);
   }
   function trackPlayLabel(v: string, isPlaying: boolean): string {
     if (isPlaying) return "Pause";
@@ -229,7 +266,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   // Schedule tab: maps visibility to user-facing tier label + style
   function scheduleTier(v: string): { label: string; cls: string } {
     if (v === "public")   return { label: "Public",   cls: "st-free" };
-    if (v === "preview")  return { label: "Preview",  cls: "st-preview" };
+    if (v === "preview")  return { label: "Passport", cls: "st-preview" };
     if (v === "passport" || v === "locked") return { label: "Passport", cls: "st-passport" };
     if (v === "members")  return { label: "Plus",     cls: "st-plus" };
     return                       { label: "Pro",      cls: "st-pro" };
@@ -570,7 +607,13 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           )}
                           {locked && <div className="track-locked-msg track-coming-soon">Coming soon</div>}
                         </div>
-                        <span className={"vis-badge " + badge.cls}>{badge.label}</span>
+                        <button
+                          className={"vis-badge vis-badge-btn " + badge.cls}
+                          onClick={() => handleBadgeClick(t)}
+                          aria-label={`${badge.label} - click to purchase ${t.n}`}
+                        >
+                          {badge.label}
+                        </button>
                       </div>
                     );
                   })}
@@ -611,7 +654,13 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           <span className={"sch-status" + (isAvailable ? " sch-status-live" : "")}>{statusLabel}</span>
                         </div>
                       </div>
-                      <span className={"sch-tier-pill " + tier.cls}>{tier.label}</span>
+                      <button
+                        className={"sch-tier-pill sch-tier-pill-btn " + tier.cls}
+                        onClick={() => handleBadgeClick(t)}
+                        aria-label={`${tier.label} - click to purchase ${t.n}`}
+                      >
+                        {tier.label}
+                      </button>
                     </div>
                   );
                 }
@@ -798,6 +847,37 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
 
         </div>
       </div>
+
+      {/* Purchase confirmation modal */}
+      {purchaseModal && (
+        <div className="pur-overlay" role="dialog" aria-modal="true" aria-labelledby="pur-title" onClick={() => setPurchaseModal(null)}>
+          <div className="pur-modal" onClick={e => e.stopPropagation()}>
+            <button className="pur-close" onClick={() => setPurchaseModal(null)} aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <div className="pur-song-label">Purchase</div>
+            <h2 id="pur-title" className="pur-song-name">{purchaseModal.trackName}</h2>
+            <div className="pur-price-row">
+              <span className="pur-price">{purchaseModal.price}</span>
+              <span className="pur-currency">LESARs</span>
+            </div>
+            <p className="pur-desc">You&apos;ll receive lifetime access to this track. Purchase is tied to your account.</p>
+            <div className="pur-actions">
+              <button className="pur-confirm" onClick={handlePurchaseConfirm}>Continue</button>
+              <button className="pur-cancel" onClick={() => setPurchaseModal(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purchase success toast */}
+      {purchaseSuccess && (
+        <div className="pur-toast" role="status" aria-live="polite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          <span><strong>{purchaseSuccess}</strong> purchased successfully.</span>
+        </div>
+      )}
+
     </SiteChrome>
   );
 }
@@ -920,11 +1000,41 @@ const CSS = `
 .tplay.locked svg{fill:none;width:15px;height:15px}
 .track .ti{flex:1}.track .tn{font-size:15px;font-weight:800}.track .tm{font-size:11px;color:var(--lr-text-50);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
 .vis-badge{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.vis-badge-btn{border:none;font-family:inherit;cursor:pointer;transition:filter .15s,transform .1s}
+.vis-badge-btn:hover{filter:brightness(1.15);transform:scale(1.04)}
+.vis-badge-btn:focus-visible{outline:2px solid var(--rx);outline-offset:2px}
+.sch-tier-pill-btn{border:none;font-family:inherit;cursor:pointer;transition:filter .15s,transform .1s}
+.sch-tier-pill-btn:hover{filter:brightness(1.15);transform:scale(1.04)}
+.sch-tier-pill-btn:focus-visible{outline:2px solid var(--rx);outline-offset:2px}
 .vb-public  {background:rgba(76,175,80,.14);color:#2e7d32}
 .vb-preview {background:rgba(246,152,32,.16);color:#b45309}
 .vb-passport{background:var(--rx-tint);color:var(--rx-text)}
 .vb-members {background:rgba(99,102,241,.13);color:#4338ca}
 .vb-locked  {background:rgba(0,0,0,.06);color:var(--lr-text-30)}
+/* Purchase modal */
+.pur-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.pur-modal{background:#fff;border-radius:20px;padding:36px 32px 28px;max-width:400px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.18)}
+.pur-close{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.06);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#555;padding:0}
+.pur-close svg{width:14px;height:14px}
+.pur-close:hover{background:rgba(0,0,0,.1)}
+.pur-close:focus-visible{outline:2px solid var(--rx);outline-offset:2px}
+.pur-song-label{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;color:var(--lr-text-50);margin-bottom:6px}
+.pur-song-name{font-size:22px;font-weight:900;color:#1a1a1a;margin:0 0 20px;letter-spacing:-.01em}
+.pur-price-row{display:flex;align-items:baseline;gap:7px;margin-bottom:14px}
+.pur-price{font-size:42px;font-weight:900;color:var(--rx-text);line-height:1}
+.pur-currency{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--rx-text);opacity:.7}
+.pur-desc{font-size:13px;color:#555;line-height:1.65;margin-bottom:28px}
+.pur-actions{display:flex;flex-direction:column;gap:10px}
+.pur-confirm{padding:14px;background:var(--rx);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.08em;cursor:pointer}
+.pur-confirm:hover{filter:brightness(1.08)}
+.pur-confirm:focus-visible{outline:2px solid var(--rx);outline-offset:3px}
+.pur-cancel{padding:14px;background:#f5f5f5;color:#1a1a1a;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
+.pur-cancel:hover{background:#ebebeb}
+.pur-cancel:focus-visible{outline:2px solid #aaa;outline-offset:2px}
+/* Purchase success toast */
+.pur-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;border-radius:100px;padding:12px 22px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;z-index:1100;box-shadow:0 8px 32px rgba(0,0,0,.22);animation:toast-in .25s ease}
+.pur-toast svg{width:16px;height:16px;stroke:#4ade80;flex-shrink:0}
+@keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .adminbar{display:flex;gap:10px;background:#111;color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:22px;font-size:12px}
 .adminbar .t{font-weight:800;text-transform:uppercase;letter-spacing:.08em}.adminbar .s{color:rgba(255,255,255,.7)}
 .bsec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:var(--rx-text);margin:26px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--lr-border)}
