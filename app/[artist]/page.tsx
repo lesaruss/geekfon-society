@@ -1,3 +1,5 @@
+import ArtistPage from "@/components/ArtistPage";
+import { notFound } from "next/navigation";
 import type { ArtistContent } from "@/components/ArtistPage";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
@@ -235,6 +237,7 @@ export async function generateMetadata({ params }: Props) {
     description: content?.tagline || `${name} is an original artist on GeekFon Society.`,
   };
 }
+
 
 
 
