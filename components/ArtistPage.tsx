@@ -848,7 +848,6 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
 
           </div>
 
-        </div>
       </div>
 
       {/* Purchase confirmation modal */}
@@ -881,6 +880,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
         </div>
       )}
 
+    </div>
   );
 }
 
