@@ -10,14 +10,12 @@ const NAV = [
 
 // Logged-in members see the full dashboard nav inside the drawer
 const NAV_MEMBER = [
-  { label: "Roster",        href: "/roster" },
-  { label: "GeekFon Radio", href: "/radio" },
-  // Dashboard section
-  { label: "___SECTION:Dashboard", href: "" },
   { label: "Overview",      href: "/dashboard" },
+  { label: "Roster",        href: "/roster" },
   { label: "Library",       href: "/dashboard/library" },
   { label: "Leaderboard",   href: "/dashboard/leaderboard" },
   { label: "Artist Top 10", href: "/dashboard/top10" },
+  { label: "GeekFon Radio", href: "/radio" },
 ];
 
 type Crumb = { label: string; href?: string };
@@ -127,27 +125,16 @@ export default function SiteChrome({
         </div>
 
         <nav className="gnav">
-          {nav.map((n, i) => {
-            // Section header
-            if (n.label.startsWith("___SECTION:")) {
-              const title = n.label.replace("___SECTION:", "");
-              return (
-                <div key={i} className="gnav-section">
-                  {title}
-                </div>
-              );
-            }
-            return (
-              <a
-                key={n.href + i}
-                href={n.href}
-                className="gitem"
-                onClick={() => setOpen(false)}
-              >
-                {n.label}
-              </a>
-            );
-          })}
+          {nav.map((n, i) => (
+            <a
+              key={n.href + i}
+              href={n.href}
+              className="gitem"
+              onClick={() => setOpen(false)}
+            >
+              {n.label}
+            </a>
+          ))}
         </nav>
 
         {member && (
