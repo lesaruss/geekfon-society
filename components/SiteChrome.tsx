@@ -19,7 +19,7 @@ const NAV_PASSPORT: NavItem[] = [
   { label: "Roster",        href: "/roster" },
   { label: "Library",       href: "/dashboard/library" },
   { label: "Leaderboard",   href: "/dashboard/leaderboard" },
-  { label: "Artist Top 10", href: "/dashboard/top10" },
+  { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "GeekFon Radio", href: "/radio" },
 ];
 
@@ -29,7 +29,7 @@ const NAV_PLUS: NavItem[] = [
   { label: "Roster",        href: "/roster" },
   { label: "Library",       href: "/dashboard/library" },
   { label: "Leaderboard",   href: "/dashboard/leaderboard" },
-  { label: "Artist Top 10", href: "/dashboard/top10" },
+  { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Plus",          href: "/plus" },
   { label: "GeekFon Radio", href: "/radio" },
 ];
@@ -40,7 +40,7 @@ const NAV_PRO: NavItem[] = [
   { label: "Roster",        href: "/roster" },
   { label: "Library",       href: "/dashboard/library" },
   { label: "Leaderboard",   href: "/dashboard/leaderboard" },
-  { label: "Artist Top 10", href: "/dashboard/top10" },
+  { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Plus",          href: "/plus" },
   { label: "GeekFon Radio", href: "/radio" },
 ];
