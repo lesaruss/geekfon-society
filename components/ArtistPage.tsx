@@ -1185,6 +1185,27 @@ const CSS = `
 .pulse-page-info{font-size:13px;color:var(--lr-text-50)}
 @media(max-width:1024px){.pulse-feed{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:640px){.pulse-feed{grid-template-columns:1fr}}
+/* Article Grid (News & Updates) */
+.pulse-articles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+.pulse-article-card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.pf-article-img{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--lr-bg)}
+.pf-article-img img{width:100%;height:100%;object-fit:cover;object-position:top}
+.pf-article-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--lr-bg)}
+.pf-article-body{flex:1;padding:16px;display:flex;flex-direction:column}
+.pf-article-date{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-50);margin-bottom:6px}
+.pf-article-title{font-size:14px;font-weight:900;line-height:1.35;color:var(--lr-text);margin-bottom:8px}
+.pf-article-title-link{text-decoration:none;display:block}
+.pf-article-title-link:hover{color:var(--rx)}
+.pf-article-blurb{font-size:13px;color:var(--lr-text-75);line-height:1.5;margin-bottom:auto;margin-top:0}
+@media(max-width:1024px){.pulse-articles-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.pulse-articles-grid{grid-template-columns:1fr}}
+
+/* Billboard fixes */
+.bb-slide{width:100%;display:flex;flex-direction:column}
+.bb-stacked{display:flex;flex-direction:column;gap:12px}
+.bb-ad-link{display:block;width:100%}
+.bb-tall{min-height:600px}
+
 
 /* ---- Schedule tab ---- */
 .sch-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px}
