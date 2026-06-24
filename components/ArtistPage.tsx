@@ -96,6 +96,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const [viewDropOpen, setViewDropOpen] = useState(false);
   const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
+  const [showAllPulse, setShowAllPulse] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
