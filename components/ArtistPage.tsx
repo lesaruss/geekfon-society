@@ -20,7 +20,7 @@ type PulsePost = {
   audioUrl?: string;
   trackName?: string; trackEra?: string; trackUrl?: string; trackVisibility?: string;
   tag?: string; title?: string; blurb?: string; href?: string; thumb?: string;
-  likes?: number; comments?: number; shares?: number;
+  likes?: number; comments?: number; shares?: number; videoUrl?: string;
 };
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
@@ -97,7 +97,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const [viewDropOpen, setViewDropOpen] = useState(false);
   const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
-  const [showAllPulse, setShowAllPulse] = useState(false);
+  const [pulseShown, setPulseShown] = useState(3);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -466,7 +466,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                     <div className="pulse-empty"><p>Posts coming soon.</p></div>
                   ) : (
                     <div className="pulse-container">
-                      {((showAllPulse ? c.pulse : (c.pulse || []).slice(0, 3)) || []).map((post, i) => (
+                      {((c.pulse || []).slice(0, pulseShown)).map((post, i) => (
                         <div key={i} className="pulse-card">
                           <div className="pulse-card-header">
                             <div className="pulse-card-meta">
@@ -477,7 +477,11 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           </div>
                           <div className="pulse-card-body">
                             {post.caption && <p className="pulse-text">{post.caption}</p>}
-                            {post.thumb && <div className="pulse-media"><img src={post.thumb} alt="" /></div>}
+                            {post.videoUrl ? (
+                              <div className="pulse-media pulse-media-video"><video src={post.videoUrl} poster={post.thumb} controls playsInline /></div>
+                            ) : post.thumb ? (
+                              <div className="pulse-media"><img src={post.thumb} alt="" /></div>
+                            ) : null}
                           </div>
                           <div className="pulse-stats">
                             <span>👍 {post.likes || 0}</span>
@@ -486,9 +490,9 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           </div>
                         </div>
                       ))}
-                      {!showAllPulse && c.pulse && c.pulse.length > 3 && (
+                      {c.pulse && c.pulse.length > pulseShown && (
                         <div className="pulse-load-container">
-                          <button className="pulse-load-btn" onClick={() => setShowAllPulse(true)}>Load more</button>
+                          <button className="pulse-load-btn" onClick={() => setPulseShown(n => n + 3)}>Load more</button>
                         </div>
                       )}
                     </div>
@@ -1175,7 +1179,7 @@ const CSS = `
 .sch-remix-badge{display:inline-block;margin-left:8px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;padding:2px 7px;border-radius:20px;background:rgba(99,102,241,.13);color:#4338ca;vertical-align:middle;position:relative;top:-1px}
 
     .pulse-section { padding: 0; }
-    .pulse-container { display: flex; flex-direction: column; gap: 24px; }
+    .pulse-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
     .pulse-card { border: 1px solid #e5e5e5; border-radius: 8px; background: #fafafa; padding: 20px; }
     .pulse-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
     .pulse-card-meta { display: flex; gap: 12px; align-items: flex-start; }
@@ -1188,8 +1192,12 @@ const CSS = `
     .pulse-text { font-size: 15px; line-height: 1.6; color: #1a1a1a; margin-bottom: 12px; }
     .pulse-media { width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
     .pulse-media img { width: 100%; height: auto; display: block; }
-    .pulse-stats { display: flex; gap: 24px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px; color: #666; }
-    .pulse-load-container { display: flex; justify-content: center; margin-top: 32px; }
+    .pulse-media-video { aspect-ratio: 16 / 9; background: #000; }
+    .pulse-media-video video { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .pulse-stats { display: flex; gap: 16px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px; color: #666; }
+    .pulse-load-container { grid-column: 1 / -1; display: flex; justify-content: center; margin-top: 32px; }
+    @media(max-width:900px){ .pulse-container{grid-template-columns:repeat(2,1fr)} }
+    @media(max-width:600px){ .pulse-container{grid-template-columns:1fr} }
     .pulse-load-btn { padding: 12px 32px; background: #1a1a1a; color: white; border: none; border-radius: 4px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; }
     .pulse-load-btn:hover { background: #333; }
     .pulse-empty { text-align: center; padding: 60px 20px; color: #999; }
