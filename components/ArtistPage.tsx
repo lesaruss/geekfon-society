@@ -306,11 +306,7 @@ const [showAllPulse, setShowAllPulse] = useState(false);
   return (
 
       <div style={vars}>
-        <style>{CSS}{cityBg ? CITY_CSS : ""}.pulse-load-more{display:block;margin:0 auto;padding:12px 24px;background:#222;color:#fff;border:none;border-radius:4px;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.1em;cursor:pointer}
-.pulse-load-more:hover{background:#333}
-.pulse-pagination-container{display:flex;justify-content:center;margin:20px 0}
-
-</style>
+        <style>{CSS}{cityBg ? CITY_CSS : ""}</style>
         <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
         <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
