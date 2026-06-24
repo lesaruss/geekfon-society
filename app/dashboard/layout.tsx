@@ -17,6 +17,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
+    document.body.classList.add("gbody");
+    return () => document.body.classList.remove("gbody");
+  }, []);
+
+  useEffect(() => {
     async function load() {
       const {
         data: { session },
