@@ -1171,6 +1171,26 @@ const CSS = `
 .sch-status-live{color:#2e7d32}
 .sch-footnote{font-size:11px;color:var(--lr-text-30);font-style:italic;margin-top:22px;border-top:1px solid var(--lr-border);padding-top:16px}
 .sch-remix-badge{display:inline-block;margin-left:8px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;padding:2px 7px;border-radius:20px;background:rgba(99,102,241,.13);color:#4338ca;vertical-align:middle;position:relative;top:-1px}
+
+    .pulse-section { padding: 0; }
+    .pulse-container { display: flex; flex-direction: column; gap: 24px; }
+    .pulse-card { border: 1px solid #e5e5e5; border-radius: 8px; background: #fafafa; padding: 20px; }
+    .pulse-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .pulse-card-meta { display: flex; gap: 12px; align-items: flex-start; }
+    .pulse-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .pulse-avatar-init { width: 40px; height: 40px; border-radius: 50%; background: #764ba2; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .pulse-card-meta h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .pulse-date { font-size: 12px; color: #999; }
+    .pulse-badge { display: inline-block; background: #e8f0fe; color: #1967d2; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .pulse-card-body { margin-bottom: 16px; }
+    .pulse-text { font-size: 15px; line-height: 1.6; color: #1a1a1a; margin-bottom: 12px; }
+    .pulse-media { width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+    .pulse-media img { width: 100%; height: auto; display: block; }
+    .pulse-stats { display: flex; gap: 24px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 13px; color: #666; }
+    .pulse-load-container { display: flex; justify-content: center; margin-top: 32px; }
+    .pulse-load-btn { padding: 12px 32px; background: #1a1a1a; color: white; border: none; border-radius: 4px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; }
+    .pulse-load-btn:hover { background: #333; }
+    .pulse-empty { text-align: center; padding: 60px 20px; color: #999; }
 `;
 
 const CITY_CSS = `
