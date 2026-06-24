@@ -334,8 +334,8 @@ export default function SiteChrome({
 }
 
 const CHROME_CSS = `
-.gtop { position: sticky; top: 0; z-index: 40; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 18px; background: #fff; border-bottom: 1px solid rgba(0,0,0,.08); }
-.gham { width: 40px; height: 40px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #1a1a1a; flex-shrink: 0; }
+.gtop { position: sticky; top: 0; z-index: 40; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 18px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,.08); }
+.gham { width: 40px; height: 40px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #fff; flex-shrink: 0; }
 .gham:hover { background: #f5f5f5; }
 .gham svg { width: 23px; height: 23px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
 @keyframes fonHue { 0% { color: #E91E8C; } 25% { color: #00B4FF; } 50% { color: #AAFF00; } 75% { color: #F69820; } 100% { color: #E91E8C; } }
@@ -343,12 +343,12 @@ const CHROME_CSS = `
 .gfs-word { display: inline; }
 .gfs-geek, .gfs-fon { display: inline; }
 .gfs-icon { height: 28px; width: 28px; object-fit: contain; display: block; flex-shrink: 0; }
-.gfs-geek { color: #1a1a1a; }
+.gfs-geek { color: #fff; }
 .gfs-fon { animation: fonHue 6s ease-in-out infinite; }
 .gdrawer .gfs-geek { color: #fff; }
 .glogo { display: flex; align-items: center; flex-shrink: 0; text-decoration: none; }
 .gcrumb { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; overflow: hidden; font-family: 'Montserrat', sans-serif; }
-.gcrumb a, .gcrumb .gcrumb-cur { font-size: 14px; font-weight: 800; letter-spacing: .01em; color: #1a1a1a; white-space: nowrap; }
+.gcrumb a, .gcrumb .gcrumb-cur { font-size: 14px; font-weight: 800; letter-spacing: .01em; color: #fff; white-space: nowrap; }
 .gcrumb a:hover { color: #9c1458; }
 .gcrumb .gcrumb-cur { color: #9c1458; }
 .gcrumb-sep { color: rgba(26,26,26,.3); font-weight: 600; }
