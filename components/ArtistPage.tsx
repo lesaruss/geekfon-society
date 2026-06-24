@@ -1011,6 +1011,7 @@ const CSS = `
 
 .tabbar{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);display:flex;gap:2px;padding:0 40px}
 .tab{position:relative;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);background:none;border:none;padding:18px 18px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+.tab{border:none;outline:none}
 .tab:focus-visible{outline:none}
 .tab[aria-selected="true"]{color:var(--rx-text)}
 .tab[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--rx)}
@@ -1154,7 +1155,7 @@ const CSS = `
 
 /* ---- Pulse Feed ---- */
 /* Pulse Grid Layout */
-.pulse-feed{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;max-height:600px;overflow:hidden}
+.pulse-feed{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
 .pulse-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .2s,box-shadow .2s;min-height:400px}
 .pulse-post:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1)}
 .pulse-header{display:flex;align-items:flex-start;justify-content:space-between;padding:12px;gap:8px;flex-shrink:0}
@@ -1187,6 +1188,8 @@ const CSS = `
 @media(max-width:1024px){.pulse-feed{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:640px){.pulse-feed{grid-template-columns:1fr}}
 /* Article Grid (News & Updates) */
+.pulse-pagination-container{display:flex;justify-content:center;margin-top:20px}
+.pulse-load-more{padding:10px 24px;background:var(--rx);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;text-transform:uppercase}
 .pulse-articles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
 .pulse-article-card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
 .pf-article-img{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--lr-bg)}
