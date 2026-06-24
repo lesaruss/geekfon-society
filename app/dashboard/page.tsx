@@ -102,7 +102,7 @@ export default function DashboardOverview() {
       {/* Welcome bar */}
       <div className="do-welcome">
         <div className="do-welcome-eyebrow">Member Dashboard</div>
-        <div className="do-welcome-name">Welcome back, {displayName}</div>
+        <h1 className="do-welcome-name">Welcome back, {displayName}</h1>
         <div className="do-welcome-since">Passport holder since {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
       </div>
 
@@ -366,7 +366,7 @@ const CSS = `
 /* Welcome */
 .do-welcome{padding:32px 0 28px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:28px;}
 .do-welcome-eyebrow{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.22em;color:#F69820;margin-bottom:8px;}
-.do-welcome-name{font-size:clamp(22px,4vw,36px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;}
+.do-welcome-name{font-size:clamp(22px,4vw,36px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;margin:0;}
 .do-welcome-since{font-size:11px;font-weight:500;color:rgba(255,255,255,.35);margin-top:4px;}
 /* Stats row */
 .do-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
