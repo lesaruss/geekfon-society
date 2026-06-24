@@ -1212,7 +1212,7 @@ const CSS = `
     .pulse-card { border: 1px solid #e5e5e5; border-radius: 8px; background: #fafafa; padding: 20px; }
     .pulse-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
     .pulse-card-meta { display: flex; gap: 12px; align-items: flex-start; }
-    .pulse-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .pulse-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: top center; }
     .pulse-avatar-init { width: 40px; height: 40px; border-radius: 50%; background: #764ba2; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     .pulse-card-meta h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
     .pulse-date { font-size: 12px; color: #999; }
