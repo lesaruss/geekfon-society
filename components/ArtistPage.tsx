@@ -470,7 +470,7 @@ const [showAllPulse, setShowAllPulse] = useState(false);
                     </div>
                   ) : (
                     <div className="feed">
-                      {(c.pulse || []).map((post, i) => (
+                      {(showAllPulse ? (c.pulse || []) : (c.pulse || []).slice(0, 3)).map((post, i) => (
                         <div key={i} className={"feed-post" + (post.type === "music_drop" ? " feed-post-music" : post.type === "voice_message" ? " feed-post-voice" : "")}>
                           <div className="feed-left">
                             {c.heroUrl
@@ -562,7 +562,18 @@ const [showAllPulse, setShowAllPulse] = useState(false);
                             Read more
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                           </a>
+                        {!showAllPulse && c.pulse && c.pulse.length > 3 && (
+                        <div style={{textAlign: 'center', marginTop: '20px'}}>
+                          <button 
+                            style={{padding: '12px 24px', background: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: '700', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '.1em', cursor: 'pointer'}}
+                            onClick={() => setShowAllPulse(true)}
+                          >
+                            Load more
+                          </button>
                         </div>
+                      )}
+                      
+</div>
                       </div>
                     ))}
                   </div>
