@@ -20,6 +20,7 @@ type PulsePost = {
   audioUrl?: string;
   trackName?: string; trackEra?: string; trackUrl?: string; trackVisibility?: string;
   tag?: string; title?: string; blurb?: string; href?: string; thumb?: string;
+  likes?: number; comments?: number; shares?: number;
 };
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
