@@ -314,7 +314,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
       <div style={vars}>
         <style>{CSS}{cityBg ? CITY_CSS : ""}</style>
         <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
-        <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
+        <div suppressHydrationWarning className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
           {/* Black header - city bg is scoped inside here */}
           <div className="bible-head">
