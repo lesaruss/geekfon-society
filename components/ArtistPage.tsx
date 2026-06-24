@@ -379,16 +379,7 @@ const [showAllPulse, setShowAllPulse] = useState(false);
                   {(c.pills || []).map((p, i) => (<span key={i} className={"pill" + (p.accent ? " accent" : "")}>{p.label}</span>))}
                 </div>
               </div>
-            
-          {!showAllPulse && pulseItems.length > 3 && (
-            <button 
-              className="pulse-load-more"
-              onClick={() => setShowAllPulse(true)}
-            >
-              Load more
-            </button>
-          )}
-          </div>
+            </div>
           </div>
 
           {/* Tab bar */}
