@@ -1154,12 +1154,12 @@ const CSS = `
 
 /* ---- Pulse Feed ---- */
 /* Pulse Grid Layout */
-.pulse-feed{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
-.pulse-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;aspect-ratio:1;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.pulse-feed{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;max-height:600px;overflow:hidden}
+.pulse-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .2s,box-shadow .2s;min-height:400px}
 .pulse-post:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1)}
 .pulse-header{display:flex;align-items:flex-start;justify-content:space-between;padding:12px;gap:8px;flex-shrink:0}
 .pulse-meta{display:flex;align-items:center;gap:8px;min-width:0}
-.pulse-avatar{width:32px;height:32px;border-radius:50%;background:var(--rx);border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:12px;overflow:hidden;flex-shrink:0}
+.pulse-avatar{width:32px;height:32px;border-radius:4px;background:var(--rx);border:1px solid var(--rx);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:12px;overflow:hidden;flex-shrink:0}
 .pulse-avatar img{width:100%;height:100%;object-fit:cover}
 .pulse-info{min-width:0}
 .pulse-info h3{font-size:12px;font-weight:600;margin:0;color:var(--lr-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1173,7 +1173,7 @@ const CSS = `
 .pulse-member-lock{font-size:12px}
 .pulse-content{flex:1;padding:0 12px;display:flex;flex-direction:column;min-width:0}
 .pulse-text{font-size:13px;line-height:1.4;color:var(--lr-text);margin:8px 0;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-word}
-.pulse-media{width:100%;aspect-ratio:1;border:2px solid #1a1a1a;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px;margin:4px 0;flex-shrink:0;overflow:hidden}
+.pulse-media{width:100%;aspect-ratio:1;border:1px solid var(--rx);border-radius:0;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px;margin:4px 0;flex-shrink:0;overflow:hidden}
 .pulse-media-voice{background:#764ba2;color:white}
 .pulse-media-photo{background:#ffc751;color:#333}
 .pulse-media-video{background:#0051ba;color:white}
