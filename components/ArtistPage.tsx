@@ -90,6 +90,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const [playingV, setPlayingV] = useState<string | null>(null);
   const [bbSlot, setBbSlot] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [showAllPulse, setShowAllPulse] = useState(false);
   const [tabDropOpen, setTabDropOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [viewAs, setViewAs] = useState<"real" | "visitor" | "passport" | "plus" | "pro">("real");
@@ -358,6 +359,16 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           {v === "real" ? "My View" : v.charAt(0).toUpperCase() + v.slice(1)}
                         </button>
                       ))}
+                      {!showAllPulse && c.pulse && c.pulse.length > 3 && (
+                        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                          <button
+                            style={{ padding: '12px 24px', background: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '.1em', cursor: 'pointer' }}
+                            onClick={() => setShowAllPulse(true)}
+                          >
+                            Load more
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -401,6 +412,16 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           {t.label}
                         </button>
                       ))}
+                      {!showAllPulse && c.pulse && c.pulse.length > 3 && (
+                        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                          <button
+                            style={{ padding: '12px 24px', background: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '.1em', cursor: 'pointer' }}
+                            onClick={() => setShowAllPulse(true)}
+                          >
+                            Load more
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -469,7 +490,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                     </div>
                   ) : (
                     <div className="feed">
-                      {(c.pulse || []).map((post, i) => (
+                      {((showAllPulse ? c.pulse : (c.pulse || []).slice(0, 3)) || []).map((post, i) => (
                         <div key={i} className={"feed-post" + (post.type === "music_drop" ? " feed-post-music" : post.type === "voice_message" ? " feed-post-voice" : "")}>
                           <div className="feed-left">
                             {c.heroUrl
@@ -504,6 +525,16 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           </div>
                         </div>
                       ))}
+                      {!showAllPulse && c.pulse && c.pulse.length > 3 && (
+                        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                          <button
+                            style={{ padding: '12px 24px', background: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '.1em', cursor: 'pointer' }}
+                            onClick={() => setShowAllPulse(true)}
+                          >
+                            Load more
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </section>
@@ -529,6 +560,16 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                       {(c.bio || []).slice(0, 2).map((p, i) => (
                         <p key={i} className="ov-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
                       ))}
+                      {!showAllPulse && c.pulse && c.pulse.length > 3 && (
+                        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                          <button
+                            style={{ padding: '12px 24px', background: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '.1em', cursor: 'pointer' }}
+                            onClick={() => setShowAllPulse(true)}
+                          >
+                            Load more
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
