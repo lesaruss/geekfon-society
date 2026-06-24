@@ -90,7 +90,6 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const [playingV, setPlayingV] = useState<string | null>(null);
   const [bbSlot, setBbSlot] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [showAllPulse, setShowAllPulse] = useState(false);
   const [tabDropOpen, setTabDropOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [viewAs, setViewAs] = useState<"real" | "visitor" | "passport" | "plus" | "pro">("real");
@@ -359,16 +358,6 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           {v === "real" ? "My View" : v.charAt(0).toUpperCase() + v.slice(1)}
                         </button>
                       ))}
-                      {!showAllPulse && c.pulse && c.pulse.length > 3 && (
-                        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                          <button
-                            style={{ padding: '12px 24px', background: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '.1em', cursor: 'pointer' }}
-                            onClick={() => setShowAllPulse(true)}
-                          >
-                            Load more
-                          </button>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
@@ -412,16 +401,6 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           {t.label}
                         </button>
                       ))}
-                      {!showAllPulse && c.pulse && c.pulse.length > 3 && (
-                        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                          <button
-                            style={{ padding: '12px 24px', background: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '.1em', cursor: 'pointer' }}
-                            onClick={() => setShowAllPulse(true)}
-                          >
-                            Load more
-                          </button>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
@@ -480,68 +459,41 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
               ) : (
               <>{/* Pulse tab - social feed */}
               {tab === "pulse" && (
-                <section className="panel">
-                  {(!c.pulse || c.pulse.length === 0) ? (
-                    <div className="feed-empty">
-                      <div className="feed-empty-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
-                      </div>
-                      <p className="feed-empty-text">Posts coming soon. Season 1 starts Jun 1.</p>
-                    </div>
+                <section className="pulse-section">
+                  {!c.pulse || c.pulse.length === 0 ? (
+                    <div className="pulse-empty"><p>Posts coming soon.</p></div>
                   ) : (
-                    <div className="feed">
+                    <div className="pulse-container">
                       {((showAllPulse ? c.pulse : (c.pulse || []).slice(0, 3)) || []).map((post, i) => (
-                        <div key={i} className={"feed-post" + (post.type === "music_drop" ? " feed-post-music" : post.type === "voice_message" ? " feed-post-voice" : "")}>
-                          <div className="feed-left">
-                            {c.heroUrl
-                              ? <img className="feed-avatar" src={c.heroUrl} alt={name} />
-                              : <div className="feed-avatar-fallback">{name.charAt(0)}</div>
-                            }
-                          </div>
-                          <div className="feed-body">
-                            <div className="feed-header">
-                              <span className="feed-name">{name}</span>
-                              {post.date && <span className="feed-time">{post.date}</span>}
-                              {post.type === "music_drop" && <span className="feed-badge feed-badge-music">Music Drop</span>}
-                              {post.type === "voice_message" && <span className="feed-badge feed-badge-voice">Voice</span>}
+                        <div key={i} className="pulse-card">
+                          <div className="pulse-card-header">
+                            <div className="pulse-card-meta">
+                              {c.heroUrl ? <img src={c.heroUrl} alt={name} className="pulse-avatar" /> : <div className="pulse-avatar-init">{name.charAt(0)}</div>}
+                              <div><h4>{name}</h4><p className="pulse-date">{post.date || 'Recent'}</p></div>
                             </div>
-                            {post.caption && <p className="feed-text">{post.caption}</p>}
-                            {post.type === "music_drop" && post.trackName && (
-                              <div className="feed-music-chip">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 8V4"/><path d="M8 12H4"/><path d="M16 12h4"/><path d="M12 16v4"/></svg>
-                                <span className="feed-chip-track">{post.trackName}</span>
-                                {post.trackEra && <span className="feed-chip-era">{post.trackEra}</span>}
-                              </div>
-                            )}
-                            {post.type === "article" && post.title && (
-                              <a href={post.href || "#"} className="feed-article-chip">
-                                {post.thumb && <img src={post.thumb} alt="" />}
-                                <div className="feed-article-chip-body">
-                                  {post.tag && <span className="feed-chip-tag">{post.tag}</span>}
-                                  <span className="feed-chip-title">{post.title}</span>
-                                </div>
-                              </a>
-                            )}
+                            {post.type && <span className="pulse-badge">{post.type}</span>}
+                          </div>
+                          <div className="pulse-card-body">
+                            {post.caption && <p className="pulse-text">{post.caption}</p>}
+                            {post.thumb && <div className="pulse-media"><img src={post.thumb} alt="" /></div>}
+                          </div>
+                          <div className="pulse-stats">
+                            <span>👍 {post.likes || 0}</span>
+                            <span>💬 {post.comments || 0}</span>
+                            <span>🔁 {post.shares || 0}</span>
                           </div>
                         </div>
                       ))}
                       {!showAllPulse && c.pulse && c.pulse.length > 3 && (
-                        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                          <button
-                            style={{ padding: '12px 24px', background: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '.1em', cursor: 'pointer' }}
-                            onClick={() => setShowAllPulse(true)}
-                          >
-                            Load more
-                          </button>
+                        <div className="pulse-load-container">
+                          <button className="pulse-load-btn" onClick={() => setShowAllPulse(true)}>Load more</button>
                         </div>
                       )}
                     </div>
                   )}
                 </section>
               )}
-
-              {/* News tab - editorial / blog content (former Pulse) */}
-              {tab === "news" && (
+{tab === "news" && (
                 <section className="panel">
 
                   {/* Intro: video (left) + bio blurb (right) */}
@@ -560,16 +512,6 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                       {(c.bio || []).slice(0, 2).map((p, i) => (
                         <p key={i} className="ov-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
                       ))}
-                      {!showAllPulse && c.pulse && c.pulse.length > 3 && (
-                        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                          <button
-                            style={{ padding: '12px 24px', background: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '.1em', cursor: 'pointer' }}
-                            onClick={() => setShowAllPulse(true)}
-                          >
-                            Load more
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
 
