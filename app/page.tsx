@@ -315,7 +315,7 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
 .btn-p{background:#F69820;color:#1a1a1a;border:none;border-radius:100px;padding:13px 30px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:background .15s,transform .1s;}
 .btn-p:hover{background:#e08818;transform:translateY(-1px);}
 .btn-p:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
-.btn-s{background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.14);border-radius:100px;padding:13px 30px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:border-color .15s,color .15s;}
+.btn-s{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:100px;padding:13px 30px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:border-color .15s,color .15s;}
 .btn-s:hover{border-color:rgba(255,255,255,.3);color:#fff;}
 .btn-s:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
 
