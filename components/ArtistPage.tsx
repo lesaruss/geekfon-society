@@ -90,7 +90,8 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const [playingV, setPlayingV] = useState<string | null>(null);
   const [bbSlot, setBbSlot] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [tabDropOpen, setTabDropOpen] = useState(false);
+const [showAllPulse, setShowAllPulse] = useState(false);
+    const [tabDropOpen, setTabDropOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [viewAs, setViewAs] = useState<"real" | "visitor" | "passport" | "plus" | "pro">("real");
   const [viewDropOpen, setViewDropOpen] = useState(false);
