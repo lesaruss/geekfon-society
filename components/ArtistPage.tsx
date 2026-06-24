@@ -1201,7 +1201,7 @@ const CSS = `
 @media(max-width:640px){.pulse-articles-grid{grid-template-columns:1fr}}
 
 /* Billboard fixes */
-.bb-slide{width:100%;display:flex;flex-direction:column}
+.bb-slide{width:100%}
 .bb-stacked{display:flex;flex-direction:column;gap:12px}
 .bb-ad-link{display:block;width:100%}
 .bb-tall{min-height:600px}
