@@ -35,8 +35,8 @@ const PERKS = [
   },
   {
     icon: "◆",
-    title: "1,000 LESARs / Month",
-    desc: "Your monthly allocation of LESARs. Use them to unlock tracks, tip artists, and climb the leaderboard.",
+    title: "Earn LESARs Every Day",
+    desc: "Get points for listening, sharing, and bringing people in. Your activity is your currency.",
     accent: "#9C27B0",
   },
   {
@@ -47,10 +47,16 @@ const PERKS = [
   },
   {
     icon: "◈",
-    title: "Leaderboard & Artist Top 10",
+    title: "Leaderboard and Artist Top 10",
     desc: "Compete with the community. Vote on the Artist Top 10. Your LESARs, your influence.",
     accent: "#FF5722",
   },
+];
+
+const POINT_PACKS = [
+  { lesars: 555,   price: 5,  label: "Starter",  note: "~22 tracks" },
+  { lesars: 1500,  price: 11, label: "Standard", note: "~60 tracks", popular: true },
+  { lesars: 5550,  price: 33, label: "Power",    note: "~222 tracks" },
 ];
 
 const CSS = `
@@ -91,20 +97,52 @@ const CSS = `
 .pp-perk-title { font-size: 15px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 10px; }
 .pp-perk-desc { font-size: 13px; font-weight: 400; color: rgba(255,255,255,.6); line-height: 1.65; }
 
-/* Bottom CTA */
-.pp-bottom { background: rgba(233,30,140,.07); border-top: 1px solid rgba(233,30,140,.15); padding: 80px 24px; text-align: center; }
-.pp-bottom-heading { font-size: clamp(24px, 4vw, 40px); font-weight: 900; text-transform: uppercase; letter-spacing: -1px; margin: 0 0 16px; }
-.pp-bottom-sub { font-size: 15px; color: rgba(255,255,255,.6); margin: 0 0 40px; }
-.pp-bottom-price { font-size: 48px; font-weight: 900; color: #E91E8C; letter-spacing: -2px; margin: 0 0 8px; }
-.pp-bottom-per { font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.4); margin: 0 0 40px; }
+/* ---- Pricing section ---- */
+.pp-pricing { padding: 80px 24px 100px; max-width: 1100px; margin: 0 auto; }
+.pp-pricing-label { font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 20px; }
+.pp-pricing-heading { font-size: clamp(26px, 4vw, 40px); font-weight: 900; letter-spacing: -1px; text-transform: uppercase; margin: 0 0 12px; }
+.pp-pricing-sub { font-size: 15px; color: rgba(255,255,255,.55); margin: 0 0 56px; line-height: 1.6; }
+.pp-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+@media (max-width: 860px) { .pp-pricing-grid { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Tier cards */
+.pp-tier { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); padding: 40px 32px 36px; display: flex; flex-direction: column; position: relative; }
+.pp-tier.featured { background: rgba(233,30,140,.08); border-color: rgba(233,30,140,.35); }
+.pp-tier-badge { position: absolute; top: -1px; right: 28px; background: #E91E8C; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 5px 12px; }
+.pp-tier-name { font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 20px; }
+.pp-tier-price { font-size: clamp(38px, 5vw, 54px); font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
+.pp-tier-price span { font-size: 18px; font-weight: 700; vertical-align: top; margin-top: 10px; display: inline-block; }
+.pp-tier-period { font-size: 13px; color: rgba(255,255,255,.4); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 28px; }
+.pp-tier-highlight { font-size: 20px; font-weight: 900; color: #E91E8C; letter-spacing: -0.5px; margin-bottom: 6px; }
+.pp-tier-highlight-sub { font-size: 12px; color: rgba(255,255,255,.45); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 28px; }
+.pp-tier-items { list-style: none; padding: 0; margin: 0 0 32px; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.pp-tier-items li { font-size: 13px; color: rgba(255,255,255,.7); line-height: 1.5; padding-left: 20px; position: relative; }
+.pp-tier-items li::before { content: ""; position: absolute; left: 0; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.3); }
+.pp-tier.featured .pp-tier-items li::before { background: #E91E8C; }
+.pp-tier-btn { width: 100%; padding: 15px; font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; border: none; border-radius: 2px; cursor: pointer; transition: opacity .15s; font-family: inherit; }
+.pp-tier-btn:hover { opacity: .88; }
+.pp-tier-btn.primary { background: #E91E8C; color: #fff; }
+.pp-tier-btn.secondary { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+
+/* Point packs sub-grid */
+.pp-packs { margin: 12px 0 24px; display: flex; flex-direction: column; gap: 8px; }
+.pp-pack-row { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); padding: 12px 16px; border-radius: 2px; cursor: pointer; transition: background .15s; position: relative; }
+.pp-pack-row:hover { background: rgba(233,30,140,.1); border-color: rgba(233,30,140,.3); }
+.pp-pack-row.pack-popular { border-color: rgba(233,30,140,.4); background: rgba(233,30,140,.07); }
+.pp-pack-badge { position: absolute; top: -8px; right: 10px; background: #E91E8C; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 8px; border-radius: 2px; }
+.pp-pack-lesars { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+.pp-pack-note { font-size: 11px; color: rgba(255,255,255,.4); font-weight: 600; }
+.pp-pack-price { font-size: 16px; font-weight: 900; color: #E91E8C; }
+
+/* Divider */
+.pp-pricing-divider { border: none; border-top: 1px solid rgba(255,255,255,.07); margin: 0 0 80px; }
 `;
 
 export default function PassportPage() {
   const [cityIdx, setCityIdx] = useState(0);
   const [cityVisible, setCityVisible] = useState(true);
-
-  // Get return path from query string
   const [returnPath, setReturnPath] = useState("/dashboard");
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ret = params.get("return");
@@ -122,9 +160,9 @@ export default function PassportPage() {
     return () => clearInterval(timer);
   }, []);
 
-  function handleJoin() {
-    // Routes to welcome onboarding wizard which handles sign-up + plan selection
-    window.location.href = `/welcome?return=${encodeURIComponent(returnPath)}`;
+  function handleJoin(plan?: string) {
+    const base = `/welcome?return=${encodeURIComponent(returnPath)}`;
+    window.location.href = plan ? `${base}&plan=${plan}` : base;
   }
 
   return (
@@ -149,13 +187,13 @@ export default function PassportPage() {
             <div className="pp-ground" />
           </div>
           <div className="pp-hero-content">
-            <div className="pp-hero-price">$11 / Month</div>
+            <div className="pp-hero-price">Free to Join</div>
             <h1 className="pp-hero-title">GeekFon Passport</h1>
             <p className="pp-hero-sub">
-              Your membership into the GeekFon universe. Radio, Jukebox, early access, LESARs, and the door to GeekFon Plus.
-              Everything for eleven dollars a month.
+              Your membership into the GeekFon universe. Listen, earn LESARs, unlock tracks,
+              and build your place in the community. Free to start. Power up when you&apos;re ready.
             </p>
-            <button className="pp-hero-cta" onClick={handleJoin} aria-label="Join GeekFon Passport">
+            <button className="pp-hero-cta" onClick={() => handleJoin("free")} aria-label="Join GeekFon Passport free">
               Get Your Passport
             </button>
           </div>
@@ -176,18 +214,96 @@ export default function PassportPage() {
           </div>
         </section>
 
-        {/* Bottom CTA */}
-        <div className="pp-bottom">
-          <p className="pp-bottom-price">$11</p>
-          <p className="pp-bottom-per">per month</p>
-          <h2 className="pp-bottom-heading">No brainer.</h2>
-          <p className="pp-bottom-sub">
-            Six perks. One price. Cancel any time.
+        <hr className="pp-pricing-divider" />
+
+        {/* Pricing */}
+        <section className="pp-pricing" aria-labelledby="pp-plans-heading">
+          <div className="pp-pricing-label">Choose your path</div>
+          <h2 id="pp-plans-heading" className="pp-pricing-heading">Start free. Go deeper when you&apos;re ready.</h2>
+          <p className="pp-pricing-sub">
+            Every Passport is free. LESARs are how you move inside the ecosystem - earn them by
+            participating, or get more to unlock tracks faster. The $11 membership puts everything on autopilot.
           </p>
-          <button className="pp-hero-cta" onClick={handleJoin} aria-label="Join GeekFon Passport">
-            Get Your Passport
-          </button>
-        </div>
+
+          <div className="pp-pricing-grid" role="list">
+
+            {/* --- FREE --- */}
+            <div className="pp-tier" role="listitem">
+              <div className="pp-tier-name">Free Forever</div>
+              <div className="pp-tier-price">Free</div>
+              <div className="pp-tier-period">no card required</div>
+              <div className="pp-tier-highlight">111 LESARs</div>
+              <div className="pp-tier-highlight-sub">to get you started</div>
+              <ul className="pp-tier-items">
+                <li>111 LESARs loaded on signup - enough to unlock 4 tracks</li>
+                <li>Earn LESARs by listening, sharing, and referring friends</li>
+                <li>Full access to GeekFon Radio and the Jukebox</li>
+                <li>Vote on the Artist Top 10</li>
+                <li>Your activity builds your rank in the community</li>
+              </ul>
+              <button className="pp-tier-btn secondary" onClick={() => handleJoin("free")}>
+                Join Free
+              </button>
+            </div>
+
+            {/* --- POINT PACKS --- */}
+            <div className="pp-tier" role="listitem">
+              <div className="pp-tier-name">LESARs Packs</div>
+              <div className="pp-tier-price"><span>from </span>$5</div>
+              <div className="pp-tier-period">one-time, no subscription</div>
+              <div className="pp-tier-highlight-sub" style={{marginTop: 8}}>Buy points when you need them</div>
+              <div className="pp-packs">
+                {POINT_PACKS.map(pk => (
+                  <div
+                    key={pk.label}
+                    className={"pp-pack-row" + (pk.popular ? " pack-popular" : "")}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleJoin(`pack-${pk.lesars}`)}
+                    onKeyDown={e => e.key === "Enter" && handleJoin(`pack-${pk.lesars}`)}
+                    aria-label={`Buy ${pk.lesars} LESARs for $${pk.price}`}
+                  >
+                    {pk.popular && <span className="pp-pack-badge">Most Popular</span>}
+                    <div>
+                      <div className="pp-pack-lesars">{pk.lesars.toLocaleString()} LESARs</div>
+                      <div className="pp-pack-note">{pk.note}</div>
+                    </div>
+                    <div className="pp-pack-price">${pk.price}</div>
+                  </div>
+                ))}
+              </div>
+              <ul className="pp-tier-items">
+                <li>Never expires - use at your own pace</li>
+                <li>Works alongside free earnings</li>
+              </ul>
+              <button className="pp-tier-btn secondary" onClick={() => handleJoin("pack-1500")}>
+                Buy LESARs
+              </button>
+            </div>
+
+            {/* --- $11/MONTH --- */}
+            <div className="pp-tier featured" role="listitem">
+              <div className="pp-tier-badge">Best Value</div>
+              <div className="pp-tier-name">All Access</div>
+              <div className="pp-tier-price"><span>$</span>11</div>
+              <div className="pp-tier-period">per month, cancel any time</div>
+              <div className="pp-tier-highlight">1,000 LESARs</div>
+              <div className="pp-tier-highlight-sub">every month, automatically</div>
+              <ul className="pp-tier-items">
+                <li>1,000 LESARs per month - enough for 40 tracks</li>
+                <li>Early access to every new track before public release</li>
+                <li>Eligible for the GeekFon Plus street team</li>
+                <li>Invitation to the Plus program based on your activity</li>
+                <li>Leaderboard ranking and Artist Top 10 voting power</li>
+                <li>Priority access to exclusive artist drops and events</li>
+              </ul>
+              <button className="pp-tier-btn primary" onClick={() => handleJoin("all-access")}>
+                Get All Access
+              </button>
+            </div>
+
+          </div>
+        </section>
 
       </div>
     </SiteChrome>
