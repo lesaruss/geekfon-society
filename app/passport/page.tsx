@@ -54,9 +54,9 @@ const PERKS = [
 ];
 
 const POINT_PACKS = [
-  { lesars: 555,   price: 5,  label: "Starter",  note: "~22 tracks" },
-  { lesars: 1500,  price: 11, label: "Standard", note: "~60 tracks", popular: true },
-  { lesars: 5550,  price: 33, label: "Power",    note: "~222 tracks" },
+  { lesars: 500,   price: 5,  label: "Starter",  note: "~20 tracks" },
+  { lesars: 1000,  price: 11, label: "Standard", note: "~40 tracks", popular: true },
+  { lesars: 5000,  price: 33, label: "Power",    note: "~200 tracks" },
 ];
 
 const CSS = `
@@ -287,10 +287,10 @@ export default function PassportPage() {
               <div className="pp-tier-name">All Access</div>
               <div className="pp-tier-price"><span>$</span>11</div>
               <div className="pp-tier-period">per month, cancel any time</div>
-              <div className="pp-tier-highlight">1,000 LESARs</div>
+              <div className="pp-tier-highlight">1,500 LESARs</div>
               <div className="pp-tier-highlight-sub">every month, automatically</div>
               <ul className="pp-tier-items">
-                <li>1,000 LESARs per month - enough for 40 tracks</li>
+                <li>1,500 LESARs per month - enough for 60 tracks</li>
                 <li>Early access to every new track before public release</li>
                 <li>Eligible for the GeekFon Plus street team</li>
                 <li>Invitation to the Plus program based on your activity</li>
