@@ -191,17 +191,17 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   }
   function onTimeUpdate() {
     const a = audioRef.current;
-    if (!a || !a.src) return;
+    if (!a || !playing) return;
     // Enforce 20s clip only for non-members; passport+ gets the full track
     if (playingV === "preview" && !userTier && a.currentTime >= 20) {
       a.pause(); a.currentTime = 0; setPlaying(null); setPlayingV(null); return;
     }
-    setAudioProgress(prev => ({ ...prev, [a.src]: a.currentTime }));
+    setAudioProgress(prev => ({ ...prev, [playing]: a.currentTime }));
   }
   function onLoadedMetadata() {
     const a = audioRef.current;
-    if (!a || !a.src) return;
-    setAudioDuration(prev => ({ ...prev, [a.src]: a.duration }));
+    if (!a || !playing) return;
+    setAudioDuration(prev => ({ ...prev, [playing]: a.duration }));
   }
   function seekTo(e: React.MouseEvent<HTMLDivElement>, url: string) {
     const a = audioRef.current;
@@ -710,7 +710,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                           <div
                             key={i}
                             className={"mp-row" + (isCurr ? " current" : "") + (locked ? " locked" : "")}
-                            onClick={() => { if (!locked) selectTrack(i); }}
+                            onClick={() => { if (!locked) { selectTrack(i); if (url) togglePlay(url, t.v); } }}
                           >
                             <div className="mp-row-art">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={18} height={18}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
@@ -731,7 +731,7 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                                     className={"mp-btn-pre" + (!url ? " disabled" : "")}
                                     disabled={!url}
                                     title={!url ? "Audio coming soon" : undefined}
-                                    onClick={(e) => { e.stopPropagation(); if (url) togglePlay(url, t.v); }}
+                                    onClick={(e) => { e.stopPropagation(); if (url) { setCurrTrackIdx(i); togglePlay(url, t.v); } }}
                                     aria-label={`Preview ${t.n}`}
                                   >
                                     {url ? "Preview" : "Soon"}
