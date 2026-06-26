@@ -128,6 +128,7 @@ const CSS = `
 .pp-packs { margin: 12px 0 24px; display: flex; flex-direction: column; gap: 8px; }
 .pp-pack-row { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); padding: 12px 16px; border-radius: 2px; cursor: pointer; transition: background .15s; position: relative; }
 .pp-pack-row:hover { background: rgba(233,30,140,.1); border-color: rgba(233,30,140,.3); }
+.pp-pack-row.pack-selected { background: rgba(233,30,140,.12); border-color: #E91E8C; box-shadow: 0 0 0 1px rgba(233,30,140,.4); }
 .pp-pack-row.pack-popular { border-color: rgba(233,30,140,.4); background: rgba(233,30,140,.07); }
 .pp-pack-badge { position: absolute; top: -8px; right: 10px; background: #E91E8C; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 8px; border-radius: 2px; }
 .pp-pack-lesars { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
@@ -142,6 +143,8 @@ export default function PassportPage() {
   const [cityIdx, setCityIdx] = useState(0);
   const [cityVisible, setCityVisible] = useState(true);
   const [returnPath, setReturnPath] = useState("/dashboard");
+  const [selectedPack, setSelectedPack] = useState<number | null>(1000);
+  const [packModal, setPackModal] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -256,12 +259,12 @@ export default function PassportPage() {
                 {POINT_PACKS.map(pk => (
                   <div
                     key={pk.label}
-                    className={"pp-pack-row" + (pk.popular ? " pack-popular" : "")}
+                    className={"pp-pack-row" + (pk.popular ? " pack-popular" : "") + (selectedPack === pk.lesars ? " pack-selected" : "")}
                     role="button"
                     tabIndex={0}
-                    onClick={() => handleJoin(`pack-${pk.lesars}`)}
-                    onKeyDown={e => e.key === "Enter" && handleJoin(`pack-${pk.lesars}`)}
-                    aria-label={`Buy ${pk.lesars} LESARs for $${pk.price}`}
+                    onClick={() => setSelectedPack(pk.lesars)}
+                    onKeyDown={e => e.key === "Enter" && setSelectedPack(pk.lesars)}
+                    aria-label={`Select ${pk.lesars} LESARs for $${pk.price}`}
                   >
                     {pk.popular && <span className="pp-pack-badge">Most Popular</span>}
                     <div>
@@ -276,8 +279,13 @@ export default function PassportPage() {
                 <li>Never expires - use at your own pace</li>
                 <li>Works alongside free earnings</li>
               </ul>
-              <button className="pp-tier-btn secondary" onClick={() => handleJoin("pack-1500")}>
-                Buy LESARs
+              <button
+                className="pp-tier-btn secondary"
+                disabled={!selectedPack}
+                onClick={() => selectedPack && setPackModal(true)}
+                style={selectedPack ? {} : {opacity: .45, cursor: "not-allowed"}}
+              >
+                {selectedPack ? `Buy ${selectedPack.toLocaleString()} LESARs` : "Select a Pack"}
               </button>
             </div>
 
@@ -306,6 +314,49 @@ export default function PassportPage() {
         </section>
 
       </div>
+
+      {/* LESARs Pack Purchase Modal */}
+      {packModal && selectedPack && (() => {
+        const pack = POINT_PACKS.find(p => p.lesars === selectedPack)!;
+        return (
+          <div
+            style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}
+            onClick={() => setPackModal(false)}
+            role="dialog" aria-modal="true" aria-labelledby="pack-modal-title"
+          >
+            <div
+              style={{background:"#111",border:"1px solid rgba(233,30,140,.3)",borderRadius:"4px",padding:"40px 36px",maxWidth:"420px",width:"100%",fontFamily:"Montserrat,sans-serif",color:"#fff"}}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{fontSize:"11px",fontWeight:700,letterSpacing:"3px",textTransform:"uppercase",color:"rgba(255,255,255,.4)",marginBottom:"20px"}}>LESARs Pack</div>
+              <h2 id="pack-modal-title" style={{fontSize:"32px",fontWeight:900,letterSpacing:"-1px",margin:"0 0 6px"}}>{pack.lesars.toLocaleString()} LESARs</h2>
+              <div style={{fontSize:"13px",color:"rgba(255,255,255,.5)",marginBottom:"28px"}}>{pack.note} at 25 LESARs each</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:"8px",marginBottom:"28px"}}>
+                <span style={{fontSize:"48px",fontWeight:900,color:"#E91E8C",letterSpacing:"-2px"}}>${pack.price}</span>
+                <span style={{fontSize:"13px",color:"rgba(255,255,255,.4)",fontWeight:600,letterSpacing:"1px",textTransform:"uppercase"}}>one-time</span>
+              </div>
+              <p style={{fontSize:"13px",color:"rgba(255,255,255,.55)",lineHeight:1.6,marginBottom:"32px"}}>
+                Points are added to your account instantly and never expire. You can use them alongside points you earn through listening and sharing.
+              </p>
+              <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
+                <button
+                  style={{width:"100%",padding:"16px",background:"#E91E8C",color:"#fff",fontSize:"13px",fontWeight:800,letterSpacing:"2px",textTransform:"uppercase",border:"none",borderRadius:"2px",cursor:"pointer",fontFamily:"inherit"}}
+                  onClick={() => handleJoin(`pack-${pack.lesars}`)}
+                >
+                  Continue to Payment
+                </button>
+                <button
+                  style={{width:"100%",padding:"14px",background:"transparent",color:"rgba(255,255,255,.5)",fontSize:"12px",fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",border:"1px solid rgba(255,255,255,.15)",borderRadius:"2px",cursor:"pointer",fontFamily:"inherit"}}
+                  onClick={() => setPackModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
     </SiteChrome>
   );
 }
