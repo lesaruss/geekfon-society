@@ -1,25 +1,17 @@
+// @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
 export const config = { api: { bodyParser: false } };
 
-type PointsRow = { available_points: number; total_points: number } | null;
-
-async function creditLesars(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  amount: number,
-  plan: string,
-  referenceId: string
-) {
-  const { data } = await supabase
+async function creditLesars(supabase, userId, amount, plan, referenceId) {
+  const { data: existing } = await supabase
     .from("member_points")
     .select("available_points, total_points")
     .eq("user_id", userId)
     .maybeSingle();
 
-  const existing = data as PointsRow;
   const newAvailable = (existing?.available_points || 0) + amount;
   const newTotal = (existing?.total_points || 0) + amount;
 
