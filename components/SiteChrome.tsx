@@ -172,11 +172,18 @@ export default function SiteChrome({
           return;
         }
         const u = session.user;
-        const { data } = await supabase
-          .from("gfs_members")
-          .select("name, tier, role")
-          .eq("user_id", u.id)
-          .maybeSingle();
+        const [{ data }, { data: pts }] = await Promise.all([
+          supabase
+            .from("gfs_members")
+            .select("name, tier, role")
+            .eq("user_id", u.id)
+            .maybeSingle(),
+          supabase
+            .from("member_points")
+            .select("available_points")
+            .eq("user_id", u.id)
+            .maybeSingle(),
+        ]);
         if (cancelled) return;
         const displayName = data?.name || u.email || "Member";
         const tier = parseTier(data?.tier || "passport");
@@ -186,7 +193,7 @@ export default function SiteChrome({
           tier,
           name: displayName,
           initial: displayName.charAt(0).toUpperCase(),
-          balance: 0,
+          balance: pts?.available_points || 0,
           isAdmin,
         });
       } catch {
@@ -358,7 +365,7 @@ const CHROME_CSS = `
 .gcta:hover { background: rgba(233,30,140,.07); }
 .gmember-chip { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
 .gmember-balance { display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
-.gmember-balance-num { font-size: 15px; font-weight: 900; color: #1a1a1a; letter-spacing: -.01em; }
+.gmember-balance-num { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -.01em; }
 .gmember-balance-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: #9c1458; margin-top: 2px; }
 .gmember-avatar { width: 36px; height: 36px; border-radius: 50%; color: #fff; font-size: 14px; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
 .gscrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 50; }
