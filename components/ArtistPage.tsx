@@ -107,6 +107,10 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
   const [pulseShown, setPulseShown] = useState(3);
+  const [currTrackIdx, setCurrTrackIdx] = useState(0);
+  const [musicShuffle, setMusicShuffle] = useState(false);
+  const [musicRepeat, setMusicRepeat] = useState(false);
+  const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -586,60 +590,167 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                 </section>
               )}
 
-              {tab === "music" && (
-                <section className="panel">
-                  <div className="panel-intro"><span>Full catalog. What plays adapts to your membership.</span></div>
-                  {(c.tracks || []).map((t, i) => {
-                    const url = t.url ? AUDIO + t.url : null;
-                    const locked = trackLocked(t.v);
-                    const isPlaying = !!url && playing === url;
-                    const badge = trackBadge(t.v);
-                    const progress = url ? (audioProgress[url] || 0) : 0;
-                    const duration = url ? (audioDuration[url] || 0) : 0;
-                    const maxTime = t.v === "preview" ? 20 : duration;
-                    const pct = maxTime > 0 ? Math.min(100, (progress / maxTime) * 100) : 0;
-                    return (
-                      <div key={i} className={"track" + (locked ? " track-locked" : "")}>
-                        {locked ? (
-                          <div className="tplay locked" aria-hidden="true">{LOCK}</div>
-                        ) : (
-                          <button
-                            className={"tplay" + (isPlaying ? " on" : "")}
-                            disabled={!url}
-                            aria-label={isPlaying ? "Pause" : "Play"}
-                            onClick={() => url && togglePlay(url, t.v)}
-                          >
-                            {isPlaying ? PAUSE : PLAY}
-                          </button>
-                        )}
-                        <div className="ti">
-                          <div className="tn">{t.n}</div>
-                          {!locked && (
-                            <div className="track-scrubber" onClick={(e) => url && seekTo(e, url)}>
-                              <div className="ts-track">
-                                <div className="ts-fill" style={{ width: `${pct}%` }} />
-                                <div className="ts-thumb" style={{ left: `${pct}%` }} />
-                              </div>
-                              <span className="ts-time">{isPlaying ? fmtTime(progress) : ""}{maxTime > 0 ? ` / ${(t.v === "preview" && !userTier) ? "0:20" : fmtTime(maxTime)}` : ""}</span>
-                            </div>
-                          )}
-                          {!locked && t.v === "preview" && !userTier && (
-                            <div className="track-locked-msg"><a href="/dashboard">25 LESARs &middot; Unlock early</a></div>
-                          )}
-                          {locked && <div className="track-locked-msg track-coming-soon">Coming soon</div>}
+              {tab === "music" && (() => {
+                const tracks = c.tracks || [];
+                const safeIdx = Math.min(currTrackIdx, tracks.length - 1);
+                const npTrack = tracks[safeIdx];
+                const npUrl = npTrack?.url ? AUDIO + npTrack.url : null;
+                const npLocked = npTrack ? trackLocked(npTrack.v) : true;
+                const npPlaying = !!npUrl && playing === npUrl;
+                const npProgress = npUrl ? (audioProgress[npUrl] || 0) : 0;
+                const npDuration = npUrl ? (audioDuration[npUrl] || 0) : 0;
+                const npMax = npTrack?.v === "preview" ? 20 : npDuration;
+                const npPct = npMax > 0 ? Math.min(100, (npProgress / npMax) * 100) : 0;
+                const npBadge = npTrack ? trackBadge(npTrack.v) : { label: "", cls: "" };
+
+                function selectTrack(i: number) {
+                  setCurrTrackIdx(i);
+                  if (playing) { const a = audioRef.current; if (a) { a.pause(); setPlaying(null); setPlayingV(null); } }
+                }
+                function playPrev() {
+                  let i = safeIdx - 1;
+                  while (i >= 0 && trackLocked(tracks[i].v)) i--;
+                  if (i >= 0) selectTrack(i);
+                }
+                function playNext() {
+                  let i = safeIdx + 1;
+                  while (i < tracks.length && trackLocked(tracks[i].v)) i++;
+                  if (i < tracks.length) selectTrack(i);
+                }
+
+                return (
+                  <section className="mp-root">
+                    {/* Now-playing card */}
+                    <div className="mp-player">
+                      <div className="mp-np">
+                        <div className="mp-cover">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
                         </div>
-                        <button
-                          className={"vis-badge vis-badge-btn " + badge.cls}
-                          onClick={() => handleBadgeClick(t)}
-                          aria-label={`${badge.label} - click to purchase ${t.n}`}
-                        >
-                          {badge.label}
-                        </button>
+                        <div className="mp-npmeta">
+                          <div className="mp-nptitle">{npTrack?.n || "Select a track"}</div>
+                          <div className="mp-npartist">{name}</div>
+                          <span className={"mp-nptag " + npBadge.cls}>{npBadge.label}</span>
+                        </div>
+                        <div className="mp-transport">
+                          <button className={"mp-ic" + (musicShuffle ? " on" : "")} aria-label="Shuffle" onClick={() => setMusicShuffle(s => !s)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                          </button>
+                          <button className="mp-ic" aria-label="Previous" onClick={playPrev}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                          </button>
+                          <button
+                            className="mp-orb"
+                            aria-label={npPlaying ? "Pause" : "Play"}
+                            disabled={npLocked || !npUrl}
+                            onClick={() => { if (npUrl) togglePlay(npUrl, npTrack?.v); }}
+                          >
+                            {npPlaying ? PAUSE : PLAY}
+                          </button>
+                          <button className="mp-ic" aria-label="Next" onClick={playNext}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                          </button>
+                          <button className={"mp-ic" + (musicRepeat ? " on" : "")} aria-label="Repeat" onClick={() => setMusicRepeat(r => !r)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                          </button>
+                        </div>
                       </div>
-                    );
-                  })}
-                </section>
-              )}
+
+                      {/* Scrub bar */}
+                      <div className="mp-scrub">
+                        <span className="mp-time">{fmtTime(npProgress)}</span>
+                        <div className="mp-bar" onClick={(e) => npUrl && seekTo(e, npUrl)}>
+                          <div className="mp-bar-fill" style={{ width: `${npPct}%` }} />
+                          <div className="mp-bar-knob" style={{ left: `${npPct}%` }} />
+                        </div>
+                        <span className="mp-time">{npMax > 0 ? fmtTime(npMax) : "--:--"}</span>
+                      </div>
+
+                      {/* Bottom bar */}
+                      <div className="mp-barrow">
+                        <div className="mp-vol">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={18} height={18}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                          <div className="mp-voltrack"><div className="mp-volfill" style={{ width: "70%" }} /></div>
+                        </div>
+                        <div className="mp-chips">
+                          <button className={"mp-chip" + (lyricsDrawerOpen ? " active" : "")} onClick={() => setLyricsDrawerOpen(o => !o)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={15} height={15}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            Lyrics
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lyrics drawer (inline, below player) */}
+                    {lyricsDrawerOpen && npTrack && (
+                      <div className="mp-lyrics-inline">
+                        <div className="mp-lyrics-head">
+                          <span className="mp-lyrics-label">Lyrics</span>
+                          <span className="mp-lyrics-track">{npTrack.n}</span>
+                          <button className="mp-lyrics-close" onClick={() => setLyricsDrawerOpen(false)}>&#x2715;</button>
+                        </div>
+                        <div className="mp-lyrics-body">
+                          <p style={{ color: "var(--lr-text-50)", fontSize: 13 }}>Lyrics sync coming soon.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Catalog */}
+                    <div className="mp-catalog-head">
+                      <h2 className="mp-catalog-title">{name} - Full Catalog</h2>
+                    </div>
+                    <p className="mp-catalog-note">Each track is <strong>25 LESARs.</strong> Clicking Buy deducts from your LESARUSS balance instantly - no checkout required.</p>
+
+                    <div className="mp-rows">
+                      {tracks.map((t, i) => {
+                        const url = t.url ? AUDIO + t.url : null;
+                        const locked = trackLocked(t.v);
+                        const isCurr = i === safeIdx;
+                        const badge = trackBadge(t.v);
+                        return (
+                          <div
+                            key={i}
+                            className={"mp-row" + (isCurr ? " current" : "") + (locked ? " locked" : "")}
+                            onClick={() => { if (!locked) selectTrack(i); }}
+                          >
+                            <div className="mp-row-art">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={18} height={18}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                            </div>
+                            <div className="mp-row-meta">
+                              <div className="mp-row-title">{t.n}</div>
+                              <div className="mp-row-sub">{name}{t.m ? ` - ${t.m}` : ""}</div>
+                            </div>
+                            <div className="mp-row-state">
+                              {locked ? (
+                                <>
+                                  <span className="mp-badge-lk">LOCKED</span>
+                                  <span className="mp-row-date">{t.scheduledFor || "Coming soon"}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    className="mp-btn-pre"
+                                    onClick={(e) => { e.stopPropagation(); if (url) togglePlay(url, t.v); }}
+                                    aria-label={`Preview ${t.n}`}
+                                  >
+                                    Preview
+                                  </button>
+                                  <button
+                                    className="mp-btn-buy"
+                                    onClick={(e) => { e.stopPropagation(); handleBadgeClick(t); }}
+                                    aria-label={`Buy ${t.n}`}
+                                  >
+                                    Buy
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })()}
 
               {tab === "media" && (<section className="panel"><p className="empty-note">Media gallery renders here (wire to storage on rollout).</p></section>)}
 
@@ -1012,6 +1123,66 @@ const CSS = `
 .article-cta:hover svg{transform:translateX(3px)}
 .article-tag{position:absolute;top:10px;left:10px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 10px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text);backdrop-filter:blur(4px)}
 .panel-intro{font-size:13px;color:var(--lr-text-50);margin-bottom:18px}
+.mp-root{padding-bottom:40px}
+.mp-player{background:#fff;border:1px solid var(--lr-border);border-radius:20px;box-shadow:0 6px 28px rgba(20,20,40,.07);overflow:hidden;margin-bottom:20px}
+.mp-np{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:18px 22px}
+.mp-cover{width:60px;height:60px;border-radius:14px;background:var(--rx);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.mp-cover svg{width:26px;height:26px}
+.mp-npmeta .mp-nptitle{font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
+.mp-npmeta .mp-npartist{color:rgba(26,26,26,.55);font-size:13.5px;margin-top:2px}
+.mp-nptag{display:inline-block;margin-top:6px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+.mp-nptag.vb-public{background:rgba(76,175,80,.14);color:#2e7d32}
+.mp-nptag.vb-preview,.mp-nptag.vb-passport{background:var(--rx-tint);color:var(--rx-text)}
+.mp-nptag.vb-locked{background:rgba(0,0,0,.06);color:rgba(26,26,26,.4)}
+.mp-transport{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.mp-ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:rgba(26,26,26,.5);background:none;border:none;cursor:pointer;transition:.12s}
+.mp-ic:hover{background:#f0f0f4;color:#1a1a1a}
+.mp-ic.on{color:var(--rx)}
+.mp-ic svg{width:19px;height:19px}
+.mp-orb{width:56px;height:56px;border-radius:50%;background:var(--rx);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.2);transition:box-shadow .15s,transform .08s;color:#fff}
+.mp-orb:hover{box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.mp-orb:active{transform:scale(.94)}
+.mp-orb:disabled{opacity:.45;cursor:not-allowed}
+.mp-orb svg{width:22px;height:22px;fill:currentColor}
+.mp-scrub{display:flex;align-items:center;gap:12px;padding:0 22px 16px}
+.mp-time{font-size:12px;color:rgba(26,26,26,.45);font-variant-numeric:tabular-nums;min-width:36px;text-align:center;font-weight:700}
+.mp-bar{flex:1;height:6px;border-radius:999px;background:#ececf2;position:relative;cursor:pointer}
+.mp-bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--rx);transition:width .1s linear}
+.mp-bar-knob{position:absolute;top:50%;transform:translate(-50%,-50%);width:13px;height:13px;border-radius:50%;background:#fff;border:2px solid var(--rx);box-shadow:0 1px 4px rgba(0,0,0,.18);transition:left .1s linear}
+.mp-barrow{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--lr-border);padding:11px 22px;background:#fafafb}
+.mp-vol{display:flex;align-items:center;gap:10px;color:rgba(26,26,26,.5)}
+.mp-voltrack{width:100px;height:5px;border-radius:999px;background:#e2e2ea;position:relative}
+.mp-volfill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:#1a1a1a}
+.mp-chips{display:flex;gap:8px}
+.mp-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.3px;color:rgba(26,26,26,.55);border:1px solid var(--lr-border);border-radius:999px;padding:7px 13px;background:none;cursor:pointer;font-family:inherit;transition:.12s}
+.mp-chip:hover{border-color:var(--rx);color:var(--rx)}
+.mp-chip.active{background:var(--rx);border-color:var(--rx);color:#fff}
+.mp-lyrics-inline{background:#fff;border:1px solid var(--lr-border);border-radius:16px;margin-bottom:20px;overflow:hidden}
+.mp-lyrics-head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--lr-border)}
+.mp-lyrics-label{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--rx)}
+.mp-lyrics-track{flex:1;font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-lyrics-close{margin-left:auto;width:28px;height:28px;border-radius:50%;background:#f0f0f4;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:rgba(26,26,26,.5)}
+.mp-lyrics-body{padding:16px 18px}
+.mp-catalog-head{margin-bottom:6px}
+.mp-catalog-title{font-size:13px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:rgba(26,26,26,.45);margin:0}
+.mp-catalog-note{font-size:11.5px;color:rgba(26,26,26,.45);font-weight:600;margin-bottom:14px}
+.mp-catalog-note strong{color:rgba(26,26,26,.65);font-weight:800}
+.mp-rows{display:grid;gap:8px}
+.mp-row{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;background:#fff;border:1px solid var(--lr-border);border-radius:14px;padding:11px 14px;cursor:pointer;transition:.12s}
+.mp-row:hover{border-color:rgba(0,0,0,.16);box-shadow:0 4px 16px rgba(20,20,40,.06)}
+.mp-row.current{border-color:var(--rx);box-shadow:0 0 0 1px var(--rx)}
+.mp-row.locked{cursor:default;opacity:.75}
+.mp-row-art{width:44px;height:44px;border-radius:10px;background:#eeeeee;display:flex;align-items:center;justify-content:center;color:rgba(26,26,26,.35);flex-shrink:0}
+.mp-row-title{font-weight:800;font-size:14.5px}
+.mp-row-sub{color:rgba(26,26,26,.45);font-size:12.5px;margin-top:2px}
+.mp-row-state{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.mp-badge-lk{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:rgba(26,26,26,.5);background:rgba(0,0,0,.06);padding:4px 9px;border-radius:999px;white-space:nowrap}
+.mp-row-date{color:rgba(26,26,26,.4);font-size:12px;white-space:nowrap}
+.mp-btn-pre{border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;border:1px solid var(--lr-border);color:#1a1a1a;background:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
+.mp-btn-pre:hover{border-color:var(--rx);color:var(--rx)}
+.mp-btn-buy{border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;background:#1f8f50;color:#fff;border:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
+.mp-btn-buy:hover{background:#17763f}
+@media(max-width:768px){.mp-np{grid-template-columns:auto 1fr;gap:14px}.mp-transport{grid-column:1/-1;justify-content:center;margin-top:6px}.mp-barrow{flex-direction:column;gap:10px}.mp-chips{justify-content:center}}
 .track{display:flex;align-items:center;gap:16px;background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:10px;padding:13px 18px;margin-bottom:9px}
 .tplay{width:42px;height:42px;border-radius:50%;border:none;background:var(--rx);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0}
 .tplay svg{width:16px;height:16px;fill:currentColor}
