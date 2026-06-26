@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { DashboardContext, DashboardCtx, TIER_LABEL } from "./context";
+import SiteChrome from "@/components/SiteChrome";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [ctx, setCtx] = useState<DashboardCtx>({
@@ -95,18 +96,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (loading)
     return (
-      <>
+      <SiteChrome>
         <style>{LAYOUT_CSS}</style>
         <Aurora />
         <div className="dl-loading">
           <div className="dl-spinner" />
         </div>
-      </>
+      </SiteChrome>
     );
 
   if (!userId)
     return (
-      <>
+      <SiteChrome>
         <style>{LAYOUT_CSS}</style>
         <Aurora />
         <div className="dl-gate">
@@ -143,14 +144,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </a>
           </div>
         </div>
-      </>
+      </SiteChrome>
     );
 
   return (
     <DashboardContext.Provider value={ctx}>
-      <style>{LAYOUT_CSS}</style>
-      <Aurora />
-      <div className="dl-main">{children}</div>
+      <SiteChrome member={memberProp}>
+        <style>{LAYOUT_CSS}</style>
+        <Aurora />
+        <div className="dl-main">{children}</div>
+      </SiteChrome>
     </DashboardContext.Provider>
   );
 }
