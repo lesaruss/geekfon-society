@@ -1025,12 +1025,19 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
             </div>
             <div className="pur-balance-row">
               <span className="pur-balance-label">Your balance:</span>
-              <span className="pur-balance-val">{userBalance.toLocaleString()} LESARs</span>
+              <span className={"pur-balance-val" + (userBalance < purchaseModal.price ? " pur-balance-low" : "")}>{userBalance.toLocaleString()} LESARs</span>
             </div>
+            {userBalance < purchaseModal.price && (
+              <p className="pur-low-msg">You need {(purchaseModal.price - userBalance).toLocaleString()} more LESARs to unlock this track.</p>
+            )}
             <p className="pur-desc">You&apos;ll receive lifetime access to this track. Purchase is tied to your account.</p>
-            {purchaseError && <p className="pur-error">{purchaseError} <a href="/passport" className="pur-error-link">Get LESARs</a></p>}
+            {purchaseError && <p className="pur-error">{purchaseError}</p>}
             <div className="pur-actions">
-              <button className="pur-confirm" onClick={handlePurchaseConfirm} disabled={userBalance < purchaseModal.price}>Continue</button>
+              {userBalance < purchaseModal.price ? (
+                <a href="/passport" className="pur-confirm pur-reload">Reload LESARs</a>
+              ) : (
+                <button className="pur-confirm" onClick={handlePurchaseConfirm}>Continue</button>
+              )}
               <button className="pur-cancel" onClick={() => { setPurchaseModal(null); setPurchaseError(null); }}>Cancel</button>
             </div>
           </div>
@@ -1251,11 +1258,16 @@ const CSS = `
 .pur-price-row{display:flex;align-items:baseline;gap:7px;margin-bottom:14px}
 .pur-price{font-size:42px;font-weight:900;color:var(--rx-text);line-height:1}
 .pur-currency{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--rx-text);opacity:.7}
+.pur-balance-low{color:#ef4444}
+.pur-low-msg{font-size:12px;color:#ef4444;font-weight:600;margin:6px 0 14px;line-height:1.5}
 .pur-desc{font-size:13px;color:#555;line-height:1.65;margin-bottom:28px}
 .pur-actions{display:flex;flex-direction:column;gap:10px}
-.pur-confirm{padding:14px;background:var(--rx);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.08em;cursor:pointer}
+.pur-confirm{padding:14px;background:var(--rx);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;text-align:center;display:block;text-decoration:none}
 .pur-confirm:hover{filter:brightness(1.08)}
 .pur-confirm:focus-visible{outline:2px solid var(--rx);outline-offset:3px}
+.pur-confirm.pur-reload{background:#F69820;color:#000}
+.pur-confirm.pur-reload:hover{background:#ffaf30;filter:none}
+.pur-confirm.pur-reload:focus-visible{outline-color:#F69820}
 .pur-cancel{padding:14px;background:#f5f5f5;color:#1a1a1a;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
 .pur-cancel:hover{background:#ebebeb}
 .pur-cancel:focus-visible{outline:2px solid #aaa;outline-offset:2px}
