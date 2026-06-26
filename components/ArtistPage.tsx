@@ -191,17 +191,17 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   }
   function onTimeUpdate() {
     const a = audioRef.current;
-    if (!a || !playing) return;
+    if (!a || !a.src) return;
     // Enforce 20s clip only for non-members; passport+ gets the full track
     if (playingV === "preview" && !userTier && a.currentTime >= 20) {
       a.pause(); a.currentTime = 0; setPlaying(null); setPlayingV(null); return;
     }
-    setAudioProgress(prev => ({ ...prev, [playing]: a.currentTime }));
+    setAudioProgress(prev => ({ ...prev, [a.src]: a.currentTime }));
   }
   function onLoadedMetadata() {
     const a = audioRef.current;
-    if (!a || !playing) return;
-    setAudioDuration(prev => ({ ...prev, [playing]: a.duration }));
+    if (!a || !a.src) return;
+    setAudioDuration(prev => ({ ...prev, [a.src]: a.duration }));
   }
   function seekTo(e: React.MouseEvent<HTMLDivElement>, url: string) {
     const a = audioRef.current;
