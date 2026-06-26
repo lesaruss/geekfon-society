@@ -728,11 +728,13 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                               ) : (
                                 <>
                                   <button
-                                    className="mp-btn-pre"
+                                    className={"mp-btn-pre" + (!url ? " disabled" : "")}
+                                    disabled={!url}
+                                    title={!url ? "Audio coming soon" : undefined}
                                     onClick={(e) => { e.stopPropagation(); if (url) togglePlay(url, t.v); }}
                                     aria-label={`Preview ${t.n}`}
                                   >
-                                    Preview
+                                    {url ? "Preview" : "Soon"}
                                   </button>
                                   <button
                                     className="mp-btn-buy"
@@ -1179,7 +1181,8 @@ const CSS = `
 .mp-badge-lk{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:rgba(26,26,26,.5);background:rgba(0,0,0,.06);padding:4px 9px;border-radius:999px;white-space:nowrap}
 .mp-row-date{color:rgba(26,26,26,.4);font-size:12px;white-space:nowrap}
 .mp-btn-pre{border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;border:1px solid var(--lr-border);color:#1a1a1a;background:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
-.mp-btn-pre:hover{border-color:var(--rx);color:var(--rx)}
+.mp-btn-pre:hover:not(:disabled){border-color:var(--rx);color:var(--rx)}
+.mp-btn-pre.disabled,.mp-btn-pre:disabled{opacity:.4;cursor:not-allowed;color:rgba(26,26,26,.45)}
 .mp-btn-buy{border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;background:#1f8f50;color:#fff;border:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
 .mp-btn-buy:hover{background:#17763f}
 @media(max-width:768px){.mp-np{grid-template-columns:auto 1fr;gap:14px}.mp-transport{grid-column:1/-1;justify-content:center;margin-top:6px}.mp-barrow{flex-direction:column;gap:10px}.mp-chips{justify-content:center}}
