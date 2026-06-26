@@ -95,6 +95,9 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userBalance, setUserBalance] = useState<number>(0);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [audioProgress, setAudioProgress] = useState<Record<string, number>>({});
   const [audioDuration, setAudioDuration] = useState<Record<string, number>>({});
   const [playingV, setPlayingV] = useState<string | null>(null);
@@ -136,9 +139,15 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
     const sb = createClient(SUPA_URL, SUPA_ANON);
     sb.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
+      setUserId(user.id);
       if (user.email === "contact@lesaruss.com") setIsSuperAdmin(true);
-      sb.from("gfs_members").select("tier").eq("user_id", user.id).single()
-        .then(({ data }) => { if (data?.tier) setUserTier(data.tier); });
+      Promise.all([
+        sb.from("gfs_members").select("tier").eq("user_id", user.id).single(),
+        sb.from("member_points").select("available_points").eq("user_id", user.id).maybeSingle(),
+      ]).then(([{ data: member }, { data: pts }]) => {
+        if (member?.tier) setUserTier(member.tier);
+        if (pts?.available_points != null) setUserBalance(pts.available_points);
+      });
     });
   }, []);
 
@@ -261,12 +270,30 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
 
   async function handlePurchaseConfirm() {
     if (!purchaseModal) return;
-    if (!effectiveTier) {
+    if (!effectiveTier || !userId) {
       const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
       window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`;
       return;
     }
-    // TODO: wire to LESARs contract / API route for actual transaction
+    const cost = purchaseModal.price;
+    if (userBalance < cost) {
+      setPurchaseError(`You need ${cost} LESARs but only have ${userBalance.toLocaleString()}. Get more on the Passport page.`);
+      return;
+    }
+    setPurchaseError(null);
+    const sb = createClient(SUPA_URL, SUPA_ANON!);
+    const { data, error } = await sb.rpc("debit_lesars", {
+      p_user_id: userId,
+      p_amount: cost,
+      p_track_name: purchaseModal.trackName,
+    });
+    if (error || !data?.ok) {
+      setPurchaseError(data?.error === "insufficient_balance"
+        ? `Not enough LESARs. You have ${(data?.balance || 0).toLocaleString()}, need ${cost}.`
+        : "Purchase failed. Please try again.");
+      return;
+    }
+    setUserBalance(data.balance);
     setPurchaseSuccess(purchaseModal.trackName);
     setPurchaseModal(null);
     setTimeout(() => setPurchaseSuccess(null), 4000);
@@ -998,10 +1025,15 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
               <span className="pur-price">{purchaseModal.price}</span>
               <span className="pur-currency">LESARs</span>
             </div>
+            <div className="pur-balance-row">
+              <span className="pur-balance-label">Your balance:</span>
+              <span className="pur-balance-val">{userBalance.toLocaleString()} LESARs</span>
+            </div>
             <p className="pur-desc">You&apos;ll receive lifetime access to this track. Purchase is tied to your account.</p>
+            {purchaseError && <p className="pur-error">{purchaseError} <a href="/passport" className="pur-error-link">Get LESARs</a></p>}
             <div className="pur-actions">
-              <button className="pur-confirm" onClick={handlePurchaseConfirm}>Continue</button>
-              <button className="pur-cancel" onClick={() => setPurchaseModal(null)}>Cancel</button>
+              <button className="pur-confirm" onClick={handlePurchaseConfirm} disabled={userBalance < purchaseModal.price}>Continue</button>
+              <button className="pur-cancel" onClick={() => { setPurchaseModal(null); setPurchaseError(null); }}>Cancel</button>
             </div>
           </div>
         </div>
