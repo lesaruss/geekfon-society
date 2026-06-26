@@ -54,8 +54,6 @@ const TABS: { key: string; label: string; admin?: boolean }[] = [
   { key: "news",     label: "Overview" },
   { key: "music",    label: "Music" },
   { key: "pulse",    label: "Pulse" },
-  { key: "media",    label: "Media" },
-  { key: "schedule", label: "Schedule" },
   { key: "brief",    label: "Brief", admin: true },
 ];
 
@@ -1087,7 +1085,7 @@ const CSS = `
 .head-tagline{font-size:17px;color:rgba(255,255,255,.85);margin-top:14px;max-width:680px;line-height:1.55}
 .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
 .pill{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:6px 14px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16)}
-.pill.accent{background:var(--rx);border-color:var(--rx);color:var(--rx-text)}
+.pill.accent{background:var(--rx);border-color:var(--rx);color:#fff}
 
 .tabbar{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);display:flex;gap:2px;padding:0 40px}
 .tab{position:relative;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);background:none;border:none;padding:18px 18px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
