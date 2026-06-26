@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import SiteChrome from "@/components/SiteChrome";
+import { supabase } from "@/lib/supabase";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -145,11 +146,19 @@ export default function PassportPage() {
   const [returnPath, setReturnPath] = useState("/dashboard");
   const [selectedPack, setSelectedPack] = useState<number | null>(1000);
   const [packModal, setPackModal] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ret = params.get("return");
     if (ret) setReturnPath(ret);
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUserId(session.user.id);
+    });
   }, []);
 
   useEffect(() => {
@@ -163,9 +172,36 @@ export default function PassportPage() {
     return () => clearInterval(timer);
   }, []);
 
-  function handleJoin(plan?: string) {
-    const base = `/welcome?return=${encodeURIComponent(returnPath)}`;
-    window.location.href = plan ? `${base}&plan=${plan}` : base;
+  async function handleJoin(plan?: string) {
+    if (!plan || plan === "free") {
+      const base = `/welcome?return=${encodeURIComponent(returnPath)}`;
+      window.location.href = plan ? `${base}&plan=${plan}` : base;
+      return;
+    }
+    // Paid plans: require auth, then hit Stripe checkout
+    if (!userId) {
+      // Not logged in — send to welcome/signup first with plan param so we return here
+      window.location.href = `/welcome?return=${encodeURIComponent(returnPath)}&plan=${plan}`;
+      return;
+    }
+    setCheckingOut(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan, userId, returnUrl: returnPath }),
+      });
+      const { url, error } = await res.json();
+      if (url) {
+        window.location.href = url;
+      } else {
+        console.error("[checkout]", error);
+        setCheckingOut(false);
+      }
+    } catch (err) {
+      console.error("[checkout]", err);
+      setCheckingOut(false);
+    }
   }
 
   return (
@@ -305,8 +341,8 @@ export default function PassportPage() {
                 <li>Leaderboard ranking and Artist Top 10 voting power</li>
                 <li>Priority access to exclusive artist drops and events</li>
               </ul>
-              <button className="pp-tier-btn primary" onClick={() => handleJoin("all-access")}>
-                Get All Access
+              <button className="pp-tier-btn primary" onClick={() => !checkingOut && handleJoin("all-access")} disabled={checkingOut}>
+                {checkingOut ? "Redirecting..." : "Get All Access"}
               </button>
             </div>
 
@@ -340,10 +376,11 @@ export default function PassportPage() {
               </p>
               <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
                 <button
-                  style={{width:"100%",padding:"16px",background:"#E91E8C",color:"#fff",fontSize:"13px",fontWeight:800,letterSpacing:"2px",textTransform:"uppercase",border:"none",borderRadius:"2px",cursor:"pointer",fontFamily:"inherit"}}
-                  onClick={() => handleJoin(`pack-${pack.lesars}`)}
+                  style={{width:"100%",padding:"16px",background:"#E91E8C",color:"#fff",fontSize:"13px",fontWeight:800,letterSpacing:"2px",textTransform:"uppercase",border:"none",borderRadius:"2px",cursor:checkingOut?"not-allowed":"pointer",fontFamily:"inherit",opacity:checkingOut?.6:1}}
+                  onClick={() => !checkingOut && handleJoin(`pack-${pack.lesars}`)}
+                  disabled={checkingOut}
                 >
-                  Continue to Payment
+                  {checkingOut ? "Redirecting..." : "Continue to Payment"}
                 </button>
                 <button
                   style={{width:"100%",padding:"14px",background:"transparent",color:"rgba(255,255,255,.5)",fontSize:"12px",fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",border:"1px solid rgba(255,255,255,.15)",borderRadius:"2px",cursor:"pointer",fontFamily:"inherit"}}
