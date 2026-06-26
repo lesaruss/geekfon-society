@@ -2,18 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const PRICE_MAP: Record<string, string> = {
-  "pack-starter":  process.env.STRIPE_PRICE_LESARS_STARTER!,
-  "pack-standard": process.env.STRIPE_PRICE_LESARS_STANDARD!,
-  "pack-power":    process.env.STRIPE_PRICE_LESARS_POWER!,
-  "all-access":    process.env.STRIPE_PRICE_ALL_ACCESS!,
-  "passport":      process.env.STRIPE_PRICE_PASSPORT!,
+const PRICE_MAP: Record<string, string | undefined> = {
+  "pack-starter":  process.env.STRIPE_PRICE_LESARS_STARTER,
+  "pack-standard": process.env.STRIPE_PRICE_LESARS_STANDARD,
+  "pack-power":    process.env.STRIPE_PRICE_LESARS_POWER,
+  "all-access":    process.env.STRIPE_PRICE_ALL_ACCESS,
+  "passport":      process.env.STRIPE_PRICE_PASSPORT,
 };
 
 const LESARS_MAP: Record<string, number> = {
@@ -25,6 +19,12 @@ const LESARS_MAP: Record<string, number> = {
 };
 
 export async function POST(req: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   try {
     const { plan, userId, returnUrl } = await req.json();
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       mode: isSubscription ? "subscription" : "payment",
-      line_items: [{ price: PRICE_MAP[plan], quantity: 1 }],
+      line_items: [{ price: PRICE_MAP[plan]!, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
