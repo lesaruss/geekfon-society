@@ -162,35 +162,35 @@ const ARTISTS: ArtistCard[] = [
 
 const ROLE_META: Record<Role, { label: string; tagline: string; accent: string; icon: ReactElement }> = {
   fan: { label: "Music Fan", tagline: "Discover artists, earn points, unlock everything", accent: "#E91E8C", icon: <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="14" cy="26" r="5" stroke="currentColor" strokeWidth="2.5" fill="none"/><circle cx="30" cy="22" r="5" stroke="currentColor" strokeWidth="2.5" fill="none"/><path d="M19 26V10L35 6V22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-  label: { label: "Record Label", tagline: "License original IP built for the real world", accent: "#9C27B0", icon: <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="20" cy="20" r="12" stroke="currentColor" strokeWidth="2.5" fill="none"/><circle cx="20" cy="20" r="3" fill="currentColor"/><path d="M20 8 V4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg> },
+  label: { label: "Producers", tagline: "License original music for sync, film, TV, and campaigns", accent: "#9C27B0", icon: <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="20" cy="20" r="12" stroke="currentColor" strokeWidth="2.5" fill="none"/><circle cx="20" cy="20" r="3" fill="currentColor"/><path d="M20 8 V4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg> },
   brand: { label: "Brand", tagline: "Integrate into a culture-forward global community", accent: "#F69820", icon: <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path d="M8 20 L20 8 L32 20 L20 32 Z" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinejoin="round"/><circle cx="20" cy="20" r="4" fill="currentColor"/></svg> },
   promoter: { label: "Promoter", tagline: "Book live acts that make every show a moment", accent: "#00BCD4", icon: <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect x="6" y="12" width="28" height="20" rx="3" stroke="currentColor" strokeWidth="2.5" fill="none"/><path d="M14 12V8M26 12V8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><path d="M6 18H34" stroke="currentColor" strokeWidth="2"/><circle cx="20" cy="26" r="3" fill="currentColor"/></svg> },
 };
 
 const PATH_SLIDES: Record<Role, SlideData[]> = {
   fan: [
-    { id: "fan-artists", headline: "Meet the Artists", body: "Nine original characters. Every genre. Every city.", detail: "Roxanne. Shamanic Resin. Riku Hayasaka. Lex from Brixton. Nilo Wave. Lickle Bro and Lickle Sis. Mr. Russell. Straight and Narrow. Each has a full biography, a discography, a Pulse feed, and a world of their own. None of them are real. All of the music is.", accent: "#E91E8C", isArtistSlide: true },
+    { id: "fan-artists", headline: "Meet the Artists", body: "Step into their lives. Follow their stories. Hear the music.", detail: "We release a few artists at a time, so the world grows as you do. Each one has a full biography, a discography, and a Pulse feed of their own. None of them are real. All of the music is. And the music is only the start: series, live shows, and more are on the way.", accent: "#E91E8C", isArtistSlide: true },
     { id: "fan-pulse", headline: "The Pulse", body: "Your favorite artist posts every day. You're in the conversation.", detail: "Video, photo, text - the Pulse is each artist's personal feed. Comment on a post. React to a drop. The artist responds. This is not a playlist. This is a living relationship with a character who shows up every day.", accent: "#F69820" },
-    { id: "fan-tokens", headline: "Points Unlock\nEverything", body: "Start for about $11. Unlock songs, wallpapers, and more.", detail: "About 1,000 points for $11-12. Unlock a single song for 50 points. Full artist access - every track, every drop, every update - for 1,000 points. Collect multiple artists. Bank points. New unlockable content will keep appearing as the Society grows.", accent: "#9C27B0" },
-    { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every point you spend on an artist counts as a vote. Rankings update in real time. The top-ranked artists get featured on GeekFon Radio. Your support is not just appreciation - it moves artists up the board and onto the mic.", accent: "#2196F3" },
-    { id: "fan-radio", headline: "GeekFon Radio", body: "Every week. New songs. Real interviews. The artists you made famous.", detail: "GeekFon Radio is the weekly podcast where the Society goes public. New song debuts. Artist interviews. Features from inside the universe. The artists who earned their ranking earned the spotlight. You helped put them there.", accent: "#00BCD4", cta: { label: "Join the Society", href: "/passport" } },
+    { id: "fan-tokens", headline: "LESARs Unlock\nEverything", body: "Start free with 111 LESARs. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 LESARs. Unlock a single song for 100 LESARs, or go All Access for every track an artist drops. LESARs are not limited to GeekFon: spend them to redeem songs and unlock experiences across 15+ brands in the LESARUSS universe. Buy more anytime.", accent: "#9C27B0" },
+    { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every LESAR you spend on an artist counts as a vote. Rankings update in real time and decide which songs we play most and which get a music video first. Your votes carry across the network, including TopSpot USA and Anime 3000, and help set the charts on TopSpot Global. Your support shapes multiple communities at once.", accent: "#2196F3" },
+    { id: "fan-radio", headline: "GeekFon Radio", body: "Old-school radio, reinvented. New songs every week, 24/7.", detail: "GeekFon Radio is a constant feed, just like traditional radio: no on-demand, no saving, just every artist playing in the background while you live your day. New songs drop weekly, and members hear songs that are not even available to redeem yet. It is an exclusive perk of the $11/month Passport: 24/7 access to nearly every song in the Society.", accent: "#00BCD4", cta: { label: "Join the Society", href: "/passport" } },
   ],
   label: [
-    { id: "label-ip", headline: "An IP Universe\nReady to License", body: "Original fictional artists on every streaming platform.", detail: "GeekFon Society is fully distributed via DistroKid - available on Spotify, Apple Music, and every major platform. The roster spans genres: pop, alternative, hip-hop, electronic, and beyond. All original LESARUSS IP. No sample clearances. No competing rights.", accent: "#9C27B0" },
-    { id: "label-licensing", headline: "Sync. Advertising.\nEvents.", body: "License tracks for placements, campaigns, and live use.", detail: "DistroKit licensing enables commercial partners to use GeekFon music for sync placements, advertising, and event programming. The music earns streaming royalties as standard. B2B licensing opens a separate, direct revenue channel for both sides.", accent: "#E91E8C" },
+    { id: "label-ip", headline: "An IP Catalog\nReady to License", body: "Original music on every major platform, ready for sync.", detail: "GeekFon Society is fully distributed and available on Spotify, Apple Music, and every major platform. The roster spans genres: pop, alternative, hip-hop, electronic, and beyond, with new artists announced monthly. All original LESARUSS IP. No sample clearances. No competing rights.", accent: "#9C27B0" },
+    { id: "label-licensing", headline: "Sync. Film. TV.\nCampaigns.", body: "License tracks for placements, campaigns, and live use.", detail: "Licensing enables commercial partners, production companies, and ad teams to use GeekFon music for sync placements, film and TV, advertising, and event programming. The music earns streaming royalties as standard. B2B licensing opens a separate, direct revenue channel for both sides.", accent: "#E91E8C" },
     { id: "label-pipeline", headline: "The Proof of Concept", body: "Every system here is being proven for the real-artist market.", detail: "GeekFon Society is the fictional prototype for TalentVangelist, the LESARUSS real-artist development agency. Fan engagement systems, PR pipelines, content production, and the token economy are all being built and tested here first. A label that partners with GeekFon now partners with the infrastructure that will run TalentVangelist at scale.", accent: "#F69820" },
     { id: "label-cta", headline: "Let's Talk\nLicensing", body: "GeekFon Society is actively expanding its licensing and partnership pipeline.", detail: "We are open to sync licensing, master licensing, catalog co-ownership discussions, and distribution partnerships. If you work with original IP and are looking for clean, commercial-ready music built for the modern era, this is the conversation.", accent: "#9C27B0", cta: { label: "Get In Touch", href: "mailto:contact@lesaruss.com" } },
   ],
   brand: [
-    { id: "brand-audience", headline: "Six Cities.\nOne Community.", body: "London. Tokyo. Seoul. Fort Lauderdale. Berlin. Johannesburg.", detail: "GeekFon Society is a global music community organized around cities and built around daily content, live events, and a points economy. The audience is music-first, culture-forward, and already spending. Six active cities with more launching in Season 2.", accent: "#F69820" },
-    { id: "brand-ecosystem", headline: "The Points\nEcosystem", body: "Your brand is inside the unlock, not on top of it.", detail: "Fans buy points to support artists, unlock content, and participate in rankings. Brands can sponsor point packages, fund artist moments, or create exclusive drops. When a fan unlocks something your brand powered, your name belongs in that moment - not over it.", accent: "#E91E8C" },
+    { id: "brand-audience", headline: "Multiple Cities.\nOne Community.", body: "Tokyo. Seoul. Fort Lauderdale. Berlin.", detail: "GeekFon Society is a global music community organized around cities and built around daily content, live events, and a LESARs economy. The audience is music-first, culture-forward, and already spending. Active cities include Tokyo, Seoul, Fort Lauderdale, and Berlin, with more launching as the Society grows.", accent: "#F69820" },
+    { id: "brand-ecosystem", headline: "The LESARs\nEcosystem", body: "Your brand is inside the unlock, not on top of it.", detail: "Fans spend LESARs to support artists, unlock content, and participate in rankings. Brands can sponsor LESARs packages, fund artist moments, donate products for sampling and giveaways, or create exclusive drops. When a fan unlocks something your brand powered, your name belongs in that moment - not over it.", accent: "#E91E8C" },
     { id: "brand-events", headline: "Live Activations\nThat Get Filmed", body: "Every show is a content shoot. Every activation feeds the archive.", detail: "GeekFon Society produces events at anime conventions, after-parties, and city-based activations. Every event produces footage for the Pulse feed, the animated series pipeline, and the archive. A sponsorship here is not a banner at one event. It is content that lives in the universe.", accent: "#2196F3" },
     { id: "brand-cta", headline: "Your Brand Inside\nthe Universe", body: "Integrations that belong in the world. Not ads. Moments.", detail: "We build sponsor relationships that feel native to the GeekFon universe. Your brand does not interrupt the experience. It enhances it. If that is the kind of partnership you are looking for, let's build it.", accent: "#F69820", cta: { label: "Become a Sponsor", href: "mailto:contact@lesaruss.com" } },
   ],
   promoter: [
-    { id: "promoter-live", headline: "GeekFon Society\nGoes Live", body: "Full production. Every show. Lord Zorlat on the decks.", detail: "GeekFon Society produces live events at anime conventions, club after-parties, theater events, and city activations. The Lord Zorlat DJ set is the flagship live experience: full GeekFon visual production, original music, and the energy of a universe brought into a room.", accent: "#00BCD4" },
+    { id: "promoter-live", headline: "GeekFon Society\nGoes Live", body: "Full production. Every show. Lord Zorlot on the decks.", detail: "GeekFon Society produces live events at anime conventions, club after-parties, theater events, and city activations. The Lord Zorlot DJ set is the flagship live experience: full GeekFon visual production, original music, and the energy of a universe brought into a room.", accent: "#00BCD4" },
     { id: "promoter-production", headline: "Every Show Is\na Content Shoot", body: "You book the act. We build the moment. The footage lives forever.", detail: "Every GeekFon live event feeds three pipelines: the Pulse feed for fans, the animated series archive for Anime 3000, and the long-term content library. Promoters who book GeekFon are not booking a one-night act. They are creating content that extends the brand beyond the venue.", accent: "#9C27B0" },
-    { id: "promoter-cities", headline: "Season 1 Is Live", body: "July 1 through September 19, 2026. Six cities active.", detail: "Season 1 runs 111 days and closes with a live event. London, Tokyo, Seoul, Fort Lauderdale, Berlin, and Johannesburg are the active Season 1 markets. If you produce events in any of these markets - anime conventions, music festivals, club nights, theater programming - we should be talking.", accent: "#F44336" },
+    { id: "promoter-cities", headline: "Season 1 Is Live", body: "July 13 through September 19, 2026.", detail: "Season 1 runs 111 days, opening July 13 and closing September 19, 2026 with a live event. Active markets include Tokyo, Seoul, Fort Lauderdale, and Berlin. If you produce events in any of these markets - anime conventions, music festivals, club nights, theater programming - we should be talking.", accent: "#F44336" },
     { id: "promoter-cta", headline: "Book the Act", body: "GeekFon Society is available to book for Season 1 shows now.", detail: "We handle production design, music programming, and content capture. You handle the room. Together we put on something that neither of us could alone. Season 1 closes September 19. Dates are limited.", accent: "#00BCD4", cta: { label: "Book an Event", href: "mailto:contact@lesaruss.com" } },
   ],
 };
@@ -476,21 +476,8 @@ export default function WelcomePage() {
         .gfs-fon-hue { animation: fonHue 6s ease-in-out infinite; }
       `}</style>
 
-      {/* Top bar */}
-      <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 28px", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(7,7,18,0.6)", backdropFilter: "blur(12px)" }}>
-        <a href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
-          <img src="/geekfon-logo.png" alt="" style={{ height: "28px", width: "28px", objectFit: "contain" }} aria-hidden="true" />
-          <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "18px", fontWeight: 900, letterSpacing: "0.02em", textTransform: "uppercase", lineHeight: 1, userSelect: "none" }}>
-            <span style={{ color: "#ffffff" }}>GEEK</span>
-            <span className="gfs-fon-hue">FON</span>
-            <span style={{ color: "rgba(255,255,255,0.5)", marginLeft: "6px", fontSize: "12px", fontWeight: 700, letterSpacing: "0.18em" }}>SOCIETY</span>
-          </span>
-        </a>
-        <ProgressDots total={totalSteps} current={currentStep} accent={roleAccent} />
-        <a href="/passport" style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", color: "rgba(255,255,255,0.45)", textDecoration: "none", textTransform: "uppercase" }}>
-          Skip
-        </a>
-      </div>
+      {/* Top bar removed: SiteChrome provides the single nav (hamburger + Get Passport).
+          Pagination + Skip now live in the bottom bar below. */}
 
       {/* Main content */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: "40px 60px 100px", position: "relative", zIndex: 10, maxWidth: "900px" }}>
@@ -607,16 +594,26 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      {/* Bottom nav */}
-      {phase === "path" && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 28px 28px", background: "linear-gradient(to top, rgba(7,7,18,0.95) 0%, transparent 100%)", zIndex: 20 }}>
-          <button
-            onClick={handleBack}
-            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "100px", padding: "12px 24px", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.06em" }}
-          >
-            Back
-          </button>
-          {!isLastSlide && (
+      {/* Bottom bar: single set of controls. Pagination centered, Skip at right, Back/Next on path. */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", padding: "20px 28px 28px", background: "linear-gradient(to top, rgba(7,7,18,0.95) 0%, transparent 100%)", zIndex: 20 }}>
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+          {phase === "path" && (
+            <button
+              onClick={handleBack}
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "100px", padding: "12px 24px", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.06em" }}
+            >
+              Back
+            </button>
+          )}
+        </div>
+
+        <ProgressDots total={totalSteps} current={currentStep} accent={roleAccent} />
+
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "16px" }}>
+          <a href="/passport" style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", color: "rgba(255,255,255,0.45)", textDecoration: "none", textTransform: "uppercase" }}>
+            Skip
+          </a>
+          {phase === "path" && !isLastSlide && (
             <button
               onClick={handleNext}
               style={{ background: roleAccent, border: "none", borderRadius: "100px", padding: "12px 32px", color: "white", fontSize: "0.9rem", fontWeight: 800, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
@@ -627,7 +624,7 @@ export default function WelcomePage() {
             </button>
           )}
         </div>
-      )}
+      </div>
 
       {/* Artist panel overlay */}
       {artistPanelOpen && (

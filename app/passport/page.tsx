@@ -19,7 +19,7 @@ const PERKS = [
   {
     icon: "◉",
     title: "GeekFon Radio",
-    desc: "Members-only live radio stream. Exclusive mixes, DJ sessions, and artist drops before anyone else hears them.",
+    desc: "24/7 members-only radio: every artist, including songs not yet available to redeem. A constant feed, exclusive to your Passport.",
     accent: "#E91E8C",
   },
   {
@@ -55,9 +55,9 @@ const PERKS = [
 ];
 
 const POINT_PACKS = [
-  { lesars: 500,   price: 5,  label: "Starter",  note: "~20 tracks" },
-  { lesars: 1000,  price: 11, label: "Standard", note: "~40 tracks", popular: true },
-  { lesars: 5000,  price: 33, label: "Power",    note: "~200 tracks" },
+  { lesars: 500,   price: 5,  label: "Starter",  note: "~5 tracks" },
+  { lesars: 1000,  price: 11, label: "Standard", note: "~10 tracks", popular: true },
+  { lesars: 5000,  price: 33, label: "Power",    note: "~50 tracks" },
 ];
 
 const CSS = `
@@ -180,7 +180,7 @@ export default function PassportPage() {
     }
     // Paid plans: require auth, then hit Stripe checkout
     if (!userId) {
-      // Not logged in — send to welcome/signup first with plan param so we return here
+      // Not logged in: send to welcome/signup first with plan param so we return here
       window.location.href = `/welcome?return=${encodeURIComponent(returnPath)}&plan=${plan}`;
       return;
     }
@@ -274,7 +274,7 @@ export default function PassportPage() {
               <div className="pp-tier-highlight">111 LESARs</div>
               <div className="pp-tier-highlight-sub">to get you started</div>
               <ul className="pp-tier-items">
-                <li>111 LESARs loaded on signup - enough to unlock 4 tracks</li>
+                <li>111 LESARs loaded on signup - enough to unlock your first track</li>
                 <li>Earn LESARs by listening, sharing, and referring friends</li>
                 <li>Full access to GeekFon Radio and the Jukebox</li>
                 <li>Vote on the Artist Top 10</li>
@@ -285,12 +285,33 @@ export default function PassportPage() {
               </button>
             </div>
 
+            {/* --- $11/MONTH (best value, center) --- */}
+            <div className="pp-tier featured" role="listitem">
+              <div className="pp-tier-badge">Best Value</div>
+              <div className="pp-tier-name">All Access</div>
+              <div className="pp-tier-price"><span>$</span>11</div>
+              <div className="pp-tier-period">per month, cancel any time</div>
+              <div className="pp-tier-highlight">1,500 LESARs</div>
+              <div className="pp-tier-highlight-sub">every month, automatically</div>
+              <ul className="pp-tier-items">
+                <li>1,500 LESARs per month - enough for 15 tracks</li>
+                <li>Early access to every new track before public release</li>
+                <li>24/7 GeekFon Radio, including unreleased songs</li>
+                <li>Eligible for the GeekFon Plus street team</li>
+                <li>Leaderboard ranking and Artist Top 10 voting power</li>
+                <li>Priority access to exclusive artist drops and events</li>
+              </ul>
+              <button className="pp-tier-btn primary" onClick={() => !checkingOut && handleJoin("all-access")} disabled={checkingOut}>
+                {checkingOut ? "Redirecting..." : "Get All Access"}
+              </button>
+            </div>
+
             {/* --- POINT PACKS --- */}
             <div className="pp-tier" role="listitem">
               <div className="pp-tier-name">LESARs Packs</div>
-              <div className="pp-tier-price"><span>from </span>$5</div>
+              <div className="pp-tier-price"><span>from&nbsp;</span>$5</div>
               <div className="pp-tier-period">one-time, no subscription</div>
-              <div className="pp-tier-highlight-sub" style={{marginTop: 8}}>Buy points when you need them</div>
+              <div className="pp-tier-highlight-sub" style={{marginTop: 8}}>Buy LESARs when you need them</div>
               <div className="pp-packs">
                 {POINT_PACKS.map(pk => (
                   <div
@@ -325,27 +346,6 @@ export default function PassportPage() {
               </button>
             </div>
 
-            {/* --- $11/MONTH --- */}
-            <div className="pp-tier featured" role="listitem">
-              <div className="pp-tier-badge">Best Value</div>
-              <div className="pp-tier-name">All Access</div>
-              <div className="pp-tier-price"><span>$</span>11</div>
-              <div className="pp-tier-period">per month, cancel any time</div>
-              <div className="pp-tier-highlight">1,500 LESARs</div>
-              <div className="pp-tier-highlight-sub">every month, automatically</div>
-              <ul className="pp-tier-items">
-                <li>1,500 LESARs per month - enough for 60 tracks</li>
-                <li>Early access to every new track before public release</li>
-                <li>Eligible for the GeekFon Plus street team</li>
-                <li>Invitation to the Plus program based on your activity</li>
-                <li>Leaderboard ranking and Artist Top 10 voting power</li>
-                <li>Priority access to exclusive artist drops and events</li>
-              </ul>
-              <button className="pp-tier-btn primary" onClick={() => !checkingOut && handleJoin("all-access")} disabled={checkingOut}>
-                {checkingOut ? "Redirecting..." : "Get All Access"}
-              </button>
-            </div>
-
           </div>
         </section>
 
@@ -366,7 +366,7 @@ export default function PassportPage() {
             >
               <div style={{fontSize:"11px",fontWeight:700,letterSpacing:"3px",textTransform:"uppercase",color:"rgba(255,255,255,.4)",marginBottom:"20px"}}>LESARs Pack</div>
               <h2 id="pack-modal-title" style={{fontSize:"32px",fontWeight:900,letterSpacing:"-1px",margin:"0 0 6px"}}>{pack.lesars.toLocaleString()} LESARs</h2>
-              <div style={{fontSize:"13px",color:"rgba(255,255,255,.5)",marginBottom:"28px"}}>{pack.note} at 25 LESARs each</div>
+              <div style={{fontSize:"13px",color:"rgba(255,255,255,.5)",marginBottom:"28px"}}>{pack.note} at 100 LESARs each</div>
               <div style={{display:"flex",alignItems:"baseline",gap:"8px",marginBottom:"28px"}}>
                 <span style={{fontSize:"48px",fontWeight:900,color:"#E91E8C",letterSpacing:"-2px"}}>${pack.price}</span>
                 <span style={{fontSize:"13px",color:"rgba(255,255,255,.4)",fontWeight:600,letterSpacing:"1px",textTransform:"uppercase"}}>one-time</span>

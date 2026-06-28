@@ -44,7 +44,7 @@ const NAV_PRO: NavItem[] = [
 
 const STAKEHOLDERS = [
   { label: "Music Fan", href: "/#music-fan" },
-  { label: "Record Label", href: "/#record-label" },
+  { label: "Producers", href: "/#record-label" },
   { label: "Brand", href: "/#brand" },
   { label: "Promoter", href: "/#promoter" },
 ];
@@ -284,6 +284,14 @@ export default function SiteChrome({
           </div>
         )}
 
+        {!isLoggedIn && (
+          <a href="/shamanic-resin" className="gdrawer-ad" onClick={() => setOpen(false)}>
+            <span className="gda-eyebrow">Now Playing</span>
+            <span className="gda-title">Shamanic Resin</span>
+            <span className="gda-sub">All I Do Is Eat. Listen now.</span>
+          </a>
+        )}
+
         {isLoggedIn ? (
           <div className="gdrawer-member">
             <div className="gdm-avatar" style={{ background: tierAccent }}>{auth.initial}</div>
@@ -376,7 +384,7 @@ const CHROME_CSS = `
 .gx { width: 34px; height: 34px; border: none; background: none; cursor: pointer; color: rgba(255,255,255,.6); display: flex; align-items: center; justify-content: center; border-radius: 7px; }
 .gx:hover { background: rgba(255,255,255,.08); color: #fff; }
 .gx svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
-.gnav { padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.gnav { padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
 .gitem { display: block; padding: 11px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.7); text-decoration: none; }
 .gitem:hover { background: rgba(255,255,255,.07); color: #fff; }
 .gdrawer-stakeholders { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.08); }
@@ -392,7 +400,12 @@ const CHROME_CSS = `
 .gdm-balance { text-align: right; flex-shrink: 0; }
 .gdm-balance-num { font-size: 14px; font-weight: 900; color: #fff; }
 .gdm-balance-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; margin-top: 1px; }
-.gdrawer-cta { padding: 20px 18px; border-top: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; gap: 12px; }
+.gdrawer-ad { display: block; margin: 6px 16px 0; padding: 16px; border-radius: 10px; background: linear-gradient(135deg, rgba(156,39,176,.24), rgba(156,39,176,.06)); border: 1px solid rgba(156,39,176,.45); text-decoration: none; }
+.gdrawer-ad:hover { background: linear-gradient(135deg, rgba(156,39,176,.34), rgba(156,39,176,.1)); }
+.gda-eyebrow { display: block; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: #cf9bff; margin-bottom: 7px; }
+.gda-title { display: block; font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -.01em; }
+.gda-sub { display: block; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.6); margin-top: 4px; }
+.gdrawer-cta { margin-top: auto; padding: 20px 18px; border-top: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; gap: 12px; }
 .gdrawer-cta-btn { display: block; text-align: center; padding: 13px 20px; border-radius: 100px; background: #E91E8C; color: #fff; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; text-decoration: none; }
 .gdrawer-cta-btn:hover { background: #c41874; }
 .gdrawer-cta-sub { font-size: 11px; font-weight: 500; line-height: 1.6; color: rgba(255,255,255,.35); margin: 0; }
