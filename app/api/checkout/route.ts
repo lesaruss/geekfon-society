@@ -67,19 +67,8 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err: any) {
+  } catch (err) {
     console.error("[checkout]", err);
-    const dbg = req.headers.get("x-gfs-debug") === "geekfon-diag";
-    return NextResponse.json(
-      dbg
-        ? {
-            error: "Checkout failed",
-            detail: String(err?.message || err),
-            envSecret: !!process.env.STRIPE_SECRET_KEY,
-            envUrl: !!(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL),
-          }
-        : { error: "Checkout failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Checkout failed" }, { status: 500 });
   }
 }
