@@ -34,7 +34,7 @@ async function creditLesars(supabase, userId, amount, plan, referenceId) {
     event_type: "purchase",
     amount,
     balance_after: newAvailable,
-    description: `LESARs purchase — ${plan}`,
+    description: `LESARs purchase: ${plan}`,
     reference_id: referenceId,
   });
 }
@@ -42,7 +42,7 @@ async function creditLesars(supabase, userId, amount, plan, referenceId) {
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 

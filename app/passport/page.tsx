@@ -173,15 +173,15 @@ export default function PassportPage() {
   }, []);
 
   async function handleJoin(plan?: string) {
+    // Free signup goes straight to the registration form (magic-link sign-up).
     if (!plan || plan === "free") {
-      const base = `/welcome?return=${encodeURIComponent(returnPath)}`;
-      window.location.href = plan ? `${base}&plan=${plan}` : base;
+      window.location.href = "/register.html";
       return;
     }
-    // Paid plans: require auth, then hit Stripe checkout
+    // Paid plans require an authenticated member. Send guests to log in,
+    // then bring them back to the passport page to complete the purchase.
     if (!userId) {
-      // Not logged in: send to welcome/signup first with plan param so we return here
-      window.location.href = `/welcome?return=${encodeURIComponent(returnPath)}&plan=${plan}`;
+      window.location.href = "/login.html?redirect=/passport";
       return;
     }
     setCheckingOut(true);
@@ -377,7 +377,7 @@ export default function PassportPage() {
               <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
                 <button
                   style={{width:"100%",padding:"16px",background:"#E91E8C",color:"#fff",fontSize:"13px",fontWeight:800,letterSpacing:"2px",textTransform:"uppercase",border:"none",borderRadius:"2px",cursor:checkingOut?"not-allowed":"pointer",fontFamily:"inherit",opacity:checkingOut?.6:1}}
-                  onClick={() => !checkingOut && handleJoin(`pack-${pack.lesars}`)}
+                  onClick={() => !checkingOut && handleJoin(`pack-${pack.label.toLowerCase()}`)}
                   disabled={checkingOut}
                 >
                   {checkingOut ? "Redirecting..." : "Continue to Payment"}
