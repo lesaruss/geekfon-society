@@ -270,30 +270,50 @@ function TrackPlayer({ track, accent }: { track: ArtistCard["tracks"][number]; a
   );
 }
 
+// ── Featured launch artists (See the Artist popup) ────────────────────────────
+// One preview song each, real files mapped from public.radio_tracks.
+const PREVIEW: Record<string, { title: string; path: string }> = {
+  "roxanne":          { title: "Life's Tough",     path: "roxanne/lifes-tough.mp3" },
+  "lex-from-brixton": { title: "Be Yourself",      path: "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3" },
+  "shamanic-resin":   { title: "Real Dream",       path: "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3" },
+  "riku":             { title: "Lottery of Love",  path: "riku-hayasaka/lottery-of-love.mp3" },
+};
+const FEATURED: ArtistCard[] = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"].map((s) => {
+  const base = ARTISTS.find((a) => a.slug === s)!;
+  const pv = PREVIEW[s];
+  return { ...base, tracks: [{ title: pv.title, url: SUPA_AUDIO + pv.path }] };
+});
+
 // ── Artist panel ──────────────────────────────────────────────────────────────
-function ArtistPanel({ onClose, accent }: { onClose: () => void; accent: string }) {
+function ArtistPanel({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState(0);
-  const artist = ARTISTS[selected];
+  const artist = FEATURED[selected];
+  const touchX = useRef<number | null>(null);
+  const go = (dir: number) => setSelected((i) => (i + dir + FEATURED.length) % FEATURED.length);
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 30, display: "flex", alignItems: "stretch" }}>
       {/* Scrim */}
       <div style={{ flex: 1, background: "rgba(0,0,0,0.5)", cursor: "pointer" }} onClick={onClose} />
       {/* Panel */}
-      <div style={{ width: "min(520px, 100vw)", background: "#0c0c1a", borderLeft: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", overflowY: "auto" }}>
+      <div
+        style={{ width: "min(520px, 100vw)", background: "#0c0c1a", borderLeft: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", overflowY: "auto" }}
+        onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+        onTouchEnd={(e) => { if (touchX.current === null) return; const dx = e.changedTouches[0].clientX - touchX.current; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); touchX.current = null; }}
+      >
         {/* Panel header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
           <span style={{ fontSize: "11px", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
-            THE ROSTER
+            Meet the Artists
           </span>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px", padding: "8px 14px", color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 700, cursor: "pointer", letterSpacing: "0.06em" }}>
             CLOSE
           </button>
         </div>
 
-        {/* Artist selector pills */}
+        {/* Artist selector pills (4 launch artists) */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
-          {ARTISTS.map((a, i) => (
+          {FEATURED.map((a, i) => (
             <button
               key={a.slug}
               onClick={() => setSelected(i)}
@@ -318,14 +338,20 @@ function ArtistPanel({ onClose, accent }: { onClose: () => void; accent: string 
 
         {/* Artist detail */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          {/* Hero image - full width */}
+          {/* Hero image with swipe arrows */}
           {artist.heroUrl ? (
-            <div style={{ width: "100%", aspectRatio: "1 / 1", overflow: "hidden", flexShrink: 0, borderBottom: `3px solid ${artist.accent}` }}>
+            <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", flexShrink: 0, borderBottom: `3px solid ${artist.accent}` }}>
               <img
                 src={artist.heroUrl}
                 alt={artist.name}
                 style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
               />
+              <button onClick={() => go(-1)} aria-label="Previous artist" style={{ position: "absolute", top: "50%", left: "12px", transform: "translateY(-50%)", width: "38px", height: "38px", borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <button onClick={() => go(1)} aria-label="Next artist" style={{ position: "absolute", top: "50%", right: "12px", transform: "translateY(-50%)", width: "38px", height: "38px", borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
             </div>
           ) : null}
 
@@ -343,15 +369,15 @@ function ArtistPanel({ onClose, accent }: { onClose: () => void; accent: string 
               </div>
             </div>
 
-            {/* Tagline */}
+            {/* Blurb */}
             <p style={{ fontSize: "14px", lineHeight: 1.65, color: "rgba(255,255,255,0.7)", margin: 0 }}>
               {artist.tagline}
             </p>
 
-            {/* Tracks */}
+            {/* Preview track */}
             <div>
               <div style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "10px" }}>
-                1 FULL TRACK + 3 PREVIEWS (20s)
+                Preview
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {artist.tracks.map((t) => (
@@ -628,7 +654,7 @@ export default function WelcomePage() {
 
       {/* Artist panel overlay */}
       {artistPanelOpen && (
-        <ArtistPanel accent={roleAccent} onClose={() => setArtistPanelOpen(false)} />
+        <ArtistPanel onClose={() => setArtistPanelOpen(false)} />
       )}
     </div>
     </SiteChrome>
