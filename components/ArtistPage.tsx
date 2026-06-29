@@ -31,6 +31,17 @@ type PulsePost = {
   tag?: string; title?: string; blurb?: string; href?: string; thumb?: string;
   likes?: number; comments?: number; shares?: number; videoUrl?: string;
 };
+
+type BibleModule = {
+  id: string;
+  artist_slug: string;
+  module: string;
+  module_label: string | null;
+  data: Record<string, unknown>;
+  status: string;
+  updated_at: string;
+};
+
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
   heroUrl?: string; initial?: string; tagline?: string;
@@ -88,7 +99,183 @@ const PLACEHOLDER_NEWS: News[] = [
   },
 ];
 
-export default function ArtistPage({ content, cityBg, activeArticle }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null; activeArticle?: News }) {
+
+// ── BiblePanel ─────────────────────────────────────────────────────────────
+// Standalone component so it can be extracted to its own file as usage grows.
+// Scalable for hundreds of artists: search, status filter, versioning, progress.
+function BiblePanel({
+  bibleModules, bibleLoading, bibleOpenModule, setBibleOpenModule,
+  MODULE_ORDER, isPopulated, statusColor, renderBibleValue,
+  slug, sonic, visual, songAudits, copy,
+}: {
+  bibleModules: BibleModule[];
+  bibleLoading: boolean;
+  bibleOpenModule: string | null;
+  setBibleOpenModule: (m: string | null) => void;
+  MODULE_ORDER: string[];
+  isPopulated: (data: Record<string, unknown>) => boolean;
+  statusColor: (s: string) => string;
+  renderBibleValue: (val: unknown, depth?: number) => React.ReactNode;
+  slug?: string;
+  artistSlug: string;
+  sonic?: ArtistContent["sonic"];
+  visual?: ArtistContent["visual"];
+  songAudits?: ArtistContent["songAudits"];
+  copy: (e: React.SyntheticEvent, text: string) => void;
+}) {
+  const [bibleSearch, setBibleSearch] = useState("");
+  const [bibleStatusFilter, setBibleStatusFilter] = useState<"all"|"draft"|"review"|"complete">("all");
+
+  const sorted = [...bibleModules].sort((a,b) => {
+    const ai = MODULE_ORDER.indexOf(a.module);
+    const bi = MODULE_ORDER.indexOf(b.module);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  const populated = sorted.filter(m => isPopulated(m.data));
+  const pct = sorted.length > 0 ? Math.round((populated.length / sorted.length) * 100) : 0;
+
+  const filtered = sorted.filter(m => {
+    const label = (m.module_label || m.module.replace(/_/g," ")).toLowerCase();
+    const matchSearch = !bibleSearch || label.includes(bibleSearch.toLowerCase()) ||
+      JSON.stringify(m.data).toLowerCase().includes(bibleSearch.toLowerCase());
+    const matchStatus = bibleStatusFilter === "all" || m.status === bibleStatusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  return (
+    <section className="panel">
+      {/* Header */}
+      <div className="adminbar" style={{marginBottom:12}}>
+        <span className="t">Artist Bible</span>
+        <span className="s">{slug || "unknown"} &nbsp;|&nbsp; super admin only</span>
+      </div>
+
+      {/* Progress bar */}
+      {sorted.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+            <span style={{fontSize:11,color:"#6b7280",fontWeight:600,letterSpacing:.4}}>BIBLE COMPLETENESS</span>
+            <span style={{fontSize:11,color:"#6b7280",fontWeight:600}}>{populated.length}/{sorted.length} modules &nbsp;{pct}%</span>
+          </div>
+          <div style={{height:5,background:"#e5e7eb",borderRadius:99,overflow:"hidden"}}>
+            <div style={{height:"100%",width:`${pct}%`,background:"var(--rx)",borderRadius:99,transition:"width .4s ease"}} />
+          </div>
+          <div style={{display:"flex",gap:12,marginTop:8}}>
+            {(["draft","review","complete"] as const).map(s => {
+              const count = sorted.filter(m => m.status === s).length;
+              return (
+                <span key={s} style={{fontSize:11,color:statusColor(s),fontWeight:600}}>
+                  {count} {s}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Search + Filter */}
+      <div style={{display:"flex",gap:8,marginBottom:12}}>
+        <input
+          type="text"
+          placeholder="Search modules..."
+          value={bibleSearch}
+          onChange={e => setBibleSearch(e.target.value)}
+          style={{flex:1,fontSize:12,padding:"7px 10px",border:"1px solid #e5e7eb",borderRadius:8,outline:"none",background:"#fafafa"}}
+        />
+        <select
+          value={bibleStatusFilter}
+          onChange={e => setBibleStatusFilter(e.target.value as typeof bibleStatusFilter)}
+          style={{fontSize:12,padding:"7px 10px",border:"1px solid #e5e7eb",borderRadius:8,background:"#fafafa",outline:"none",cursor:"pointer"}}
+        >
+          <option value="all">All statuses</option>
+          <option value="draft">Draft</option>
+          <option value="review">Review</option>
+          <option value="complete">Complete</option>
+        </select>
+      </div>
+
+      {bibleLoading && <p className="hint" style={{paddingLeft:4}}>Loading modules...</p>}
+      {!bibleLoading && bibleModules.length === 0 && (
+        <div className="card" style={{color:"var(--rx-text)",fontSize:13}}>
+          No bible data found for <strong>{slug}</strong>. Seed modules via Supabase.
+        </div>
+      )}
+      {!bibleLoading && bibleModules.length > 0 && filtered.length === 0 && (
+        <p className="hint" style={{paddingLeft:4}}>No modules match your search.</p>
+      )}
+
+      {/* Module accordion */}
+      <div style={{display:"flex",flexDirection:"column",gap:2}}>
+        {filtered.map(mod => {
+          const isOpen = bibleOpenModule === mod.module;
+          const pop = isPopulated(mod.data);
+          const label = mod.module_label || mod.module.replace(/_/g," ").replace(/\w/g,l=>l.toUpperCase());
+          const versionStr = `v${(mod as BibleModule & {version?:number}).version ?? 1}`;
+          return (
+            <div key={mod.module} style={{borderRadius:10,border:"1px solid",borderColor:isOpen?"var(--rx)":"rgba(0,0,0,0.08)",overflow:"hidden",background:"#fff",transition:"border-color .15s"}}>
+              <button
+                onClick={() => setBibleOpenModule(isOpen ? null : mod.module)}
+                style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"11px 14px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}
+              >
+                <span style={{width:7,height:7,borderRadius:"50%",background:pop?"#22c55e":"#d1d5db",flexShrink:0}} />
+                <span style={{flex:1,fontSize:13,fontWeight:600,color:"#111"}}>{label}</span>
+                <span style={{fontSize:10,fontFamily:"monospace",color:"#9ca3af",marginRight:4}}>{versionStr}</span>
+                <span style={{fontSize:10,fontWeight:700,letterSpacing:.5,padding:"2px 8px",borderRadius:20,background:statusColor(mod.status)+"20",color:statusColor(mod.status)}}>
+                  {mod.status.toUpperCase()}
+                </span>
+                <span style={{fontSize:16,color:"#9ca3af",transform:isOpen?"rotate(180deg)":"none",transition:"transform .15s"}}>&#8964;</span>
+              </button>
+              {isOpen && (
+                <div style={{padding:"0 14px 14px",borderTop:"1px solid rgba(0,0,0,0.05)"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",margin:"8px 0 10px"}}>
+                    <span style={{fontSize:10,color:"#9ca3af",fontFamily:"monospace"}}>
+                      {mod.module} &nbsp;|&nbsp; updated: {mod.updated_at?.slice(0,10)}
+                    </span>
+                    <button
+                      onClick={(e) => copy(e, JSON.stringify(mod.data, null, 2))}
+                      style={{fontSize:10,padding:"2px 8px",border:"1px solid #e5e7eb",borderRadius:6,background:"#f9fafb",cursor:"pointer",color:"#6b7280"}}
+                    >
+                      Copy JSON
+                    </button>
+                  </div>
+                  {renderBibleValue(mod.data)}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Legacy prompts - preserved for backward compat */}
+      {(sonic?.songPrompt || visual?.imagePrompt) && (
+        <>
+          <p className="bsec" style={{marginTop:24}}>Legacy Prompts</p>
+          {sonic?.songPrompt && (<div className="copy-block"><div className="copy-bar"><span className="lbl">Song Prompt</span><button className="copy-btn" onClick={(e) => copy(e, sonic!.songPrompt!)}>Copy</button></div><pre className="copy-body">{sonic.songPrompt}</pre></div>)}
+          {visual?.imagePrompt && (<div className="copy-block"><div className="copy-bar"><span className="lbl">Image Prompt</span><button className="copy-btn" onClick={(e) => copy(e, visual!.imagePrompt!)}>Copy</button></div><pre className="copy-body">{visual.imagePrompt}</pre></div>)}
+        </>
+      )}
+      {!!(songAudits || []).length && (
+        <>
+          <p className="bsec" style={{marginTop:24}}>Song Audits</p>
+          {(songAudits || []).map((a, i) => (
+            <div key={i} className="audit">
+              <div className="audit-title">{a.title}</div>
+              {(a.status || a.pillar) && <div className="audit-meta">{a.status}{a.status && a.pillar ? " · " : ""}{a.pillar}</div>}
+              {a.theme && <p className="audit-theme">{a.theme}</p>}
+              <div className="scores">
+                {Object.entries(a.scores || {}).map(([k, v]) => (<span key={k} className="score">{k.replace(/_/g, " ")} {v}</span>))}
+                {a.emotion && <span className="score emo">{a.emotion}</span>}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </section>
+  );
+}
+
+export default function ArtistPage({ content, cityBg, activeArticle, slug }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null; activeArticle?: News; slug?: string }) {
   const [tab, setTab] = useState("news");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
@@ -112,6 +299,9 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   const [musicShuffle, setMusicShuffle] = useState(false);
   const [musicRepeat, setMusicRepeat] = useState(false);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
+  const [bibleModules, setBibleModules] = useState<BibleModule[]>([]);
+  const [bibleLoading, setBibleLoading] = useState(false);
+  const [bibleOpenModule, setBibleOpenModule] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -156,6 +346,22 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Fetch gfs_artist_bible when Brief tab opens
+  useEffect(() => {
+    if (tab !== "brief" || !slug || !SUPA_ANON) return;
+    if (bibleModules.length > 0) return; // already loaded
+    setBibleLoading(true);
+    const sb = createClient(SUPA_URL, SUPA_ANON);
+    sb.from("gfs_artist_bible")
+      .select("id,artist_slug,module,module_label,data,status,updated_at")
+      .eq("artist_slug", slug)
+      .order("module")
+      .then(({ data }) => {
+        if (data) setBibleModules(data as BibleModule[]);
+        setBibleLoading(false);
+      });
+  }, [tab, slug]);
 
   // Billboard auto-rotate every 6s
   useEffect(() => {
@@ -825,77 +1031,100 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
                 );
               })()}
 
-              {tab === "brief" && (
-                <section className="panel">
-                  <div className="adminbar"><span className="t">Admin only.</span> <span className="s">The Brief tab is the internal World Bible.</span></div>
-                  <p className="bsec">Identity &amp; Backstory</p>
-                  {c.identity && (<div className="card"><div className="kv">{Object.entries(c.identity).map(([k, v]) => (<div key={k}><div className="k">{k}</div><div className="v">{v}</div></div>))}</div></div>)}
-                  {c.brief && (
-                    <div className="card">
-                      {c.brief.highConcept && (<><p className="mini-h" style={{ marginTop: 0 }}>High Concept</p><p>{c.brief.highConcept}</p></>)}
-                      {(c.brief.strength || c.brief.weakness) && (<><p className="mini-h">Strength &amp; Weakness</p><p><strong>Greatest strength:</strong> {c.brief.strength} <strong>Greatest weakness:</strong> {c.brief.weakness}</p></>)}
-                      {c.brief.wound && (<><p className="mini-h">Defining Wound</p><p>{c.brief.wound}</p></>)}
-                      {c.brief.lostSong && (<><p className="mini-h">The Lost Song Era</p><p>{c.brief.lostSong}</p></>)}
-                      {c.brief.rikuConversation && (<><p className="mini-h">The Conversation</p><p>{c.brief.rikuConversation}</p></>)}
-                      {c.brief.emotionalJourney && (<><p className="mini-h">Emotional Journey</p><p>{c.brief.emotionalJourney}</p></>)}
-                    </div>
-                  )}
-                  {c.universe && (<><p className="bsec">Universe Placement</p><div className="card"><div className="kv">{Object.entries(c.universe).map(([k, v]) => (<div key={k}><div className="k">{k}</div><div className="v">{v}</div></div>))}</div></div></>)}
-                  {!!(c.relationships || []).length && (<div className="card">{(c.relationships || []).map((r, i) => (<div key={i} className="rel-row"><div className="rel-name">{r.name}</div><div className="rel-desc">{r.desc}</div></div>))}</div>)}
-                  {c.sonic && (
-                    <>
-                      <p className="bsec">Sonic DNA &amp; Song Prompt</p>
-                      <div className="card">
-                        <div className="kv">
-                          {c.sonic.primaryGenre && <div><div className="k">Primary Genre</div><div className="v">{c.sonic.primaryGenre}</div></div>}
-                          {c.sonic.secondaryGenre && <div><div className="k">Secondary Genre</div><div className="v">{c.sonic.secondaryGenre}</div></div>}
-                          {c.sonic.vocalAge && <div><div className="k">Vocal Age</div><div className="v">{c.sonic.vocalAge}</div></div>}
-                          {c.sonic.tone && <div><div className="k">Tone / Energy / Texture</div><div className="v">{c.sonic.tone}</div></div>}
-                        </div>
-                        {c.sonic.delivery && <p style={{ marginTop: 14 }}>{c.sonic.delivery}</p>}
-                      </div>
-                      {c.sonic.songPrompt && (<div className="copy-block"><div className="copy-bar"><span className="lbl">Song Prompt (paste into Suno)</span><button className="copy-btn" onClick={(e) => copy(e, c.sonic!.songPrompt!)}>Copy</button></div><pre className="copy-body">{c.sonic.songPrompt}</pre></div>)}
-                      {c.sonic.songPromptNote && <p className="hint">{c.sonic.songPromptNote}</p>}
-                    </>
-                  )}
-                  {c.visual && (
-                    <>
-                      <p className="bsec">Visual DNA &amp; Image Prompt</p>
-                      <div className="card">
-                        {c.visual.visualIdentity && <p><strong>Visual identity.</strong> {c.visual.visualIdentity}</p>}
-                        {c.visual.houseStyle && <p style={{ marginTop: 10 }}><strong>House style.</strong> {c.visual.houseStyle}</p>}
-                      </div>
-                      {c.visual.imagePrompt && (<div className="copy-block"><div className="copy-bar"><span className="lbl">Image Prompt (zero text)</span><button className="copy-btn" onClick={(e) => copy(e, c.visual!.imagePrompt!)}>Copy</button></div><pre className="copy-body">{c.visual.imagePrompt}</pre></div>)}
-                      {c.visual.imagePromptNote && <p className="hint">{c.visual.imagePromptNote}</p>}
-                    </>
-                  )}
-                  {!!(c.songAudits || []).length && (
-                    <>
-                      <p className="bsec">Song Audits</p>
-                      {(c.songAudits || []).map((a, i) => (
-                        <div key={i} className="audit">
-                          <div className="audit-title">{a.title}</div>
-                          {(a.status || a.pillar) && <div className="audit-meta">{a.status}{a.status && a.pillar ? " · " : ""}{a.pillar}</div>}
-                          {a.theme && <p className="audit-theme">{a.theme}</p>}
-                          <div className="scores">
-                            {Object.entries(a.scores || {}).map(([k, v]) => (<span key={k} className="score">{k.replace(/_/g, " ")} {v}</span>))}
-                            {a.emotion && <span className="score emo">{a.emotion}</span>}
+              {tab === "brief" && (() => {
+                // ── Artist Bible Admin UI ──────────────────────────────────────────────
+                // Scalable for hundreds of artists: searchable, filtered, versioned.
+                const MODULE_ORDER = ["identity","personality","backstory","visual_identity","voice",
+                  "musical_dna","lyrical_dna","emotional_performance","relationships","lore",
+                  "timeline","prompt_library","canon_rules","assets","version_history"];
+
+                function isPopulated(data: Record<string, unknown>): boolean {
+                  return Object.values(data).some(v =>
+                    v !== null && v !== undefined && v !== "" &&
+                    !(Array.isArray(v) && v.length === 0) &&
+                    !(typeof v === "object" && !Array.isArray(v) && Object.keys(v as object).length === 0)
+                  );
+                }
+
+                function statusColor(s: string) {
+                  if (s === "complete") return "#22c55e";
+                  if (s === "review") return "#f59e0b";
+                  return "#9ca3af";
+                }
+
+                function renderBibleValue(val: unknown, depth = 0): React.ReactNode {
+                  if (val === null || val === undefined || val === "")
+                    return <span style={{color:"#9ca3af",fontStyle:"italic",fontSize:12}}>empty</span>;
+                  if (typeof val === "string")
+                    return <p style={{margin:0,fontSize:13,lineHeight:1.6,whiteSpace:"pre-wrap"}}>{val}</p>;
+                  if (typeof val === "number" || typeof val === "boolean")
+                    return <span style={{fontSize:13,fontFamily:"monospace"}}>{String(val)}</span>;
+                  if (Array.isArray(val)) {
+                    if (val.length === 0) return <span style={{color:"#9ca3af",fontStyle:"italic",fontSize:12}}>empty</span>;
+                    if (val.every(v => typeof v === "string" || typeof v === "number")) return (
+                      <ul style={{margin:"4px 0 0",paddingLeft:18,fontSize:13,lineHeight:1.7}}>
+                        {val.map((item,i) => <li key={i}>{String(item)}</li>)}
+                      </ul>
+                    );
+                    return (
+                      <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6}}>
+                        {val.map((item,i) => (
+                          <div key={i} style={{background:"rgba(0,0,0,0.04)",borderRadius:6,padding:"8px 10px"}}>
+                            {renderBibleValue(item, depth+1)}
                           </div>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                  {!!(c.tracks || []).length && (
-                    <>
-                      <p className="bsec">Catalog &amp; Status</p>
-                      <div className="card"><table className="cat"><thead><tr><th>Song</th><th>Era / Tier</th><th>Visibility</th></tr></thead>
-                      <tbody>{(c.tracks || []).map((t, i) => { const b = trackBadge(t.v); return (<tr key={i}><td className="song">{t.n}</td><td>{t.m}</td><td><span className={"vis-badge " + b.cls}>{b.label}</span></td></tr>); })}</tbody></table></div>
-                    </>
-                  )}
-                </section>
-              )}
+                        ))}
+                      </div>
+                    );
+                  }
+                  if (typeof val === "object") {
+                    const entries = Object.entries(val as Record<string,unknown>).filter(([,v]) => v !== null && v !== undefined && v !== "");
+                    if (entries.length === 0) return <span style={{color:"#9ca3af",fontStyle:"italic",fontSize:12}}>empty</span>;
+                    if (depth > 0) return (
+                      <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:2}}>
+                        {entries.map(([k,v]) => (
+                          <span key={k} style={{background:"rgba(0,0,0,0.07)",borderRadius:4,padding:"2px 7px",fontSize:11}}>
+                            <strong style={{textTransform:"capitalize"}}>{k.replace(/_/g," ")}:</strong> {typeof v === "string" ? v : JSON.stringify(v)}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                    return (
+                      <div className="kv" style={{marginTop:6}}>
+                        {entries.map(([k,v]) => (
+                          <div key={k}>
+                            <div className="k" style={{textTransform:"none",fontSize:11,letterSpacing:.3}}>{k.replace(/_/g," ")}</div>
+                            <div className="v" style={{fontSize:13}}>{renderBibleValue(v, depth+1)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return <span style={{fontSize:13}}>{String(val)}</span>;
+                }
+
+                return (
+                  <BiblePanel
+                    bibleModules={bibleModules}
+                    bibleLoading={bibleLoading}
+                    bibleOpenModule={bibleOpenModule}
+                    setBibleOpenModule={setBibleOpenModule}
+                    MODULE_ORDER={MODULE_ORDER}
+                    isPopulated={isPopulated}
+                    statusColor={statusColor}
+                    renderBibleValue={renderBibleValue}
+                    slug={slug}
+                    artistSlug={c.name || ""}
+                    sonic={c.sonic}
+                    visual={c.visual}
+                    songAudits={c.songAudits}
+                    copy={copy}
+                  />
+                );
+              })()}
 
             </> )}
+
+
 
             </div>
 
@@ -1556,3 +1785,6 @@ const CITY_CSS = `
 `;
 
 
+
+---SHA---
+68bc20c95a42b91f5e53847748d6e2a318b2b52a
