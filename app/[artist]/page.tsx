@@ -163,14 +163,18 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
   const headers = { apikey: key, Authorization: `Bearer ${key}` };
   const opts = { headers, next: { revalidate: 0 } } as RequestInit & { next: { revalidate: number } };
 
-  // Fetch profile and audits in parallel
-  const [profileRes, auditsRes] = await Promise.all([
+  // Fetch profile, audits, and active ads in parallel
+  const [profileRes, auditsRes, adsRes] = await Promise.all([
     fetch(
       `${url}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(slug)}&select=name,profile&limit=1`,
       opts
     ),
     fetch(
       `${url}/rest/v1/gfs_anr_audits?artist_slug=eq.${encodeURIComponent(slug)}&select=doc_type,title,content,scores&order=doc_type.asc,title.asc`,
+      opts
+    ),
+    fetch(
+      `${url}/rest/v1/gfs_active_ads?or=(artist_slug.eq.${encodeURIComponent(slug)},artist_slug.eq.global)&active=eq.true&select=slot_id,image_url,link_url,artist_slug`,
       opts
     ),
   ]);
@@ -212,6 +216,24 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
         m: "Season 1",
         v: "members" as const,
       }));
+    }
+  }
+
+  // Merge active ads (artist-specific overrides global)
+  if (adsRes && adsRes.ok) {
+    const adRows: { slot_id: string; image_url: string; link_url: string; artist_slug: string }[] = await adsRes.json();
+    // Sort so artist-specific ads win over global
+    const sorted = [...adRows].sort((a, b) => (a.artist_slug === slug ? -1 : 1) - (b.artist_slug === slug ? -1 : 1));
+    for (const ad of sorted) {
+      if (ad.slot_id === "primary-ad"  && !profile.primaryAdUrl)  { profile.primaryAdUrl  = ad.image_url; profile.primaryAdLink  = ad.link_url; }
+      if (ad.slot_id === "feature-ad"  && !profile.featureAdUrl)  { profile.featureAdUrl  = ad.image_url; profile.featureAdLink  = ad.link_url; }
+      if (ad.slot_id === "skyscraper"  && !profile.skyscraperUrl) { profile.skyscraperUrl = ad.image_url; profile.skyscraperLink = ad.link_url; }
+    }
+    // Artist-specific always wins
+    for (const ad of sorted.filter(a => a.artist_slug === slug)) {
+      if (ad.slot_id === "primary-ad")  { profile.primaryAdUrl  = ad.image_url; profile.primaryAdLink  = ad.link_url; }
+      if (ad.slot_id === "feature-ad")  { profile.featureAdUrl  = ad.image_url; profile.featureAdLink  = ad.link_url; }
+      if (ad.slot_id === "skyscraper")  { profile.skyscraperUrl = ad.image_url; profile.skyscraperLink = ad.link_url; }
     }
   }
 
