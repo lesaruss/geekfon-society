@@ -13,7 +13,7 @@ type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: str
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
-type News = { slug?: string; tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string; content?: string };
+type News = { slug?: string; tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string; content?: string; draft?: boolean };
 type Audit = { title: string; status?: string; pillar?: string; theme?: string; emotion?: string; scores?: Record<string, number> };
 type PulsePost = {
   id?: string;
@@ -344,7 +344,8 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
   // ── Pulse feed ────────────────────────────────────────────────────────────────
   const msg = c.message || {};
   const hasMsg = !!(msg.ja || msg.en);
-  const pulseArticles = c.news && c.news.length > 0 ? c.news : PLACEHOLDER_NEWS;
+  const publishedNews = (c.news || []).filter((n: News) => !n.draft);
+  const pulseArticles = publishedNews.length > 0 ? publishedNews : PLACEHOLDER_NEWS;
 
   return (
 
