@@ -38,7 +38,10 @@ type BibleModule = {
   module: string;
   module_label: string | null;
   data: Record<string, unknown>;
+  confidence: Record<string, string>;
+  canon_status: string;
   status: string;
+  version: number;
   updated_at: string;
 };
 
@@ -221,6 +224,15 @@ function BiblePanel({
                 <span style={{width:7,height:7,borderRadius:"50%",background:pop?"#22c55e":"#d1d5db",flexShrink:0}} />
                 <span style={{flex:1,fontSize:13,fontWeight:600,color:"#111"}}>{label}</span>
                 <span style={{fontSize:10,fontFamily:"monospace",color:"#9ca3af",marginRight:4}}>{versionStr}</span>
+                {mod.canon_status && mod.canon_status !== "proposed_canon" && (
+                  <span style={{fontSize:9,fontWeight:700,letterSpacing:.4,padding:"2px 7px",borderRadius:20,
+                    background: mod.canon_status === "official_canon" ? "#dcfce7" : mod.canon_status === "deprecated_canon" ? "#fef9c3" : "#f3f4f6",
+                    color: mod.canon_status === "official_canon" ? "#15803d" : mod.canon_status === "deprecated_canon" ? "#92400e" : "#6b7280",
+                    marginRight:2
+                  }}>
+                    {mod.canon_status === "official_canon" ? "CANON" : mod.canon_status === "deprecated_canon" ? "DEPRECATED" : "NON-CANON"}
+                  </span>
+                )}
                 <span style={{fontSize:10,fontWeight:700,letterSpacing:.5,padding:"2px 8px",borderRadius:20,background:statusColor(mod.status)+"20",color:statusColor(mod.status)}}>
                   {mod.status.toUpperCase()}
                 </span>
@@ -230,7 +242,7 @@ function BiblePanel({
                 <div style={{padding:"0 14px 14px",borderTop:"1px solid rgba(0,0,0,0.05)"}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",margin:"8px 0 10px"}}>
                     <span style={{fontSize:10,color:"#9ca3af",fontFamily:"monospace"}}>
-                      {mod.module} &nbsp;|&nbsp; updated: {mod.updated_at?.slice(0,10)}
+                      {mod.module} &nbsp;|&nbsp; v{mod.version ?? 1} &nbsp;|&nbsp; updated: {mod.updated_at?.slice(0,10)}
                     </span>
                     <button
                       onClick={(e) => copy(e, JSON.stringify(mod.data, null, 2))}
@@ -354,7 +366,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     setBibleLoading(true);
     const sb = createClient(SUPA_URL, SUPA_ANON);
     sb.from("gfs_artist_bible")
-      .select("id,artist_slug,module,module_label,data,status,updated_at")
+      .select("id,artist_slug,module,module_label,data,confidence,canon_status,status,version,updated_at")
       .eq("artist_slug", slug)
       .order("module")
       .then(({ data }) => {
@@ -1034,9 +1046,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               {tab === "brief" && (() => {
                 // ── Artist Bible Admin UI ──────────────────────────────────────────────
                 // Scalable for hundreds of artists: searchable, filtered, versioned.
-                const MODULE_ORDER = ["identity","personality","backstory","visual_identity","voice",
-                  "musical_dna","lyrical_dna","emotional_performance","relationships","lore",
-                  "timeline","prompt_library","canon_rules","assets","version_history"];
+                const MODULE_ORDER = [
+                  "identity","psychology","personality","backstory",
+                  "visual_identity","voice",
+                  "musical_dna","lyrical_dna","emotional_performance",
+                  "relationships","lore","timeline",
+                  "creative_direction","prompt_library","canon_rules",
+                  "assets","version_history",
+                  "creative_producer_notes"
+                ];
 
                 function isPopulated(data: Record<string, unknown>): boolean {
                   return Object.values(data).some(v =>
