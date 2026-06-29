@@ -249,7 +249,10 @@ export default function SiteChrome({
             </div>
           </div>
         ) : (
-          <a href="/passport" className="gcta">Get Passport</a>
+          <div className="gauth">
+            <a href="/login.html" className="glogin">Log in</a>
+            <a href="/passport" className="gcta">Get Passport</a>
+          </div>
         )}
       </header>
 
@@ -312,6 +315,7 @@ export default function SiteChrome({
           <div className="gdrawer-cta">
             <a href="/passport" className="gdrawer-cta-btn" onClick={() => setOpen(false)}>Get Your Passport</a>
             <p className="gdrawer-cta-sub">Join GeekFon Society and unlock your dashboard, LESARs, and exclusive artist content.</p>
+            <a href="/login.html" className="gdrawer-login" onClick={() => setOpen(false)}>Already a member? Log in</a>
           </div>
         )}
 
@@ -371,6 +375,12 @@ const CHROME_CSS = `
 @keyframes gShimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
 .gcta { margin-left: auto; flex-shrink: 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #9c1458; border: 1px solid #E91E8C; border-radius: 20px; padding: 8px 17px; background: #fff; text-decoration: none; }
 .gcta:hover { background: rgba(233,30,140,.07); }
+.gauth { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 14px; }
+.gauth .gcta { margin-left: 0; }
+.glogin { flex-shrink: 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #fff; text-decoration: none; opacity: .85; }
+.glogin:hover { opacity: 1; }
+.gdrawer-login { display: block; text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); text-decoration: underline; text-underline-offset: 3px; }
+.gdrawer-login:hover { color: #fff; }
 .gmember-chip { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
 .gmember-balance { display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
 .gmember-balance-num { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -.01em; }
