@@ -80,23 +80,17 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Could not save registration' });
     }
 
-    // Send magic link - redirect to /dashboard after auth
-    const origin = req.headers.origin || 'https://geekfon.ai';
-    const redirectTo = origin + '/dashboard';
-
-    const magicRes = await fetch(SUPABASE_URL + '/auth/v1/magiclink', {
+    // Send the GeekFon-branded magic link via Resend (gfs-auth-email function).
+    // Pending profile is already saved above, so we just trigger the branded send.
+    const magicRes = await fetch(SUPABASE_URL + '/functions/v1/gfs-auth-email', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON,
-        Authorization: 'Bearer ' + SUPABASE_ANON,
-      },
-      body: JSON.stringify({ email: email.toLowerCase().trim(), options: { emailRedirectTo: redirectTo } }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'login', email: email.toLowerCase().trim() }),
     });
 
     if (!magicRes.ok) {
       const err = await magicRes.text();
-      console.error('magic link error:', err);
+      console.error('branded magic link error:', err);
       return res.status(500).json({ error: 'Could not send confirmation email' });
     }
 

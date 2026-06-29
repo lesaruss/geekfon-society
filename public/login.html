@@ -483,18 +483,15 @@
   if (checkHash()) return;
 
   async function sendMagicLink(email) {
-    var res = await fetch(SUPABASE_URL + '/auth/v1/magiclink', {
+    // Send the GeekFon-branded magic link via the gfs-auth-email function (Resend).
+    var res = await fetch(SUPABASE_URL + '/functions/v1/gfs-auth-email', {
       method: 'POST',
-      headers: {
-        apikey:         SUPABASE_ANON,
-        Authorization:  'Bearer ' + SUPABASE_ANON,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email: email, options: { emailRedirectTo: REDIRECT_TO } }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'login', email: email }),
     });
     if (!res.ok) {
       var data = await res.json().catch(function () { return {}; });
-      throw new Error(data.error_description || data.msg || 'Failed to send link');
+      throw new Error(data.error || 'Failed to send link');
     }
   }
 
