@@ -136,13 +136,14 @@ function BiblePanel({
   });
 
   const populated = sorted.filter(m => isPopulated(m.data));
-  const pct = sorted.length > 0 ? Math.round((populated.length / sorted.length) * 100) : 0;
+  const pct = sorted.length > 0 ? Math.round((populated.length / sorted.length) * 100) : 0; // legacy, used in module count only
 
   const filtered = sorted.filter(m => {
     const label = (m.module_label || m.module.replace(/_/g," ")).toLowerCase();
     const matchSearch = !bibleSearch || label.includes(bibleSearch.toLowerCase()) ||
       JSON.stringify(m.data).toLowerCase().includes(bibleSearch.toLowerCase());
-    const matchStatus = bibleStatusFilter === "all" || m.status === bibleStatusFilter;
+    const displayLabel = getDisplayStatus(m).label.toLowerCase().replace(" ","_");
+    const matchStatus = bibleStatusFilter === "all" || displayLabel === bibleStatusFilter || m.status === bibleStatusFilter;
     return matchSearch && matchStatus;
   });
 
@@ -154,28 +155,68 @@ function BiblePanel({
         <span className="s">{slug || "unknown"} &nbsp;|&nbsp; super admin only</span>
       </div>
 
-      {/* Progress bar */}
-      {sorted.length > 0 && (
-        <div style={{marginBottom:14}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-            <span style={{fontSize:11,color:"#6b7280",fontWeight:600,letterSpacing:.4}}>BIBLE COMPLETENESS</span>
-            <span style={{fontSize:11,color:"#6b7280",fontWeight:600}}>{populated.length}/{sorted.length} modules &nbsp;{pct}%</span>
+      {/* Phase Progress Tracker */}
+      {sorted.length > 0 && (() => {
+        const totalWeight = sorted.reduce((sum, m) => sum + getDisplayStatus(m).weight, 0);
+        const completionPct = Math.round((totalWeight / sorted.length) * 100);
+        const moduleMap = Object.fromEntries(sorted.map(m => [m.module, m]));
+        const statusCounts = { "Not Started": 0, "In Progress": 0, "Review": 0, "Approved": 0, "Complete": 0 } as Record<string,number>;
+        sorted.forEach(m => { const s = getDisplayStatus(m).label; statusCounts[s] = (statusCounts[s] || 0) + 1; });
+
+        return (
+          <div style={{marginBottom:16}}>
+            {/* Overall bar */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+              <span style={{fontSize:11,fontWeight:700,letterSpacing:.5,color:"#6b7280"}}>BIBLE PROGRESS</span>
+              <span style={{fontSize:13,fontWeight:800,color:"var(--rx)"}}>{completionPct}%</span>
+            </div>
+            <div style={{height:6,background:"#e5e7eb",borderRadius:99,overflow:"hidden",marginBottom:8}}>
+              <div style={{height:"100%",width:`${completionPct}%`,background:"var(--rx)",borderRadius:99,transition:"width .5s ease"}} />
+            </div>
+            {/* Status legend */}
+            <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+              {Object.entries(statusCounts).filter(([,n])=>n>0).map(([label,count])=>{
+                const colorMap: Record<string,string> = {"Not Started":"#9ca3af","In Progress":"#2563eb","Review":"#d97706","Approved":"#7c3aed","Complete":"#16a34a"};
+                return <span key={label} style={{fontSize:10,fontWeight:700,color:colorMap[label]}}>{count} {label}</span>;
+              })}
+            </div>
+            {/* Phase groups */}
+            {PHASES.map(phase => (
+              <div key={phase.label} style={{marginBottom:12}}>
+                <div style={{fontSize:10,fontWeight:700,letterSpacing:.6,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>
+                  {phase.label}
+                </div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                  {phase.modules.map(slug => {
+                    const mod = moduleMap[slug];
+                    const ds = mod ? getDisplayStatus(mod) : { label:"Not Started", color:"#9ca3af", bg:"#f3f4f6", weight:0 };
+                    const label = mod?.module_label || slug.replace(/_/g," ").replace(/\w/g,l=>l.toUpperCase());
+                    return (
+                      <button
+                        key={slug}
+                        onClick={() => mod && setBibleOpenModule(bibleOpenModule === slug ? null : slug)}
+                        style={{
+                          display:"flex",alignItems:"center",gap:5,
+                          padding:"4px 10px",borderRadius:20,border:"none",cursor:"pointer",
+                          background:ds.bg,color:ds.color,
+                          fontSize:11,fontWeight:600,
+                          opacity: mod ? 1 : 0.5,
+                          transition:"opacity .15s"
+                        }}
+                        title={`${label}: ${ds.label}`}
+                      >
+                        <span style={{width:5,height:5,borderRadius:"50%",background:ds.color,flexShrink:0}} />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <div style={{height:1,background:"rgba(0,0,0,0.07)",margin:"4px 0 14px"}} />
           </div>
-          <div style={{height:5,background:"#e5e7eb",borderRadius:99,overflow:"hidden"}}>
-            <div style={{height:"100%",width:`${pct}%`,background:"var(--rx)",borderRadius:99,transition:"width .4s ease"}} />
-          </div>
-          <div style={{display:"flex",gap:12,marginTop:8}}>
-            {(["draft","review","complete"] as const).map(s => {
-              const count = sorted.filter(m => m.status === s).length;
-              return (
-                <span key={s} style={{fontSize:11,color:statusColor(s),fontWeight:600}}>
-                  {count} {s}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Search + Filter */}
       <div style={{display:"flex",gap:8,marginBottom:12}}>
@@ -191,9 +232,11 @@ function BiblePanel({
           onChange={e => setBibleStatusFilter(e.target.value as typeof bibleStatusFilter)}
           style={{fontSize:12,padding:"7px 10px",border:"1px solid #e5e7eb",borderRadius:8,background:"#fafafa",outline:"none",cursor:"pointer"}}
         >
-          <option value="all">All statuses</option>
-          <option value="draft">Draft</option>
+          <option value="all">All</option>
+          <option value="not_started">Not Started</option>
+          <option value="in_progress">In Progress</option>
           <option value="review">Review</option>
+          <option value="approved">Approved</option>
           <option value="complete">Complete</option>
         </select>
       </div>
@@ -1047,13 +1090,27 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 // ── Artist Bible Admin UI ──────────────────────────────────────────────
                 // Scalable for hundreds of artists: searchable, filtered, versioned.
                 const MODULE_ORDER = [
-                  "identity","psychology","personality","backstory",
-                  "visual_identity","voice",
-                  "musical_dna","lyrical_dna","emotional_performance",
+                  // Identity Layer
+                  "identity","psychology","personality",
+                  // Character
+                  "backstory","voice","emotional_performance","visual_identity",
+                  // Music
+                  "musical_dna","lyrical_dna",
+                  // World
                   "relationships","lore","timeline",
+                  // Creative
                   "creative_direction","prompt_library","canon_rules",
-                  "assets","version_history",
-                  "creative_producer_notes"
+                  // Admin
+                  "assets","version_history","creative_producer_notes"
+                ];
+
+                const PHASES = [
+                  { label: "Identity Layer", modules: ["identity","psychology","personality"] },
+                  { label: "Character", modules: ["backstory","voice","emotional_performance","visual_identity"] },
+                  { label: "Music", modules: ["musical_dna","lyrical_dna"] },
+                  { label: "World", modules: ["relationships","lore","timeline"] },
+                  { label: "Creative", modules: ["creative_direction","prompt_library","canon_rules"] },
+                  { label: "Admin", modules: ["assets","version_history","creative_producer_notes"] },
                 ];
 
                 function isPopulated(data: Record<string, unknown>): boolean {
@@ -1064,9 +1121,18 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   );
                 }
 
+                function getDisplayStatus(mod: BibleModule): { label: string; color: string; bg: string; weight: number } {
+                  if (mod.status === "complete")  return { label: "Complete",    color: "#16a34a", bg: "#dcfce7", weight: 1.00 };
+                  if (mod.status === "approved")  return { label: "Approved",    color: "#7c3aed", bg: "#ede9fe", weight: 0.85 };
+                  if (mod.status === "review")    return { label: "Review",      color: "#d97706", bg: "#fef3c7", weight: 0.60 };
+                  if (isPopulated(mod.data))      return { label: "In Progress", color: "#2563eb", bg: "#dbeafe", weight: 0.30 };
+                  return                                 { label: "Not Started", color: "#9ca3af", bg: "#f3f4f6", weight: 0.00 };
+                }
+
                 function statusColor(s: string) {
                   if (s === "complete") return "#22c55e";
-                  if (s === "review") return "#f59e0b";
+                  if (s === "approved") return "#7c3aed";
+                  if (s === "review")   return "#f59e0b";
                   return "#9ca3af";
                 }
 
