@@ -358,9 +358,14 @@
       <p class="card-eyebrow">Member Access</p>
       <h1 class="card-heading">Sign In to Your Membership</h1>
       <p class="card-body">
-        Enter your email and we'll send you a magic link — no password needed.
-        One click and you're inside.
+        Sign in with one tap, or get a one-time code by email. No password needed.
       </p>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin:0 0 18px;">
+        <button type="button" id="googleBtn" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:#ffffff;color:#1a1a1a;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Continue with Google</button>
+        <button type="button" id="appleBtn" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:#000000;color:#ffffff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Continue with Apple</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin:0 0 18px;color:rgba(232,232,232,0.4);font-size:12px;"><span style="flex:1;height:1px;background:rgba(255,255,255,0.12);"></span>or use your email<span style="flex:1;height:1px;background:rgba(255,255,255,0.12);"></span></div>
 
       <form id="loginForm" novalidate>
         <div class="input-group">
@@ -378,7 +383,7 @@
           >
         </div>
         <div class="error-msg" id="emailError" role="alert" aria-live="polite"></div>
-        <button class="submit-btn" type="submit" id="submitBtn">Send My Magic Link</button>
+        <button class="submit-btn" type="submit" id="submitBtn">Email me a code</button>
       </form>
 
       <p class="form-note">
@@ -392,31 +397,33 @@
       <p class="card-body" style="text-align:center;">Sending your magic link&hellip;</p>
     </div>
 
-    <!-- State: sent -->
+    <!-- State: enter code -->
     <div class="state" id="stateSent" aria-live="polite">
-      <div class="sent-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-      </div>
-      <h2 class="sent-heading">Check Your Inbox</h2>
-      <p class="sent-body">We sent a magic link to:</p>
+      <h2 class="sent-heading">Enter Your Code</h2>
+      <p class="sent-body">We emailed an 8-digit sign-in code to:</p>
       <div class="sent-email-chip" id="sentEmail" aria-live="polite"></div>
-      <div class="sent-steps">
-        <div class="sent-step">
-          <div class="step-num" aria-hidden="true">1</div>
-          <span>Open the email from <strong style="color:rgba(232,232,232,0.8);">GeekFon Society</strong> — subject line: <em>"Your Magic Link"</em></span>
+      <form id="codeForm" novalidate style="margin-top:18px;">
+        <div class="input-group">
+          <label class="input-label" for="codeInput">Sign-in code</label>
+          <input
+            class="input-field"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            id="codeInput"
+            name="code"
+            placeholder="________"
+            maxlength="8"
+            style="letter-spacing:0.4em;text-align:center;font-size:20px;"
+            aria-describedby="codeError"
+          >
         </div>
-        <div class="sent-step">
-          <div class="step-num" aria-hidden="true">2</div>
-          <span>Click <strong style="color:rgba(232,232,232,0.8);">"Sign in"</strong> in the email. It logs you in instantly.</span>
-        </div>
-        <div class="sent-step">
-          <div class="step-num" aria-hidden="true">3</div>
-          <span>Links expire in <strong style="color:rgba(232,232,232,0.8);">60 minutes.</strong> If yours expired, use the button below.</span>
-        </div>
-      </div>
-      <button class="resend-btn" id="resendBtn" type="button">Resend Magic Link</button>
+        <div class="error-msg" id="codeError" role="alert" aria-live="polite"></div>
+        <button class="submit-btn" type="submit" id="verifyBtn">Verify and sign in</button>
+      </form>
+      <p class="sent-body" style="margin-top:14px;font-size:13px;">
+        Didn't get it? <button class="resend-btn" id="resendBtn" type="button" style="display:inline;width:auto;padding:0;background:none;border:none;color:#E91E8C;font-weight:700;cursor:pointer;text-decoration:underline;">Resend code</button>. You can also tap the link in the email instead.
+      </p>
     </div>
 
   </div>
@@ -431,15 +438,14 @@
   </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function () {
   var SUPABASE_URL  = 'https://fwbhwfxpncrsfhttimna.supabase.co';
   var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA';
 
-  // Hard-coded redirect: geekfon.ai/dashboard
-  // Supabase must have https://geekfon.ai/** in its allowed redirect URLs list.
-  // In the meantime, the lesaruss.ai homepage has a bounce handler.
   var REDIRECT_TO = 'https://geekfon.ai/dashboard';
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
   function getRedirect() {
     var params = new URLSearchParams(window.location.search);
@@ -455,35 +461,13 @@
     });
   }
 
-  // If token is in hash, exchange it and redirect
-  function checkHash() {
-    var hash = window.location.hash;
-    if (hash.includes('access_token=')) {
-      var params = new URLSearchParams(hash.substring(1));
-      var token = params.get('access_token');
-      var refresh = params.get('refresh_token');
-      if (token) {
-        try {
-          sessionStorage.setItem('gfs_session', JSON.stringify({
-            access_token: token,
-            refresh_token: refresh || '',
-            timestamp: Date.now()
-          }));
-          document.cookie = 'gfs_token=' + token + '; path=/; SameSite=Lax';
-        } catch (_) {}
-        window.history.replaceState({}, document.title, window.location.pathname);
-        var dest = getRedirect();
-        window.location.href = dest.startsWith('http') ? dest : dest;
-        return true;
-      }
-    }
-    return false;
-  }
+  // Already signed in (or returning from an OAuth/link redirect)? go straight in.
+  sb.auth.getSession().then(function (res) {
+    if (res && res.data && res.data.session) { window.location.href = getRedirect(); }
+  });
 
-  if (checkHash()) return;
-
-  async function sendMagicLink(email) {
-    // Send the GeekFon-branded magic link via the gfs-auth-email function (Resend).
+  async function sendCode(email) {
+    // Trigger the GeekFon-branded one-time code email via gfs-auth-email (Resend).
     var res = await fetch(SUPABASE_URL + '/functions/v1/gfs-auth-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -491,7 +475,7 @@
     });
     if (!res.ok) {
       var data = await res.json().catch(function () { return {}; });
-      throw new Error(data.error || 'Failed to send link');
+      throw new Error(data.error || 'Could not send your code');
     }
   }
 
@@ -501,7 +485,20 @@
   var errorEl  = document.getElementById('emailError');
   var sentEmail= document.getElementById('sentEmail');
   var resendBtn= document.getElementById('resendBtn');
+  var codeForm = document.getElementById('codeForm');
+  var codeEl   = document.getElementById('codeInput');
+  var verifyEl = document.getElementById('verifyBtn');
+  var codeErr  = document.getElementById('codeError');
   var lastEmail = '';
+
+  // Google / Apple one-tap
+  function oauth(provider) {
+    sb.auth.signInWithOAuth({ provider: provider, options: { redirectTo: REDIRECT_TO } });
+  }
+  var gBtn = document.getElementById('googleBtn');
+  var aBtn = document.getElementById('appleBtn');
+  if (gBtn) gBtn.addEventListener('click', function () { oauth('google'); });
+  if (aBtn) aBtn.addEventListener('click', function () { oauth('apple'); });
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -521,9 +518,10 @@
     show('stateSending');
 
     try {
-      await sendMagicLink(email);
+      await sendCode(email);
       sentEmail.textContent = email;
       show('stateSent');
+      if (codeEl) codeEl.focus();
     } catch (err) {
       show('stateForm');
       errorEl.textContent = err.message || 'Something went wrong. Please try again.';
@@ -532,19 +530,41 @@
     }
   });
 
-  resendBtn.addEventListener('click', async function () {
+  if (codeForm) codeForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    codeErr.classList.remove('show');
+    codeErr.textContent = '';
+    var code = (codeEl.value || '').replace(/\s/g, '');
+    if (code.length < 6) {
+      codeErr.textContent = 'Enter the code from your email.';
+      codeErr.classList.add('show');
+      return;
+    }
+    verifyEl.disabled = true;
+    verifyEl.textContent = 'Verifying...';
+    try {
+      var out = await sb.auth.verifyOtp({ email: lastEmail, token: code, type: 'email' });
+      if (out.error) throw out.error;
+      window.location.href = getRedirect();
+    } catch (err) {
+      codeErr.textContent = (err && err.message) ? err.message : 'That code did not work. Try again or resend.';
+      codeErr.classList.add('show');
+      verifyEl.disabled = false;
+      verifyEl.textContent = 'Verify and sign in';
+    }
+  });
+
+  if (resendBtn) resendBtn.addEventListener('click', async function () {
     if (!lastEmail) { show('stateForm'); return; }
     resendBtn.disabled = true;
+    var orig = resendBtn.textContent;
     resendBtn.textContent = 'Sending...';
     try {
-      await sendMagicLink(lastEmail);
-      resendBtn.textContent = 'Sent!';
-      setTimeout(function () {
-        resendBtn.textContent = 'Resend Magic Link';
-        resendBtn.disabled = false;
-      }, 3000);
+      await sendCode(lastEmail);
+      resendBtn.textContent = 'Sent';
+      setTimeout(function () { resendBtn.textContent = orig; resendBtn.disabled = false; }, 3000);
     } catch (_) {
-      resendBtn.textContent = 'Resend Magic Link';
+      resendBtn.textContent = orig;
       resendBtn.disabled = false;
     }
   });
