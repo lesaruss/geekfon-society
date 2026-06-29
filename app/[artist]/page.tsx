@@ -247,7 +247,7 @@ export default async function ArtistPageRoute({ params }: Props) {
   const content = await getArtist(slug);
   if (!content) notFound();
   const cityBg = ARTIST_CITY[slug] ?? null;
-  return <ArtistPage content={content} cityBg={cityBg} />;
+  return <ArtistPage content={content} cityBg={cityBg} slug={slug} />;
 }
 
 export async function generateMetadata({ params }: Props) {
