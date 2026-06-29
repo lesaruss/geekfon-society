@@ -429,27 +429,6 @@ export default function ArtistPage({ content, cityBg, activeArticle }: { content
           {(() => {
             const canSeeBrief = isSuperAdmin || (!!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 2);
             const visibleTabs = TABS.filter(t => !t.admin || canSeeBrief);
-            const currentLabel = visibleTabs.find(t => t.key === tab)?.label || visibleTabs[0]?.label || "Music";
-            if (isMobile) {
-              return (
-                <div className="tabbar-mobile">
-                  <button className="tabbar-drop-btn" onClick={() => setTabDropOpen(o => !o)}>
-                    <span>{currentLabel}</span>
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.5} style={{transform: tabDropOpen ? "rotate(180deg)" : "none", transition:"transform .2s"}}><path d="M6 9l6 6 6-6"/></svg>
-                  </button>
-                  {tabDropOpen && (
-                    <div className="tabbar-drop-menu">
-                      {visibleTabs.map(t => (
-                        <button key={t.key} className={"tabbar-drop-item" + (tab === t.key ? " active" : "")}
-                          onClick={() => { setTab(t.key); setTabDropOpen(false); }}>
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            }
             return (
               <div className="tabbar" role="tablist">
                 {visibleTabs.map(t => (
@@ -1139,7 +1118,8 @@ const CSS = `
   .head-tagline{font-size:13px;margin-top:6px}
   .pill-row{margin-top:10px}
   .head-topbar{padding:14px 16px 16px}
-  .tabbar{padding:0 16px}
+  .tabbar{padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab{padding:14px 12px;font-size:12px}
 }
 .tabbar-mobile{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:2px solid var(--rx);padding:0 16px}
 .tabbar-drop-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 0;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text);background:none;border:none;cursor:pointer}
