@@ -150,7 +150,7 @@ function BiblePanel({
   sonic?: ArtistContent["sonic"];
   visual?: ArtistContent["visual"];
   songAudits?: ArtistContent["songAudits"];
-  copy: (e: React.SyntheticEvent, text: string) => void;
+  copy: (e: React.MouseEvent<HTMLButtonElement>, text: string) => void;
 }) {
   const [bibleSearch, setBibleSearch] = useState("");
   const [bibleStatusFilter, setBibleStatusFilter] = useState<"all"|"draft"|"review"|"complete">("all");
