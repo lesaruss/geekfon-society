@@ -103,7 +103,16 @@ const PLACEHOLDER_NEWS: News[] = [
 ];
 
 
-// ── Module status helpers (hoisted for BiblePanel access) ───────────────────
+// ── Module-level constants + helpers (hoisted for BiblePanel access) ─────────
+const PHASES = [
+  { label: "Identity Layer", modules: ["identity","psychology","personality"] },
+  { label: "Character",      modules: ["backstory","voice","emotional_performance","visual_identity"] },
+  { label: "Music",          modules: ["musical_dna","lyrical_dna"] },
+  { label: "World",          modules: ["relationships","lore","timeline"] },
+  { label: "Creative",       modules: ["creative_direction","prompt_library","canon_rules"] },
+  { label: "Admin",          modules: ["assets","version_history","creative_producer_notes"] },
+];
+
 function isPopulated(data: Record<string, unknown>): boolean {
   return Object.values(data || {}).some(v =>
     v !== null && v !== undefined && v !== "" &&
