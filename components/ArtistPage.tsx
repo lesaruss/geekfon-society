@@ -103,6 +103,23 @@ const PLACEHOLDER_NEWS: News[] = [
 ];
 
 
+// ── Module status helpers (hoisted for BiblePanel access) ───────────────────
+function isPopulated(data: Record<string, unknown>): boolean {
+  return Object.values(data || {}).some(v =>
+    v !== null && v !== undefined && v !== "" &&
+    !(Array.isArray(v) && v.length === 0) &&
+    !(typeof v === "object" && !Array.isArray(v) && Object.keys(v as object).length === 0)
+  );
+}
+
+function getDisplayStatus(mod: { status: string; data: Record<string, unknown> }): { label: string; color: string; bg: string; weight: number } {
+  if (mod.status === "complete")  return { label: "Complete",    color: "#16a34a", bg: "#dcfce7", weight: 1.00 };
+  if (mod.status === "approved")  return { label: "Approved",    color: "#7c3aed", bg: "#ede9fe", weight: 0.85 };
+  if (mod.status === "review")    return { label: "Review",      color: "#d97706", bg: "#fef3c7", weight: 0.60 };
+  if (isPopulated(mod.data))      return { label: "In Progress", color: "#2563eb", bg: "#dbeafe", weight: 0.30 };
+  return                                 { label: "Not Started", color: "#9ca3af", bg: "#f3f4f6", weight: 0.00 };
+}
+
 // ── BiblePanel ─────────────────────────────────────────────────────────────
 // Standalone component so it can be extracted to its own file as usage grows.
 // Scalable for hundreds of artists: search, status filter, versioning, progress.
