@@ -39,11 +39,10 @@ const ACTIVE_ORDER = [
   "straight-and-narrow", "riku", "nilo-wave", "rustblood-prophets",
 ];
 
-function fmtDate(d: string | undefined) {
+function toDateInput(d: string | undefined): string {
   if (!d) return "";
-  const [y, m, day] = d.split("-");
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${months[+m - 1]} ${+day}, ${y}`;
+  // Strip time component if ISO string (e.g. 2026-07-12T00:00:00Z -> 2026-07-12)
+  return d.split("T")[0];
 }
 
 export default function ReleaseSchedulePage() {
@@ -395,22 +394,13 @@ export default function ReleaseSchedulePage() {
 
                           {/* Release date */}
                           <div style={{ width: 120 }} className="rs-date-cell">
-                            {track.scheduledFor ? (
-                              <span className="rs-date-set" title="Click to edit">
-                                {fmtDate(track.scheduledFor)}
-                                <button className="rs-date-clear" onClick={() => updateTrack(artist.slug, idx, "scheduledFor", undefined)} title="Clear date">
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" width="10" height="10"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                                </button>
-                              </span>
-                            ) : (
-                              <input
-                                type="date"
-                                className="rs-input rs-date"
-                                value=""
-                                onChange={(e) => updateTrack(artist.slug, idx, "scheduledFor", e.target.value || undefined)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            )}
+                            <input
+                              type="date"
+                              className={`rs-input rs-date${track.scheduledFor ? " rs-date-filled" : ""}`}
+                              value={toDateInput(track.scheduledFor)}
+                              onChange={(e) => updateTrack(artist.slug, idx, "scheduledFor", e.target.value || undefined)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
                           </div>
 
                           {/* Audio */}
@@ -510,9 +500,7 @@ const RS_CSS = `
 .rs-sel { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 8px; border-radius: 6px; cursor: pointer; color: #fff; flex-shrink: 0; }
 .rs-sel option { background: #1a1a1a; color: #fff; }
 .rs-date-cell { display: flex; align-items: center; flex-shrink: 0; }
-.rs-date-set { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.7); white-space: nowrap; }
-.rs-date-clear { display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.08); border: none; border-radius: 4px; cursor: pointer; color: rgba(255,255,255,.4); padding: 2px; }
-.rs-date-clear:hover { background: rgba(255,100,100,.15); color: rgba(255,100,100,.9); }
+.rs-date-filled { border-color: rgba(170,255,0,.3) !important; color: rgba(170,255,0,.85) !important; }
 .rs-audio-cell { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .rs-audio-ok { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: rgba(0,215,95,.8); }
 .rs-audio-none { font-size: 9px; font-weight: 700; color: rgba(255,255,255,.22); }
