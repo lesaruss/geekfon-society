@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-// roster page - 4-col desktop, 2x2 mobile
+// roster page - 4-col desktop (8 artists: 4 live + 4 ghost), 2-col mobile
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -52,8 +52,17 @@ const CITIES = [
 const SUPA = "https://fwbhwfxpncrsfhttimna.supabase.co";
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA";
 
-// Ordered display list — first 3 = slide 1 desktop, Riku = slide 2 desktop slot 1
+// Live artists
 const ARTIST_ORDER = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
+
+// Ghost artists — grayed out, non-clickable, "COMING SOON"
+const GHOST_ORDER = ["straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings"];
+const GHOST_NAMES: Record<string, string> = {
+  "straight-and-narrow": "Straight and Narrow",
+  "nilo-wave":           "Nilo Wave",
+  "rustblood-prophets":  "Rustblood Prophets",
+  "mad-tings":           "Mad Tings",
+};
 
 type Artist = {
   slug: string;
@@ -68,6 +77,7 @@ type Artist = {
 
 export default function RosterPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
+  const [ghostArtists, setGhostArtists] = useState<Artist[]>([]);
   const [current, setCurrent] = useState(0);
   const currentRef = useRef(0);
   const cityPanelRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -85,6 +95,32 @@ export default function RosterPage() {
         setArtists(ordered);
       })
       .catch(() => {});
+  }, []);
+
+  // Fetch ghost artists from DB (may have hero images already)
+  useEffect(() => {
+    const slugList = GHOST_ORDER.map(s => `"${s}"`).join(",");
+    fetch(
+      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=in.(${slugList})`,
+      { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } }
+    )
+      .then((r) => r.json())
+      .then((data: Artist[]) => {
+        if (!Array.isArray(data)) {
+          // No DB rows yet — build stubs from GHOST_NAMES
+          setGhostArtists(GHOST_ORDER.map(s => ({ slug: s, name: GHOST_NAMES[s], profile: {} })));
+          return;
+        }
+        // Merge DB data with name fallback; preserve GHOST_ORDER
+        const ordered = GHOST_ORDER.map(s => {
+          const found = data.find(a => a.slug === s);
+          return found || { slug: s, name: GHOST_NAMES[s], profile: {} };
+        });
+        setGhostArtists(ordered);
+      })
+      .catch(() => {
+        setGhostArtists(GHOST_ORDER.map(s => ({ slug: s, name: GHOST_NAMES[s], profile: {} })));
+      });
   }, []);
 
   const goTo = useCallback((next: number) => {
@@ -126,15 +162,12 @@ export default function RosterPage() {
 
   const city = CITIES[current];
 
-  // Mobile: all 4 artists, 2x2
-  const mobileArtists = artists;
-
-  function ArtistCard({ a, featured = false }: { a: Artist; featured?: boolean }) {
+  function ArtistCard({ a }: { a: Artist }) {
     const accent = a.profile?.accent || "#E91E8C";
     return (
       <a
         href={`/${a.slug}`}
-        className={"r-card" + (featured ? " r-card-featured" : "")}
+        className="r-card"
         style={{ "--r-accent": accent } as React.CSSProperties}
       >
         <div className="r-card-img">
@@ -155,6 +188,28 @@ export default function RosterPage() {
           )}
         </div>
       </a>
+    );
+  }
+
+  function GhostCard({ a }: { a: Artist }) {
+    const accent = a.profile?.accent || "#888";
+    return (
+      <div className="r-card r-card-ghost" aria-label={`${a.name} — coming soon`}>
+        <div className="r-card-img">
+          {a.profile?.heroUrl ? (
+            <img src={a.profile.heroUrl} alt="" aria-hidden="true" />
+          ) : (
+            <div className="r-card-fallback" style={{ backgroundColor: accent + "22" }}>
+              {a.profile?.initial || a.name.charAt(0)}
+            </div>
+          )}
+          <div className="r-card-grad" />
+        </div>
+        <div className="r-coming-soon-badge">COMING SOON</div>
+        <div className="r-card-info">
+          <span className="r-card-name">{a.name}</span>
+        </div>
+      </div>
     );
   }
 
@@ -208,17 +263,19 @@ export default function RosterPage() {
             </div>
           ) : (
             <>
-              {/* DESKTOP: 4-col grid, all artists */}
+              {/* DESKTOP: 4-col grid — 4 live + 4 ghost */}
               <div className="r-desktop-roster">
                 <div className="r-grid">
-                  {artists.map(a => <ArtistCard key={a.slug} a={a} featured />)}
+                  {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
+                  {ghostArtists.map(a => <GhostCard key={a.slug} a={a} />)}
                 </div>
               </div>
 
-              {/* MOBILE: 2x2 grid */}
+              {/* MOBILE: 2-col grid — all 8 */}
               <div className="r-mobile-roster">
                 <div className="r-grid-mobile">
-                  {mobileArtists.map(a => <ArtistCard key={a.slug} a={a} featured />)}
+                  {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
+                  {ghostArtists.map(a => <GhostCard key={a.slug} a={a} />)}
                 </div>
               </div>
             </>
@@ -316,14 +373,10 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .r-card-tag{display:block;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.06em;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .r-now-live-badge{position:absolute;top:12px;left:12px;z-index:3;background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:#00e676;font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
 
-/* Teaser + empty slots (desktop slide 2 only) */
-.r-card-teaser{border:1px dashed rgba(255,255,255,.15);background:rgba(255,255,255,.03);cursor:default}
-.r-card-teaser:hover{transform:none;box-shadow:none}
-.r-teaser-inner{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px}
-.r-teaser-label{font-size:10px;font-weight:800;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.12em;text-align:center;line-height:1.4}
-.r-teaser-sub{font-size:9px;font-weight:600;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.1em;text-align:center;line-height:1.4}
-.r-card-empty{background:transparent;border:none;pointer-events:none;cursor:default}
-.r-card-empty:hover{transform:none;box-shadow:none}
+/* Ghost cards — coming soon */
+.r-card-ghost{filter:grayscale(1) brightness(0.38);pointer-events:none;cursor:default;user-select:none}
+.r-card-ghost:hover{transform:none!important;box-shadow:none!important}
+.r-coming-soon-badge{position:absolute;top:12px;left:12px;z-index:3;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
 
 /* Loading */
 .r-loading{display:flex;flex-direction:column;align-items:center;gap:16px;padding:80px 0;color:rgba(255,255,255,.4);font-size:14px;letter-spacing:.08em}
