@@ -284,29 +284,48 @@ const FEATURED: ArtistCard[] = ["roxanne", "lex-from-brixton", "shamanic-resin",
   return { ...base, tracks: [{ title: pv.title, url: SUPA_AUDIO + pv.path }] };
 });
 
-// ── Slide preview mockups (16:9) ──────────────────────────────────────────────
-const SLIDE_PREVIEWS: Record<string, { icon: string; label: string; description: string }> = {
-  "fan-artists": { icon: "🎤", label: "Artist Profiles", description: "Full bio, music, Pulse feed" },
-  "fan-pulse": { icon: "📱", label: "The Pulse", description: "Daily posts from every artist" },
-  "fan-tokens": { icon: "✦", label: "LESARs", description: "111 free points to start" },
-  "fan-voting": { icon: "▲", label: "Rankings", description: "Vote daily. Shape the charts." },
-  "fan-radio": { icon: "📻", label: "GeekFon Radio", description: "24/7 live station" },
-  "label-ip": { icon: "♪", label: "IP Catalog", description: "Original music, all genres" },
-  "label-licensing": { icon: "⚡", label: "Sync Licensing", description: "Film, TV, campaigns" },
-  "label-pipeline": { icon: "⬡", label: "TalentVangelist", description: "Real-artist pipeline" },
-  "label-cta": { icon: "✉", label: "Contact", description: "Licensing inquiries open" },
-  "brand-audience": { icon: "◉", label: "Global Cities", description: "Tokyo · Seoul · Berlin" },
-  "brand-ecosystem": { icon: "✦", label: "LESARs Economy", description: "Built-in brand moments" },
-  "brand-events": { icon: "◈", label: "Live Events", description: "Every show is content" },
-  "brand-cta": { icon: "⬟", label: "Sponsorships", description: "Native to the universe" },
-  "promoter-live": { icon: "◎", label: "Live Shows", description: "Lord Zorlot on the decks" },
-  "promoter-production": { icon: "▣", label: "Content Pipeline", description: "3 archive streams per show" },
-  "promoter-cities": { icon: "◍", label: "Season 1", description: "Jul 13 - Sep 19, 2026" },
-  "promoter-cta": { icon: "➔", label: "Book the Act", description: "Dates are limited" },
+// ── Flat SVG icons for slide previews ────────────────────────────────────────
+const SLIDE_ICONS: Record<string, (color: string) => ReactElement> = {
+  "fan-artists":        (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="18" cy="30" r="6" stroke={c} strokeWidth="2.5"/><circle cx="36" cy="26" r="6" stroke={c} strokeWidth="2.5"/><path d="M24 30V12L42 7V26" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  "fan-pulse":          (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="10" width="32" height="28" rx="4" stroke={c} strokeWidth="2.5"/><path d="M16 22h4l4-6 4 12 4-6h4" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  "fan-tokens":         (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="14" stroke={c} strokeWidth="2.5"/><path d="M24 16v16M20 20h6a4 4 0 010 8h-6" stroke={c} strokeWidth="2.5" strokeLinecap="round"/></svg>,
+  "fan-voting":         (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M24 10l3.5 10.5H38L29 27l3.5 10.5L24 31l-8.5 6.5L19 27 10 20.5h10.5z" stroke={c} strokeWidth="2.5" strokeLinejoin="round"/></svg>,
+  "fan-radio":          (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="20" width="32" height="20" rx="4" stroke={c} strokeWidth="2.5"/><circle cx="18" cy="30" r="4" stroke={c} strokeWidth="2.5"/><path d="M28 27h6M28 33h6M12 20l12-10 12 10" stroke={c} strokeWidth="2.5" strokeLinecap="round"/></svg>,
+  "label-ip":           (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M16 8h16l8 8v24H8V8z" stroke={c} strokeWidth="2.5" strokeLinejoin="round"/><path d="M32 8v8h8M18 22h12M18 28h12M18 34h8" stroke={c} strokeWidth="2.5" strokeLinecap="round"/></svg>,
+  "label-licensing":    (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M10 24h28M24 10v28" stroke={c} strokeWidth="2.5" strokeLinecap="round"/><circle cx="24" cy="24" r="14" stroke={c} strokeWidth="2.5"/></svg>,
+  "label-pipeline":     (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M8 16h10v16H8zM30 16h10v16H30z" stroke={c} strokeWidth="2.5" strokeLinejoin="round"/><path d="M18 24h12" stroke={c} strokeWidth="2.5" strokeLinecap="round"/><circle cx="24" cy="24" r="3" fill={c}/></svg>,
+  "label-cta":          (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M8 14h32v24H8z" stroke={c} strokeWidth="2.5" strokeLinejoin="round"/><path d="M8 14l16 14L40 14" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  "brand-audience":     (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="14" stroke={c} strokeWidth="2.5"/><path d="M10 24h28M24 10c-4 4-6 9-6 14s2 10 6 14M24 10c4 4 6 9 6 14s-2 10-6 14" stroke={c} strokeWidth="2.5" strokeLinecap="round"/></svg>,
+  "brand-ecosystem":    (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="6" stroke={c} strokeWidth="2.5"/><circle cx="24" cy="10" r="4" stroke={c} strokeWidth="2.5"/><circle cx="36" cy="32" r="4" stroke={c} strokeWidth="2.5"/><circle cx="12" cy="32" r="4" stroke={c} strokeWidth="2.5"/><path d="M24 16v2M31 29l-1.5-1.5M17 29l1.5-1.5" stroke={c} strokeWidth="2.5" strokeLinecap="round"/></svg>,
+  "brand-events":       (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="16" width="32" height="24" rx="3" stroke={c} strokeWidth="2.5"/><path d="M16 16V10M32 16V10M8 24h32" stroke={c} strokeWidth="2.5" strokeLinecap="round"/><circle cx="24" cy="32" r="3" fill={c}/></svg>,
+  "brand-cta":          (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M10 24L24 10l14 14-14 14z" stroke={c} strokeWidth="2.5" strokeLinejoin="round"/><circle cx="24" cy="24" r="4" fill={c}/></svg>,
+  "promoter-live":      (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M16 38V18l20-8v20" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="13" cy="38" r="5" stroke={c} strokeWidth="2.5"/><circle cx="33" cy="30" r="5" stroke={c} strokeWidth="2.5"/></svg>,
+  "promoter-production":(c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="12" width="32" height="20" rx="3" stroke={c} strokeWidth="2.5"/><path d="M20 38h8M24 32v6" stroke={c} strokeWidth="2.5" strokeLinecap="round"/><polygon points="18,16 34,22 18,28" fill={c}/></svg>,
+  "promoter-cities":    (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M24 10c-6 0-10 5-10 11 0 8 10 17 10 17s10-9 10-17c0-6-4-11-10-11z" stroke={c} strokeWidth="2.5"/><circle cx="24" cy="21" r="4" stroke={c} strokeWidth="2.5"/></svg>,
+  "promoter-cta":       (c) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M10 24h28M28 14l10 10-10 10" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
 };
 
 function SlidePreview({ slideId, accent }: { slideId: string; accent: string }) {
-  const meta = SLIDE_PREVIEWS[slideId] || { icon: "◆", label: "GeekFon", description: "Explore the universe" };
+  const label = {
+    "fan-artists": "Artist Profiles", "fan-pulse": "The Pulse", "fan-tokens": "LESARs",
+    "fan-voting": "Rankings", "fan-radio": "GeekFon Radio", "label-ip": "IP Catalog",
+    "label-licensing": "Sync Licensing", "label-pipeline": "TalentVangelist", "label-cta": "Contact",
+    "brand-audience": "Global Cities", "brand-ecosystem": "LESARs Economy", "brand-events": "Live Events",
+    "brand-cta": "Sponsorships", "promoter-live": "Live Shows", "promoter-production": "Content Pipeline",
+    "promoter-cities": "Season 1", "promoter-cta": "Book the Act",
+  }[slideId] || "GeekFon";
+  const desc = {
+    "fan-artists": "Full bio, music, Pulse feed", "fan-pulse": "Daily posts from every artist",
+    "fan-tokens": "111 free points to start", "fan-voting": "Vote daily. Shape the charts.",
+    "fan-radio": "24/7 live station", "label-ip": "Original music, all genres",
+    "label-licensing": "Film, TV, campaigns", "label-pipeline": "Real-artist pipeline",
+    "label-cta": "Licensing inquiries open", "brand-audience": "Tokyo · Seoul · Berlin",
+    "brand-ecosystem": "Built-in brand moments", "brand-events": "Every show is content",
+    "brand-cta": "Native to the universe", "promoter-live": "Lord Zorlot on the decks",
+    "promoter-production": "3 archive streams per show", "promoter-cities": "Jul 13 - Sep 19, 2026",
+    "promoter-cta": "Dates are limited",
+  }[slideId] || "Explore the universe";
+  const iconFn = SLIDE_ICONS[slideId] || ((c: string) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="24 8 44 40 4 40" stroke={c} strokeWidth="2.5" strokeLinejoin="round"/></svg>);
   return (
     <div style={{
       aspectRatio: "16 / 9",
@@ -324,14 +343,12 @@ function SlidePreview({ slideId, accent }: { slideId: string; accent: string }) 
       overflow: "hidden",
       position: "relative",
     }}>
-      {/* Subtle grid lines */}
       <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${accent}15 1px, transparent 1px), linear-gradient(90deg, ${accent}15 1px, transparent 1px)`, backgroundSize: "24px 24px", opacity: 0.5 }} />
-      {/* Glow blob */}
       <div style={{ position: "absolute", width: "120px", height: "120px", borderRadius: "50%", background: `${accent}20`, filter: "blur(40px)", top: "20%", left: "30%" }} />
-      <div style={{ position: "relative", fontSize: "48px", lineHeight: 1 }}>{meta.icon}</div>
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", color: accent }}>{iconFn(accent)}</div>
       <div style={{ position: "relative", textAlign: "center" }}>
-        <div style={{ fontSize: "16px", fontWeight: 900, color: "#fff", letterSpacing: "0.04em", marginBottom: "6px" }}>{meta.label}</div>
-        <div style={{ fontSize: "12px", fontWeight: 600, color: accent, letterSpacing: "0.1em", textTransform: "uppercase" }}>{meta.description}</div>
+        <div style={{ fontSize: "16px", fontWeight: 900, color: "#fff", letterSpacing: "0.04em", marginBottom: "6px" }}>{label}</div>
+        <div style={{ fontSize: "12px", fontWeight: 600, color: accent, letterSpacing: "0.1em", textTransform: "uppercase" }}>{desc}</div>
       </div>
     </div>
   );
@@ -648,30 +665,28 @@ export default function WelcomePage() {
               )}
 
               {isLastSlide && currentSlide.cta && !currentSlide.isArtistSlide && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
-                  <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+                  <a
+                    href={currentSlide.cta.href}
+                    style={{ display: "inline-block", background: currentSlide.accent, color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 40px", fontSize: "1rem", fontWeight: 800, letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.04)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; }}
+                  >
+                    {currentSlide.cta.label}
+                  </a>
+                  {currentSlide.cta.href !== "/passport" && (
                     <a
-                      href={currentSlide.cta.href}
-                      style={{ display: "inline-block", background: currentSlide.accent, color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 40px", fontSize: "1rem", fontWeight: 800, letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.04)"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; }}
+                      href="/passport"
+                      style={{ display: "inline-block", background: "rgba(255,255,255,0.08)", color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", border: "1.5px solid rgba(255,255,255,0.18)", transition: "transform 0.15s ease, background 0.15s ease" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.14)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.08)"; }}
                     >
-                      {currentSlide.cta.label}
+                      Become a Member
                     </a>
-                    {currentSlide.cta.href !== "/passport" && (
-                      <a
-                        href="/passport"
-                        style={{ display: "inline-block", background: "rgba(255,255,255,0.08)", color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", border: "1.5px solid rgba(255,255,255,0.18)", transition: "transform 0.15s ease, background 0.15s ease" }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.14)"; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.08)"; }}
-                      >
-                        Become a Member
-                      </a>
-                    )}
-                  </div>
+                  )}
                   <button
                     onClick={() => transition(() => { setPhase("picker"); setRole(null); })}
-                    style={{ background: "none", border: "none", padding: "4px 0", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", textDecoration: "underline", textUnderlineOffset: "3px" }}
+                    style={{ background: "none", border: "none", padding: "0", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", textDecoration: "underline", textUnderlineOffset: "3px" }}
                   >
                     See other paths
                   </button>
