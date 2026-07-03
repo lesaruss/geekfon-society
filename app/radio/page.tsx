@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import SiteChrome from "@/components/SiteChrome";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 const AUDIO_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
@@ -121,7 +122,7 @@ export default function RadioPage() {
   const pct = duration > 0 ? (progress / duration) * 100 : 0;
 
   return (
-    <>
+    <SiteChrome crumb={[{ label: "GeekFon Radio" }]}>
       <style>{CSS}</style>
 
       <div className="rd-city-stage">
@@ -191,7 +192,7 @@ export default function RadioPage() {
           <p className="rd-hint">Tap the logo to tune in</p>
         )}
       </div>
-    </>
+    </SiteChrome>
   );
 }
 
