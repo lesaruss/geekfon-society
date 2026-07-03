@@ -546,23 +546,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     return                       { label: "Locked",       cls: "vb-locked" };
   }
 
-  // Purchase routing: what happens when a user clicks a song badge
+  // Purchase routing: always open the modal — modal handles non-member/low-balance states
   function handleBadgeClick(t: Track) {
-    // Always open the modal — non-members see a register CTA inside, no redirect
     setPurchaseModal({ trackName: t.n, price: 25 });
-    if (t.v === "public") {
-      return;
-    }
-    if (t.v === "preview" || t.v === "passport") {
-      return;
-    }
-    if (t.v === "members") {
-      // Plus-tier songs: promoter/pro can purchase; Passport tier goes to Plus waitlist; visitors go to Passport
-      if (!effectiveTier) { window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`; return; }
-      if (rank < 2) { window.location.href = `/plus?return=${encodeURIComponent(returnPath)}`; return; }
-      setPurchaseModal({ trackName: t.n, price: 25 });
-      return;
-    }
   }
 
   async function handlePurchaseConfirm() {
