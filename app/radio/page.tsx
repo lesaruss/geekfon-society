@@ -19,8 +19,8 @@ const PLAYLIST = [
   { artist: "Roxanne", title: "Good Luck", path: "roxanne/good-luck.mp3" },
   { artist: "Shamanic Resin", title: "Real Dream", path: "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3" },
   { artist: "Shamanic Resin", title: "London Is Cool", path: "shamanic-resin/london-is-cool.mp3" },
-  { artist: "Lex from Brixton", title: "The Block", path: "lex-from-brixton/the-flex.mp3" },
-  { artist: "Lex from Brixton", title: "Brixton Sound", path: "lex-from-brixton/vibration.mp3" },
+  { artist: "Lex from Brixton", title: "The Flex", path: "lex-from-brixton/the-flex.mp3" },
+  { artist: "Lex from Brixton", title: "Vibration", path: "lex-from-brixton/vibration.mp3" },
   { artist: "Lex from Brixton", title: "No Apology", path: "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3" },
   { artist: "Riku Hayasaka", title: "Lottery of Love", path: "riku-hayasaka/lottery-of-love.mp3" },
   { artist: "Riku Hayasaka", title: "Make My Body Move", path: "riku-hayasaka/make-my-body-move.mp3" },
@@ -162,7 +162,7 @@ export default function RadioPage() {
           </button>
 
           <div className="rd-brand-row">
-            <span className="rd-brand-geek">GEEK</span><span className="rd-brand-fon">FON</span>
+            <span className="rd-brand-geekfon"><span className="rd-brand-geek">GEEK</span><span className="rd-brand-fon">FON</span></span>
             <span className="rd-brand-sep"></span>
             <span className="rd-brand-radio">RADIO</span>
           </div>
@@ -253,6 +253,7 @@ html, body { background: #020c0a !important; overflow-x: hidden; }
 }
 
 .rd-brand-row { display: flex; align-items: center; gap: 10px; }
+.rd-brand-geekfon { display: inline-flex; align-items: baseline; }
 .rd-brand-geek { font-family: 'Montserrat', sans-serif; font-size: 32px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; }
 @keyframes fonHue { 0% { color: #E91E8C; } 25% { color: #00B4FF; } 50% { color: #AAFF00; } 75% { color: #F69820; } 100% { color: #E91E8C; } }
 .rd-brand-fon { font-family: 'Montserrat', sans-serif; font-size: 32px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; animation: fonHue 6s ease-in-out infinite; }
