@@ -383,6 +383,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [bibleModules, setBibleModules] = useState<BibleModule[]>([]);
   const [bibleLoading, setBibleLoading] = useState(false);
   const [bibleOpenModule, setBibleOpenModule] = useState<string | null>(null);
+  const [hasVotedToday, setHasVotedToday] = useState(false);
+  const [voteLoading, setVoteLoading] = useState(false);
+  const [voteSuccess, setVoteSuccess] = useState(false);
+  const [showVoteModal, setShowVoteModal] = useState<"non-member" | "lesar" | null>(null);
+  const [lesarVoteCount, setLesarVoteCount] = useState(1);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -427,6 +432,20 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Check if user has voted for this artist today
+  useEffect(() => {
+    if (!userId || !slug || !SUPA_ANON) return;
+    const sb = createClient(SUPA_URL, SUPA_ANON);
+    const today = new Date().toISOString().slice(0, 10);
+    sb.from("gfs_artist_votes")
+      .select("id")
+      .eq("artist_slug", slug)
+      .eq("user_id", userId)
+      .gte("voted_at", today + "T00:00:00Z")
+      .maybeSingle()
+      .then(({ data }) => { if (data) setHasVotedToday(true); });
+  }, [userId, slug]);
 
   // Fetch gfs_artist_bible when Brief tab opens
   useEffect(() => {
@@ -614,13 +633,51 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
     b.textContent = "Copied"; setTimeout(() => { b.textContent = prev; }, 1400);
   }
-  function togglePlay(url: string, v?: string) {
+  function togglePlay(url: string, v?: string, trackName?: string) {
     const a = audioRef.current; if (!a) return;
     if (playing === url) { a.pause(); setPlaying(null); setPlayingV(null); return; }
     a.src = url;
     a.play()
-      .then(() => { setPlaying(url); setPlayingV(v || null); })
+      .then(() => { setPlaying(url); setPlayingV(v || null); if (trackName) logPlay(trackName); })
       .catch(() => { setPlaying(null); setPlayingV(null); });
+  }
+
+  async function logPlay(trackName: string) {
+    if (!SUPA_ANON) return;
+    try {
+      const sb = createClient(SUPA_URL, SUPA_ANON);
+      await sb.from("gfs_track_plays").insert({ artist_slug: slug, track_name: trackName, user_id: userId || null });
+    } catch { /* silent */ }
+  }
+
+  async function submitVote() {
+    if (!effectiveTier) { setShowVoteModal("non-member"); return; }
+    if (hasVotedToday || voteLoading) return;
+    setVoteLoading(true);
+    try {
+      const sb = createClient(SUPA_URL, SUPA_ANON!);
+      const { error } = await sb.from("gfs_artist_votes").insert({ artist_slug: slug, user_id: userId, vote_count: 1, lesars_spent: 0 });
+      if (!error) { setHasVotedToday(true); setVoteSuccess(true); setTimeout(() => setVoteSuccess(false), 3000); }
+    } catch { /* silent */ }
+    setVoteLoading(false);
+  }
+
+  async function submitLesarVote() {
+    const count = lesarVoteCount;
+    if (!effectiveTier || !userId || count < 1) return;
+    if (userBalance < count) return;
+    setVoteLoading(true);
+    try {
+      const sb = createClient(SUPA_URL, SUPA_ANON!);
+      const { error } = await sb.from("gfs_artist_votes").insert({ artist_slug: slug, user_id: userId, vote_count: count, lesars_spent: count });
+      if (!error) {
+        setUserBalance(b => b - count);
+        setVoteSuccess(true);
+        setShowVoteModal(null);
+        setTimeout(() => setVoteSuccess(false), 3000);
+      }
+    } catch { /* silent */ }
+    setVoteLoading(false);
   }
   const crumb = [
     { label: "GeekFon", href: "/" },
@@ -707,15 +764,56 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 <div className="head-name">{name}</div>
                 <p className="head-tagline">{c.tagline}</p>
                 <div className="pill-row">
-                  {(c.pills || []).map((p, i) => (<span key={i} className={"pill" + (p.accent ? " accent" : "")}>{p.label}</span>))}
+                  {c.pills && c.pills[0] && <span className={"pill" + (c.pills[0].accent ? " accent" : "")}>{c.pills[0].label}</span>}
+                  <button
+                    className={"pill-vote" + (hasVotedToday ? " voted" : "") + (voteLoading ? " loading" : "") + (voteSuccess ? " success" : "")}
+                    onClick={submitVote}
+                    disabled={voteLoading}
+                    aria-label={hasVotedToday ? "Already voted today" : "Vote for this artist"}
+                  >
+                    {voteSuccess ? "Voted!" : hasVotedToday ? "Voted" : "Vote"}
+                  </button>
+                  {(c.pills || []).slice(1).map((p, i) => (<span key={i} className={"pill" + (p.accent ? " accent" : "")}>{p.label}</span>))}
                 </div>
+                {userBalance > 0 && !showVoteModal && (
+                  <button className="pill-lesar-vote" onClick={() => setShowVoteModal("lesar")}>
+                    Use LESARs for extra votes
+                  </button>
+                )}
+                {showVoteModal === "non-member" && (
+                  <div className="vote-modal">
+                    <p>You need to be a member in order to vote. Membership is free. Register today.</p>
+                    <div className="vote-modal-actions">
+                      <a href="/passport" className="vote-modal-cta">Get Passport - Free</a>
+                      <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Dismiss</button>
+                    </div>
+                  </div>
+                )}
+                {showVoteModal === "lesar" && (
+                  <div className="vote-modal">
+                    <p className="vote-modal-title">Extra Votes with LESARs</p>
+                    <p className="vote-modal-sub">1 LESAR = 1 vote. You have <strong>{userBalance.toLocaleString()}</strong> LESARs.</p>
+                    <div className="vote-modal-input">
+                      <button className="vote-count-btn" onClick={() => setLesarVoteCount(v => Math.max(1, v - 1))}>-</button>
+                      <span className="vote-count-val">{lesarVoteCount}</span>
+                      <button className="vote-count-btn" onClick={() => setLesarVoteCount(v => Math.min(userBalance, v + 1))}>+</button>
+                      <span className="vote-count-cost">{lesarVoteCount} LESAR{lesarVoteCount > 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="vote-modal-actions">
+                      <button className="vote-modal-cta" onClick={submitLesarVote} disabled={voteLoading || userBalance < lesarVoteCount}>
+                        {voteLoading ? "Voting..." : `Submit ${lesarVoteCount} Vote${lesarVoteCount > 1 ? "s" : ""}`}
+                      </button>
+                      <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Cancel</button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* Tab bar */}
           {(() => {
-            const canSeeBrief = isSuperAdmin || (!!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 2);
+            const canSeeBrief = isSuperAdmin || (!!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 3);
             const visibleTabs = TABS.filter(t => !t.admin || canSeeBrief);
             return (
               <div className="tabbar" role="tablist">
@@ -1006,7 +1104,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                           <div
                             key={i}
                             className={"mp-row" + (isCurr ? " current" : "") + (locked ? " locked" : "")}
-                            onClick={() => { if (!locked) selectTrack(i); }}
+                            onClick={() => { if (!locked) { setCurrTrackIdx(i); if (url) togglePlay(url, t.v, t.n); } }}
                           >
                             <div className="mp-row-art">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={18} height={18}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
@@ -1027,7 +1125,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                     className={"mp-btn-pre" + (!url ? " disabled" : "")}
                                     disabled={!url}
                                     title={!url ? "Audio coming soon" : undefined}
-                                    onClick={(e) => { e.stopPropagation(); if (url) togglePlay(url, t.v); }}
+                                    onClick={(e) => { e.stopPropagation(); if (url) { setCurrTrackIdx(i); togglePlay(url, t.v, t.n); } }}
                                     aria-label={`Preview ${t.n}`}
                                   >
                                     {url ? "Preview" : "Soon"}
@@ -1412,6 +1510,29 @@ const CSS = `
 .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
 .pill{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:6px 14px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16)}
 .pill.accent{background:var(--rx);border-color:var(--rx);color:#fff}
+.pill-vote{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding:6px 16px;border-radius:20px;background:var(--rx);border:1px solid var(--rx);color:#fff;cursor:pointer;transition:opacity .15s,transform .1s;font-family:inherit}
+.pill-vote:hover:not(:disabled){opacity:.85;transform:scale(1.03)}
+.pill-vote:disabled{cursor:default}
+.pill-vote.voted{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.5)}
+.pill-vote.success{background:#22c55e;border-color:#22c55e}
+.pill-vote.loading{opacity:.6}
+.pill-lesar-vote{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:4px 12px;border-radius:20px;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);cursor:pointer;font-family:inherit;transition:all .15s;margin-top:4px}
+.pill-lesar-vote:hover{border-color:var(--rx);color:var(--rx)}
+.vote-modal{margin-top:16px;padding:16px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+.vote-modal p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;margin:0 0 12px}
+.vote-modal-title{font-weight:800;color:#fff!important}
+.vote-modal-sub{font-size:12px!important}
+.vote-modal-input{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.vote-count-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.vote-count-btn:hover{background:rgba(255,255,255,.2)}
+.vote-count-val{font-size:20px;font-weight:900;color:#fff;min-width:32px;text-align:center}
+.vote-count-cost{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em}
+.vote-modal-actions{display:flex;gap:10px;flex-wrap:wrap}
+.vote-modal-cta{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:9px 18px;border-radius:20px;background:var(--rx);color:#fff;border:none;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
+.vote-modal-cta:hover:not(:disabled){opacity:.85}
+.vote-modal-cta:disabled{opacity:.5;cursor:default}
+.vote-modal-dismiss{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:9px 16px;border-radius:20px;background:none;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.15);cursor:pointer;font-family:inherit}
+.vote-modal-dismiss:hover{color:#fff;border-color:rgba(255,255,255,.4)}
 
 .tabbar{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);display:flex;gap:2px;padding:0 40px}
 .tab{position:relative;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-50);background:none;border:none;padding:18px 18px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
