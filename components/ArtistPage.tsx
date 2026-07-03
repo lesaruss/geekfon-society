@@ -505,10 +505,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   function onTimeUpdate() {
     const a = audioRef.current;
     if (!a || !playing) return;
-    // Enforce 20s clip only for non-members; passport+ gets the full track
-    if (playingV === "preview" && !userTier && a.currentTime >= 20) {
-      a.pause(); a.currentTime = 0; setPlaying(null); setPlayingV(null); return;
-    }
+    // Tier enforcement: trackLocked already prevents locked tracks from playing
     setAudioProgress(prev => ({ ...prev, [playing]: a.currentTime }));
   }
   function onLoadedMetadata() {
@@ -521,29 +518,45 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     if (!a || playing !== url) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const maxTime = playingV === "preview" ? 20 : (a.duration || 0);
+    const maxTime = a.duration || 0;
     a.currentTime = pct * maxTime;
   }
 
   // Visibility helpers
-  // public   - free for everyone
-  // preview  - 20s clip, playable by everyone (not yet released)
-  // passport - full for passport+; locked for visitors
-  // members  - full for promoter/pro; locked for passport & visitors
-  // locked   - admin only
+  // Tier hierarchy (track v field → who can play):
+  //   public  = everyone, no account needed
+  //   preview = Passport+  (locked for public/anonymous)
+  //   members = Plus+      (locked for public + Passport)
+  //   pro     = Pro only   (locked for everyone below Pro)
+  // scheduledFor: if in the future → always locked regardless of tier
   const TIER_RANK: Record<string, number> = { passport: 1, promoter: 2, pro: 3 };
-  function trackLocked(v: string): boolean {
-    if (v === "public" || v === "preview") return false;
-    if (v === "passport") return !effectiveTier;
-    if (v === "members")  return !effectiveTier || (TIER_RANK[effectiveTier] || 0) < 2;
-    return true; // locked / admin
+
+  function isScheduledFuture(t: Track): boolean {
+    if (!t.scheduledFor) return false;
+    const rel = new Date(t.scheduledFor.split("T")[0]);
+    rel.setHours(0, 0, 0, 0);
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    return rel > now;
   }
-  function trackBadge(v: string): { label: string; cls: string } {
-    if (v === "public")   return { label: "Free",         cls: "vb-public" };
-    if (v === "preview")  return { label: "Full Preview",  cls: "vb-preview" };
-    if (v === "passport") return { label: "Passport",     cls: "vb-passport" };
-    if (v === "members")  return { label: "Plus",         cls: "vb-members" };
-    return                       { label: "Locked",       cls: "vb-locked" };
+
+  function trackLocked(t: Track): boolean {
+    if (isScheduledFuture(t)) return true;
+    const v = t.v;
+    if (v === "public")  return false;
+    if (v === "preview") return !effectiveTier;
+    if (v === "members") return !effectiveTier || (TIER_RANK[effectiveTier] || 0) < 2;
+    if (v === "pro")     return !effectiveTier || (TIER_RANK[effectiveTier] || 0) < 3;
+    return true;
+  }
+
+  function trackBadge(t: Track): { label: string; cls: string } {
+    if (isScheduledFuture(t)) return { label: "Coming Soon", cls: "vb-coming" };
+    const v = t.v;
+    if (v === "public")  return { label: "Free",    cls: "vb-public" };
+    if (v === "preview") return { label: "Passport", cls: "vb-passport" };
+    if (v === "members") return { label: "Plus",     cls: "vb-members" };
+    if (v === "pro")     return { label: "Pro",      cls: "vb-pro" };
+    return                     { label: "Locked",   cls: "vb-locked" };
   }
 
   // Purchase routing: always open the modal — modal handles non-member/low-balance states
@@ -581,30 +594,32 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     setPurchaseModal(null);
     setTimeout(() => setPurchaseSuccess(null), 4000);
   }
-  function trackPlayLabel(v: string, isPlaying: boolean): string {
-    if (isPlaying) return "Pause";
-    if (v === "preview") return "Play Preview";
-    return "Play";
+  function trackPlayLabel(isPlaying: boolean): string {
+    return isPlaying ? "Pause" : "Play";
   }
-  function trackLockedLabel(v: string): string {
-    if (v === "passport") return "Passport members";
-    if (v === "members")  return "Members only";
+  function trackLockedLabel(t: Track): string {
+    if (isScheduledFuture(t)) {
+      const d = t.scheduledFor!.split("T")[0];
+      const [, m, day] = d.split("-");
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      return `Available ${months[+m - 1]} ${+day}`;
+    }
+    if (t.v === "preview") return "Passport required";
+    if (t.v === "members") return "Plus required";
+    if (t.v === "pro")     return "Pro required";
     return "Locked";
   }
   // Schedule tab: maps visibility to user-facing tier label + style
   function scheduleTier(v: string): { label: string; cls: string } {
-    if (v === "public")   return { label: "Public",   cls: "st-free" };
-    if (v === "preview")  return { label: "Passport", cls: "st-preview" };
-    if (v === "passport" || v === "locked") return { label: "Passport", cls: "st-passport" };
-    if (v === "members")  return { label: "Plus",     cls: "st-plus" };
-    return                       { label: "Pro",      cls: "st-pro" };
+    if (v === "public")  return { label: "Public",   cls: "st-free" };
+    if (v === "preview") return { label: "Passport", cls: "st-preview" };
+    if (v === "members") return { label: "Plus",     cls: "st-plus" };
+    if (v === "pro")     return { label: "Pro",      cls: "st-pro" };
+    return                     { label: "Passport",  cls: "st-passport" };
   }
-  // Which tracks are visible in the schedule for the current user
-  function scheduleVisible(v: string): boolean {
-    if (v === "public" || v === "preview") return true;
-    if (v === "passport") return !!effectiveTier;
-    if (v === "members") return !!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 2;
-    return false;
+  // Show all tracks in schedule so users can see what's coming + upgrade CTAs
+  function scheduleVisible(_v: string): boolean {
+    return true;
   }
 
   function copy(e: React.MouseEvent<HTMLButtonElement>, text: string) {
@@ -973,13 +988,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 const safeIdx = Math.min(currTrackIdx, tracks.length - 1);
                 const npTrack = tracks[safeIdx];
                 const npUrl = npTrack?.url ? AUDIO + npTrack.url : null;
-                const npLocked = npTrack ? trackLocked(npTrack.v) : true;
+                const npLocked = npTrack ? trackLocked(npTrack) : true;
                 const npPlaying = !!npUrl && playing === npUrl;
                 const npProgress = npUrl ? (audioProgress[npUrl] || 0) : 0;
                 const npDuration = npUrl ? (audioDuration[npUrl] || 0) : 0;
-                const npMax = npTrack?.v === "preview" ? 20 : npDuration;
+                const npMax = npDuration;
                 const npPct = npMax > 0 ? Math.min(100, (npProgress / npMax) * 100) : 0;
-                const npBadge = npTrack ? trackBadge(npTrack.v) : { label: "", cls: "" };
+                const npBadge = npTrack ? trackBadge(npTrack) : { label: "", cls: "" };
 
                 function selectTrack(i: number) {
                   setCurrTrackIdx(i);
@@ -987,12 +1002,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 }
                 function playPrev() {
                   let i = safeIdx - 1;
-                  while (i >= 0 && trackLocked(tracks[i].v)) i--;
+                  while (i >= 0 && trackLocked(tracks[i])) i--;
                   if (i >= 0) selectTrack(i);
                 }
                 function playNext() {
                   let i = safeIdx + 1;
-                  while (i < tracks.length && trackLocked(tracks[i].v)) i++;
+                  while (i < tracks.length && trackLocked(tracks[i])) i++;
                   if (i < tracks.length) selectTrack(i);
                 }
 
@@ -1081,9 +1096,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     <div className="mp-rows">
                       {tracks.map((t, i) => {
                         const url = t.url ? AUDIO + t.url : null;
-                        const locked = trackLocked(t.v);
+                        const locked = trackLocked(t);
                         const isCurr = i === safeIdx;
-                        const badge = trackBadge(t.v);
+                        const badge = trackBadge(t);
                         return (
                           <div
                             key={i}
@@ -1100,8 +1115,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             <div className="mp-row-state">
                               {locked ? (
                                 <>
-                                  <span className="mp-badge-lk">LOCKED</span>
-                                  <span className="mp-row-date">{t.scheduledFor || "Coming soon"}</span>
+                                  <span className="mp-badge-lk">{isScheduledFuture(t) ? "SOON" : "LOCKED"}</span>
+                                  <span className="mp-row-date">{trackLockedLabel(t)}</span>
                                 </>
                               ) : (
                                 <>
@@ -1110,9 +1125,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                     disabled={!url}
                                     title={!url ? "Audio coming soon" : undefined}
                                     onClick={(e) => { e.stopPropagation(); if (url) { setCurrTrackIdx(i); togglePlay(url, t.v, t.n); } }}
-                                    aria-label={`Preview ${t.n}`}
+                                    aria-label={trackPlayLabel(playing === url)}
                                   >
-                                    {!url ? "Soon" : t.v === "public" ? "Play" : "Preview"}
+                                    {!url ? "Soon" : trackPlayLabel(playing === url)}
                                   </button>
                                   <button
                                     className="mp-btn-buy"
@@ -1147,9 +1162,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   const tier = scheduleTier(t.v);
                   const releaseDate = t.scheduledFor ? new Date(t.scheduledFor) : null;
                   const isReleased = releaseDate ? releaseDate <= today : false;
-                  const isAvailable = t.v === "public" || (t.v === "preview" && !!t.url && isReleased);
-                  const releasedLabel = t.scheduledFor ? `Released ${t.scheduledFor}` : "Available now";
-                  const statusLabel = isAvailable ? releasedLabel : (t.scheduledFor || "Coming soon");
+                  const userCanAccess = t.v === "public"
+                    || (t.v === "preview" && !!effectiveTier)
+                    || (t.v === "members" && !!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 2)
+                    || (t.v === "pro"     && !!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 3);
+                  const isAvailable = isReleased && userCanAccess;
+                  const releasedLabel = t.scheduledFor ? `Released ${t.scheduledFor.split("T")[0]}` : "Available now";
+                  const statusLabel = isAvailable ? releasedLabel : (t.scheduledFor ? t.scheduledFor.split("T")[0] : "Coming soon");
                   return (
                     <div key={i} className={"sch-row" + (isAvailable ? " sch-live" : "")}>
                       <div className="sch-dot-wrap" aria-hidden="true">
@@ -1685,7 +1704,9 @@ const CSS = `
 .sch-tier-pill-btn:hover{filter:brightness(1.15);transform:scale(1.04)}
 .sch-tier-pill-btn:focus-visible{outline:2px solid var(--rx);outline-offset:2px}
 .vb-public  {background:rgba(76,175,80,.14);color:#2e7d32}
-.vb-preview {background:rgba(246,152,32,.16);color:#b45309}
+.vb-coming  {background:rgba(120,120,140,.16);color:rgba(255,255,255,.5)}
+.vb-preview,.vb-passport {background:rgba(233,30,140,.14);color:#c71585}
+.vb-pro     {background:rgba(170,255,0,.12);color:#5a8a00}
 .vb-passport{background:var(--rx-tint);color:var(--rx-text)}
 .vb-members {background:rgba(99,102,241,.13);color:#4338ca}
 .vb-locked  {background:rgba(0,0,0,.06);color:var(--lr-text-30)}
@@ -2024,6 +2045,7 @@ const CITY_CSS = `
 .art-q{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-50);margin:28px 0 2px}
 .art-a{font-size:15px;line-height:1.8;color:var(--lr-text);margin:0 0 4px;padding:14px 18px;background:rgba(0,0,0,.035);border-radius:10px;border-left:3px solid var(--rx,#c084fc)}
 `;
+
 
 
 
