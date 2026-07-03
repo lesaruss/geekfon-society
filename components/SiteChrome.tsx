@@ -227,28 +227,19 @@ export default function SiteChrome({
           </nav>
         )}
 
-        {auth.loading ? (
-          <div className="gtop-shimmer" aria-hidden="true" />
-        ) : isLoggedIn ? (
-          <div className="gmember-chip">
-            {auth.balance > 0 && (
-              <div className="gmember-balance">
-                <span className="gmember-balance-num">{auth.balance.toLocaleString()}</span>
-                <span className="gmember-balance-label">LESARs</span>
-              </div>
-            )}
-            <div className="gmember-avatar" aria-label={auth.name} style={{ background: tierAccent }}>
-              {auth.initial}
-            </div>
+        {!auth.loading && isLoggedIn && auth.balance > 0 && (
+          <div className="gmember-balance">
+            <span className="gmember-balance-num">{auth.balance.toLocaleString()}</span>
+            <span className="gmember-balance-label">LESARs</span>
           </div>
-        ) : (
+        )}
+        {!auth.loading && !isLoggedIn && (
           <div className="gauth">
             <a href="/login.html" className="glogin">Log in</a>
             <a href="/passport" className="gcta">Get Passport</a>
           </div>
         )}
 
-        <img src="/geekfon-logo.png" alt="" className="gfs-nav-circle" aria-hidden="true" onClick={() => setOpen(true)} />
         <button className="gham" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
           <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
         </button>
@@ -379,8 +370,7 @@ const CHROME_CSS = `
 .glogin:hover { opacity: 1; }
 .gdrawer-login { display: block; text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); text-decoration: underline; text-underline-offset: 3px; }
 .gdrawer-login:hover { color: #fff; }
-.gmember-chip { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
-.gmember-balance { display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
+.gmember-balance { margin-left: auto; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
 .gmember-balance-num { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -.01em; }
 .gmember-balance-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: #9c1458; margin-top: 2px; }
 .gmember-avatar { width: 36px; height: 36px; border-radius: 50%; color: #fff; font-size: 14px; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
