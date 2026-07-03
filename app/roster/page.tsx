@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+// roster page - 4-col desktop, 2x2 mobile
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -67,7 +68,6 @@ type Artist = {
 
 export default function RosterPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [desktopSlide, setDesktopSlide] = useState(0);
   const [current, setCurrent] = useState(0);
   const currentRef = useRef(0);
   const cityPanelRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -126,11 +126,7 @@ export default function RosterPage() {
 
   const city = CITIES[current];
 
-  // Desktop: slide 1 = first 3 artists, slide 2 = Riku + teaser + empty
-  const desktopSlide1 = artists.slice(0, 3);
-  const desktopSlide2Artists = artists.slice(3); // [Riku]
-
-  // Mobile: all 4 artists, 2x2, no teaser
+  // Mobile: all 4 artists, 2x2
   const mobileArtists = artists;
 
   function ArtistCard({ a, featured = false }: { a: Artist; featured?: boolean }) {
@@ -212,51 +208,14 @@ export default function RosterPage() {
             </div>
           ) : (
             <>
-              {/* DESKTOP: paginated 3-col slides */}
+              {/* DESKTOP: 4-col grid, all artists */}
               <div className="r-desktop-roster">
-                <div className="r-slide-viewport">
-                  {/* Slide 1 */}
-                  <div className={"r-slide" + (desktopSlide === 0 ? " active" : " prev")}>
-                    <div className="r-grid">
-                      {desktopSlide1.map(a => <ArtistCard key={a.slug} a={a} featured />)}
-                    </div>
-                  </div>
-
-                  {/* Slide 2 */}
-                  <div className={"r-slide" + (desktopSlide === 1 ? " active" : " next")}>
-                    <div className="r-grid">
-                      {desktopSlide2Artists.map(a => <ArtistCard key={a.slug} a={a} featured />)}
-                      {/* Teaser slot */}
-                      <div className="r-card r-card-teaser" aria-label="More artists coming">
-                        <div className="r-teaser-inner">
-                          <span className="r-teaser-label">More artists coming</span>
-                          <span className="r-teaser-sub">Check back for announcements</span>
-                        </div>
-                      </div>
-                      {/* Empty third slot */}
-                      <div className="r-card r-card-empty" aria-hidden="true" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dot nav */}
-                <div className="r-dot-nav" role="navigation" aria-label="Roster pages">
-                  <button
-                    className={"r-dot" + (desktopSlide === 0 ? " on" : "")}
-                    onClick={() => setDesktopSlide(0)}
-                    aria-label="Page 1"
-                    aria-current={desktopSlide === 0 ? "true" : undefined}
-                  />
-                  <button
-                    className={"r-dot" + (desktopSlide === 1 ? " on" : "")}
-                    onClick={() => setDesktopSlide(1)}
-                    aria-label="Page 2"
-                    aria-current={desktopSlide === 1 ? "true" : undefined}
-                  />
+                <div className="r-grid">
+                  {artists.map(a => <ArtistCard key={a.slug} a={a} featured />)}
                 </div>
               </div>
 
-              {/* MOBILE: 2x2 grid, all 4 artists, no teaser */}
+              {/* MOBILE: 2x2 grid */}
               <div className="r-mobile-roster">
                 <div className="r-grid-mobile">
                   {mobileArtists.map(a => <ArtistCard key={a.slug} a={a} featured />)}
@@ -335,7 +294,7 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .r-slide.prev   { transform:translateX(-105%); opacity:0; position:absolute; top:0; left:0; width:100%; pointer-events:none; }
 .r-slide.next   { transform:translateX(105%); opacity:0; position:absolute; top:0; left:0; width:100%; pointer-events:none; }
 
-.r-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.r-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 
 /* Dot nav */
 .r-dot-nav{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:28px}
