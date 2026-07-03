@@ -14,7 +14,6 @@ const NAV_PASSPORT: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
   { label: "Roster",          href: "/roster" },
   { label: "Library",         href: "/dashboard/library" },
-  { label: "Jukebox",         href: "/dashboard/jukebox" },
   { label: "Leaderboard",     href: "/dashboard/leaderboard" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "GeekFon Radio",   href: "/radio" },
@@ -24,7 +23,6 @@ const NAV_PLUS: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
   { label: "Roster",          href: "/roster" },
   { label: "Library",         href: "/dashboard/library" },
-  { label: "Jukebox",         href: "/dashboard/jukebox" },
   { label: "Leaderboard",     href: "/dashboard/leaderboard" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Plus",            href: "/plus" },
@@ -35,7 +33,6 @@ const NAV_PRO: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
   { label: "Roster",          href: "/roster" },
   { label: "Library",         href: "/dashboard/library" },
-  { label: "Jukebox",         href: "/dashboard/jukebox" },
   { label: "Leaderboard",     href: "/dashboard/leaderboard" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Plus",            href: "/plus" },
@@ -215,10 +212,6 @@ export default function SiteChrome({
       <style>{CHROME_CSS}</style>
 
       <header className="gtop">
-        <button className="gham" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
-          <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
-        </button>
-
         <a href="/" className="glogo" aria-label="GeekFon Society home">
           <GeekFonLogo />
         </a>
@@ -254,6 +247,11 @@ export default function SiteChrome({
             <a href="/passport" className="gcta">Get Passport</a>
           </div>
         )}
+
+        <img src="/geekfon-logo.png" alt="" className="gfs-nav-circle" aria-hidden="true" onClick={() => setOpen(true)} />
+        <button className="gham" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+        </button>
       </header>
 
       <div className={"gscrim" + (open ? " open" : "")} onClick={() => setOpen(false)} aria-hidden="true" />
@@ -388,8 +386,10 @@ const CHROME_CSS = `
 .gmember-avatar { width: 36px; height: 36px; border-radius: 50%; color: #fff; font-size: 14px; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
 .gscrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 50; }
 .gscrim.open { opacity: 1; pointer-events: auto; }
-.gdrawer { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; background: #111; color: #fff; z-index: 60; transform: translateX(-100%); transition: transform .26s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; overflow-y: auto; }
+.gdrawer { position: fixed; top: 0; right: 0; left: auto; bottom: 0; width: 280px; background: #111; color: #fff; z-index: 60; transform: translateX(100%); transition: transform .26s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; overflow-y: auto; }
 .gdrawer.open { transform: translateX(0); }
+.gfs-nav-circle { height: 28px; width: 28px; object-fit: contain; flex-shrink: 0; cursor: pointer; border-radius: 50%; filter: brightness(0) saturate(100%) invert(51%) sepia(98%) saturate(1200%) hue-rotate(178deg) brightness(103%) contrast(104%); opacity: .9; }
+.gfs-nav-circle:hover { opacity: 1; }
 .gdrawer-head { display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 0 14px 0 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
 .gx { width: 34px; height: 34px; border: none; background: none; cursor: pointer; color: rgba(255,255,255,.6); display: flex; align-items: center; justify-content: center; border-radius: 7px; }
 .gx:hover { background: rgba(255,255,255,.08); color: #fff; }
