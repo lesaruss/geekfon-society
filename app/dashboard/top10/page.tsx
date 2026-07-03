@@ -4,46 +4,49 @@ import { supabase } from "@/lib/supabase";
 
 const STORAGE_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/artists";
 
-const FEATURED_SLUGS = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku-hayasaka"];
+const FEATURED_SLUGS = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
 
-type Artist = {
+type RankedArtist = {
   slug: string;
   name: string;
   genre: string | null;
+  plays: number;
+  votes: number;
+  score: number;
 };
-
-const SEED_SCORES: Record<string, { plays: number; views: number; votes: number; trend: "up" | "down" | "same"; trendVal: string }> = {
-  "roxanne":          { plays: 12480, views: 8310,  votes: 4200, trend: "up",   trendVal: "+2" },
-  "shamanic-resin":   { plays: 9210,  views: 6880,  votes: 3440, trend: "same", trendVal: "--" },
-  "riku-hayasaka":    { plays: 8760,  views: 5920,  votes: 2990, trend: "down", trendVal: "-1" },
-  "lex-from-brixton": { plays: 7340,  views: 5100,  votes: 2610, trend: "up",   trendVal: "+1" },
-};
-
-function score(slug: string) {
-  const s = SEED_SCORES[slug];
-  if (!s) return 0;
-  return Math.round(s.plays * 0.4 + s.views * 0.3 + s.votes * 0.3);
-}
 
 export default function ArtistRankingsPage() {
-  const [artists, setArtists] = useState<Artist[]>([]);
+  const [artists, setArtists] = useState<RankedArtist[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from("gfs_artists")
-        .select("slug, name, profile")
-        .in("slug", FEATURED_SLUGS);
+      // Fetch live rankings from the view (plays + votes = real data)
+      const { data: rankings } = await supabase
+        .from("gfs_artist_rankings")
+        .select("slug, name, plays, votes, score")
+        .in("slug", FEATURED_SLUGS)
+        .order("score", { ascending: false });
 
-      if (data) {
-        const mapped: Artist[] = data.map(a => ({
-          slug: a.slug,
-          name: a.name,
-          genre: (a.profile as { genre?: string } | null)?.genre ?? null,
+      if (rankings && rankings.length > 0) {
+        const mapped: RankedArtist[] = rankings.map((r: { slug: string; name: string; plays: number; votes: number; score: number }) => ({
+          slug: r.slug,
+          name: r.name,
+          genre: null,
+          plays: r.plays,
+          votes: r.votes,
+          score: r.score,
         }));
-        mapped.sort((a, b) => score(b.slug) - score(a.slug));
         setArtists(mapped);
+      } else {
+        // Fallback: fetch artists, show all zeros
+        const { data } = await supabase
+          .from("gfs_artists")
+          .select("slug, name")
+          .in("slug", FEATURED_SLUGS);
+        if (data) {
+          setArtists(data.map(a => ({ slug: a.slug, name: a.name, genre: null, plays: 0, votes: 0, score: 0 })));
+        }
       }
       setLoading(false);
     }
@@ -78,13 +81,12 @@ export default function ArtistRankingsPage() {
           </div>
 
           {artists.map((artist, i) => {
-            const s = SEED_SCORES[artist.slug];
-            const sc = score(artist.slug);
             const rankClass = i === 0 ? " rank-1" : i === 1 ? " rank-2" : i === 2 ? " rank-3" : "";
             const rankColor = i === 0 ? " gold" : i === 1 ? " silver" : i === 2 ? " bronze" : "";
             const imgSrc = `${STORAGE_BASE}/${artist.slug}/profile.jpg`;
+            const artSlug = artist.slug === "riku" ? "riku" : artist.slug;
             return (
-              <a key={artist.slug} href={`/${artist.slug}`} className={"t10-row" + rankClass}>
+              <a key={artist.slug} href={`/${artSlug}`} className={"t10-row" + rankClass}>
                 <div className={"t10-rank" + rankColor}>{i + 1}</div>
                 <div className="t10-identity">
                   <img
@@ -103,25 +105,11 @@ export default function ArtistRankingsPage() {
                     {artist.genre && <div className="t10-genre">{artist.genre}</div>}
                   </div>
                 </div>
-                <div className="t10-stat t10-plays">{s ? s.plays.toLocaleString() : "-"}</div>
-                <div className="t10-stat t10-views">{s ? s.views.toLocaleString() : "-"}</div>
-                <div className="t10-stat">{s ? s.votes.toLocaleString() : "-"}</div>
+                <div className="t10-stat t10-plays">{artist.plays > 0 ? artist.plays.toLocaleString() : "0"}</div>
+                <div className="t10-stat t10-views">-</div>
+                <div className="t10-stat">{artist.votes > 0 ? artist.votes.toLocaleString() : "0"}</div>
                 <div className="t10-score-cell">
-                  <div className={"t10-score" + rankColor}>{sc > 0 ? sc.toLocaleString() : "-"}</div>
-                  {s && (
-                    <div className={"t10-trend t10-trend-" + s.trend}>
-                      {s.trend === "up" && (
-                        <svg viewBox="0 0 10 10" fill="currentColor" width="13" height="13"><path d="M5 2L9 7H1L5 2Z"/></svg>
-                      )}
-                      {s.trend === "down" && (
-                        <svg viewBox="0 0 10 10" fill="currentColor" width="13" height="13"><path d="M5 8L9 3H1L5 8Z"/></svg>
-                      )}
-                      {s.trend === "same" && (
-                        <svg viewBox="0 0 10 10" fill="currentColor" width="13" height="13"><rect x="1" y="4" width="8" height="2"/></svg>
-                      )}
-                      {s.trendVal}
-                    </div>
-                  )}
+                  <div className={"t10-score" + rankColor}>{artist.score > 0 ? artist.score.toLocaleString() : "0"}</div>
                 </div>
               </a>
             );
