@@ -540,9 +540,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   }
 
   function trackLocked(t: Track): boolean {
-    // Super admin in real (non-view-as) mode sees and can play everything
+    // Super admin in real mode: bypass all locks (see + play everything)
     if (isSuperAdmin && viewAs === "real") return false;
-    if (isScheduledFuture(t)) return true;
+    // Super admin in view-as mode: bypass date locks, only apply tier gating
+    // This previews what each tier will see on launch day
+    const adminPreview = isSuperAdmin && viewAs !== "real";
+    if (!adminPreview && isScheduledFuture(t)) return true;
     const v = t.v;
     if (v === "public")  return false;
     if (v === "preview") return !effectiveTier;
@@ -552,8 +555,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   }
 
   function trackBadge(t: Track): { label: string; cls: string } {
-    // Super admin in real mode: show the actual tier badge, not "Coming Soon"
-    if (!isSuperAdmin || viewAs !== "real") {
+    // In view-as or real admin mode: always show the actual tier badge, not "Coming Soon"
+    if (!isSuperAdmin) {
       if (isScheduledFuture(t)) return { label: "Coming Soon", cls: "vb-coming" };
     }
     const v = t.v;
