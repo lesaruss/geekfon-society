@@ -128,9 +128,15 @@ export default function SiteChrome({
 
   const handleViewAs = (t: Tier) => {
     const final = t === auth.tier && viewAs === null ? null : t;
-    setViewAs(final === auth.tier ? null : t);
-    if (final === auth.tier) localStorage.removeItem("gfs-view-as");
-    else if (t !== auth.tier) localStorage.setItem("gfs-view-as", t);
+    const newViewAs = final === auth.tier ? null : t;
+    setViewAs(newViewAs);
+    if (final === auth.tier) {
+      localStorage.removeItem("gfs-view-as");
+      window.dispatchEvent(new CustomEvent("gfs-view-as", { detail: null }));
+    } else if (t !== auth.tier) {
+      localStorage.setItem("gfs-view-as", t);
+      window.dispatchEvent(new CustomEvent("gfs-view-as", { detail: t }));
+    }
     setAdminOpen(false);
   };
 
@@ -331,7 +337,7 @@ export default function SiteChrome({
                   </button>
                 ))}
                 {viewAs !== null && (
-                  <button className="gdva-reset" onClick={() => { setViewAs(null); localStorage.removeItem("gfs-view-as"); setAdminOpen(false); }}>
+                  <button className="gdva-reset" onClick={() => { setViewAs(null); localStorage.removeItem("gfs-view-as"); window.dispatchEvent(new CustomEvent("gfs-view-as", { detail: null })); setAdminOpen(false); }}>
                     Reset to my account
                   </button>
                 )}
