@@ -284,6 +284,59 @@ const FEATURED: ArtistCard[] = ["roxanne", "lex-from-brixton", "shamanic-resin",
   return { ...base, tracks: [{ title: pv.title, url: SUPA_AUDIO + pv.path }] };
 });
 
+// ── Slide preview mockups (16:9) ──────────────────────────────────────────────
+const SLIDE_PREVIEWS: Record<string, { icon: string; label: string; description: string }> = {
+  "fan-artists": { icon: "🎤", label: "Artist Profiles", description: "Full bio, music, Pulse feed" },
+  "fan-pulse": { icon: "📱", label: "The Pulse", description: "Daily posts from every artist" },
+  "fan-tokens": { icon: "✦", label: "LESARs", description: "111 free points to start" },
+  "fan-voting": { icon: "▲", label: "Rankings", description: "Vote daily. Shape the charts." },
+  "fan-radio": { icon: "📻", label: "GeekFon Radio", description: "24/7 live station" },
+  "label-ip": { icon: "♪", label: "IP Catalog", description: "Original music, all genres" },
+  "label-licensing": { icon: "⚡", label: "Sync Licensing", description: "Film, TV, campaigns" },
+  "label-pipeline": { icon: "⬡", label: "TalentVangelist", description: "Real-artist pipeline" },
+  "label-cta": { icon: "✉", label: "Contact", description: "Licensing inquiries open" },
+  "brand-audience": { icon: "◉", label: "Global Cities", description: "Tokyo · Seoul · Berlin" },
+  "brand-ecosystem": { icon: "✦", label: "LESARs Economy", description: "Built-in brand moments" },
+  "brand-events": { icon: "◈", label: "Live Events", description: "Every show is content" },
+  "brand-cta": { icon: "⬟", label: "Sponsorships", description: "Native to the universe" },
+  "promoter-live": { icon: "◎", label: "Live Shows", description: "Lord Zorlot on the decks" },
+  "promoter-production": { icon: "▣", label: "Content Pipeline", description: "3 archive streams per show" },
+  "promoter-cities": { icon: "◍", label: "Season 1", description: "Jul 13 - Sep 19, 2026" },
+  "promoter-cta": { icon: "➔", label: "Book the Act", description: "Dates are limited" },
+};
+
+function SlidePreview({ slideId, accent }: { slideId: string; accent: string }) {
+  const meta = SLIDE_PREVIEWS[slideId] || { icon: "◆", label: "GeekFon", description: "Explore the universe" };
+  return (
+    <div style={{
+      aspectRatio: "16 / 9",
+      background: "rgba(0,0,0,0.45)",
+      border: `1px solid ${accent}40`,
+      borderRadius: "12px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "14px",
+      padding: "24px",
+      backdropFilter: "blur(8px)",
+      boxShadow: `0 0 40px ${accent}20, inset 0 0 30px rgba(0,0,0,0.3)`,
+      overflow: "hidden",
+      position: "relative",
+    }}>
+      {/* Subtle grid lines */}
+      <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${accent}15 1px, transparent 1px), linear-gradient(90deg, ${accent}15 1px, transparent 1px)`, backgroundSize: "24px 24px", opacity: 0.5 }} />
+      {/* Glow blob */}
+      <div style={{ position: "absolute", width: "120px", height: "120px", borderRadius: "50%", background: `${accent}20`, filter: "blur(40px)", top: "20%", left: "30%" }} />
+      <div style={{ position: "relative", fontSize: "48px", lineHeight: 1 }}>{meta.icon}</div>
+      <div style={{ position: "relative", textAlign: "center" }}>
+        <div style={{ fontSize: "16px", fontWeight: 900, color: "#fff", letterSpacing: "0.04em", marginBottom: "6px" }}>{meta.label}</div>
+        <div style={{ fontSize: "12px", fontWeight: 600, color: accent, letterSpacing: "0.1em", textTransform: "uppercase" }}>{meta.description}</div>
+      </div>
+    </div>
+  );
+}
+
 // ── Artist panel ──────────────────────────────────────────────────────────────
 function ArtistPanel({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState(0);
@@ -338,20 +391,27 @@ function ArtistPanel({ onClose }: { onClose: () => void }) {
 
         {/* Artist detail */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          {/* Hero image with swipe arrows */}
+          {/* Hero image - 16:9 with pagination dots */}
           {artist.heroUrl ? (
-            <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", flexShrink: 0, borderBottom: `3px solid ${artist.accent}` }}>
-              <img
-                src={artist.heroUrl}
-                alt={artist.name}
-                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
-              />
-              <button onClick={() => go(-1)} aria-label="Previous artist" style={{ position: "absolute", top: "50%", left: "12px", transform: "translateY(-50%)", width: "38px", height: "38px", borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-              </button>
-              <button onClick={() => go(1)} aria-label="Next artist" style={{ position: "absolute", top: "50%", right: "12px", transform: "translateY(-50%)", width: "38px", height: "38px", borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-              </button>
+            <div style={{ flexShrink: 0 }}>
+              <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", overflow: "hidden", borderBottom: `3px solid ${artist.accent}` }}>
+                <img
+                  src={artist.heroUrl}
+                  alt={artist.name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
+                />
+              </div>
+              {/* Pagination dots */}
+              <div style={{ display: "flex", justifyContent: "center", gap: "8px", padding: "12px 0 4px" }}>
+                {FEATURED.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelected(i)}
+                    aria-label={`Artist ${i + 1}`}
+                    style={{ width: i === selected ? "20px" : "6px", height: "6px", borderRadius: "3px", background: i === selected ? artist.accent : "rgba(255,255,255,0.25)", border: "none", cursor: "pointer", padding: 0, transition: "all 0.3s ease" }}
+                  />
+                ))}
+              </div>
             </div>
           ) : null}
 
@@ -552,7 +612,9 @@ export default function WelcomePage() {
 
           {/* PATH SLIDES */}
           {phase === "path" && currentSlide && role && (
-            <div style={{ maxWidth: "620px" }}>
+            <div style={{ display: "flex", gap: "48px", alignItems: "center", maxWidth: "900px" }}>
+              {/* Text content */}
+              <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ marginBottom: "12px" }}>
                 <span style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: currentSlide.accent, opacity: 0.85 }}>
                   {ROLE_META[role].label} - {pathSlide + 1} of {currentSlides.length}
@@ -615,6 +677,13 @@ export default function WelcomePage() {
                   </button>
                 </div>
               )}
+              </div>{/* end text content */}
+
+              {/* 16:9 feature preview - desktop only */}
+              <div style={{ flexShrink: 0, width: "340px", display: "none" }} className="slide-preview-panel">
+                <SlidePreview slideId={currentSlide.id} accent={currentSlide.accent} />
+              </div>
+              <style>{`@media(min-width:900px){.slide-preview-panel{display:block !important}}`}</style>
             </div>
           )}
         </div>
