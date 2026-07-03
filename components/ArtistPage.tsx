@@ -371,7 +371,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [isMobile, setIsMobile] = useState(false);
   const [tabDropOpen, setTabDropOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [viewAs, setViewAs] = useState<"real" | "visitor" | "passport" | "plus" | "pro">("real");
+  const [viewAs, setViewAs] = useState<string>("real");
   const [viewDropOpen, setViewDropOpen] = useState(false);
   const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
@@ -399,12 +399,27 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   } as React.CSSProperties;
   const emph = (t: string) => t.replace(/\{\{(.+?)\}\}/g, '<em style="color:var(--rx-text);font-style:normal;font-weight:800">$1</em>');
 
-  // Super admin view-as override: maps the selected preview tier to an actual tier value
+  // Sync viewAs from SiteChrome's localStorage + custom event (same-window)
+  useEffect(() => {
+    const saved = localStorage.getItem("gfs-view-as");
+    if (saved) setViewAs(saved);
+    const onViewAs = (e: Event) => {
+      const tier = (e as CustomEvent<string | null>).detail;
+      setViewAs(tier ?? "real");
+    };
+    window.addEventListener("gfs-view-as", onViewAs);
+    return () => window.removeEventListener("gfs-view-as", onViewAs);
+  }, []);
+
+  // Super admin view-as override: maps SiteChrome tier selection to effectiveTier
+  // SiteChrome tier values: "public" | "passport" | "plus" | "pro" | null (= real)
   const effectiveTier: string | null = isSuperAdmin && viewAs !== "real"
-    ? viewAs === "visitor" ? null
+    ? viewAs === "public" ? null       // visitor: no tier access
+    : viewAs === "visitor" ? null      // legacy
     : viewAs === "passport" ? "passport"
-    : viewAs === "plus" ? "promoter"
-    : "pro"
+    : viewAs === "plus" ? "promoter"   // SiteChrome "plus" → TIER_RANK "promoter"
+    : viewAs === "pro" ? "pro"
+    : null
     : userTier;
 
   // Fetch current user's membership tier + super admin check
@@ -734,24 +749,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   </span>
                 ))}
               </nav>
-              {isSuperAdmin && (
-                <div className="va-wrap">
-                  <button className="va-btn" onClick={() => setViewDropOpen(o => !o)}>
-                    <span className="va-dot" />
-                    <span>{viewAs === "real" ? "My View" : viewAs === "visitor" ? "Visitor" : viewAs === "passport" ? "Passport" : viewAs === "plus" ? "Plus" : "Pro"}</span>
-                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth={2.5} style={{transform: viewDropOpen ? "rotate(180deg)" : "none", transition:"transform .15s"}}><path d="M6 9l6 6 6-6"/></svg>
-                  </button>
-                  {viewDropOpen && (
-                    <div className="va-menu">
-                      {(["real","visitor","passport","plus","pro"] as const).map(v => (
-                        <button key={v} className={"va-item" + (viewAs === v ? " active" : "")}
-                          onClick={() => { setViewAs(v); setViewDropOpen(false); }}>
-                          {v === "real" ? "My View" : v.charAt(0).toUpperCase() + v.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {isSuperAdmin && viewAs !== "real" && (
+                <span className="va-indicator">
+                  Viewing as: <strong>{viewAs === "public" ? "Visitor" : viewAs.charAt(0).toUpperCase() + viewAs.slice(1)}</strong>
+                </span>
               )}
             </div>
 
@@ -1515,15 +1516,8 @@ const CSS = `
   margin-bottom:28px;
 }
 /* Super admin view-as pill */
-.va-wrap{margin-left:auto;position:relative}
-.va-btn{display:flex;align-items:center;gap:7px;font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:100px;padding:5px 12px 5px 10px;cursor:pointer;white-space:nowrap}
-.va-btn:hover{background:rgba(255,255,255,.14)}
-.va-dot{width:7px;height:7px;border-radius:50%;background:var(--rx);flex-shrink:0}
-.va-menu{position:absolute;top:calc(100% + 6px);right:0;background:#1a1a1a;border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;min-width:130px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.4)}
-.va-item{display:block;width:100%;padding:10px 16px;font-family:inherit;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.65);background:none;border:none;cursor:pointer;text-align:left;border-top:1px solid rgba(255,255,255,.06)}
-.va-item:first-child{border-top:none}
-.va-item:hover{background:rgba(255,255,255,.07);color:#fff}
-.va-item.active{color:var(--rx);background:rgba(233,30,140,.08)}
+.va-indicator{margin-left:auto;font-size:11px;font-weight:600;color:rgba(255,255,255,.5);white-space:nowrap}
+.va-indicator strong{color:var(--rx);font-weight:800}
 .head-crumb{display:flex;align-items:center;gap:8px}
 .head-crumb-item{display:flex;align-items:center;gap:8px}
 .head-crumb a{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);text-decoration:none;letter-spacing:.01em}
