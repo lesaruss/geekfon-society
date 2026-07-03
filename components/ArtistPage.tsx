@@ -539,28 +539,21 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     return true; // locked / admin
   }
   function trackBadge(v: string): { label: string; cls: string } {
-    if (v === "public")   return { label: "Public",   cls: "vb-public" };
-    if (v === "preview")  return { label: "Passport", cls: "vb-preview" };
-    if (v === "passport") return { label: "Passport", cls: "vb-passport" };
-    if (v === "members")  return { label: "Plus",     cls: "vb-members" };
-    return                       { label: "Locked",   cls: "vb-locked" };
+    if (v === "public")   return { label: "Free",         cls: "vb-public" };
+    if (v === "preview")  return { label: "Full Preview",  cls: "vb-preview" };
+    if (v === "passport") return { label: "Passport",     cls: "vb-passport" };
+    if (v === "members")  return { label: "Plus",         cls: "vb-members" };
+    return                       { label: "Locked",       cls: "vb-locked" };
   }
 
   // Purchase routing: what happens when a user clicks a song badge
   function handleBadgeClick(t: Track) {
-    const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
-    const rank = effectiveTier ? (TIER_RANK[effectiveTier] || 0) : 0;
-
+    // Always open the modal — non-members see a register CTA inside, no redirect
+    setPurchaseModal({ trackName: t.n, price: 25 });
     if (t.v === "public") {
-      // Public songs: anyone with an account can purchase; visitors go to Passport
-      if (!effectiveTier) { window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`; return; }
-      setPurchaseModal({ trackName: t.n, price: 25 });
       return;
     }
     if (t.v === "preview" || t.v === "passport") {
-      // Passport-tier songs: Passport+ can purchase; others go to Passport page
-      if (!effectiveTier) { window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`; return; }
-      setPurchaseModal({ trackName: t.n, price: 25 });
       return;
     }
     if (t.v === "members") {
@@ -763,18 +756,23 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               <div className="head-meta">
                 <div className="head-name">{name}</div>
                 <p className="head-tagline">{c.tagline}</p>
-                <div className="pill-row">
-                  {c.pills && c.pills[0] && <span className={"pill" + (c.pills[0].accent ? " accent" : "")}>{c.pills[0].label}</span>}
-                  <button
-                    className={"pill-vote" + (hasVotedToday ? " voted" : "") + (voteLoading ? " loading" : "") + (voteSuccess ? " success" : "")}
-                    onClick={submitVote}
-                    disabled={voteLoading}
-                    aria-label={hasVotedToday ? "Already voted today" : "Vote for this artist"}
-                  >
-                    {voteSuccess ? "Voted!" : hasVotedToday ? "Voted" : "Vote"}
-                  </button>
-                  {(c.pills || []).slice(1).map((p, i) => (<span key={i} className={"pill" + (p.accent ? " accent" : "")}>{p.label}</span>))}
-                </div>
+                {(() => {
+                  const visiblePills = (c.pills || []).filter(p => p.label !== "Original");
+                  return (
+                    <div className="pill-row">
+                      {visiblePills[0] && <span className={"pill" + (visiblePills[0].accent ? " accent" : "")}>{visiblePills[0].label}</span>}
+                      <button
+                        className={"pill-vote" + (hasVotedToday ? " voted" : "") + (voteLoading ? " loading" : "") + (voteSuccess ? " success" : "")}
+                        onClick={submitVote}
+                        disabled={voteLoading}
+                        aria-label={hasVotedToday ? "Already voted today" : "Vote for this artist"}
+                      >
+                        {voteSuccess ? "Voted!" : hasVotedToday ? "Voted" : "Vote"}
+                      </button>
+                      {visiblePills.slice(1).map((p, i) => (<span key={i} className={"pill" + (p.accent ? " accent" : "")}>{p.label}</span>))}
+                    </div>
+                  );
+                })()}
                 {userBalance > 0 && !showVoteModal && (
                   <button className="pill-lesar-vote" onClick={() => setShowVoteModal("lesar")}>
                     Use LESARs for extra votes
@@ -1128,7 +1126,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                     onClick={(e) => { e.stopPropagation(); if (url) { setCurrTrackIdx(i); togglePlay(url, t.v, t.n); } }}
                                     aria-label={`Preview ${t.n}`}
                                   >
-                                    {url ? "Preview" : "Soon"}
+                                    {!url ? "Soon" : t.v === "public" ? "Play" : "Preview"}
                                   </button>
                                   <button
                                     className="mp-btn-buy"
@@ -1440,23 +1438,41 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               <span className="pur-price">{purchaseModal.price}</span>
               <span className="pur-currency">LESARs</span>
             </div>
-            <div className="pur-balance-row">
-              <span className="pur-balance-label">Your balance:</span>
-              <span className={"pur-balance-val" + (userBalance < purchaseModal.price ? " pur-balance-low" : "")}>{userBalance.toLocaleString()} LESARs</span>
-            </div>
-            {userBalance < purchaseModal.price && (
-              <p className="pur-low-msg">You need {(purchaseModal.price - userBalance).toLocaleString()} more LESARs to unlock this track.</p>
+            {!userId ? (
+              /* Non-member state — stay in modal, no redirect */
+              <>
+                <p className="pur-desc">Create a free Passport account to purchase tracks and support the artists you love.</p>
+                <div className="pur-actions">
+                  <a href="/passport" className="pur-confirm">Register — It&apos;s Free</a>
+                  <button className="pur-cancel" onClick={() => { setPurchaseModal(null); setPurchaseError(null); }}>Not now</button>
+                </div>
+                <p className="pur-guest-note">Already a member? <a href="/passport" className="pur-guest-link">Sign in</a></p>
+              </>
+            ) : (
+              /* Member state */
+              <>
+                <div className="pur-balance-row">
+                  <span className="pur-balance-label">Your balance:</span>
+                  <span className={"pur-balance-val" + (userBalance < purchaseModal.price ? " pur-balance-low" : "")}>{userBalance.toLocaleString()} LESARs</span>
+                </div>
+                {userBalance < purchaseModal.price && (
+                  <div className="pur-topup-block">
+                    <p className="pur-low-msg">You need <strong>{(purchaseModal.price - userBalance).toLocaleString()}</strong> more LESARs to unlock this track.</p>
+                    <a href="/passport?topup=1" className="pur-topup-btn">Top Up LESARs</a>
+                  </div>
+                )}
+                <p className="pur-desc">You&apos;ll receive lifetime access to this track. Purchase is tied to your account.</p>
+                {purchaseError && <p className="pur-error">{purchaseError}</p>}
+                <div className="pur-actions">
+                  {userBalance < purchaseModal.price ? (
+                    <button className="pur-confirm pur-disabled" disabled>Insufficient Balance</button>
+                  ) : (
+                    <button className="pur-confirm" onClick={handlePurchaseConfirm}>Confirm Purchase</button>
+                  )}
+                  <button className="pur-cancel" onClick={() => { setPurchaseModal(null); setPurchaseError(null); }}>Cancel</button>
+                </div>
+              </>
             )}
-            <p className="pur-desc">You&apos;ll receive lifetime access to this track. Purchase is tied to your account.</p>
-            {purchaseError && <p className="pur-error">{purchaseError}</p>}
-            <div className="pur-actions">
-              {userBalance < purchaseModal.price ? (
-                <a href="/passport" className="pur-confirm pur-reload">Reload LESARs</a>
-              ) : (
-                <button className="pur-confirm" onClick={handlePurchaseConfirm}>Continue</button>
-              )}
-              <button className="pur-cancel" onClick={() => { setPurchaseModal(null); setPurchaseError(null); }}>Cancel</button>
-            </div>
           </div>
         </div>
       )}
@@ -1586,7 +1602,7 @@ const CSS = `
 .tabbar-drop-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 0;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text);background:none;border:none;cursor:pointer}
 .tabbar-drop-menu{position:absolute;left:-16px;right:-16px;top:100%;background:#fff;border-bottom:1px solid var(--lr-border);z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.09);margin-top:0}
 /* Overview tab */
-.ov-intro{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:flex-start;margin-bottom:36px}
+.ov-intro{display:flex;flex-direction:column;gap:24px;margin-bottom:36px}
 .ov-video-wrap{border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/9;width:100%}
 .ov-video-el{width:100%;height:100%;display:block;object-fit:cover}
 .ov-video-ph{width:100%;height:100%;min-height:200px;background:var(--lr-surface);border:1px dashed var(--lr-border);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--lr-text-30);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
@@ -1598,7 +1614,7 @@ const CSS = `
 .ov-pull-mark.close{text-align:right;margin-top:-12px}
 .ov-pull-text{font-size:22px;font-weight:700;line-height:1.55;color:var(--lr-text);font-style:italic;letter-spacing:-.015em;margin:0;text-align:center}
 .ov-news-head{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;color:var(--lr-text-50);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--lr-border)}
-@media(max-width:900px){.ov-intro{grid-template-columns:1fr}}
+/* ov-intro is already single-column flex */
 .tabbar-drop-item{display:block;width:100%;padding:13px 22px 13px 16px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text-75);background:none;border:none;border-top:1px solid var(--lr-border);cursor:pointer;text-align:left}
 .tabbar-drop-item.active{color:var(--rx);font-weight:900;background:var(--rx-tint)}
 .tabbar-drop-item:hover:not(.active){background:var(--lr-bg)}
@@ -1712,6 +1728,14 @@ const CSS = `
 .pur-cancel{padding:14px;background:#f5f5f5;color:#1a1a1a;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
 .pur-cancel:hover{background:#ebebeb}
 .pur-cancel:focus-visible{outline:2px solid #aaa;outline-offset:2px}
+.pur-balance-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.pur-balance-label{font-size:13px;color:#555;font-weight:600}
+.pur-balance-val{font-size:13px;font-weight:800;color:#1a1a1a}
+.pur-topup-block{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px;margin-bottom:16px}
+.pur-topup-btn{display:inline-block;padding:8px 16px;background:#F69820;color:#000;border-radius:8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;text-decoration:none}
+.pur-guest-note{font-size:12px;color:#888;text-align:center;margin-top:12px}
+.pur-guest-link{color:var(--rx);font-weight:700;text-decoration:none}
+.pur-disabled{opacity:.45;cursor:not-allowed}
 /* Purchase success toast */
 .pur-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;border-radius:100px;padding:12px 22px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;z-index:1100;box-shadow:0 8px 32px rgba(0,0,0,.22);animation:toast-in .25s ease}
 .pur-toast svg{width:16px;height:16px;stroke:#4ade80;flex-shrink:0}
