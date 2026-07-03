@@ -46,11 +46,16 @@ const STAKEHOLDERS = [
   { label: "Promoter", href: "/#promoter" },
 ];
 
-function navForTier(tier: Tier): NavItem[] {
-  if (tier === "plus")     return NAV_PLUS;
-  if (tier === "pro")      return NAV_PRO;
-  if (tier === "passport") return NAV_PASSPORT;
-  return NAV_PUBLIC;
+function navForTier(tier: Tier, isAdmin = false): NavItem[] {
+  let base: NavItem[];
+  if (tier === "plus")          base = NAV_PLUS;
+  else if (tier === "pro")      base = NAV_PRO;
+  else if (tier === "passport") base = NAV_PASSPORT;
+  else                          base = NAV_PUBLIC;
+  if (isAdmin || tier === "pro") {
+    return [...base, { label: "Release Schedule", href: "/dashboard/release-schedule" }];
+  }
+  return base;
 }
 
 const TIER_ACCENT: Record<Tier, string> = {
@@ -202,7 +207,7 @@ export default function SiteChrome({
   }, [member]);
 
   const effectiveTier: Tier = (auth.isAdmin && viewAs) ? viewAs : auth.tier;
-  const nav = navForTier(effectiveTier);
+  const nav = navForTier(effectiveTier, auth.isAdmin);
   const isLoggedIn = effectiveTier !== "public" && !auth.loading;
   const tierAccent = TIER_ACCENT[effectiveTier];
   const tierLabel  = TIER_LABEL[effectiveTier];
