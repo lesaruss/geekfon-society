@@ -679,7 +679,7 @@ export default function WelcomePage() {
 
   return (
     <SiteChrome>
-    <div style={{ minHeight: "100dvh", background: "#070712", color: "white", fontFamily: "'Montserrat', sans-serif", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+    <div className="gfs-main" style={{ minHeight: "100dvh", background: "#070712", color: "white", fontFamily: "'Montserrat', sans-serif", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
 
       {/* City background */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
@@ -710,13 +710,25 @@ export default function WelcomePage() {
         .role-card { transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
         .role-card:hover { transform: translateY(-4px); }
         .gfs-fon-hue { animation: fonHue 6s ease-in-out infinite; }
+        @media(max-width:899px){
+          .gfs-main{overflow-y:auto !important}
+          .gfs-outer-content{padding-left:0 !important;padding-right:0 !important;padding-top:0 !important}
+        }
+        .tour-slide-wrap{display:flex;flex-direction:column;width:100%;align-items:flex-start}
+        .tour-text-col{width:100%;padding:28px 20px 16px;min-width:0;box-sizing:border-box}
+        .tour-right-col{width:100%;padding:0 20px 32px;min-width:0;box-sizing:border-box}
+        @media(min-width:900px){
+          .tour-slide-wrap{flex-direction:row;align-items:center}
+          .tour-text-col{width:52%;flex:0 0 52%;padding:40px 32px 0 56px}
+          .tour-right-col{width:48%;flex:0 0 48%;padding:40px 48px 0 16px}
+        }
       `}</style>
 
       {/* Top bar removed: SiteChrome provides the single nav (hamburger + Get Passport).
           Pagination + Skip now live in the bottom bar below. */}
 
       {/* Main content */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: phase === "path" ? "0 0 100px" : "40px 60px 100px", position: "relative", zIndex: 10, width: "100%" }}>
+      <div className="gfs-outer-content" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: phase === "path" ? "0 0 100px" : "40px 60px 100px", position: "relative", zIndex: 10, width: "100%" }}>
         <div
           key={`${phase}-${pathSlide}`}
           className="slide-content"
@@ -762,10 +774,10 @@ export default function WelcomePage() {
 
           {/* PATH SLIDES */}
           {phase === "path" && currentSlide && role && (
-            <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+            <div className="tour-slide-wrap">
 
               {/* Left: text */}
-              <div style={{ flex: "0 0 52%", minWidth: 0, padding: "40px 32px 0 56px" }}>
+              <div className="tour-text-col">
                 <div style={{ marginBottom: "12px" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: currentSlide.accent, opacity: 0.85 }}>
                     {ROLE_META[role].label} - {pathSlide + 1} of {currentSlides.length}
@@ -828,8 +840,8 @@ export default function WelcomePage() {
                 )}
               </div>
 
-              {/* Right: dynamic panel — desktop only */}
-              <div style={{ flex: "0 0 48%", minWidth: 0, padding: "40px 48px 0 16px", display: "none" }} className="tour-right-col">
+              {/* Right: dynamic panel — desktop only via CSS class */}
+              <div className="tour-right-col">
                 {currentSlide.id === "label-ip" ? (
                   /* Slide 1: solo player, no cover art */
                   <TourSoloPlayer track={SLIDE_AUDIO["label-ip"]} accent={currentSlide.accent} />
@@ -909,7 +921,6 @@ export default function WelcomePage() {
                   </div>
                 )}
               </div>
-              <style>{`@media(min-width:900px){.tour-right-col{display:block !important}}`}</style>
 
             </div>
           )}
