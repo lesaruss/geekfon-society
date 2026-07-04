@@ -937,23 +937,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
 {tab === "news" && (
                 <section className="panel">
 
-                  {/* Intro: video (left) + bio blurb (right) */}
-                  <div className="ov-intro">
-                    <div className="ov-video-wrap">
-                      {c.introVideoUrl ? (
-                        <video src={c.introVideoUrl} controls playsInline preload="metadata" poster={c.videoThumbUrl || c.heroUrl || undefined} className="ov-video-el" />
-                      ) : (
-                        <div className="ov-video-ph">
-                          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="15" height="10" rx="2"/><path d="M17 9l5-3v12l-5-3"/></svg>
-                          <span>Video coming soon</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="ov-bio">
-                      {(c.bio || []).slice(0, 2).map((p, i) => (
-                        <p key={i} className="ov-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
-                      ))}
-                    </div>
+                  {/* Bio */}
+                  <div className="ov-bio">
+                    {(c.bio || []).map((p, i) => (
+                      <p key={i} className="ov-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
+                    ))}
                   </div>
 
                   {/* Pull quote - between intro and news */}
@@ -1609,19 +1597,14 @@ const CSS = `
 .tabbar-drop-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 0;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text);background:none;border:none;cursor:pointer}
 .tabbar-drop-menu{position:absolute;left:-16px;right:-16px;top:100%;background:#fff;border-bottom:1px solid var(--lr-border);z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.09);margin-top:0}
 /* Overview tab */
-.ov-intro{display:flex;flex-direction:column;gap:24px;margin-bottom:36px}
-.ov-video-wrap{border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/9;width:100%}
-.ov-video-el{width:100%;height:100%;display:block;object-fit:cover}
-.ov-video-ph{width:100%;height:100%;min-height:200px;background:var(--lr-surface);border:1px dashed var(--lr-border);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--lr-text-30);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
-.ov-bio{padding-top:4px}
-.ov-bio-p{font-size:15px;color:var(--lr-text-75);line-height:1.75;margin-bottom:12px}
+.ov-bio{margin-bottom:36px}
+.ov-bio-p{font-size:16px;color:var(--lr-text-75);line-height:1.8;margin-bottom:16px;max-width:680px}
 .ov-pull-quote{position:relative;margin:8px 0 40px;padding:36px 48px;background:var(--lr-surface);border-left:4px solid var(--lr-accent,#a78bfa);border-radius:4px}
 .ov-pull-mark{display:block;font-size:72px;line-height:1;font-weight:900;color:var(--lr-accent,#a78bfa);opacity:.35;font-style:normal;user-select:none}
 .ov-pull-mark.open{margin-bottom:-12px}
 .ov-pull-mark.close{text-align:right;margin-top:-12px}
 .ov-pull-text{font-size:22px;font-weight:700;line-height:1.55;color:var(--lr-text);font-style:italic;letter-spacing:-.015em;margin:0;text-align:center}
 .ov-news-head{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.18em;color:var(--lr-text-50);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--lr-border)}
-/* ov-intro is already single-column flex */
 .tabbar-drop-item{display:block;width:100%;padding:13px 22px 13px 16px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text-75);background:none;border:none;border-top:1px solid var(--lr-border);cursor:pointer;text-align:left}
 .tabbar-drop-item.active{color:var(--rx);font-weight:900;background:var(--rx-tint)}
 .tabbar-drop-item:hover:not(.active){background:var(--lr-bg)}
