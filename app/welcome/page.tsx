@@ -377,6 +377,98 @@ function SlidePreview({ slideId, accent }: { slideId: string; accent: string }) 
   );
 }
 
+// ── Artist Portrait Gallery (label-cta) ───────────────────────────────────────
+const GALLERY_ORDER = [
+  "roxanne", "lex-from-brixton", "shamanic-resin",
+  "riku", "nilo-wave", "lickle-bro",
+  "lickle-sis", "mad-tings", "mr-russell",
+  "rustblood-prophets", "straight-and-narrow",
+];
+const GALLERY_ARTISTS = GALLERY_ORDER
+  .map((s) => ARTISTS.find((a) => a.slug === s))
+  .filter(Boolean) as ArtistCard[];
+
+function ArtistPortraitGallery({ accent }: { accent: string }) {
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 3;
+  const totalPages = Math.ceil(GALLERY_ARTISTS.length / PAGE_SIZE);
+  const visible = GALLERY_ARTISTS.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  return (
+    <div>
+      <div style={{ display: "flex", gap: "8px" }}>
+        {visible.map((a) => (
+          <div key={a.slug} style={{ flex: 1, borderRadius: "10px", overflow: "hidden", position: "relative" }}>
+            <div style={{ paddingBottom: "150%", position: "relative" }}>
+              <img
+                src={a.heroUrl}
+                alt={a.name}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
+              />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.08) 50%, transparent 100%)" }} />
+              <div style={{ position: "absolute", bottom: "10px", left: "8px", right: "8px" }}>
+                <div style={{ fontSize: "8px", fontWeight: 700, letterSpacing: "0.1em", color: a.accent, textTransform: "uppercase", marginBottom: "2px" }}>{a.genre}</div>
+                <div style={{ fontSize: "10px", fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>{a.name}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", gap: "7px", marginTop: "12px" }}>
+        {Array.from({ length: totalPages }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setPage(i)}
+            style={{ width: "7px", height: "7px", borderRadius: "50%", border: "none", background: i === page ? accent : "rgba(255,255,255,0.22)", cursor: "pointer", padding: 0, transition: "background 0.2s", flexShrink: 0 }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── City Slideshow ────────────────────────────────────────────────────────────
+const CITY_DATA = [
+  { name: "Tokyo",           ...CITY_IMAGES[0] },
+  { name: "Seoul",           ...CITY_IMAGES[1] },
+  { name: "Fort Lauderdale", ...CITY_IMAGES[2] },
+  { name: "Berlin",          ...CITY_IMAGES[3] },
+  { name: "Los Angeles",     ...CITY_IMAGES[4] },
+  { name: "Osaka",           ...CITY_IMAGES[5] },
+];
+
+function CitySlideshow({ accent = "#9C27B0" }: { accent?: string }) {
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setCurrent((c) => (c + 1) % CITY_DATA.length), 3500);
+    return () => clearInterval(id);
+  }, []);
+  const city = CITY_DATA[current];
+  return (
+    <div style={{ borderRadius: "12px", overflow: "hidden", position: "relative" }}>
+      <img
+        key={city.name}
+        src={city.desktop}
+        alt={city.name}
+        style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+      />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(5,5,15,0.82) 0%, transparent 55%)" }} />
+      <div style={{ position: "absolute", bottom: "14px", left: "16px" }}>
+        <div style={{ fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: accent, marginBottom: "3px" }}>ACTIVE MARKET</div>
+        <div style={{ fontSize: "20px", fontWeight: 900, color: "#fff", letterSpacing: "-0.01em" }}>{city.name}</div>
+      </div>
+      <div style={{ position: "absolute", top: "12px", right: "12px", display: "flex", gap: "5px" }}>
+        {CITY_DATA.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            style={{ width: "5px", height: "5px", borderRadius: "50%", border: "none", background: i === current ? "#fff" : "rgba(255,255,255,0.3)", cursor: "pointer", padding: 0, transition: "background 0.2s" }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Artist panel ──────────────────────────────────────────────────────────────
 function ArtistPanel({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState(0);
@@ -724,6 +816,8 @@ export default function WelcomePage() {
           .tour-text-col{width:52%;flex:0 0 52%;padding:40px 32px 0 56px}
           .tour-right-col{width:48%;flex:0 0 48%;padding:40px 48px 0 16px}
         }
+        .picker-right-col{display:none}
+        @media(min-width:900px){.picker-right-col{display:block;flex:0 0 44%;min-width:0}}
       `}</style>
 
       {/* Top bar removed: SiteChrome provides the single nav (hamburger + Get Passport).
@@ -739,37 +833,45 @@ export default function WelcomePage() {
 
           {/* PICKER */}
           {phase === "picker" && (
-            <div>
-              <div style={{ marginBottom: "36px" }}>
-                <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: "12px" }}>
-                  GEEKFON SOCIETY
+            <div style={{ display: "flex", alignItems: "center", width: "100%", gap: "32px" }}>
+              {/* Left: heading + role cards */}
+              <div style={{ flex: "1 1 0", minWidth: 0 }}>
+                <div style={{ marginBottom: "36px" }}>
+                  <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: "12px" }}>
+                    GEEKFON SOCIETY
+                  </div>
+                  <h1 style={{ fontSize: "clamp(2.4rem, 5vw, 4rem)", fontWeight: 900, lineHeight: 1.05, margin: "0 0 12px", letterSpacing: "-0.02em" }}>
+                    Who are you?
+                  </h1>
+                  <p style={{ color: "rgba(255,255,255,0.55)", margin: 0, fontSize: "1rem" }}>
+                    We will show you what GeekFon Society means for you specifically.
+                  </p>
                 </div>
-                <h1 style={{ fontSize: "clamp(2.4rem, 5vw, 4rem)", fontWeight: 900, lineHeight: 1.05, margin: "0 0 12px", letterSpacing: "-0.02em" }}>
-                  Who are you?
-                </h1>
-                <p style={{ color: "rgba(255,255,255,0.55)", margin: 0, fontSize: "1rem" }}>
-                  We will show you what GeekFon Society means for you specifically.
-                </p>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 280px))", gap: "14px" }}>
+                  {(Object.keys(ROLE_META) as Role[]).map((r) => {
+                    const meta = ROLE_META[r];
+                    return (
+                      <button
+                        key={r}
+                        className="role-card"
+                        onClick={() => handleRoleSelect(r)}
+                        onMouseEnter={() => setHovered(r)}
+                        onMouseLeave={() => setHovered(null)}
+                        style={{ background: hovered === r ? `${meta.accent}18` : "rgba(255,255,255,0.06)", border: `1.5px solid ${hovered === r ? meta.accent : "rgba(255,255,255,0.1)"}`, borderRadius: "16px", padding: "24px 20px", textAlign: "left", cursor: "pointer", color: "white", fontFamily: "inherit", boxShadow: hovered === r ? `0 0 32px ${meta.accent}30` : "none" }}
+                      >
+                        <div style={{ color: hovered === r ? meta.accent : "rgba(255,255,255,0.6)", marginBottom: "12px" }}>{meta.icon}</div>
+                        <div style={{ fontWeight: 800, fontSize: "1.05rem", marginBottom: "6px" }}>{meta.label}</div>
+                        <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>{meta.tagline}</div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 280px))", gap: "14px" }}>
-                {(Object.keys(ROLE_META) as Role[]).map((r) => {
-                  const meta = ROLE_META[r];
-                  return (
-                    <button
-                      key={r}
-                      className="role-card"
-                      onClick={() => handleRoleSelect(r)}
-                      onMouseEnter={() => setHovered(r)}
-                      onMouseLeave={() => setHovered(null)}
-                      style={{ background: hovered === r ? `${meta.accent}18` : "rgba(255,255,255,0.06)", border: `1.5px solid ${hovered === r ? meta.accent : "rgba(255,255,255,0.1)"}`, borderRadius: "16px", padding: "24px 20px", textAlign: "left", cursor: "pointer", color: "white", fontFamily: "inherit", boxShadow: hovered === r ? `0 0 32px ${meta.accent}30` : "none" }}
-                    >
-                      <div style={{ color: hovered === r ? meta.accent : "rgba(255,255,255,0.6)", marginBottom: "12px" }}>{meta.icon}</div>
-                      <div style={{ fontWeight: 800, fontSize: "1.05rem", marginBottom: "6px" }}>{meta.label}</div>
-                      <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>{meta.tagline}</div>
-                    </button>
-                  );
-                })}
+              {/* Right: 16:9 city slideshow — desktop only */}
+              <div className="picker-right-col">
+                <CitySlideshow accent="#9C27B0" />
               </div>
             </div>
           )}
@@ -891,24 +993,18 @@ export default function WelcomePage() {
                       </div>
                     )}
 
-                    {/* label-cta: Roxanne hero image cap */}
+                    {/* label-cta: paginated artist portrait gallery */}
                     {currentSlide.id === "label-cta" && (
-                      <div style={{ borderRadius: "10px", overflow: "hidden", position: "relative" }}>
-                        <img
-                          src={SUPA_MEDIA + "roxanne/hero.png"}
-                          alt="GeekFon Society"
-                          style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", objectPosition: "top center", display: "block", opacity: 0.88 }}
-                        />
-                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,8,20,0.85) 0%, transparent 55%)" }} />
-                        <div style={{ position: "absolute", bottom: "12px", left: "14px", right: "14px" }}>
-                          <div style={{ fontFamily: "inherit", fontSize: "9px", letterSpacing: "0.13em", color: "#9C27B0", marginBottom: "3px" }}>GEEKFON SOCIETY</div>
-                          <div style={{ fontFamily: "inherit", fontSize: "13px", fontWeight: 700, color: "#fff" }}>Original IP. Ready to License.</div>
-                        </div>
-                      </div>
+                      <ArtistPortraitGallery accent={currentSlide.accent} />
+                    )}
+
+                    {/* brand-audience: city slideshow */}
+                    {role !== "label" && currentSlide.id === "brand-audience" && (
+                      <CitySlideshow accent={currentSlide.accent} />
                     )}
 
                     {/* All other roles: SlidePreview */}
-                    {role !== "label" && (
+                    {role !== "label" && currentSlide.id !== "brand-audience" && (
                       <SlidePreview slideId={currentSlide.id} accent={currentSlide.accent} />
                     )}
 
