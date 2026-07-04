@@ -8,6 +8,7 @@ type NavItem = { label: string; href: string };
 const NAV_PUBLIC: NavItem[] = [
   { label: "Overview",   href: "/#overview" },
   { label: "Roster",     href: "/roster" },
+  { label: "Take the Tour", href: "/welcome" },
 ];
 
 const NAV_PASSPORT: NavItem[] = [
@@ -47,7 +48,7 @@ function navForTier(tier: Tier, isAdmin = false): NavItem[] {
   else if (tier === "pro")      base = NAV_PRO;
   else if (tier === "passport") base = NAV_PASSPORT;
   else                          base = NAV_PUBLIC;
-  if (isAdmin || tier === "pro") {
+  if (isAdmin || tier === "pro" || tier === "plus") {
     return [...base, { label: "Release Schedule", href: "/dashboard/release-schedule" }];
   }
   return base;
