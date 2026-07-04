@@ -65,8 +65,8 @@ export type ArtistContent = {
 };
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
-  { key: "news",     label: "Overview" },
   { key: "music",    label: "Music" },
+  { key: "news",     label: "News" },
   { key: "pulse",    label: "Pulse" },
   { key: "brief",    label: "Brief", admin: true },
 ];
@@ -357,7 +357,7 @@ function BiblePanel({
 }
 
 export default function ArtistPage({ content, cityBg, activeArticle, slug }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null; activeArticle?: News; slug?: string }) {
-  const [tab, setTab] = useState("news");
+  const [tab, setTab] = useState("music");
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string | null>(null);
@@ -936,25 +936,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               )}
 {tab === "news" && (
                 <section className="panel">
-
-                  {/* Bio */}
-                  <div className="ov-bio">
-                    {(c.bio || []).map((p, i) => (
-                      <p key={i} className="ov-bio-p" dangerouslySetInnerHTML={{ __html: emph(p) }} />
-                    ))}
-                  </div>
-
-                  {/* Pull quote - between intro and news */}
-                  {c.quote && (
-                    <div className="ov-pull-quote">
-                      <span className="ov-pull-mark open">{"\u201c"}</span>
-                      <p className="ov-pull-text">{c.quote}</p>
-                      <span className="ov-pull-mark close">{"\u201d"}</span>
-                    </div>
-                  )}
-
-                  {/* News & Updates section */}
-                  <div className="ov-news-head">News &amp; Updates</div>
                   <div className="pulse-articles-grid">
                     {pulseArticles.map((n, i) => (
                       <div key={i} className="pulse-article-card">
@@ -1762,15 +1743,14 @@ const CSS = `
 /* ---- Pulse Feed ---- */
 .pulse-feed{display:flex;flex-direction:column;gap:20px}
 /* Article grid */
-.pulse-articles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pulse-articles-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
 .pulse-article-card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
 .pulse-article-card .pf-article-img{position:relative;aspect-ratio:16/9;overflow:hidden;flex-shrink:0}
 .pulse-article-card .pf-article-img img{width:100%;height:100%;object-fit:cover;display:block}
 .pulse-article-card .pf-article-ph{width:100%;height:100%}
-.pulse-article-card .pf-article-body{padding:14px 16px 16px;flex:1;display:flex;flex-direction:column}
+.pulse-article-card .pf-article-body{padding:16px 18px 18px;flex:1;display:flex;flex-direction:column}
 .pf-article-date{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text-30);margin-bottom:6px}
-@media(max-width:900px){.pulse-articles-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.pulse-articles-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.pulse-articles-grid{grid-template-columns:1fr;gap:14px}}
 .pf-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden;padding:20px 22px}
 .pf-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .pf-type-badge{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;padding:3px 9px;border-radius:20px}
