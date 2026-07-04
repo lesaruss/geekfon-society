@@ -39,12 +39,7 @@ const NAV_PRO: NavItem[] = [
   { label: "GeekFon Radio",   href: "/radio" },
 ];
 
-const STAKEHOLDERS = [
-  { label: "Music Fan", href: "/#music-fan" },
-  { label: "Producers", href: "/#record-label" },
-  { label: "Brand", href: "/#brand" },
-  { label: "Promoter", href: "/#promoter" },
-];
+
 
 function navForTier(tier: Tier, isAdmin = false): NavItem[] {
   let base: NavItem[];
@@ -278,16 +273,9 @@ export default function SiteChrome({
         </nav>
 
         {!isLoggedIn && (
-          <div className="gdrawer-stakeholders">
-            <div className="gds-label">Who are you?</div>
-            <div className="gds-items">
-              {STAKEHOLDERS.map((s, i) => (
-                <a key={i} href={s.href} className="gds-item" onClick={() => setOpen(false)}>
-                  {s.label}
-                </a>
-              ))}
-            </div>
-          </div>
+          <a href="/welcome" className="gdrawer-tour-link" onClick={() => setOpen(false)}>
+            Take the Tour
+          </a>
         )}
 
         {!isLoggedIn && (
@@ -401,11 +389,8 @@ const CHROME_CSS = `
 .gnav { padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
 .gitem { display: block; padding: 11px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.7); text-decoration: none; }
 .gitem:hover { background: rgba(255,255,255,.07); color: #fff; }
-.gdrawer-stakeholders { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.08); }
-.gds-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: rgba(255,255,255,.3); margin-bottom: 8px; }
-.gds-items { display: flex; flex-direction: column; gap: 4px; }
-.gds-item { display: block; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.65); text-decoration: none; background: none; border: none; cursor: pointer; text-align: left; }
-.gds-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+.gdrawer-tour-link { display: block; margin: 12px 16px; padding: 12px 18px; border-radius: 10px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #E91E8C; text-decoration: none; background: rgba(233,30,140,.1); border: 1px solid rgba(233,30,140,.3); text-align: center; transition: background .2s; }
+.gdrawer-tour-link:hover { background: rgba(233,30,140,.2); }
 .gdrawer-member { padding: 16px; border-top: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: 12px; }
 .gdm-avatar { width: 38px; height: 38px; border-radius: 50%; color: #fff; font-size: 15px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .gdm-info { flex: 1; min-width: 0; }
@@ -438,3 +423,4 @@ const CHROME_CSS = `
 .gdva-reset { display: block; width: 100%; padding: 10px 14px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.3); background: none; border: none; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; text-align: center; }
 .gdva-reset:hover { color: rgba(255,255,255,.6); }
 `;
+
