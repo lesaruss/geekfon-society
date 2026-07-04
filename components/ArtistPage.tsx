@@ -13,7 +13,7 @@ type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: str
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
-type News = { slug?: string; tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string; content?: string; draft?: boolean };
+type News = { slug?: string; tag?: string; date?: string; title?: string; blurb?: string; href?: string; thumb?: string; content?: string; draft?: boolean; videoUrl?: string };
 type Audit = { title: string; status?: string; pillar?: string; theme?: string; emotion?: string; scores?: Record<string, number> };
 type PulsePost = {
   id?: string;
@@ -848,9 +848,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     <span className="art-crumb-sep">›</span>
                     <span className="art-crumb-cur">{activeArticle.title}</span>
                   </nav>
-                  {activeArticle.thumb && (
+                  {activeArticle.videoUrl ? (
+                    <div className="art-hero"><video src={activeArticle.videoUrl} poster={activeArticle.thumb || undefined} controls playsInline className="art-hero-video" /></div>
+                  ) : activeArticle.thumb ? (
                     <div className="art-hero"><img src={activeArticle.thumb} alt={activeArticle.title || ""} /></div>
-                  )}
+                  ) : null}
                   <div className="art-meta">
                     {activeArticle.tag  && <span className="art-tag">{activeArticle.tag}</span>}
                     {activeArticle.date && <span className="art-date">{activeArticle.date}</span>}
@@ -944,6 +946,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             ? <img src={n.thumb} alt={n.title || ""} />
                             : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
                           }
+                          {n.videoUrl && (
+                            <span className="article-play-badge" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            </span>
+                          )}
                           {n.tag && <span className="article-tag">{n.tag}</span>}
                         </a>
                         <div className="pf-article-body">
@@ -1592,7 +1599,7 @@ const CSS = `
 .article-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);text-decoration:none;margin-top:4px}
 .article-cta svg{width:14px;height:14px;transition:transform .15s}
 .article-cta:hover svg{transform:translateX(3px)}
-.article-tag{position:absolute;top:10px;left:10px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 10px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text);backdrop-filter:blur(4px)}
+.article-tag{position:absolute;top:10px;left:10px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 10px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text);backdrop-filter:blur(4px)}.article-play-badge{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}.article-play-badge svg{width:14px;height:14px}
 .panel-intro{font-size:13px;color:var(--lr-text-50);margin-bottom:18px}
 .mp-root{padding-bottom:40px}
 .mp-player{background:#fff;border:1px solid var(--lr-border);border-radius:20px;box-shadow:0 6px 28px rgba(20,20,40,.07);overflow:hidden;margin-bottom:20px}
@@ -1997,7 +2004,7 @@ const CITY_CSS = `
 .art-crumb-link{color:var(--lr-text-30);text-decoration:none;transition:color .15s}.art-crumb-link:hover{color:var(--lr-text)}
 .art-crumb-sep{opacity:.4}
 .art-crumb-cur{color:var(--lr-text-50)}
-.art-hero{width:100%;border-radius:14px;overflow:hidden;margin-bottom:28px;aspect-ratio:16/9;background:var(--lr-surface)}.art-hero img{width:100%;height:100%;object-fit:cover;display:block}
+.art-hero{width:100%;border-radius:14px;overflow:hidden;margin-bottom:28px;aspect-ratio:16/9;background:var(--lr-surface)}.art-hero img{width:100%;height:100%;object-fit:cover;display:block}.art-hero-video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
 .art-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .art-tag{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;background:var(--rx,#c084fc);color:#fff;padding:3px 10px;border-radius:99px}
 .art-date{font-size:12px;font-weight:600;color:var(--lr-text-30)}
