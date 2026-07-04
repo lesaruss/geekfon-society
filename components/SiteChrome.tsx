@@ -209,7 +209,7 @@ export default function SiteChrome({
   }, [member]);
 
   const effectiveTier: Tier = (auth.isAdmin && viewAs) ? viewAs : auth.tier;
-  const nav = navForTier(effectiveTier, auth.isAdmin);
+  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs);
   const isLoggedIn = effectiveTier !== "public" && !auth.loading;
   const tierAccent = TIER_ACCENT[effectiveTier];
   const tierLabel  = TIER_LABEL[effectiveTier];
@@ -438,4 +438,3 @@ const CHROME_CSS = `
 .gdva-reset { display: block; width: 100%; padding: 10px 14px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.3); background: none; border: none; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; text-align: center; }
 .gdva-reset:hover { color: rgba(255,255,255,.6); }
 `;
-
