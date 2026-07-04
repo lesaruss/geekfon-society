@@ -68,8 +68,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const displayName = member?.name || userEmail || "Member";
   const initial = displayName.charAt(0).toUpperCase();
   const tier = member?.tier || "passport";
+  const isAdmin = member?.role === "admin" || member?.role === "super_admin";
   const memberProp = userId
-    ? { name: displayName, balance: lesars, initial, tier }
+    ? { name: displayName, balance: lesars, initial, tier, isAdmin }
     : undefined;
 
   async function signInWithGoogle() {
@@ -211,3 +212,4 @@ const LAYOUT_CSS = `
 .dp-btn-outline:hover { border-color: rgba(255,255,255,.22); color: rgba(255,255,255,.8); }
 .dp-spinner { width: 28px; height: 28px; border: 2.5px solid rgba(255,255,255,.1); border-top-color: #F69820; border-radius: 50%; animation: dlSpin .8s linear infinite; margin: 40px auto; display: block; }
 `;
+
