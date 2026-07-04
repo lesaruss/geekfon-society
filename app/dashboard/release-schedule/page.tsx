@@ -64,10 +64,14 @@ export default function ReleaseSchedulePage() {
 
   const isAdmin   = userEmail === ADMIN_EMAIL;
   const tier      = member?.tier || "public";
-  const hasAccess = isAdmin || tier === "pro";
+  const isPro     = isAdmin || tier === "pro" || tier === "lifetime";
+  const isPlus    = tier === "promoter" || tier === "all-access" || tier === "plus";
+  const hasAccess = isPro || isPlus;
+  const readOnly  = !isPro;
 
   useEffect(() => {
     if (loading || !hasAccess) { setDataLoading(false); return; }
+    // readOnly users (plus) can view but not edit — data still loads
     fetch("/api/admin/release-schedule")
       .then((r) => r.json())
       .then((j) => { setArtists(j.artists || []); setDataLoading(false); });
@@ -221,9 +225,9 @@ export default function ReleaseSchedulePage() {
               <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </div>
-          <h2>Pro Access Required</h2>
-          <p>Release Schedule is available to Pro members and admins only.</p>
-          <a href="/plus" className="rs-gate-btn">Upgrade to Pro</a>
+          <h2>Pro or Plus Access Required</h2>
+          <p>Release Schedule is available to Plus members (view only) and Pro members / admins.</p>
+          <a href="/plus" className="rs-gate-btn">Upgrade your membership</a>
         </div>
       </div>
     );
@@ -241,18 +245,21 @@ export default function ReleaseSchedulePage() {
           <h1 className="rs-title">Release Manager</h1>
         </div>
         <div className="rs-header-actions">
+          {readOnly && (
+            <div className="rs-readonly-badge">View Only — upgrade to Pro to edit</div>
+          )}
           <div className="rs-stats">
             <span>{totalTracks} tracks</span>
             <span>{scheduledCount} scheduled</span>
             <span>{audioCount} w/ audio</span>
           </div>
-          <button className="rs-gen-btn" onClick={generateSchedule} title="Auto-fill dates based on track order">
+          <button className="rs-gen-btn" onClick={generateSchedule} title="Auto-fill dates based on track order" disabled={readOnly} style={readOnly ? { opacity: 0.35, cursor: "not-allowed" } : {}}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" width="13" height="13">
               <path d="M8 6l4-4 4 4M12 2v10.5M16 18l-4 4-4-4M12 22V11.5M3 12h18"/>
             </svg>
             Generate Schedule
           </button>
-          {dirty.size > 0 && (
+          {dirty.size > 0 && !readOnly && (
             <button className="rs-save-btn" onClick={saveAll} disabled={saving}>
               {saving ? "Saving..." : `Save Changes (${dirty.size})`}
             </button>
@@ -331,11 +338,11 @@ export default function ReleaseSchedulePage() {
                         <div
                           key={key}
                           className={`rs-track-row${isDragTarget ? " rs-drag-target" : ""}`}
-                          draggable
-                          onDragStart={() => { dragArtist.current = artist.slug; dragIdx.current = idx; }}
-                          onDragOver={(e) => { e.preventDefault(); setDragOver({ slug: artist.slug, idx }); }}
-                          onDragLeave={() => setDragOver(null)}
-                          onDrop={(e) => {
+                          draggable={!readOnly}
+                          onDragStart={readOnly ? undefined : () => { dragArtist.current = artist.slug; dragIdx.current = idx; }}
+                          onDragOver={readOnly ? undefined : (e) => { e.preventDefault(); setDragOver({ slug: artist.slug, idx }); }}
+                          onDragLeave={readOnly ? undefined : () => setDragOver(null)}
+                          onDrop={readOnly ? undefined : (e) => {
                             e.preventDefault();
                             setDragOver(null);
                             if (dragArtist.current === artist.slug && dragIdx.current !== null) {
@@ -344,7 +351,7 @@ export default function ReleaseSchedulePage() {
                             dragArtist.current = null;
                             dragIdx.current = null;
                           }}
-                          onDragEnd={() => { setDragOver(null); dragArtist.current = null; dragIdx.current = null; }}
+                          onDragEnd={readOnly ? undefined : () => { setDragOver(null); dragArtist.current = null; dragIdx.current = null; }}
                         >
                           {/* Drag handle */}
                           <span className="rs-drag-handle" title="Drag to reorder">
@@ -362,16 +369,19 @@ export default function ReleaseSchedulePage() {
                           <input
                             className="rs-input rs-th-grow"
                             value={track.n}
-                            onChange={(e) => updateTrack(artist.slug, idx, "n", e.target.value)}
+                            readOnly={readOnly}
+                            onChange={readOnly ? undefined : (e) => updateTrack(artist.slug, idx, "n", e.target.value)}
                             onClick={(e) => e.stopPropagation()}
+                            style={readOnly ? { opacity: 0.7, cursor: "default" } : {}}
                           />
 
                           {/* Season */}
                           <select
                             className="rs-sel"
-                            style={{ width: 52 }}
+                            style={{ width: 52, ...(readOnly ? { opacity: 0.7, cursor: "default" } : {}) }}
                             value={track.m}
-                            onChange={(e) => updateTrack(artist.slug, idx, "m", e.target.value)}
+                            disabled={readOnly}
+                            onChange={readOnly ? undefined : (e) => updateTrack(artist.slug, idx, "m", e.target.value)}
                             onClick={(e) => e.stopPropagation()}
                           >
                             {SEASON_OPTS.map((s) => (
@@ -382,9 +392,10 @@ export default function ReleaseSchedulePage() {
                           {/* Tier */}
                           <select
                             className="rs-sel"
-                            style={{ width: 72, color: vis.color }}
+                            style={{ width: 72, color: vis.color, ...(readOnly ? { opacity: 0.7, cursor: "default" } : {}) }}
                             value={track.v}
-                            onChange={(e) => updateTrack(artist.slug, idx, "v", e.target.value as Visibility)}
+                            disabled={readOnly}
+                            onChange={readOnly ? undefined : (e) => updateTrack(artist.slug, idx, "v", e.target.value as Visibility)}
                             onClick={(e) => e.stopPropagation()}
                           >
                             {VIS_OPTS.map((v) => (
@@ -398,7 +409,8 @@ export default function ReleaseSchedulePage() {
                               type="date"
                               className={`rs-input rs-date${track.scheduledFor ? " rs-date-filled" : ""}`}
                               value={toDateInput(track.scheduledFor)}
-                              onChange={(e) => updateTrack(artist.slug, idx, "scheduledFor", e.target.value || undefined)}
+                              readOnly={readOnly}
+                              onChange={readOnly ? undefined : (e) => updateTrack(artist.slug, idx, "scheduledFor", e.target.value || undefined)}
                               onClick={(e) => e.stopPropagation()}
                             />
                           </div>
@@ -409,7 +421,7 @@ export default function ReleaseSchedulePage() {
                               ? <span className="rs-audio-ok">Audio</span>
                               : <span className="rs-audio-none">None</span>
                             }
-                            <label
+                            {!readOnly && <label
                               className={`rs-upload-btn${us === "uploading" ? " rs-uploading" : us === "done" ? " rs-uploaded" : us === "error" ? " rs-upload-err" : ""}`}
                               title="Upload audio"
                               onClick={(e) => e.stopPropagation()}
@@ -421,7 +433,7 @@ export default function ReleaseSchedulePage() {
                               )}
                               <input type="file" accept="audio/*" style={{ display: "none" }}
                                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(artist.slug, idx, f); e.target.value = ""; }} />
-                            </label>
+                            </label>}
                           </div>
 
                           {/* Flags */}
@@ -429,7 +441,8 @@ export default function ReleaseSchedulePage() {
                             {([["isPremiere","P","Premiere"],["isFinale","F","Finale"],["isRemix","R","Remix"]] as const).map(([field, label, title]) => (
                               <label key={field} className="rs-flag" title={title} onClick={(e) => e.stopPropagation()}>
                                 <input type="checkbox" checked={!!track[field as keyof Track]}
-                                  onChange={(e) => updateTrack(artist.slug, idx, field as keyof Track, e.target.checked)} />
+                                  disabled={readOnly}
+                              onChange={readOnly ? undefined : (e) => updateTrack(artist.slug, idx, field as keyof Track, e.target.checked)} />
                                 <span>{label}</span>
                               </label>
                             ))}
@@ -452,6 +465,7 @@ const RS_CSS = `
 .rs-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 24px; flex-wrap: wrap; }
 .rs-title { font-size: clamp(22px, 4vw, 32px); font-weight: 900; text-transform: uppercase; letter-spacing: -.02em; color: #fff; margin: 4px 0 0; }
 .rs-header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rs-readonly-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #F69820; border: 1px solid rgba(246,152,32,.4); background: rgba(246,152,32,.1); border-radius: 20px; padding: 5px 12px; flex-shrink: 0; }
 .rs-stats { display: flex; gap: 16px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: rgba(255,255,255,.35); }
 .rs-gen-btn { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.7); font-family: inherit; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; padding: 9px 16px; border-radius: 100px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
 .rs-gen-btn:hover { background: rgba(255,255,255,.13); color: #fff; }
@@ -528,3 +542,4 @@ const RS_CSS = `
 .rs-gate-btn { display: inline-block; background: #E91E8C; color: #fff; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; padding: 12px 24px; border-radius: 100px; text-decoration: none; }
 .rs-gate-btn:hover { background: #c41874; }
 `;
+
