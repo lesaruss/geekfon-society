@@ -527,8 +527,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   function onTimeUpdate() {
     const a = audioRef.current;
     if (!a || !playing) return;
-    // Tier enforcement: trackLocked already prevents locked tracks from playing
+    // Tier enforcement: trackLocked already prevents fully-locked tracks from playing.
+    // One-tier-up preview tracks are allowed to play but get capped at PREVIEW_CAP_SECONDS.
     setAudioProgress(prev => ({ ...prev, [playing]: a.currentTime }));
+    if (isPreviewCappedV(playingV) && a.currentTime >= PREVIEW_CAP_SECONDS) {
+      a.pause();
+      a.currentTime = 0;
+      setPlaying(null);
+      setPlayingV(null);
+    }
   }
   function onLoadedMetadata() {
     const a = audioRef.current;
@@ -552,6 +559,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   //   pro     = Pro only   (locked for everyone below Pro)
   // scheduledFor: if in the future → always locked regardless of tier
   const TIER_RANK: Record<string, number> = { passport: 1, promoter: 2, pro: 3 };
+  // One-tier-up preview window, in seconds (locked-out-tier tracks stop here — see onTimeUpdate)
+  const PREVIEW_CAP_SECONDS = 20;
 
   function isScheduledFuture(t: Track): boolean {
     if (!t.scheduledFor) return false;
@@ -561,6 +570,28 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     return rel > now;
   }
 
+  // Rank a track's required visibility tier: public=0, preview(Passport)=1, members(Plus)=2, pro=3
+  function visibilityRank(v?: string | null): number {
+    if (v === "preview") return 1;
+    if (v === "members") return 2;
+    if (v === "pro")     return 3;
+    return 0;
+  }
+  function userTierRank(): number {
+    return effectiveTier ? (TIER_RANK[effectiveTier] || 0) : 0;
+  }
+  // Cascading preview rule: whatever tier you have, you can preview (capped) the tier exactly one above.
+  // Passport previews Plus, Plus previews Pro, public previews Passport-tier. Two+ tiers up stays fully locked.
+  function isPreviewCappedV(v?: string | null): boolean {
+    if (isSuperAdmin && viewAs === "real") return false;
+    if (!v || v === "public") return false;
+    return visibilityRank(v) - userTierRank() === 1;
+  }
+  function isPreviewCappedTrack(t: Track): boolean {
+    if (isScheduledFuture(t) && !(isSuperAdmin && viewAs !== "real")) return false;
+    return isPreviewCappedV(t.v);
+  }
+
   function trackLocked(t: Track): boolean {
     // Super admin in real mode: bypass all locks (see + play everything)
     if (isSuperAdmin && viewAs === "real") return false;
@@ -568,12 +599,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     // This previews what each tier will see on launch day
     const adminPreview = isSuperAdmin && viewAs !== "real";
     if (!adminPreview && isScheduledFuture(t)) return true;
-    const v = t.v;
-    if (v === "public")  return false;
-    if (v === "preview") return !effectiveTier;
-    if (v === "members") return !effectiveTier || (TIER_RANK[effectiveTier] || 0) < 2;
-    if (v === "pro")     return !effectiveTier || (TIER_RANK[effectiveTier] || 0) < 3;
-    return true;
+    if (t.v === "public") return false;
+    // Unlocked at your own tier or below, or previewable (capped) exactly one tier up
+    return visibilityRank(t.v) - userTierRank() > 1;
   }
 
   function trackBadge(t: Track): { label: string; cls: string } {
@@ -1118,6 +1146,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 </>
                               ) : (
                                 <>
+                                  {isPreviewCappedTrack(t) && (
+                                    <span className="mp-badge-preview" title={`Preview - first ${PREVIEW_CAP_SECONDS}s. Upgrade or buy to hear the full track.`}>
+                                      Preview - {badge.label}
+                                    </span>
+                                  )}
                                   <button
                                     className={"mp-btn-pre" + (!url ? " disabled" : "")}
                                     disabled={!url}
