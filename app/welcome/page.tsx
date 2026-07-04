@@ -196,24 +196,26 @@ const PATH_SLIDES: Record<Role, SlideData[]> = {
 };
 
 // ── Slide audio map (artist tracks; swap for narration URLs when ready) ────────
+const HF_CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 const SLIDE_AUDIO: Record<string, { url: string; label: string }> = {
-  "label-ip":            { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
-  "label-licensing":     { url: SUPA_AUDIO + "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3", label: "Lex from Brixton — Be Yourself" },
-  "label-pipeline":      { url: SUPA_AUDIO + "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3",   label: "Shamanic Resin — Real Dream" },
-  "label-cta":           { url: SUPA_AUDIO + "riku-hayasaka/lottery-of-love.mp3",      label: "Riku Hayasaka — Lottery of Love" },
-  "fan-artists":         { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
-  "fan-pulse":           { url: SUPA_AUDIO + "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3", label: "Lex from Brixton — Be Yourself" },
-  "fan-tokens":          { url: SUPA_AUDIO + "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3",   label: "Shamanic Resin — Real Dream" },
-  "fan-voting":          { url: SUPA_AUDIO + "riku-hayasaka/lottery-of-love.mp3",      label: "Riku Hayasaka — Lottery of Love" },
-  "fan-radio":           { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
-  "brand-audience":      { url: SUPA_AUDIO + "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3",   label: "Shamanic Resin — Real Dream" },
-  "brand-ecosystem":     { url: SUPA_AUDIO + "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3", label: "Lex from Brixton — Be Yourself" },
-  "brand-events":        { url: SUPA_AUDIO + "riku-hayasaka/lottery-of-love.mp3",      label: "Riku Hayasaka — Lottery of Love" },
-  "brand-cta":           { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
-  "promoter-live":       { url: SUPA_AUDIO + "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3", label: "Lex from Brixton — Be Yourself" },
-  "promoter-production": { url: SUPA_AUDIO + "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3",   label: "Shamanic Resin — Real Dream" },
-  "promoter-cities":     { url: SUPA_AUDIO + "riku-hayasaka/lottery-of-love.mp3",      label: "Riku Hayasaka — Lottery of Love" },
-  "promoter-cta":        { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
+  // Narration by Cillian (ElevenLabs via Higgsfield) — generated 2026-07-04
+  "label-ip":            { url: HF_CDN + "hf_20260704_093438_ffebfbb8-3df6-425a-abce-62a3c4b010b1.mp3", label: "An IP Catalog Ready to License" },
+  "label-licensing":     { url: HF_CDN + "hf_20260704_093447_900dd9a2-0ad3-49c9-afac-5cf84d0ccb20.mp3", label: "Sync. Film. TV. Campaigns." },
+  "label-pipeline":      { url: HF_CDN + "hf_20260704_093453_b35a943f-f135-4b80-8ebd-073bd42e6c92.mp3", label: "The Proof of Concept" },
+  "label-cta":           { url: HF_CDN + "hf_20260704_093459_7f1079bd-9d62-4b48-bda4-c9704ce842fb.mp3", label: "Let's Talk Licensing" },
+  "fan-artists":         { url: HF_CDN + "hf_20260704_093505_9e69c939-f6b4-4147-b89a-b4555d870de7.mp3", label: "Meet the Artists" },
+  "fan-pulse":           { url: HF_CDN + "hf_20260704_093512_bdf50a49-86d8-4911-9636-d683f13e4971.mp3", label: "The Pulse" },
+  "fan-tokens":          { url: HF_CDN + "hf_20260704_093519_9e9448e0-474c-4471-85bb-6b39f0020425.mp3", label: "LESARs Unlock Everything" },
+  "fan-voting":          { url: HF_CDN + "hf_20260704_093526_43af9bbb-e56f-4787-8246-5427db5ac434.mp3", label: "Vote. Rank. Impact." },
+  "fan-radio":           { url: HF_CDN + "hf_20260704_093534_cbaf090b-8a1e-439b-85af-d45e88c1a41b.mp3", label: "GeekFon Radio" },
+  "brand-audience":      { url: HF_CDN + "hf_20260704_093539_5e20b015-f780-4f78-82e1-768a6ee38daa.mp3", label: "Multiple Cities. One Community." },
+  "brand-ecosystem":     { url: HF_CDN + "hf_20260704_093546_5640c321-c4d7-402a-95d3-20858f57e6a8.mp3", label: "The LESARs Ecosystem" },
+  "brand-events":        { url: HF_CDN + "hf_20260704_093551_3014e676-c597-423b-b6be-bc69455ea302.mp3", label: "Live Activations That Get Filmed" },
+  "brand-cta":           { url: HF_CDN + "hf_20260704_093559_6513f683-9b9f-42b2-8728-f9d51894e8c1.mp3", label: "Your Brand Inside the Universe" },
+  "promoter-live":       { url: HF_CDN + "hf_20260704_093604_9d24c5bd-8ed0-475d-8874-b22c4fc60805.mp3", label: "GeekFon Society Goes Live" },
+  "promoter-production": { url: HF_CDN + "hf_20260704_093609_9b1762a1-6330-43bb-8a24-ee28db8df4df.mp3", label: "Every Show Is a Content Shoot" },
+  "promoter-cities":     { url: HF_CDN + "hf_20260704_093615_04b37f9e-e6d6-42be-bc3b-d59a1ff655c3.mp3", label: "Season 1 Is Live" },
+  "promoter-cta":        { url: HF_CDN + "hf_20260704_093622_b5032f34-4217-416b-bb30-f7a85dc52261.mp3", label: "Book the Act" },
 };
 
 function useRandomCity() {
