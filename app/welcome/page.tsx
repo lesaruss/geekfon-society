@@ -195,6 +195,27 @@ const PATH_SLIDES: Record<Role, SlideData[]> = {
   ],
 };
 
+// ── Slide audio map (artist tracks; swap for narration URLs when ready) ────────
+const SLIDE_AUDIO: Record<string, { url: string; label: string }> = {
+  "label-ip":            { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
+  "label-licensing":     { url: SUPA_AUDIO + "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3", label: "Lex from Brixton — Be Yourself" },
+  "label-pipeline":      { url: SUPA_AUDIO + "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3",   label: "Shamanic Resin — Real Dream" },
+  "label-cta":           { url: SUPA_AUDIO + "riku-hayasaka/lottery-of-love.mp3",      label: "Riku Hayasaka — Lottery of Love" },
+  "fan-artists":         { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
+  "fan-pulse":           { url: SUPA_AUDIO + "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3", label: "Lex from Brixton — Be Yourself" },
+  "fan-tokens":          { url: SUPA_AUDIO + "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3",   label: "Shamanic Resin — Real Dream" },
+  "fan-voting":          { url: SUPA_AUDIO + "riku-hayasaka/lottery-of-love.mp3",      label: "Riku Hayasaka — Lottery of Love" },
+  "fan-radio":           { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
+  "brand-audience":      { url: SUPA_AUDIO + "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3",   label: "Shamanic Resin — Real Dream" },
+  "brand-ecosystem":     { url: SUPA_AUDIO + "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3", label: "Lex from Brixton — Be Yourself" },
+  "brand-events":        { url: SUPA_AUDIO + "riku-hayasaka/lottery-of-love.mp3",      label: "Riku Hayasaka — Lottery of Love" },
+  "brand-cta":           { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
+  "promoter-live":       { url: SUPA_AUDIO + "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3", label: "Lex from Brixton — Be Yourself" },
+  "promoter-production": { url: SUPA_AUDIO + "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3",   label: "Shamanic Resin — Real Dream" },
+  "promoter-cities":     { url: SUPA_AUDIO + "riku-hayasaka/lottery-of-love.mp3",      label: "Riku Hayasaka — Lottery of Love" },
+  "promoter-cta":        { url: SUPA_AUDIO + "roxanne/lifes-tough.mp3",               label: "Roxanne — Life's Tough" },
+};
+
 function useRandomCity() {
   const [city, setCity] = useState(CITY_IMAGES[0]);
   useEffect(() => {
@@ -489,6 +510,118 @@ function ProgressDots({ total, current, accent }: { total: number; current: numb
   );
 }
 
+// ── Tour audio: standalone player (slide 1, no cover art) ────────────────────
+function TourSoloPlayer({ track, accent }: { track: { url: string; label: string }; accent: string }) {
+  const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  function toggle() {
+    if (state === "unavailable") return;
+    if (!audioRef.current) {
+      const a = new Audio(track.url);
+      a.addEventListener("error", () => setState("unavailable"));
+      a.addEventListener("loadedmetadata", () => { setState("playing"); a.play(); });
+      a.addEventListener("timeupdate", () => { setProgress(a.currentTime / (a.duration || 1)); });
+      a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
+      audioRef.current = a;
+      setState("loading");
+      a.load();
+      return;
+    }
+    const a = audioRef.current;
+    if (state === "playing") { a.pause(); setState("idle"); }
+    else { a.play().then(() => setState("playing")).catch(() => setState("unavailable")); }
+  }
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  const isPlaying = state === "playing";
+  const isLoading = state === "loading";
+  const wvH = [5,8,13,17,23,27,30,25,19,27,30,22,15,23,30,23,17,25,27,19,13,17,23,30,25,21,17,13,9,7,5,9,13,18,24,30,24,19,14,10];
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.04)", border: `0.5px solid ${accent}50`, borderRadius: "14px", padding: "22px 20px", width: "100%" }}>
+      {/* Waveform */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: "2px", height: "32px", marginBottom: "18px" }}>
+        {wvH.map((h, i) => (
+          <div key={i} style={{ flex: 1, height: `${h}px`, borderRadius: "2px", background: progress > i / wvH.length ? accent : `${accent}30` }} />
+        ))}
+      </div>
+      {/* Play + info */}
+      <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px" }}>
+        <button onClick={toggle} aria-label={isPlaying ? "Pause" : "Play"}
+          style={{ width: "46px", height: "46px", borderRadius: "50%", background: accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {isLoading
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="40" strokeDashoffset="20" style={{ animation: "spin 0.8s linear infinite" }} /></svg>
+            : isPlaying
+              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              : <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{track.label}</div>
+          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>{isLoading ? "Loading..." : isPlaying ? "Playing" : "Tap to listen"}</div>
+        </div>
+      </div>
+      {/* Progress */}
+      <div style={{ height: "3px", background: "rgba(255,255,255,0.1)", borderRadius: "2px" }}>
+        <div style={{ height: "100%", width: `${progress * 100}%`, background: accent, borderRadius: "2px", transition: "width 0.1s linear" }} />
+      </div>
+    </div>
+  );
+}
+
+// ── Tour audio: compact module strip (slides 2+, sits below visual) ───────────
+function TourAudioModule({ track, accent, label }: { track: { url: string }; accent: string; label: string }) {
+  const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const LIMIT = 20;
+
+  function toggle() {
+    if (state === "unavailable") return;
+    if (!audioRef.current) {
+      const a = new Audio(track.url);
+      a.addEventListener("error", () => setState("unavailable"));
+      a.addEventListener("loadedmetadata", () => { setState("playing"); a.play(); });
+      a.addEventListener("timeupdate", () => {
+        if (a.currentTime >= LIMIT) { a.pause(); a.currentTime = 0; setState("idle"); setProgress(0); return; }
+        setProgress(a.currentTime / LIMIT);
+      });
+      a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
+      audioRef.current = a;
+      setState("loading");
+      a.load();
+      return;
+    }
+    const a = audioRef.current;
+    if (state === "playing") { a.pause(); setState("idle"); }
+    else { a.play().then(() => setState("playing")).catch(() => setState("unavailable")); }
+  }
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  const isPlaying = state === "playing";
+  const isLoading = state === "loading";
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: "10px" }}>
+      <button onClick={toggle} aria-label={isPlaying ? "Pause" : "Play"}
+        style={{ width: "32px", height: "32px", borderRadius: "50%", background: accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {isLoading
+          ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="40" strokeDashoffset="20" style={{ animation: "spin 0.8s linear infinite" }} /></svg>
+          : isPlaying
+            ? <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            : <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
+      </button>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.8)", marginBottom: "5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</div>
+        <div style={{ height: "3px", background: "rgba(255,255,255,0.1)", borderRadius: "2px" }}>
+          <div style={{ height: "100%", width: `${progress * 100}%`, background: accent, borderRadius: "2px", transition: "width 0.1s linear" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function WelcomePage() {
   const [phase, setPhase] = useState<Phase>("picker");
@@ -583,7 +716,7 @@ export default function WelcomePage() {
           Pagination + Skip now live in the bottom bar below. */}
 
       {/* Main content */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: "40px 60px 100px", position: "relative", zIndex: 10, maxWidth: "900px" }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: phase === "path" ? "0 0 100px" : "40px 60px 100px", position: "relative", zIndex: 10, width: "100%" }}>
         <div
           key={`${phase}-${pathSlide}`}
           className="slide-content"
@@ -629,76 +762,155 @@ export default function WelcomePage() {
 
           {/* PATH SLIDES */}
           {phase === "path" && currentSlide && role && (
-            <div style={{ display: "flex", gap: "48px", alignItems: "center", maxWidth: "900px" }}>
-              {/* Text content */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ marginBottom: "12px" }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: currentSlide.accent, opacity: 0.85 }}>
-                  {ROLE_META[role].label} - {pathSlide + 1} of {currentSlides.length}
-                </span>
-              </div>
+            <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
 
-              <h2 style={{ fontSize: "clamp(2.2rem, 5vw, 3.8rem)", fontWeight: 900, lineHeight: 1.08, margin: "0 0 20px", letterSpacing: "-0.02em", whiteSpace: "pre-line" }}>
-                {currentSlide.headline}
-              </h2>
-
-              <p style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", fontWeight: 600, color: currentSlide.accent, margin: "0 0 18px", lineHeight: 1.5 }}>
-                {currentSlide.body}
-              </p>
-
-              {currentSlide.detail && (
-                <p style={{ fontSize: "clamp(0.9rem, 1.8vw, 1rem)", fontWeight: 400, color: "rgba(255,255,255,0.7)", lineHeight: 1.75, margin: "0 0 36px" }}>
-                  {currentSlide.detail}
-                </p>
-              )}
-
-              {currentSlide.isArtistSlide && (
-                <button
-                  onClick={() => setArtistPanelOpen(true)}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: currentSlide.accent, color: "#fff", border: "none", borderRadius: "100px", padding: "14px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", cursor: "pointer", fontFamily: "inherit", marginBottom: "12px", transition: "transform 0.15s ease" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.04)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
-                >
-                  See the Artists
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                </button>
-              )}
-
-              {isLastSlide && currentSlide.cta && !currentSlide.isArtistSlide && (
-                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
-                  <a
-                    href={currentSlide.cta.href}
-                    style={{ display: "inline-block", background: currentSlide.accent, color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 40px", fontSize: "1rem", fontWeight: 800, letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.04)"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; }}
-                  >
-                    {currentSlide.cta.label}
-                  </a>
-                  {currentSlide.cta.href !== "/passport" && (
-                    <a
-                      href="/passport"
-                      style={{ display: "inline-block", background: "rgba(255,255,255,0.08)", color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", border: "1.5px solid rgba(255,255,255,0.18)", transition: "transform 0.15s ease, background 0.15s ease" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.14)"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.08)"; }}
-                    >
-                      Become a Member
-                    </a>
-                  )}
-                  <button
-                    onClick={() => transition(() => { setPhase("picker"); setRole(null); })}
-                    style={{ background: "none", border: "none", padding: "0", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", textDecoration: "underline", textUnderlineOffset: "3px" }}
-                  >
-                    See other paths
-                  </button>
+              {/* Left: text */}
+              <div style={{ flex: "0 0 52%", minWidth: 0, padding: "40px 32px 0 56px" }}>
+                <div style={{ marginBottom: "12px" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: currentSlide.accent, opacity: 0.85 }}>
+                    {ROLE_META[role].label} - {pathSlide + 1} of {currentSlides.length}
+                  </span>
                 </div>
-              )}
-              </div>{/* end text content */}
 
-              {/* 16:9 feature preview - desktop only */}
-              <div style={{ flexShrink: 0, width: "340px", display: "none" }} className="slide-preview-panel">
-                <SlidePreview slideId={currentSlide.id} accent={currentSlide.accent} />
+                <h2 style={{ fontSize: "clamp(2rem, 4vw, 3.4rem)", fontWeight: 900, lineHeight: 1.08, margin: "0 0 18px", letterSpacing: "-0.02em", whiteSpace: "pre-line" }}>
+                  {currentSlide.headline}
+                </h2>
+
+                <p style={{ fontSize: "clamp(0.95rem, 1.8vw, 1.1rem)", fontWeight: 600, color: currentSlide.accent, margin: "0 0 14px", lineHeight: 1.5 }}>
+                  {currentSlide.body}
+                </p>
+
+                {currentSlide.detail && (
+                  <p style={{ fontSize: "clamp(0.85rem, 1.5vw, 0.95rem)", fontWeight: 400, color: "rgba(255,255,255,0.65)", lineHeight: 1.75, margin: "0 0 30px" }}>
+                    {currentSlide.detail}
+                  </p>
+                )}
+
+                {currentSlide.isArtistSlide && (
+                  <button
+                    onClick={() => setArtistPanelOpen(true)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: currentSlide.accent, color: "#fff", border: "none", borderRadius: "100px", padding: "14px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", cursor: "pointer", fontFamily: "inherit", marginBottom: "12px", transition: "transform 0.15s ease" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.04)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
+                  >
+                    See the Artists
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </button>
+                )}
+
+                {isLastSlide && currentSlide.cta && !currentSlide.isArtistSlide && (
+                  <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+                    <a
+                      href={currentSlide.cta.href}
+                      style={{ display: "inline-block", background: currentSlide.accent, color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 40px", fontSize: "1rem", fontWeight: 800, letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.04)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; }}
+                    >
+                      {currentSlide.cta.label}
+                    </a>
+                    {currentSlide.cta.href !== "/passport" && (
+                      <a
+                        href="/passport"
+                        style={{ display: "inline-block", background: "rgba(255,255,255,0.08)", color: "white", textDecoration: "none", borderRadius: "100px", padding: "16px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", border: "1.5px solid rgba(255,255,255,0.18)", transition: "transform 0.15s ease, background 0.15s ease" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.14)"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.08)"; }}
+                      >
+                        Become a Member
+                      </a>
+                    )}
+                    <button
+                      onClick={() => transition(() => { setPhase("picker"); setRole(null); })}
+                      style={{ background: "none", border: "none", padding: "0", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", textDecoration: "underline", textUnderlineOffset: "3px" }}
+                    >
+                      See other paths
+                    </button>
+                  </div>
+                )}
               </div>
-              <style>{`@media(min-width:900px){.slide-preview-panel{display:block !important}}`}</style>
+
+              {/* Right: dynamic panel — desktop only */}
+              <div style={{ flex: "0 0 48%", minWidth: 0, padding: "40px 48px 0 16px", display: "none" }} className="tour-right-col">
+                {currentSlide.id === "label-ip" ? (
+                  /* Slide 1: solo player, no cover art */
+                  <TourSoloPlayer track={SLIDE_AUDIO["label-ip"]} accent={currentSlide.accent} />
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {/* label-licensing: platform distribution list */}
+                    {currentSlide.id === "label-licensing" && (
+                      <div style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden" }}>
+                        {[
+                          { name: "Spotify",          color: "#1DB954", badge: "Live" },
+                          { name: "Apple Music",      color: "#FA586A", badge: "Live" },
+                          { name: "Amazon Music",     color: "#FF9900", badge: "Live" },
+                          { name: "Sync / Film / TV", color: currentSlide.accent, badge: "License open" },
+                          { name: "Advertising",      color: "#F69820", badge: "License open" },
+                        ].map((p, i, arr) => (
+                          <div key={p.name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 14px", borderBottom: i < arr.length - 1 ? "0.5px solid rgba(255,255,255,0.07)" : "none" }}>
+                            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: p.color, flexShrink: 0 }} />
+                            <span style={{ flex: 1, fontSize: "12px", color: "rgba(255,255,255,0.8)", fontFamily: "inherit" }}>{p.name}</span>
+                            <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "4px", background: `${p.color}22`, color: p.color }}>{p.badge}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* label-pipeline: GeekFon → systems → TalentVangelist */}
+                    {currentSlide.id === "label-pipeline" && (
+                      <div style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden" }}>
+                        {([
+                          { label: "GeekFon Society",      sub: "Fictional IP catalog — 11 artists, live now",       color: "#9C27B0" },
+                          null,
+                          { label: "Fan + Token Systems",  sub: "Engagement, rankings, radio — proven live",         color: "#E91E8C" },
+                          null,
+                          { label: "TalentVangelist",       sub: "Real-artist agency — scales from this system",      color: "#F69820" },
+                        ] as ({ label: string; sub: string; color: string } | null)[]).map((n, i) => n === null ? (
+                          <div key={i} style={{ display: "flex", justifyContent: "center", padding: "4px 0", borderBottom: "0.5px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>↓</div>
+                        ) : (
+                          <div key={n.label} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 14px", borderBottom: i < 4 ? "0.5px solid rgba(255,255,255,0.07)" : "none" }}>
+                            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: n.color, flexShrink: 0 }} />
+                            <div>
+                              <div style={{ fontSize: "12px", fontWeight: 600, color: "#fff", fontFamily: "inherit" }}>{n.label}</div>
+                              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "1px" }}>{n.sub}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* label-cta: Roxanne hero image cap */}
+                    {currentSlide.id === "label-cta" && (
+                      <div style={{ borderRadius: "10px", overflow: "hidden", position: "relative" }}>
+                        <img
+                          src={SUPA_MEDIA + "roxanne/hero.png"}
+                          alt="GeekFon Society"
+                          style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", objectPosition: "top center", display: "block", opacity: 0.88 }}
+                        />
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,8,20,0.85) 0%, transparent 55%)" }} />
+                        <div style={{ position: "absolute", bottom: "12px", left: "14px", right: "14px" }}>
+                          <div style={{ fontFamily: "inherit", fontSize: "9px", letterSpacing: "0.13em", color: "#9C27B0", marginBottom: "3px" }}>GEEKFON SOCIETY</div>
+                          <div style={{ fontFamily: "inherit", fontSize: "13px", fontWeight: 700, color: "#fff" }}>Original IP. Ready to License.</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* All other roles: SlidePreview */}
+                    {role !== "label" && (
+                      <SlidePreview slideId={currentSlide.id} accent={currentSlide.accent} />
+                    )}
+
+                    {/* Compact audio module beneath visual */}
+                    {SLIDE_AUDIO[currentSlide.id] && (
+                      <TourAudioModule
+                        track={SLIDE_AUDIO[currentSlide.id]}
+                        accent={currentSlide.accent}
+                        label={SLIDE_AUDIO[currentSlide.id].label}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+              <style>{`@media(min-width:900px){.tour-right-col{display:block !important}}`}</style>
+
             </div>
           )}
         </div>
