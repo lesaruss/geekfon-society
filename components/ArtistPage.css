@@ -174,6 +174,7 @@
 .mp-row-sub{color:rgba(26,26,26,.45);font-size:12.5px;margin-top:2px}
 .mp-row-state{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .mp-badge-lk{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:rgba(26,26,26,.5);background:rgba(0,0,0,.06);padding:4px 9px;border-radius:999px;white-space:nowrap}
+.mp-badge-preview{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--rx-text,#9c1458);background:var(--rx-tint,rgba(233,30,140,.1));padding:4px 9px;border-radius:999px;white-space:nowrap}
 .mp-row-date{color:rgba(26,26,26,.4);font-size:12px;white-space:nowrap}
 .mp-btn-pre{border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;border:1px solid var(--lr-border);color:#1a1a1a;background:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
 .mp-btn-pre:hover:not(:disabled){border-color:var(--rx);color:var(--rx)}
