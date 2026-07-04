@@ -238,22 +238,25 @@ export default function SiteChrome({
           </nav>
         )}
 
-        {!auth.loading && isLoggedIn && auth.balance > 0 && (
-          <div className="gmember-balance">
-            <span className="gmember-balance-num">{auth.balance.toLocaleString()}</span>
-            <span className="gmember-balance-label">LESARs</span>
-          </div>
-        )}
-        {!auth.loading && !isLoggedIn && (
-          <div className="gauth">
-            <a href="/login.html" className="glogin">Log in</a>
-            <a href="/passport" className="gcta">Get Passport</a>
-          </div>
-        )}
+        {/* Right side: always pinned to far right */}
+        <div className="gtop-right">
+          {!auth.loading && isLoggedIn && auth.balance > 0 && (
+            <div className="gmember-balance">
+              <span className="gmember-balance-num">{auth.balance.toLocaleString()}</span>
+              <span className="gmember-balance-label">LESARs</span>
+            </div>
+          )}
+          {!auth.loading && !isLoggedIn && (
+            <div className="gauth">
+              <a href="/login.html" className="glogin">Log in</a>
+              <a href="/passport" className="gcta">Get Passport</a>
+            </div>
+          )}
 
-        <button className="gham" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
-          <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
-        </button>
+          <button className="gham" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
+            <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+          </button>
+        </div>
       </header>
 
       <div className={"gscrim" + (open ? " open" : "")} onClick={() => setOpen(false)} aria-hidden="true" />
@@ -354,8 +357,9 @@ export default function SiteChrome({
 
 const CHROME_CSS = `
 .gtop { position: sticky; top: 0; z-index: 40; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 18px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,.08); }
+.gtop-right { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
 .gham { width: 40px; height: 40px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #fff; flex-shrink: 0; }
-.gham:hover { background: #f5f5f5; }
+.gham:hover { background: rgba(255,255,255,0.1); }
 .gham svg { width: 23px; height: 23px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
 @keyframes fonHue { 0% { color: #E91E8C; } 25% { color: #00B4FF; } 50% { color: #AAFF00; } 75% { color: #F69820; } 100% { color: #E91E8C; } }
 .gfs-logo { font-family: 'Montserrat', -apple-system, sans-serif; font-size: 20px; font-weight: 900; letter-spacing: -.01em; line-height: 1; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; user-select: none; text-decoration: none; }
@@ -370,18 +374,17 @@ const CHROME_CSS = `
 .gcrumb a, .gcrumb .gcrumb-cur { font-size: 14px; font-weight: 800; letter-spacing: .01em; color: #fff; white-space: nowrap; }
 .gcrumb a:hover { color: #9c1458; }
 .gcrumb .gcrumb-cur { color: #9c1458; }
-.gcrumb-sep { color: rgba(26,26,26,.3); font-weight: 600; }
-.gtop-shimmer { margin-left: auto; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%); background-size: 200% 100%; animation: gShimmer 1.4s infinite; flex-shrink: 0; }
+.gcrumb-sep { color: rgba(255,255,255,.3); font-weight: 600; }
+.gtop-shimmer { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%); background-size: 200% 100%; animation: gShimmer 1.4s infinite; flex-shrink: 0; }
 @keyframes gShimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-.gcta { margin-left: auto; flex-shrink: 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #9c1458; border: 1px solid #E91E8C; border-radius: 20px; padding: 8px 17px; background: #fff; text-decoration: none; }
+.gcta { flex-shrink: 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #9c1458; border: 1px solid #E91E8C; border-radius: 20px; padding: 8px 17px; background: #fff; text-decoration: none; }
 .gcta:hover { background: rgba(233,30,140,.07); }
-.gauth { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 14px; }
-.gauth .gcta { margin-left: 0; }
+.gauth { flex-shrink: 0; display: flex; align-items: center; gap: 14px; }
 .glogin { flex-shrink: 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #fff; text-decoration: none; opacity: .85; }
 .glogin:hover { opacity: 1; }
 .gdrawer-login { display: block; text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); text-decoration: underline; text-underline-offset: 3px; }
 .gdrawer-login:hover { color: #fff; }
-.gmember-balance { margin-left: auto; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
+.gmember-balance { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
 .gmember-balance-num { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -.01em; }
 .gmember-balance-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: #9c1458; margin-top: 2px; }
 .gmember-avatar { width: 36px; height: 36px; border-radius: 50%; color: #fff; font-size: 14px; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
