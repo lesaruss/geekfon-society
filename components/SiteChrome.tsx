@@ -248,6 +248,16 @@ export default function SiteChrome({
             </div>
           )}
 
+          {auth.isAdmin && viewAs !== null && (
+            <button
+              className="gviewas-exit"
+              onClick={() => { setViewAs(null); localStorage.removeItem("gfs-view-as"); window.dispatchEvent(new CustomEvent("gfs-view-as", { detail: null })); }}
+              title="Exit view-as mode"
+            >
+              <span className="gviewas-label">Viewing as: {TIER_LABEL[viewAs]}</span>
+              <span className="gviewas-x">✕</span>
+            </button>
+          )}
           <button className="gham" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
             <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
           </button>
@@ -372,6 +382,10 @@ const CHROME_CSS = `
 .glogin:hover { opacity: 1; }
 .gdrawer-login { display: block; text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); text-decoration: underline; text-underline-offset: 3px; }
 .gdrawer-login:hover { color: #fff; }
+.gviewas-exit { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 20px; border: 1px solid rgba(233,30,140,.5); background: rgba(233,30,140,.12); cursor: pointer; font-family: 'Montserrat', sans-serif; }
+.gviewas-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #E91E8C; }
+.gviewas-x { font-size: 10px; color: rgba(233,30,140,.7); font-weight: 700; }
+.gviewas-exit:hover { background: rgba(233,30,140,.22); }
 .gmember-balance { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
 .gmember-balance-num { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -.01em; }
 .gmember-balance-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: #9c1458; margin-top: 2px; }
