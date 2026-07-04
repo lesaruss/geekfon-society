@@ -390,7 +390,7 @@ const GALLERY_ARTISTS = GALLERY_ORDER
 
 function ArtistPortraitGallery({ accent }: { accent: string }) {
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 3;
+  const PAGE_SIZE = 2;
   const totalPages = Math.ceil(GALLERY_ARTISTS.length / PAGE_SIZE);
   const visible = GALLERY_ARTISTS.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   return (
