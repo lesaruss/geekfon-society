@@ -8,7 +8,6 @@ type NavItem = { label: string; href: string };
 const NAV_PUBLIC: NavItem[] = [
   { label: "Overview",   href: "/#overview" },
   { label: "Roster",     href: "/roster" },
-  { label: "Take the Tour", href: "/welcome" },
 ];
 
 const NAV_PASSPORT: NavItem[] = [
@@ -291,7 +290,7 @@ export default function SiteChrome({
 
         {!isLoggedIn && (
           <a href="/shamanic-resin" className="gdrawer-ad" onClick={() => setOpen(false)}>
-            <span className="gda-eyebrow">Now Playing</span>
+            <span className="gda-eyebrow">On GeekFon Radio Now</span>
             <span className="gda-title">Shamanic Resin</span>
             <span className="gda-sub">All I Do Is Eat. Listen now.</span>
           </a>
@@ -381,6 +380,7 @@ const CHROME_CSS = `
 .gauth { flex-shrink: 0; display: flex; align-items: center; gap: 14px; }
 .glogin { flex-shrink: 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #fff; text-decoration: none; opacity: .85; }
 .glogin:hover { opacity: 1; }
+@media(max-width:640px) { .glogin { display: none; } }
 .gdrawer-login { display: block; text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); text-decoration: underline; text-underline-offset: 3px; }
 .gdrawer-login:hover { color: #fff; }
 .gviewas-exit { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 20px; border: 1px solid rgba(233,30,140,.5); background: rgba(233,30,140,.12); cursor: pointer; font-family: 'Montserrat', sans-serif; }
