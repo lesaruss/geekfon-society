@@ -652,8 +652,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     setPurchaseModal(null);
     setTimeout(() => setPurchaseSuccess(null), 4000);
   }
-  function trackPlayLabel(isPlaying: boolean): string {
-    return isPlaying ? "Pause" : "Play";
+  function trackPlayLabel(isPlaying: boolean, isPreviewCapped = false): string {
+    if (isPlaying) return "Pause";
+    return isPreviewCapped ? "Preview" : "Play";
   }
   function trackLockedLabel(t: Track): string {
     if (isScheduledFuture(t)) {
@@ -1156,9 +1157,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                     disabled={!url}
                                     title={!url ? "Audio coming soon" : undefined}
                                     onClick={(e) => { e.stopPropagation(); if (url) { setCurrTrackIdx(i); togglePlay(url, t.v, t.n); } }}
-                                    aria-label={trackPlayLabel(playing === url)}
+                                    aria-label={trackPlayLabel(playing === url, isPreviewCappedTrack(t))}
                                   >
-                                    {!url ? "Soon" : trackPlayLabel(playing === url)}
+                                    {!url ? "Soon" : trackPlayLabel(playing === url, isPreviewCappedTrack(t))}
                                   </button>
                                   <button
                                     className="mp-btn-buy"
