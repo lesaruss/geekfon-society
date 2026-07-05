@@ -1,9 +1,45 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createClient } from "@supabase/supabase-js";
 import SiteChrome from "@/components/SiteChrome";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 const AUDIO_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
+
+const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
+const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA";
+const radioSupabase = createClient(SUPA_URL, SUPA_ANON);
+
+// Display names for radio_tracks.artist_slug (this table uses full-name slugs,
+// which don't always match gfs_artists.slug - e.g. "riku-hayasaka" vs "riku").
+const ARTIST_NAMES: Record<string, string> = {
+  "lex-from-brixton": "Lex from Brixton",
+  "lickle-bro": "Lickle Bro",
+  "lickle-sis": "Lickle Sis",
+  "mad-tings": "Mad Tings",
+  "mr-russell": "Mr. Russell",
+  "nilo-wave": "Nilo Wave",
+  "riku-hayasaka": "Riku Hayasaka",
+  "roxanne": "Roxanne",
+  "rustblood-prophets": "Rustblood Prophets",
+  "shamanic-resin": "Shamanic Resin",
+  "straight-and-narrow": "Straight and Narrow",
+};
+
+function artistName(slug: string): string {
+  return ARTIST_NAMES[slug] || slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+type RadioTrack = { artist: string; title: string; path: string };
 
 const CITIES = [
   { name: "London, UK", accent: "#F69820", desktop: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", mobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png" },
@@ -15,23 +51,10 @@ const CITIES = [
   { name: "Orlando, FL", accent: "#FF9800", desktop: CDN + "hf_20260619_125302_4c4f6747-3bcb-45b2-a743-610912078942.png", mobile: CDN + "hf_20260619_125452_ad933e6f-0b03-43a4-b111-341e76b9efd9.jpeg" },
 ];
 
-const PLAYLIST = [
-  { artist: "Roxanne", title: "Life's Tough", path: "roxanne/lifes-tough.mp3" },
-  { artist: "Roxanne", title: "Good Luck", path: "roxanne/good-luck.mp3" },
-  { artist: "Shamanic Resin", title: "Real Dream", path: "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3" },
-  { artist: "Shamanic Resin", title: "London Is Cool", path: "shamanic-resin/london-is-cool.mp3" },
-  { artist: "Lex from Brixton", title: "The Flex", path: "lex-from-brixton/the-flex.mp3" },
-  { artist: "Lex from Brixton", title: "Vibration", path: "lex-from-brixton/vibration.mp3" },
-  { artist: "Lex from Brixton", title: "No Apology", path: "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3" },
-  { artist: "Riku Hayasaka", title: "Lottery of Love", path: "riku-hayasaka/lottery-of-love.mp3" },
-  { artist: "Riku Hayasaka", title: "Make My Body Move", path: "riku-hayasaka/make-my-body-move.mp3" },
-  { artist: "Riku Hayasaka", title: "Chasing the Horizon", path: "riku-hayasaka/chasing-the-horizon.mp3" },
-  { artist: "Shamanic Resin", title: "London Is Cool (Remix)", path: "shamanic-resin/london-is-cool-remix.mp3" },
-  { artist: "Riku Hayasaka", title: "How Do You Feel It", path: "riku-hayasaka/how-do-you-feel-it.mp3" },
-  { artist: "Lex from Brixton", title: "The Flex (Remix)", path: "lex-from-brixton/the-flex-remix.mp3" },
-  { artist: "Riku Hayasaka", title: "This Too Shall Pass", path: "riku-hayasaka/this-too-shall-pass.mp3" },
-  { artist: "Riku Hayasaka", title: "Lottery of Love (Remix)", path: "riku-hayasaka/lottery-of-love-remix.mp3" },
-];
+// PLAYLIST is now loaded live from Supabase radio_tracks (see loadPlaylist below) -
+// the previous hardcoded 15-track list only covered 3 of 11 artists and included
+// two tracks (the-flex.mp3, vibration.mp3) that were actually superadmin-gated,
+// plus one dead file (good-luck.mp3, 400) that broke playback on rotation.
 
 export default function RadioPage() {
   const [playing, setPlaying] = useState(false);
@@ -44,6 +67,37 @@ export default function RadioPage() {
   const cityPanelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const trackIdxRef = useRef(0);
+  const [playlist, setPlaylist] = useState<RadioTrack[]>([]);
+  const [loadingPlaylist, setLoadingPlaylist] = useState(true);
+  const playlistRef = useRef<RadioTrack[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPlaylist() {
+      const nowIso = new Date().toISOString();
+      const { data, error } = await radioSupabase
+        .from("radio_tracks")
+        .select("artist_slug, title, src_path, release_date")
+        .eq("is_public", true)
+        .neq("src_path", "PENDING")
+        .lte("release_date", nowIso)
+        .order("artist_slug", { ascending: true })
+        .order("sort_order", { ascending: true });
+      if (cancelled) return;
+      const rows = !error && data ? data : [];
+      const mapped: RadioTrack[] = rows.map(r => ({
+        artist: artistName(r.artist_slug as string),
+        title: r.title as string,
+        path: r.src_path as string,
+      }));
+      const shuffled = shuffle(mapped);
+      playlistRef.current = shuffled;
+      setPlaylist(shuffled);
+      setLoadingPlaylist(false);
+    }
+    loadPlaylist();
+    return () => { cancelled = true; };
+  }, []);
 
   const goCity = useCallback((next: number) => {
     const prev = cityRef.current;
@@ -77,15 +131,18 @@ export default function RadioPage() {
     });
   }, []);
 
-  function playTrack(idx: number) {
-    const track = PLAYLIST[idx];
+  function playTrack(idx: number, attempt = 0) {
+    const list = playlistRef.current;
+    if (list.length === 0) return;
+    const safeIdx = ((idx % list.length) + list.length) % list.length;
+    const track = list[safeIdx];
     if (!audioRef.current) {
       audioRef.current = new Audio();
     }
     const a = audioRef.current;
     a.src = AUDIO_BASE + track.path;
     a.onended = () => {
-      const next = (trackIdxRef.current + 1) % PLAYLIST.length;
+      const next = (trackIdxRef.current + 1) % list.length;
       trackIdxRef.current = next;
       setTrackIdx(next);
       playTrack(next);
@@ -93,15 +150,19 @@ export default function RadioPage() {
     a.ontimeupdate = () => { setProgress(a.currentTime); };
     a.ondurationchange = () => { setDuration(a.duration || 0); };
     a.onerror = () => {
-      const next = (trackIdxRef.current + 1) % PLAYLIST.length;
+      // Skip a dead/blocked file and try the next one, but bail after a full
+      // lap so a bad rotation can't spin the player forever.
+      if (attempt >= list.length) { setPlaying(false); return; }
+      const next = (trackIdxRef.current + 1) % list.length;
       trackIdxRef.current = next;
       setTrackIdx(next);
-      playTrack(next);
+      playTrack(next, attempt + 1);
     };
     a.play().then(() => setPlaying(true)).catch(() => {});
   }
 
   function toggle() {
+    if (playlistRef.current.length === 0) return;
     if (!audioRef.current || audioRef.current.paused || audioRef.current.ended) {
       playTrack(trackIdx);
     } else if (playing) {
@@ -117,7 +178,7 @@ export default function RadioPage() {
     return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
   }
 
-  const track = PLAYLIST[trackIdx];
+  const track = playlist.length > 0 ? playlist[trackIdx % playlist.length] : null;
   const city = CITIES[current];
   const pct = duration > 0 ? (progress / duration) * 100 : 0;
 
@@ -148,6 +209,7 @@ export default function RadioPage() {
           <button
             className={"rd-play-btn" + (playing ? " playing" : "")}
             onClick={toggle}
+            disabled={loadingPlaylist || !track}
             aria-label={playing ? "Pause GeekFon Radio" : "Play GeekFon Radio"}
           >
             <img src="/geekfon-logo.png" alt="GeekFon Radio" className="rd-logo-img" />
@@ -172,10 +234,10 @@ export default function RadioPage() {
         <div className="rd-now-playing">
           <div className="rd-np-eyebrow">
             <span className="rd-live-dot" aria-hidden="true" />
-            {playing ? "NOW PLAYING" : "READY TO TUNE IN"}
+            {loadingPlaylist ? "TUNING IN" : playing ? "NOW PLAYING" : "READY TO TUNE IN"}
           </div>
-          <div className="rd-np-title">{track.title}</div>
-          <div className="rd-np-artist">{track.artist}</div>
+          <div className="rd-np-title">{track ? track.title : loadingPlaylist ? "Loading Season 1..." : "No tracks available"}</div>
+          {track && <div className="rd-np-artist">{track.artist}</div>}
 
           {playing && duration > 0 && (
             <div className="rd-progress">
@@ -188,7 +250,7 @@ export default function RadioPage() {
           )}
         </div>
 
-        {!playing && (
+        {!playing && !loadingPlaylist && track && (
           <p className="rd-hint">Tap the logo to tune in</p>
         )}
       </div>
