@@ -64,8 +64,25 @@ export default function ReleaseSchedulePage() {
 
   const isAdmin   = userEmail === ADMIN_EMAIL;
   const tier      = member?.tier || "public";
-  const isPro     = isAdmin || tier === "pro" || tier === "lifetime";
-  const isPlus    = tier === "promoter" || tier === "all-access" || tier === "plus";
+
+  // Respect the admin "View As Membership" simulation (same localStorage key SiteChrome
+  // and ArtistPage use). Previously this page ignored it entirely: the nav link hid itself
+  // while simulating Passport, but a direct visit to /dashboard/release-schedule still
+  // rendered the full editable tool because isAdmin bypassed everything below regardless
+  // of the simulated tier. Release Schedule is a Pro + real-admin-only tool, so while
+  // simulating, only "pro" should see it - Passport and Plus simulations must be locked out.
+  const [viewAs, setViewAs] = useState<string | null>(null);
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem("gfs-view-as") : null;
+    if (saved) setViewAs(saved);
+    const onViewAs = (e: Event) => setViewAs((e as CustomEvent).detail ?? null);
+    window.addEventListener("gfs-view-as", onViewAs);
+    return () => window.removeEventListener("gfs-view-as", onViewAs);
+  }, []);
+  const simulating = isAdmin && viewAs !== null;
+
+  const isPro     = simulating ? viewAs === "pro" : (isAdmin || tier === "pro" || tier === "lifetime");
+  const isPlus    = simulating ? false            : (tier === "promoter" || tier === "all-access" || tier === "plus");
   const hasAccess = isPro || isPlus;
   const readOnly  = !isPro;
 
