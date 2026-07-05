@@ -237,6 +237,15 @@
 .pur-guest-note{font-size:12px;color:#888;text-align:center;margin-top:12px}
 .pur-guest-link{color:var(--rx);font-weight:700;text-decoration:none}
 .pur-disabled{opacity:.45;cursor:not-allowed}
+.tu-pack-list{display:flex;flex-direction:column;gap:10px;margin:4px 0 20px}
+.tu-pack-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid #e5e5e5;border-radius:12px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s;position:relative;font-family:inherit;text-align:left;width:100%}
+.tu-pack-row:hover{border-color:var(--rx)}
+.tu-pack-row.tu-selected{border-color:var(--rx);background:var(--rx-tint);box-shadow:0 0 0 1px var(--rx)}
+.tu-pack-row:focus-visible{outline:2px solid var(--rx);outline-offset:2px}
+.tu-pack-badge{position:absolute;top:-9px;left:14px;background:var(--rx);color:#fff;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:100px}
+.tu-pack-lesars{font-size:15px;font-weight:900;color:#1a1a1a}
+.tu-pack-note{font-size:11px;color:#888;font-weight:600;margin-top:2px}
+.tu-pack-price{font-size:16px;font-weight:900;color:var(--rx-text);flex-shrink:0}
 /* Purchase success toast */
 .pur-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;border-radius:100px;padding:12px 22px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;z-index:1100;box-shadow:0 8px 32px rgba(0,0,0,.22);animation:toast-in .25s ease}
 .pur-toast svg{width:16px;height:16px;stroke:#4ade80;flex-shrink:0}
