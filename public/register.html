@@ -409,9 +409,35 @@
     text-decoration: underline;
   }
   .back-link:hover { color: var(--text); }
+
+  /* Standard site nav (matches SiteChrome top bar) */
+  .reg-nav {
+    position: sticky; top: 0; z-index: 50; height: 60px;
+    display: flex; align-items: center; gap: 18px;
+    padding: 0 20px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .reg-nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
+  .reg-nav-logo img { height: 26px; width: 26px; object-fit: contain; display: block; }
+  .reg-nav-logo span { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 900; letter-spacing: -.01em; text-transform: uppercase; color: #fff; }
+  .reg-nav-links { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+  .reg-nav-links a { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); text-decoration: none; }
+  .reg-nav-links a:hover { color: #fff; }
+  @media (max-width: 480px) { .reg-nav-links a:not(.reg-nav-login) { display: none; } }
 </style>
 </head>
 <body>
+
+<nav class="reg-nav" aria-label="Site navigation">
+  <a href="/" class="reg-nav-logo" aria-label="GeekFon Society home">
+    <img src="/geekfon-logo.png" alt="" aria-hidden="true">
+    <span>GeekFon</span>
+  </a>
+  <div class="reg-nav-links">
+    <a href="/roster">Roster</a>
+    <a href="/welcome">Take the Tour</a>
+    <a href="/login.html" class="reg-nav-login">Log in</a>
+  </div>
+</nav>
 
 <div class="aurora" aria-hidden="true"></div>
 
@@ -419,8 +445,8 @@
 
   <!-- Logo -->
   <div class="brand" role="banner">
-    <a href="/" aria-label="GeekFon Society home" style="display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;">
-      <div class="brand-dot" aria-hidden="true"></div>
+    <a href="/" aria-label="GeekFon Society home" style="display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;">
+      <img src="/geekfon-logo.png" alt="" aria-hidden="true" style="height:52px;width:52px;object-fit:contain;border-radius:50%;">
       <span class="brand-name">GeekFon</span>
       <span class="brand-sub">Society</span>
     </a>
@@ -432,7 +458,7 @@
     <div class="state active" id="stateForm">
       <div class="tier-badge" id="tierBadge">Member</div>
       <p class="card-eyebrow">Create Your Account</p>
-      <h1 class="card-heading">Join GeekFon Society</h1>
+      <h1 class="card-heading">Register Today</h1>
       <p class="card-body">Start with one tap, or fill in your details below. No password needed.</p>
 
       <!-- OAuth -->
