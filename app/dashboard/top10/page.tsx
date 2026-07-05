@@ -175,8 +175,14 @@ const CSS = `
 .t10-footnote{padding:14px 24px;font-size:10px;font-weight:600;color:rgba(255,255,255,.2);border-top:1px solid rgba(255,255,255,.05);line-height:1.7;}
 /* Responsive: hide plays/views on small screens */
 @media(max-width:700px){
-  .t10-header{grid-template-columns:40px 1fr 0 0 80px 70px;}
-  .t10-row{grid-template-columns:40px 1fr 0 0 80px 70px;}
+  /* Plays/Views cells are removed from flow via display:none below, so the grid
+     template must only define tracks for what's actually left (rank, artist,
+     votes, score) - the old 6-column template with two 0px placeholder tracks
+     caused the 4 remaining cells to be auto-placed into the first 4 tracks
+     (40px 1fr 0 0), squeezing Votes and Score into 0-width columns and making
+     their numbers render stacked on top of each other. */
+  .t10-header{grid-template-columns:40px 1fr 80px 70px;}
+  .t10-row{grid-template-columns:40px 1fr 80px 70px;}
   .t10-col-plays,.t10-col-views,.t10-plays,.t10-views{display:none;}
 }
 /* Vote strip */
