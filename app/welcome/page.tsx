@@ -190,8 +190,8 @@ const PATH_SLIDES: Record<Role, SlideData[]> = {
   promoter: [
     { id: "promoter-live", headline: "GeekFon Society\nGoes Live", body: "Full production. Every show. Lord Zorlot on the decks.", detail: "GeekFon Society produces live events at anime conventions, club after-parties, theater events, and city activations. The Lord Zorlot DJ set is the flagship live experience: full GeekFon visual production, original music, and the energy of a universe brought into a room.", accent: "#00BCD4" },
     { id: "promoter-production", headline: "Every Show Is\na Content Shoot", body: "You book the act. We build the moment. The footage lives forever.", detail: "Every GeekFon live event feeds three pipelines: the Pulse feed for fans, the animated series archive for Anime 3000, and the long-term content library. Promoters who book GeekFon are not booking a one-night act. They are creating content that extends the brand beyond the venue.", accent: "#9C27B0" },
-    { id: "promoter-cities", headline: "Season 1 Is Live", body: "July 13 through September 19, 2026.", detail: "Season 1 runs 111 days, opening July 13 and closing September 19, 2026 with a live event. Active markets include Tokyo, Seoul, Fort Lauderdale, and Berlin. If you produce events in any of these markets - anime conventions, music festivals, club nights, theater programming - we should be talking.", accent: "#F44336" },
-    { id: "promoter-cta", headline: "Book the Act", body: "GeekFon Society is available to book for Season 1 shows now.", detail: "We handle production design, music programming, and content capture. You handle the room. Together we put on something that neither of us could alone. Season 1 closes September 19. Dates are limited.", accent: "#00BCD4", cta: { label: "Book an Event", href: "mailto:contact@lesaruss.com" } },
+    { id: "promoter-cities", headline: "Season 1 Is Live", body: "July 13 through November 1, 2026.", detail: "Season 1 runs 111 days, opening July 13 and closing November 1, 2026 with a live event. Active markets include Tokyo, Seoul, Fort Lauderdale, and Berlin. If you produce events in any of these markets - anime conventions, music festivals, club nights, theater programming - we should be talking.", accent: "#F44336" },
+    { id: "promoter-cta", headline: "Book the Act", body: "GeekFon Society is available to book for Season 1 shows now.", detail: "We handle production design, music programming, and content capture. You handle the room. Together we put on something that neither of us could alone. Season 1 closes November 1. Dates are limited.", accent: "#00BCD4", cta: { label: "Book an Event", href: "mailto:contact@lesaruss.com" } },
   ],
 };
 
@@ -345,7 +345,7 @@ function SlidePreview({ slideId, accent }: { slideId: string; accent: string }) 
     "label-cta": "Licensing inquiries open", "brand-audience": "Tokyo · Seoul · Berlin",
     "brand-ecosystem": "Built-in brand moments", "brand-events": "Every show is content",
     "brand-cta": "Native to the universe", "promoter-live": "Lord Zorlot on the decks",
-    "promoter-production": "3 archive streams per show", "promoter-cities": "Jul 13 - Sep 19, 2026",
+    "promoter-production": "3 archive streams per show", "promoter-cities": "Jul 13 - Nov 1, 2026",
     "promoter-cta": "Dates are limited",
   }[slideId] || "Explore the universe";
   const iconFn = SLIDE_ICONS[slideId] || ((c: string) => <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="24 8 44 40 4 40" stroke={c} strokeWidth="2.5" strokeLinejoin="round"/></svg>);
