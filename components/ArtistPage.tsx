@@ -10,6 +10,12 @@ const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1
 const AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
 const MEDIA = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/";
 
+const LESAR_PACKS: { id: string; lesars: number; price: number; label: string; popular?: boolean }[] = [
+  { id: "pack-starter",  lesars: 500,  price: 5,  label: "Starter" },
+  { id: "pack-standard", lesars: 1000, price: 11, label: "Standard", popular: true },
+  { id: "pack-power",    lesars: 5000, price: 33, label: "Power" },
+];
+
 type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: string; hasRemix?: boolean; isRemix?: boolean; isFinale?: boolean; isPremiere?: boolean };
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
@@ -382,6 +388,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [viewDropOpen, setViewDropOpen] = useState(false);
   const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [selectedPack, setSelectedPack] = useState<string | null>(null);
+  const [topUpLoading, setTopUpLoading] = useState(false);
+  const [topUpError, setTopUpError] = useState<string | null>(null);
   const [pulseShown, setPulseShown] = useState(3);
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
   const [musicShuffle, setMusicShuffle] = useState(false);
@@ -651,6 +661,35 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     setPurchaseSuccess(purchaseModal.trackName);
     setPurchaseModal(null);
     setTimeout(() => setPurchaseSuccess(null), 4000);
+  }
+
+  async function handleTopUpCheckout() {
+    if (!selectedPack) return;
+    if (!userId) {
+      const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
+      window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`;
+      return;
+    }
+    setTopUpError(null);
+    setTopUpLoading(true);
+    try {
+      const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: selectedPack, userId, returnUrl: returnPath }),
+      });
+      const { url, error } = await res.json();
+      if (url) {
+        window.location.href = url;
+      } else {
+        setTopUpError(error || "Checkout failed. Please try again.");
+        setTopUpLoading(false);
+      }
+    } catch {
+      setTopUpError("Checkout failed. Please try again.");
+      setTopUpLoading(false);
+    }
   }
   function trackPlayLabel(isPlaying: boolean, isPreviewCapped = false): string {
     if (isPlaying) return "Pause";
@@ -1493,7 +1532,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 {userBalance < purchaseModal.price && (
                   <div className="pur-topup-block">
                     <p className="pur-low-msg">You need <strong>{(purchaseModal.price - userBalance).toLocaleString()}</strong> more LESARs to unlock this track.</p>
-                    <a href="/passport?topup=1" className="pur-topup-btn">Top Up LESARs</a>
+                    <button
+                      type="button"
+                      className="pur-topup-btn"
+                      onClick={() => { setPurchaseModal(null); setPurchaseError(null); setSelectedPack(null); setTopUpError(null); setTopUpOpen(true); }}
+                    >
+                      Top Up LESARs
+                    </button>
                   </div>
                 )}
                 <p className="pur-desc">You&apos;ll receive lifetime access to this track. Purchase is tied to your account.</p>
@@ -1508,6 +1553,51 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* LESAR top-up modal: Buy a pack, then Continue to Payment. This is the
+          single path used everywhere a member needs more LESARs, including the
+          insufficient-balance case above. Nothing is pre-selected. */}
+      {topUpOpen && (
+        <div className="pur-overlay" role="dialog" aria-modal="true" aria-labelledby="tu-title" onClick={() => { if (!topUpLoading) setTopUpOpen(false); }}>
+          <div className="pur-modal" onClick={e => e.stopPropagation()}>
+            <button className="pur-close" onClick={() => setTopUpOpen(false)} aria-label="Close" disabled={topUpLoading}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <div className="pur-song-label">Top Up</div>
+            <h2 id="tu-title" className="pur-song-name">Choose a LESARs Pack</h2>
+            <p className="pur-desc" style={{ marginBottom: 16 }}>Pick a pack, then continue to payment. LESARs land in your balance the moment checkout completes.</p>
+            <div className="tu-pack-list">
+              {LESAR_PACKS.map(p => (
+                <button
+                  type="button"
+                  key={p.id}
+                  className={"tu-pack-row" + (selectedPack === p.id ? " tu-selected" : "")}
+                  onClick={() => setSelectedPack(p.id)}
+                  aria-pressed={selectedPack === p.id}
+                >
+                  {p.popular && <span className="tu-pack-badge">Popular</span>}
+                  <div>
+                    <div className="tu-pack-lesars">{p.lesars.toLocaleString()} LESARs</div>
+                    <div className="tu-pack-note">{p.label}</div>
+                  </div>
+                  <div className="tu-pack-price">${p.price}</div>
+                </button>
+              ))}
+            </div>
+            {topUpError && <p className="pur-error">{topUpError}</p>}
+            <div className="pur-actions">
+              <button
+                className={"pur-confirm" + (!selectedPack || topUpLoading ? " pur-disabled" : "")}
+                disabled={!selectedPack || topUpLoading}
+                onClick={handleTopUpCheckout}
+              >
+                {topUpLoading ? "Redirecting..." : "Continue to Payment"}
+              </button>
+              <button className="pur-cancel" onClick={() => setTopUpOpen(false)} disabled={topUpLoading}>Cancel</button>
+            </div>
           </div>
         </div>
       )}
