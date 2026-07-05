@@ -19,19 +19,13 @@ const PERKS = [
   {
     icon: "◉",
     title: "GeekFon Radio",
-    desc: "24/7 members-only radio: every artist, including songs not yet available to redeem. A constant feed, exclusive to your Passport.",
+    desc: "24/7 members-only radio across every artist. Your Passport is the only ticket in.",
     accent: "#E91E8C",
   },
   {
-    icon: "♬",
-    title: "Jukebox",
-    desc: "Full access to the GeekFon track library. Stream every song from every artist, any time.",
-    accent: "#F69820",
-  },
-  {
     icon: "★",
-    title: "GeekFon Plus Eligibility",
-    desc: "Passport members can apply to become a Plus rep - our street team. Early access earns your invitation.",
+    title: "GeekFon Plus",
+    desc: "Invite-only, earned through member support. Plus unlocks street-team access and affiliate revenue opportunities.",
     accent: "#AAFF00",
   },
   {
@@ -144,10 +138,11 @@ export default function PassportPage() {
   const [cityIdx, setCityIdx] = useState(0);
   const [cityVisible, setCityVisible] = useState(true);
   const [returnPath, setReturnPath] = useState("/dashboard");
-  const [selectedPack, setSelectedPack] = useState<number | null>(1000);
-  const [packModal, setPackModal] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
+  // Page-native 2-step flow: landing ("Free to Join") advances to the What You Get + plan choice step.
+  // Previously the hero CTA skipped straight to registration without showing perks or plans at all.
+  const [step, setStep] = useState<"landing" | "plans">("landing");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -232,12 +227,13 @@ export default function PassportPage() {
               Your membership into the GeekFon universe. Listen, earn LESARs, unlock tracks,
               and build your place in the community. Free to start. Power up when you&apos;re ready.
             </p>
-            <button className="pp-hero-cta" onClick={() => handleJoin("free")} aria-label="Join GeekFon Passport free">
+            <button className="pp-hero-cta" onClick={() => setStep("plans")} aria-label="See GeekFon Passport plans">
               Get Your Passport
             </button>
           </div>
         </div>
 
+        {step === "plans" && <>
         {/* Perks */}
         <section className="pp-perks-section" aria-labelledby="pp-perks-heading">
           <div className="pp-perks-label">What you get</div>
@@ -276,7 +272,7 @@ export default function PassportPage() {
               <ul className="pp-tier-items">
                 <li>111 LESARs loaded on signup - enough to unlock your first track</li>
                 <li>Earn LESARs by listening, sharing, and referring friends</li>
-                <li>Full access to GeekFon Radio and the Jukebox</li>
+                <li>Full access to GeekFon Radio</li>
                 <li>Vote on the Artist Top 10</li>
                 <li>Your activity builds your rank in the community</li>
               </ul>
@@ -306,93 +302,11 @@ export default function PassportPage() {
               </button>
             </div>
 
-            {/* --- POINT PACKS --- */}
-            <div className="pp-tier" role="listitem">
-              <div className="pp-tier-name">LESARs Packs</div>
-              <div className="pp-tier-price"><span>from&nbsp;</span>$5</div>
-              <div className="pp-tier-period">one-time, no subscription</div>
-              <div className="pp-tier-highlight-sub" style={{marginTop: 8}}>Buy LESARs when you need them</div>
-              <div className="pp-packs">
-                {POINT_PACKS.map(pk => (
-                  <div
-                    key={pk.label}
-                    className={"pp-pack-row" + (pk.popular ? " pack-popular" : "") + (selectedPack === pk.lesars ? " pack-selected" : "")}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedPack(pk.lesars)}
-                    onKeyDown={e => e.key === "Enter" && setSelectedPack(pk.lesars)}
-                    aria-label={`Select ${pk.lesars} LESARs for $${pk.price}`}
-                  >
-                    {pk.popular && <span className="pp-pack-badge">Most Popular</span>}
-                    <div>
-                      <div className="pp-pack-lesars">{pk.lesars.toLocaleString()} LESARs</div>
-                      <div className="pp-pack-note">{pk.note}</div>
-                    </div>
-                    <div className="pp-pack-price">${pk.price}</div>
-                  </div>
-                ))}
-              </div>
-              <ul className="pp-tier-items">
-                <li>Never expires - use at your own pace</li>
-                <li>Works alongside free earnings</li>
-              </ul>
-              <button
-                className="pp-tier-btn secondary"
-                disabled={!selectedPack}
-                onClick={() => selectedPack && setPackModal(true)}
-                style={selectedPack ? {} : {opacity: .45, cursor: "not-allowed"}}
-              >
-                {selectedPack ? `Buy ${selectedPack.toLocaleString()} LESARs` : "Select a Pack"}
-              </button>
-            </div>
-
           </div>
         </section>
+        </>}
 
       </div>
-
-      {/* LESARs Pack Purchase Modal */}
-      {packModal && selectedPack && (() => {
-        const pack = POINT_PACKS.find(p => p.lesars === selectedPack)!;
-        return (
-          <div
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}}
-            onClick={() => setPackModal(false)}
-            role="dialog" aria-modal="true" aria-labelledby="pack-modal-title"
-          >
-            <div
-              style={{background:"#111",border:"1px solid rgba(233,30,140,.3)",borderRadius:"4px",padding:"40px 36px",maxWidth:"420px",width:"100%",fontFamily:"Montserrat,sans-serif",color:"#fff"}}
-              onClick={e => e.stopPropagation()}
-            >
-              <div style={{fontSize:"11px",fontWeight:700,letterSpacing:"3px",textTransform:"uppercase",color:"rgba(255,255,255,.4)",marginBottom:"20px"}}>LESARs Pack</div>
-              <h2 id="pack-modal-title" style={{fontSize:"32px",fontWeight:900,letterSpacing:"-1px",margin:"0 0 6px"}}>{pack.lesars.toLocaleString()} LESARs</h2>
-              <div style={{fontSize:"13px",color:"rgba(255,255,255,.5)",marginBottom:"28px"}}>{pack.note} at 100 LESARs each</div>
-              <div style={{display:"flex",alignItems:"baseline",gap:"8px",marginBottom:"28px"}}>
-                <span style={{fontSize:"48px",fontWeight:900,color:"#E91E8C",letterSpacing:"-2px"}}>${pack.price}</span>
-                <span style={{fontSize:"13px",color:"rgba(255,255,255,.4)",fontWeight:600,letterSpacing:"1px",textTransform:"uppercase"}}>one-time</span>
-              </div>
-              <p style={{fontSize:"13px",color:"rgba(255,255,255,.55)",lineHeight:1.6,marginBottom:"32px"}}>
-                Points are added to your account instantly and never expire. You can use them alongside points you earn through listening and sharing.
-              </p>
-              <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
-                <button
-                  style={{width:"100%",padding:"16px",background:"#E91E8C",color:"#fff",fontSize:"13px",fontWeight:800,letterSpacing:"2px",textTransform:"uppercase",border:"none",borderRadius:"2px",cursor:checkingOut?"not-allowed":"pointer",fontFamily:"inherit",opacity:checkingOut?.6:1}}
-                  onClick={() => !checkingOut && handleJoin(`pack-${pack.label.toLowerCase()}`)}
-                  disabled={checkingOut}
-                >
-                  {checkingOut ? "Redirecting..." : "Continue to Payment"}
-                </button>
-                <button
-                  style={{width:"100%",padding:"14px",background:"transparent",color:"rgba(255,255,255,.5)",fontSize:"12px",fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",border:"1px solid rgba(255,255,255,.15)",borderRadius:"2px",cursor:"pointer",fontFamily:"inherit"}}
-                  onClick={() => setPackModal(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
     </SiteChrome>
   );
