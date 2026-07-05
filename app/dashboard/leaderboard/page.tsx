@@ -91,7 +91,7 @@ export default function LeaderboardPage() {
       <div className="lb-season-bar">
         <div className="lb-season-info">
           <span className="lb-season-label">Season 1</span>
-          <span className="lb-season-dates">July 1 - September 19, 2026</span>
+          <span className="lb-season-dates">July 13 - November 1, 2026</span>
         </div>
         <div className="lb-season-prize">
           <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M10 2l2.5 5.5L18 8.5l-4 4 1 5.5L10 15l-5 3 1-5.5-4-4 5.5-1L10 2z" fill="#F69820"/></svg>
@@ -146,7 +146,7 @@ export default function LeaderboardPage() {
           </div>
 
           <div className="lb-footnote">
-            Score is calculated from engagement, points, referrals, and activity. Rankings update daily. Season resets September 19, 2026.
+            Score is calculated from engagement, points, referrals, and activity. Rankings update daily. Season resets November 1, 2026.
           </div>
         </div>
       )}
