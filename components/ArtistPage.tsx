@@ -1149,8 +1149,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       {tracks.map((t, i) => {
                         const url = t.url ? AUDIO + t.url : null;
                         const locked = trackLocked(t);
+                        // Two-or-more tiers above the viewer: fully hidden, not shown as a locked row
+                        if (locked && !isScheduledFuture(t)) return null;
                         const isCurr = i === safeIdx;
-                        const badge = trackBadge(t);
                         return (
                           <div
                             key={i}
@@ -1172,11 +1173,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 </>
                               ) : (
                                 <>
-                                  {isPreviewCappedTrack(t) && (
-                                    <span className="mp-badge-preview" title={`Preview - first ${PREVIEW_CAP_SECONDS}s. Upgrade or buy to hear the full track.`}>
-                                      Preview - {badge.label}
-                                    </span>
-                                  )}
                                   <button
                                     className={"mp-btn-pre" + (!url ? " disabled" : "")}
                                     disabled={!url}
