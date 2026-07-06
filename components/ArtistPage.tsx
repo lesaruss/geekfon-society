@@ -16,7 +16,7 @@ const LESAR_PACKS: { id: string; lesars: number; price: number; label: string; p
   { id: "pack-power",    lesars: 5000, price: 33, label: "Power" },
 ];
 
-type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: string; hasRemix?: boolean; isRemix?: boolean; isFinale?: boolean; isPremiere?: boolean };
+type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: string; hasRemix?: boolean; isRemix?: boolean; isFinale?: boolean; isPremiere?: boolean; lyricsOriginal?: string; lyricsOriginalLang?: string; lyricsEn?: string };
 type Stat = { v: string; l: string };
 type Pill = { label: string; accent?: boolean };
 type Rel = { name: string; desc: string };
@@ -397,6 +397,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [musicShuffle, setMusicShuffle] = useState(false);
   const [musicRepeat, setMusicRepeat] = useState(false);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
+  const [lyricsLang, setLyricsLang] = useState<"original" | "en">("en");
   const [bibleModules, setBibleModules] = useState<BibleModule[]>([]);
   const [bibleLoading, setBibleLoading] = useState(false);
   const [bibleOpenModule, setBibleOpenModule] = useState<string | null>(null);
@@ -1081,15 +1082,42 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   </div>
                 );
 
+                const npHasTranslation = !!(npTrack?.lyricsEn && npTrack?.lyricsOriginalLang && npTrack.lyricsOriginalLang !== "en");
+                const npLyricsText = npTrack
+                  ? (lyricsLang === "original" || !npHasTranslation ? npTrack.lyricsOriginal : npTrack.lyricsEn)
+                  : undefined;
+
                 const lyricsAccordion = lyricsDrawerOpen && npTrack && (
                   <div className="mp-lyrics-inline">
                     <div className="mp-lyrics-head">
                       <span className="mp-lyrics-label">Lyrics</span>
                       <span className="mp-lyrics-track">{npTrack.n}</span>
+                      {npHasTranslation && (
+                        <div className="mp-lyrics-lang" role="group" aria-label="Lyrics language">
+                          <button
+                            className={"mp-lyrics-lang-btn" + (lyricsLang === "original" ? " active" : "")}
+                            aria-pressed={lyricsLang === "original"}
+                            onClick={() => setLyricsLang("original")}
+                          >
+                            {(npTrack.lyricsOriginalLang || "ja").toUpperCase()}
+                          </button>
+                          <button
+                            className={"mp-lyrics-lang-btn" + (lyricsLang === "en" ? " active" : "")}
+                            aria-pressed={lyricsLang === "en"}
+                            onClick={() => setLyricsLang("en")}
+                          >
+                            EN
+                          </button>
+                        </div>
+                      )}
                       <button className="mp-lyrics-close" onClick={() => setLyricsDrawerOpen(false)}>&#x2715;</button>
                     </div>
                     <div className="mp-lyrics-body">
-                      <p style={{ color: "var(--lr-text-50)", fontSize: 13 }}>Lyrics sync coming soon.</p>
+                      {npLyricsText ? (
+                        <p className="mp-lyrics-text">{npLyricsText}</p>
+                      ) : (
+                        <p style={{ color: "var(--lr-text-50)", fontSize: 13 }}>Lyrics sync coming soon.</p>
+                      )}
                     </div>
                   </div>
                 );
