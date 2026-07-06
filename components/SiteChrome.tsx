@@ -381,6 +381,13 @@ const CHROME_CSS = `
 .glogin { flex-shrink: 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #fff; text-decoration: none; opacity: .85; }
 .glogin:hover { opacity: 1; }
 @media(max-width:640px) { .glogin { display: none; } }
+/* Mobile/tablet top bar (incl. iPad portrait): logo + hamburger only. Everything else
+   the top bar can show - Log in, Get Passport, LESARs balance, the admin "Viewing as"
+   exit chip - is one tap away in the hamburger drawer already, so keeping it out of the
+   bar itself avoids the crowding Sean flagged while traveling. Desktop keeps all of it. */
+@media(max-width:900px) {
+  .gauth, .gmember-balance, .gviewas-exit { display: none; }
+}
 .gdrawer-login { display: block; text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); text-decoration: underline; text-underline-offset: 3px; }
 .gdrawer-login:hover { color: #fff; }
 .gviewas-exit { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 20px; border: 1px solid rgba(233,30,140,.5); background: rgba(233,30,140,.12); cursor: pointer; font-family: 'Montserrat', sans-serif; }
