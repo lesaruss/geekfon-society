@@ -31,7 +31,7 @@ export const DashboardContext = createContext<DashboardCtx>({
 
 export function useDashboard() { return useContext(DashboardContext); }
 
-export const TIER_MONTHLY: Record<string, number> = { passport: 1000, promoter: 2500, pro: 6000 };
+export const TIER_MONTHLY: Record<string, number> = { passport: 1500, promoter: 2500, pro: 6000 };
 export const TIER_LABEL: Record<string, string> = { passport: "Passport", promoter: "Promoter", pro: "Community Manager" };
 export const TIER_RATE: Record<string, number> = { promoter: 0.10, pro: 0.25 };
 export const ADMIN_EMAIL = "contact@lesaruss.com";
