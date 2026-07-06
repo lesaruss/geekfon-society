@@ -403,8 +403,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [hasVotedToday, setHasVotedToday] = useState(false);
   const [voteLoading, setVoteLoading] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
-  const [showVoteModal, setShowVoteModal] = useState<"non-member" | "lesar" | null>(null);
-  const [lesarVoteCount, setLesarVoteCount] = useState(1);
+  const [showVoteModal, setShowVoteModal] = useState<"non-member" | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const c = content || {};
@@ -754,23 +753,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     setVoteLoading(false);
   }
 
-  async function submitLesarVote() {
-    const count = lesarVoteCount;
-    if (!effectiveTier || !userId || count < 1) return;
-    if (userBalance < count) return;
-    setVoteLoading(true);
-    try {
-      const sb = createClient(SUPA_URL, SUPA_ANON!);
-      const { error } = await sb.from("gfs_artist_votes").insert({ artist_slug: slug, user_id: userId, vote_count: count, lesars_spent: count });
-      if (!error) {
-        setUserBalance(b => b - count);
-        setVoteSuccess(true);
-        setShowVoteModal(null);
-        setTimeout(() => setVoteSuccess(false), 3000);
-      }
-    } catch { /* silent */ }
-    setVoteLoading(false);
-  }
   const crumb = [
     { label: "GeekFon", href: "/" },
     { label: "Roster", href: "/roster" },
@@ -841,10 +823,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 <div className="head-name">{name}</div>
                 <p className="head-tagline">{c.tagline}</p>
                 {(() => {
-                  const visiblePills = (c.pills || []).filter(p => p.label !== "Original");
+                  // Exactly 3 pills, fixed order: Vote, Genre, Season.
+                  const rawPills = (c.pills || []).filter(p => p.label !== "Original");
+                  const seasonPill = rawPills.find(p => /season/i.test(p.label));
+                  const genrePill = rawPills.find(p => p !== seasonPill && !/^original(\s+artist)?$/i.test(p.label));
+                  const genreLabel = genrePill?.label || c.sonic?.primaryGenre;
+                  const seasonLabel = seasonPill?.label || c.tracks?.[0]?.m || "Season 1";
                   return (
                     <div className="pill-row">
-                      {visiblePills[0] && <span className={"pill" + (visiblePills[0].accent ? " accent" : "")}>{visiblePills[0].label}</span>}
                       <button
                         className={"pill-vote" + (hasVotedToday ? " voted" : "") + (voteLoading ? " loading" : "") + (voteSuccess ? " success" : "")}
                         onClick={submitVote}
@@ -853,39 +839,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       >
                         {voteSuccess ? "Voted!" : hasVotedToday ? "Voted" : "Vote"}
                       </button>
-                      {visiblePills.slice(1).map((p, i) => (<span key={i} className={"pill" + (p.accent ? " accent" : "")}>{p.label}</span>))}
+                      {genreLabel && <span className={"pill" + (genrePill?.accent ? " accent" : "")}>{genreLabel}</span>}
+                      <span className="pill">{seasonLabel}</span>
                     </div>
                   );
                 })()}
-                {userBalance > 0 && !showVoteModal && (
-                  <button className="pill-lesar-vote" onClick={() => setShowVoteModal("lesar")}>
-                    Use LESARs for extra votes
-                  </button>
-                )}
                 {showVoteModal === "non-member" && (
                   <div className="vote-modal">
                     <p>You need to be a member in order to vote. Membership is free. Register today.</p>
                     <div className="vote-modal-actions">
                       <a href="/passport" className="vote-modal-cta">Get Passport - Free</a>
                       <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Dismiss</button>
-                    </div>
-                  </div>
-                )}
-                {showVoteModal === "lesar" && (
-                  <div className="vote-modal">
-                    <p className="vote-modal-title">Extra Votes with LESARs</p>
-                    <p className="vote-modal-sub">1 LESAR = 1 vote. You have <strong>{userBalance.toLocaleString()}</strong> LESARs.</p>
-                    <div className="vote-modal-input">
-                      <button className="vote-count-btn" onClick={() => setLesarVoteCount(v => Math.max(1, v - 1))}>-</button>
-                      <span className="vote-count-val">{lesarVoteCount}</span>
-                      <button className="vote-count-btn" onClick={() => setLesarVoteCount(v => Math.min(userBalance, v + 1))}>+</button>
-                      <span className="vote-count-cost">{lesarVoteCount} LESAR{lesarVoteCount > 1 ? "s" : ""}</span>
-                    </div>
-                    <div className="vote-modal-actions">
-                      <button className="vote-modal-cta" onClick={submitLesarVote} disabled={voteLoading || userBalance < lesarVoteCount}>
-                        {voteLoading ? "Voting..." : `Submit ${lesarVoteCount} Vote${lesarVoteCount > 1 ? "s" : ""}`}
-                      </button>
-                      <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Cancel</button>
                     </div>
                   </div>
                 )}
@@ -1077,6 +1041,62 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   if (i < tracks.length) selectTrack(i);
                 }
 
+                const transportControls = (
+                  <div className="mp-transport">
+                    <button className={"mp-ic" + (musicShuffle ? " on" : "")} aria-label="Shuffle" onClick={() => setMusicShuffle(s => !s)}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                    </button>
+                    <button className="mp-ic" aria-label="Previous" onClick={playPrev}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                    </button>
+                    <button
+                      className="mp-orb"
+                      aria-label={npPlaying ? "Pause" : "Play"}
+                      disabled={npLocked || !npUrl}
+                      onClick={() => { if (npUrl) togglePlay(npUrl, npTrack?.v); }}
+                    >
+                      {npPlaying ? PAUSE : PLAY}
+                    </button>
+                    <button className="mp-ic" aria-label="Next" onClick={playNext}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                    </button>
+                    <button className={"mp-ic" + (musicRepeat ? " on" : "")} aria-label="Repeat" onClick={() => setMusicRepeat(r => !r)}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                    </button>
+                  </div>
+                );
+
+                const lyricsButton = (
+                  <button className={"mp-chip" + (lyricsDrawerOpen ? " active" : "")} onClick={() => setLyricsDrawerOpen(o => !o)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={15} height={15}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Lyrics
+                  </button>
+                );
+
+                const scrubBar = (
+                  <div className="mp-scrub">
+                    <span className="mp-time">{fmtTime(npProgress)}</span>
+                    <div className="mp-bar" onClick={(e) => npUrl && seekTo(e, npUrl)}>
+                      <div className="mp-bar-fill" style={{ width: `${npPct}%` }} />
+                      <div className="mp-bar-knob" style={{ left: `${npPct}%` }} />
+                    </div>
+                    <span className="mp-time">{npMax > 0 ? fmtTime(npMax) : "--:--"}</span>
+                  </div>
+                );
+
+                const lyricsAccordion = lyricsDrawerOpen && npTrack && (
+                  <div className="mp-lyrics-inline">
+                    <div className="mp-lyrics-head">
+                      <span className="mp-lyrics-label">Lyrics</span>
+                      <span className="mp-lyrics-track">{npTrack.n}</span>
+                      <button className="mp-lyrics-close" onClick={() => setLyricsDrawerOpen(false)}>&#x2715;</button>
+                    </div>
+                    <div className="mp-lyrics-body">
+                      <p style={{ color: "var(--lr-text-50)", fontSize: 13 }}>Lyrics sync coming soon.</p>
+                    </div>
+                  </div>
+                );
+
                 return (
                   <section className="mp-root">
                     {/* Now-playing card */}
@@ -1090,68 +1110,34 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                           <div className="mp-npartist">{name}</div>
                           <span className={"mp-nptag " + npBadge.cls}>{npBadge.label}</span>
                         </div>
-                        <div className="mp-transport">
-                          <button className={"mp-ic" + (musicShuffle ? " on" : "")} aria-label="Shuffle" onClick={() => setMusicShuffle(s => !s)}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
-                          </button>
-                          <button className="mp-ic" aria-label="Previous" onClick={playPrev}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
-                          </button>
-                          <button
-                            className="mp-orb"
-                            aria-label={npPlaying ? "Pause" : "Play"}
-                            disabled={npLocked || !npUrl}
-                            onClick={() => { if (npUrl) togglePlay(npUrl, npTrack?.v); }}
-                          >
-                            {npPlaying ? PAUSE : PLAY}
-                          </button>
-                          <button className="mp-ic" aria-label="Next" onClick={playNext}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
-                          </button>
-                          <button className={"mp-ic" + (musicRepeat ? " on" : "")} aria-label="Repeat" onClick={() => setMusicRepeat(r => !r)}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                          </button>
-                        </div>
+                        {isMobile ? (
+                          <div className="mp-mobile-controls">
+                            {transportControls}
+                            <div className="mp-chips mp-chips-mobile">{lyricsButton}</div>
+                          </div>
+                        ) : transportControls}
                       </div>
 
-                      {/* Scrub bar */}
-                      <div className="mp-scrub">
-                        <span className="mp-time">{fmtTime(npProgress)}</span>
-                        <div className="mp-bar" onClick={(e) => npUrl && seekTo(e, npUrl)}>
-                          <div className="mp-bar-fill" style={{ width: `${npPct}%` }} />
-                          <div className="mp-bar-knob" style={{ left: `${npPct}%` }} />
-                        </div>
-                        <span className="mp-time">{npMax > 0 ? fmtTime(npMax) : "--:--"}</span>
-                      </div>
+                      {/* Scrub bar - shared markup for desktop + mobile */}
+                      {scrubBar}
 
-                      {/* Bottom bar */}
-                      <div className="mp-barrow">
-                        <div className="mp-vol">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={18} height={18}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                          <div className="mp-voltrack"><div className="mp-volfill" style={{ width: "70%" }} /></div>
+                      {/* Bottom bar (desktop only - mobile shows Lyrics next to track info instead) */}
+                      {!isMobile && (
+                        <div className="mp-barrow">
+                          <div className="mp-vol">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={18} height={18}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            <div className="mp-voltrack"><div className="mp-volfill" style={{ width: "70%" }} /></div>
+                          </div>
+                          <div className="mp-chips">{lyricsButton}</div>
                         </div>
-                        <div className="mp-chips">
-                          <button className={"mp-chip" + (lyricsDrawerOpen ? " active" : "")} onClick={() => setLyricsDrawerOpen(o => !o)}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={15} height={15}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            Lyrics
-                          </button>
-                        </div>
-                      </div>
+                      )}
+
+                      {/* Lyrics accordion drops inline directly below the Lyrics button on mobile */}
+                      {isMobile && lyricsAccordion}
                     </div>
 
-                    {/* Lyrics drawer (inline, below player) */}
-                    {lyricsDrawerOpen && npTrack && (
-                      <div className="mp-lyrics-inline">
-                        <div className="mp-lyrics-head">
-                          <span className="mp-lyrics-label">Lyrics</span>
-                          <span className="mp-lyrics-track">{npTrack.n}</span>
-                          <button className="mp-lyrics-close" onClick={() => setLyricsDrawerOpen(false)}>&#x2715;</button>
-                        </div>
-                        <div className="mp-lyrics-body">
-                          <p style={{ color: "var(--lr-text-50)", fontSize: 13 }}>Lyrics sync coming soon.</p>
-                        </div>
-                      </div>
-                    )}
+                    {/* Lyrics drawer (desktop: inline, below player card) */}
+                    {!isMobile && lyricsAccordion}
 
                     {/* Catalog */}
                     <div className="mp-catalog-head">
