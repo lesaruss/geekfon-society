@@ -818,6 +818,14 @@ export default function WelcomePage() {
         }
         .picker-right-col{display:none}
         @media(min-width:900px){.picker-right-col{display:block;flex:0 0 44%;min-width:0}}
+        @media(max-width:899px){
+          .tour-detail-tight{margin-bottom:14px !important}
+          .tour-pipeline-row{padding:6px 14px !important}
+          .tour-pipeline-arrow{padding:2px 0 !important}
+          .tour-pipeline-sub{margin-top:0 !important}
+          .tour-cta-gallery-wrap{display:none !important}
+          .tour-right-col-cta{padding-bottom:0 !important}
+        }
       `}</style>
 
       {/* Top bar removed: SiteChrome provides the single nav (hamburger + Get Passport).
@@ -897,7 +905,7 @@ export default function WelcomePage() {
                 </p>
 
                 {currentSlide.detail && (
-                  <p style={{ fontSize: "clamp(0.85rem, 1.5vw, 0.95rem)", fontWeight: 400, color: "rgba(255,255,255,0.65)", lineHeight: 1.75, margin: "0 0 30px" }}>
+                  <p className={currentSlide.id === "label-pipeline" || currentSlide.id === "label-cta" ? "tour-detail-tight" : undefined} style={{ fontSize: "clamp(0.85rem, 1.5vw, 0.95rem)", fontWeight: 400, color: "rgba(255,255,255,0.65)", lineHeight: 1.75, margin: "0 0 30px" }}>
                     {currentSlide.detail}
                   </p>
                 )}
@@ -945,7 +953,7 @@ export default function WelcomePage() {
               </div>
 
               {/* Right: dynamic panel — desktop only via CSS class */}
-              <div className="tour-right-col">
+              <div className={currentSlide.id === "label-cta" ? "tour-right-col tour-right-col-cta" : "tour-right-col"}>
                 {currentSlide.id === "label-ip" ? (
                   /* Slide 1: solo player, no cover art */
                   <TourSoloPlayer track={SLIDE_AUDIO["label-ip"]} accent={currentSlide.accent} />
@@ -980,22 +988,24 @@ export default function WelcomePage() {
                           null,
                           { label: "TalentVangelist",       sub: "Real-artist agency — scales from this system",      color: "#F69820" },
                         ] as ({ label: string; sub: string; color: string } | null)[]).map((n, i) => n === null ? (
-                          <div key={i} style={{ display: "flex", justifyContent: "center", padding: "4px 0", borderBottom: "0.5px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>↓</div>
+                          <div key={i} className="tour-pipeline-arrow" style={{ display: "flex", justifyContent: "center", padding: "4px 0", borderBottom: "0.5px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>↓</div>
                         ) : (
-                          <div key={n.label} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 14px", borderBottom: i < 4 ? "0.5px solid rgba(255,255,255,0.07)" : "none" }}>
+                          <div key={n.label} className="tour-pipeline-row" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 14px", borderBottom: i < 4 ? "0.5px solid rgba(255,255,255,0.07)" : "none" }}>
                             <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: n.color, flexShrink: 0 }} />
                             <div>
                               <div style={{ fontSize: "12px", fontWeight: 600, color: "#fff", fontFamily: "inherit" }}>{n.label}</div>
-                              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "1px" }}>{n.sub}</div>
+                              <div className="tour-pipeline-sub" style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "1px" }}>{n.sub}</div>
                             </div>
                           </div>
                         ))}
                       </div>
                     )}
 
-                    {/* label-cta: paginated artist portrait gallery */}
+                    {/* label-cta: paginated artist portrait gallery (desktop only - hidden on mobile per Sean, also fixes mobile scroll) */}
                     {currentSlide.id === "label-cta" && (
-                      <ArtistPortraitGallery accent={currentSlide.accent} />
+                      <div className="tour-cta-gallery-wrap">
+                        <ArtistPortraitGallery accent={currentSlide.accent} />
+                      </div>
                     )}
 
                     {/* brand-audience: city slideshow */}
