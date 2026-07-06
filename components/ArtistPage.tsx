@@ -538,13 +538,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     if (!a || !playing) return;
     // Tier enforcement: trackLocked already prevents fully-locked tracks from playing.
     // One-tier-up preview tracks are allowed to play but get capped at PREVIEW_CAP_SECONDS.
-    setAudioProgress(prev => ({ ...prev, [playing]: a.currentTime }));
     if (isPreviewCappedV(playingV) && a.currentTime >= PREVIEW_CAP_SECONDS) {
       a.pause();
       a.currentTime = 0;
+      setAudioProgress(prev => ({ ...prev, [playing]: 0 })); // reset visible scrub position, not just the audio element
       setPlaying(null);
       setPlayingV(null);
+      return;
     }
+    setAudioProgress(prev => ({ ...prev, [playing]: a.currentTime }));
   }
   function onLoadedMetadata() {
     const a = audioRef.current;
@@ -597,27 +599,19 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     return visibilityRank(v) - userTierRank() === 1;
   }
   function isPreviewCappedTrack(t: Track): boolean {
-    if (isScheduledFuture(t) && !(isSuperAdmin && viewAs !== "real")) return false;
     return isPreviewCappedV(t.v);
   }
 
   function trackLocked(t: Track): boolean {
     // Super admin in real mode: bypass all locks (see + play everything)
     if (isSuperAdmin && viewAs === "real") return false;
-    // Super admin in view-as mode: bypass date locks, only apply tier gating
-    // This previews what each tier will see on launch day
-    const adminPreview = isSuperAdmin && viewAs !== "real";
-    if (!adminPreview && isScheduledFuture(t)) return true;
     if (t.v === "public") return false;
+    // Tier is the only gate now (release-date scheduling no longer locks/hides a track - Sean, 2026-07-06)
     // Unlocked at your own tier or below, or previewable (capped) exactly one tier up
     return visibilityRank(t.v) - userTierRank() > 1;
   }
 
   function trackBadge(t: Track): { label: string; cls: string } {
-    // In view-as or real admin mode: always show the actual tier badge, not "Coming Soon"
-    if (!isSuperAdmin) {
-      if (isScheduledFuture(t)) return { label: "Coming Soon", cls: "vb-coming" };
-    }
     const v = t.v;
     if (v === "public")  return { label: "Free",    cls: "vb-public" };
     if (v === "preview") return { label: "Passport", cls: "vb-passport" };
@@ -1022,7 +1016,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 const npPlaying = !!npUrl && playing === npUrl;
                 const npProgress = npUrl ? (audioProgress[npUrl] || 0) : 0;
                 const npDuration = npUrl ? (audioDuration[npUrl] || 0) : 0;
-                const npMax = npDuration;
+                const npPreviewCapped = !!npTrack && isPreviewCappedTrack(npTrack);
+                // Preview tracks show/animate a PREVIEW_CAP_SECONDS bar, not the real full-track duration,
+                // so it visibly reads as a short preview instead of looking like stalled full playback
+                const npMax = npPreviewCapped ? (npDuration > 0 ? Math.min(npDuration, PREVIEW_CAP_SECONDS) : PREVIEW_CAP_SECONDS) : npDuration;
                 const npPct = npMax > 0 ? Math.min(100, (npProgress / npMax) * 100) : 0;
                 const npBadge = npTrack ? trackBadge(npTrack) : { label: "", cls: "" };
 
@@ -1150,7 +1147,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         const url = t.url ? AUDIO + t.url : null;
                         const locked = trackLocked(t);
                         // Two-or-more tiers above the viewer: fully hidden, not shown as a locked row
-                        if (locked && !isScheduledFuture(t)) return null;
+                        if (locked) return null;
                         const isCurr = i === safeIdx;
                         return (
                           <div
