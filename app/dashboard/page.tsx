@@ -3,18 +3,29 @@ import { useState } from "react";
 import { useDashboard } from "./context";
 import { supabase } from "@/lib/supabase";
 
+// Plan lineup shown in the dashboard's Passport plan panel. Community Manager ($44/mo)
+// and Promoter ($22/mo) signup tiers were retired 2026-07-06 - Passport is now the only
+// self-serve paid tier, and Plus is invite-only (earned, not purchased). Existing members
+// already on the legacy promoter/pro tiers keep their access; see TIER_MONTHLY/TIER_LABEL/
+// TIER_RATE below, which still carry those tiers for that reason.
 const PASSPORT_TIERS = [
-  { id: "passport",  label: "Passport",           price: "$11/mo",  lesars: 1000, desc: "Fan access. Stream, explore, and collect LESARs. The first step into the GeekFon universe.", cta: "Get Passport" },
-  { id: "promoter",  label: "Promoter",            price: "$22/mo",  lesars: 2500, desc: "Share your link, back the movement, and earn 10% on every member you bring in for a full year.", cta: "Become a Promoter" },
-  { id: "pro",       label: "Community Manager",   price: "$44/mo",  lesars: 6000, desc: "25% commission for a full year on everyone you bring to the movement.", cta: "Join as Community Manager" },
+  { id: "passport", label: "Passport", price: "$11/mo", lesars: 1500, desc: "Fan access. Stream, explore, and collect LESARs. The first step into the GeekFon universe.", cta: "Get Passport", inviteOnly: false },
+  { id: "plus",     label: "Plus",     price: "Invite Only", lesars: 0, desc: "Earned through member support. Street-team access, revenue-share on referrals, and priority access to exclusive artist events.", cta: "Coming Soon", inviteOnly: true },
 ];
-const TIER_MONTHLY: Record<string, number> = { passport: 1000, promoter: 2500, pro: 6000 };
+const TIER_MONTHLY: Record<string, number> = { passport: 1500, promoter: 2500, pro: 6000 };
 const TIER_LABEL: Record<string, string>   = { passport: "Passport", promoter: "Promoter", pro: "Community Manager" };
 const TIER_RATE:  Record<string, number>   = { promoter: 0.10, pro: 0.25 };
 const TIER_DEFAULT_LESARS: Record<string, number> = { passport: 100, promoter: 1000, pro: 0 };
 const TIER_OPTIONS = ["passport", "promoter", "pro"];
 const ADMIN_EMAIL = "contact@lesaruss.com";
 const GOAL = 1_000_000;
+
+// Same pack shape/pricing as components/ArtistPage.tsx LESAR_PACKS - keep in sync if either changes.
+const LESAR_PACKS: { id: string; lesars: number; price: number; label: string; popular?: boolean }[] = [
+  { id: "pack-starter",  lesars: 500,  price: 5,  label: "Starter" },
+  { id: "pack-standard", lesars: 1000, price: 11, label: "Standard", popular: true },
+  { id: "pack-power",    lesars: 5000, price: 33, label: "Power" },
+];
 
 type AdminMember = { id: string; user_id: string; name: string | null; email: string | null; tier: string | null; available_points: number; created_at: string; last_sign_in: string | null; };
 
@@ -33,6 +44,13 @@ export default function DashboardOverview() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminLoaded,  setAdminLoaded]  = useState(false);
 
+  // LESAR top-up modal - "Buy then Continue to Payment", same pattern as components/ArtistPage.tsx.
+  // Nothing is pre-selected on open (previously a pre-highlighted pack was a bug elsewhere).
+  const [topUpModalOpen, setTopUpModalOpen] = useState(false);
+  const [selectedPack,   setSelectedPack]   = useState<string | null>(null);
+  const [topUpLoading,   setTopUpLoading]   = useState(false);
+  const [topUpError,     setTopUpError]     = useState<string | null>(null);
+
   const lesars     = points?.available_points ?? 0;
   const displayName = member?.name || userEmail || "Member";
   const tier       = member?.tier || "passport";
@@ -42,7 +60,7 @@ export default function DashboardOverview() {
   const commissionPct = TIER_RATE[tier] ? (TIER_RATE[tier] * 100).toFixed(0) : null;
   const progressPct   = Math.min((memberCount / GOAL) * 100, 100);
   const passportArtists = member?.passport_artists || [];
-  const monthlyAllot = TIER_MONTHLY[tier] ?? 1000;
+  const monthlyAllot = TIER_MONTHLY[tier] ?? 1500;
 
   // Renewal date: approximate next billing cycle (30 days from now as placeholder)
   const renewalDate = new Date();
@@ -95,15 +113,55 @@ export default function DashboardOverview() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  function openTopUpModal() {
+    setSelectedPack(null);
+    setTopUpError(null);
+    setTopUpModalOpen(true);
+  }
+
+  async function handleTopUpCheckout() {
+    if (!selectedPack) return;
+    if (!userId) {
+      window.location.href = `/passport?return=${encodeURIComponent("/dashboard")}`;
+      return;
+    }
+    setTopUpError(null);
+    setTopUpLoading(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: selectedPack, userId, returnUrl: "/dashboard" }),
+      });
+      const { url, error } = await res.json();
+      if (url) {
+        window.location.href = url;
+      } else {
+        setTopUpError(error || "Checkout failed. Please try again.");
+        setTopUpLoading(false);
+      }
+    } catch {
+      setTopUpError("Checkout failed. Please try again.");
+      setTopUpLoading(false);
+    }
+  }
+
   return (
     <>
       <style>{CSS}</style>
 
       {/* Welcome bar */}
       <div className="do-welcome">
-        <div className="do-welcome-eyebrow">Member Dashboard</div>
-        <h1 className="do-welcome-name">Welcome back, {displayName}</h1>
-        <div className="do-welcome-since">Passport holder since {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
+        <div className="do-welcome-top">
+          <div>
+            <div className="do-welcome-eyebrow">Member Dashboard</div>
+            <h1 className="do-welcome-name">Welcome back, {displayName}</h1>
+            <div className="do-welcome-since">Passport holder since {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
+          </div>
+          <button className="do-topup-hero-btn" onClick={openTopUpModal}>
+            + Top Up LESARs
+          </button>
+        </div>
       </div>
 
       {/* Status cards */}
@@ -123,11 +181,11 @@ export default function DashboardOverview() {
           <div className="do-stat-val">{lesars.toLocaleString()}</div>
           <div className="do-stat-sub">Spendable</div>
         </div>
-        <div className="do-stat-card">
+        <a href="/dashboard/library" className="do-stat-card do-stat-link">
           <div className="do-stat-label">Songs Owned</div>
           <div className="do-stat-val">{(points?.spent_points ?? 0) > 0 ? "..." : "0"}</div>
-          <div className="do-stat-sub">In library</div>
-        </div>
+          <div className="do-stat-sub">In library &rarr;</div>
+        </a>
       </div>
 
       {/* Balance + Passport grid */}
@@ -151,8 +209,11 @@ export default function DashboardOverview() {
             </div>
           </div>
           <div className="do-bal-reset">Monthly balance resets {resetStr}. Earn more by attending events, completing challenges, and engaging with artists.</div>
-          <button className="do-btn-topup" onClick={() => setTopupOpen(v => !v)}>
-            {topupOpen ? "- Hide plans" : "+ Top up LESARs"}
+          <button className="do-btn-topup" onClick={openTopUpModal}>
+            + Top up LESARs
+          </button>
+          <button className="do-btn-plans" onClick={() => setTopupOpen(v => !v)}>
+            {topupOpen ? "- Hide plans" : "View Passport plans"}
           </button>
         </div>
 
@@ -196,15 +257,18 @@ export default function DashboardOverview() {
           </div>
           <div className="do-tier-grid">
             {PASSPORT_TIERS.map(t => (
-              <div key={t.id} className={"do-tier-card" + (tier === t.id ? " current" : "")}>
+              <div key={t.id} className={"do-tier-card" + (tier === t.id ? " current" : "") + (t.inviteOnly ? " invite-only" : "")}>
                 {tier === t.id && <div className="do-tier-cur-badge">Current plan</div>}
+                {t.inviteOnly && !(tier === t.id) && <div className="do-tier-invite-badge">Invite Only</div>}
                 <div className="do-tier-name">{t.label}</div>
                 <div className="do-tier-price">{t.price}</div>
-                <div className="do-tier-lesars">{t.lesars.toLocaleString()} LESARs/mo</div>
+                {t.lesars > 0 && <div className="do-tier-lesars">{t.lesars.toLocaleString()} LESARs/mo</div>}
                 <div className="do-tier-desc">{t.desc}</div>
-                {tier !== t.id && (
+                {t.inviteOnly ? (
+                  <button className="do-tier-cta do-tier-cta-disabled" disabled aria-disabled="true">{t.cta}</button>
+                ) : tier !== t.id ? (
                   <a href={`/passport?tier=${t.id}`} className="do-tier-cta">{t.cta}</a>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
@@ -274,12 +338,12 @@ export default function DashboardOverview() {
       <div className="do-section" style={{marginTop:32}}>
         <div className="do-section-row">
           <div className="do-section-title">Purchase History</div>
-          <button className="do-section-action" onClick={() => { setTopupOpen(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>+ Top up LESARs</button>
+          <button className="do-section-action" onClick={openTopUpModal}>+ Top up LESARs</button>
         </div>
         {purchases.length === 0 ? (
           <div className="dp-empty">
             <p>No purchases yet.</p>
-            <button className="dp-btn-outline" onClick={() => { setTopupOpen(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Explore Passport options</button>
+            <button className="dp-btn-outline" onClick={openTopUpModal}>Explore LESAR packs</button>
           </div>
         ) : (
           <div className="do-purchases">
@@ -358,6 +422,50 @@ export default function DashboardOverview() {
           )}
         </div>
       )}
+
+      {/* LESAR top-up modal: same "Buy then Continue to Payment" pattern as components/ArtistPage.tsx.
+          Nothing is pre-selected when the modal opens. */}
+      {topUpModalOpen && (
+        <div className="do-tu-overlay" role="dialog" aria-modal="true" aria-labelledby="do-tu-title" onClick={() => { if (!topUpLoading) setTopUpModalOpen(false); }}>
+          <div className="do-tu-modal" onClick={e => e.stopPropagation()}>
+            <button className="do-tu-close" onClick={() => setTopUpModalOpen(false)} aria-label="Close" disabled={topUpLoading}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <div className="do-tu-eyebrow">Top Up</div>
+            <h2 id="do-tu-title" className="do-tu-title">Choose a LESARs Pack</h2>
+            <p className="do-tu-desc">Pick a pack, then continue to payment. LESARs land in your balance the moment checkout completes.</p>
+            <div className="do-tu-pack-list">
+              {LESAR_PACKS.map(p => (
+                <button
+                  type="button"
+                  key={p.id}
+                  className={"do-tu-pack-row" + (selectedPack === p.id ? " do-tu-selected" : "")}
+                  onClick={() => setSelectedPack(p.id)}
+                  aria-pressed={selectedPack === p.id}
+                >
+                  {p.popular && <span className="do-tu-pack-badge">Popular</span>}
+                  <div>
+                    <div className="do-tu-pack-lesars">{p.lesars.toLocaleString()} LESARs</div>
+                    <div className="do-tu-pack-note">{p.label}</div>
+                  </div>
+                  <div className="do-tu-pack-price">${p.price}</div>
+                </button>
+              ))}
+            </div>
+            {topUpError && <p className="do-tu-error">{topUpError}</p>}
+            <div className="do-tu-actions">
+              <button
+                className={"do-tu-confirm" + (!selectedPack || topUpLoading ? " do-tu-disabled" : "")}
+                disabled={!selectedPack || topUpLoading}
+                onClick={handleTopUpCheckout}
+              >
+                {topUpLoading ? "Redirecting..." : "Continue to Payment"}
+              </button>
+              <button className="do-tu-cancel" onClick={() => setTopUpModalOpen(false)} disabled={topUpLoading}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -365,12 +473,17 @@ export default function DashboardOverview() {
 const CSS = `
 /* Welcome */
 .do-welcome{padding:32px 0 28px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:28px;}
+.do-welcome-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;}
 .do-welcome-eyebrow{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.22em;color:#F69820;margin-bottom:8px;}
 .do-welcome-name{font-size:clamp(22px,4vw,36px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;margin:0;}
 .do-welcome-since{font-size:11px;font-weight:500;color:rgba(255,255,255,.35);margin-top:4px;}
+.do-topup-hero-btn{flex-shrink:0;padding:13px 24px;border-radius:100px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;border:1px solid rgba(0,215,95,.3);background:rgba(0,215,95,.14);color:rgba(0,215,95,.95);cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap;margin-top:2px;}
+.do-topup-hero-btn:hover{background:rgba(0,215,95,.22);}
 /* Stats row */
 .do-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
 .do-stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px 20px;}
+.do-stat-link{text-decoration:none;display:block;transition:background .15s,border-color .15s;}
+.do-stat-link:hover{background:rgba(255,255,255,.07);border-color:rgba(246,152,32,.3);}
 .do-stat-passport{border-color:rgba(246,152,32,.22);}
 .do-stat-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.35);margin-bottom:8px;}
 .do-stat-val{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.02em;line-height:1;}
@@ -395,6 +508,8 @@ const CSS = `
 .do-bal-reset{font-size:9px;font-weight:600;color:rgba(255,255,255,.25);margin-top:16px;line-height:1.6;}
 .do-btn-topup{display:block;width:100%;text-align:center;margin-top:18px;padding:13px;border-radius:10px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;border:1px solid rgba(0,215,95,.2);background:rgba(0,215,95,.12);color:rgba(0,215,95,.9);transition:background .15s;cursor:pointer;font-family:inherit;}
 .do-btn-topup:hover{background:rgba(0,215,95,.18);}
+.do-btn-plans{display:block;width:100%;text-align:center;margin-top:10px;padding:11px;border-radius:10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);transition:border-color .15s,color .15s;cursor:pointer;font-family:inherit;}
+.do-btn-plans:hover{border-color:rgba(255,255,255,.22);color:rgba(255,255,255,.8);}
 /* Passport card */
 .do-psp-card{background:rgba(255,255,255,.04);border:1px solid rgba(246,152,32,.2);border-radius:20px;padding:28px;display:flex;flex-direction:column;}
 .do-psp-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(246,152,32,.1);border:1px solid rgba(246,152,32,.2);border-radius:100px;padding:5px 13px;margin-bottom:16px;width:fit-content;}
@@ -411,17 +526,21 @@ const CSS = `
 .do-tier-panel-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:#F69820;}
 .do-tier-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.4);display:flex;align-items:center;padding:4px;border-radius:4px;}
 .do-tier-close:hover{color:#fff;}
-.do-tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.do-tier-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:640px;}
 @media(max-width:700px){.do-tier-grid{grid-template-columns:1fr;}}
 .do-tier-card{background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:20px;position:relative;}
 .do-tier-card.current{border-color:#F69820;box-shadow:0 0 0 3px rgba(246,152,32,.08);}
+.do-tier-card.invite-only{border-style:dashed;opacity:.85;}
 .do-tier-cur-badge{position:absolute;top:-10px;left:16px;background:#F69820;color:#000;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 10px;border-radius:20px;}
+.do-tier-invite-badge{position:absolute;top:-10px;left:16px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.75);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.2);}
 .do-tier-name{font-size:15px;font-weight:900;color:#fff;margin-bottom:4px;}
 .do-tier-price{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.02em;margin-bottom:4px;}
 .do-tier-lesars{font-size:11px;font-weight:800;color:rgba(0,215,95,.8);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
 .do-tier-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5;margin-bottom:14px;}
-.do-tier-cta{display:block;text-align:center;background:#F69820;color:#000;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;padding:11px;border-radius:100px;text-decoration:none;transition:background .15s;}
+.do-tier-cta{display:block;text-align:center;background:#F69820;color:#000;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;padding:11px;border-radius:100px;text-decoration:none;transition:background .15s;border:none;width:100%;cursor:pointer;font-family:inherit;}
 .do-tier-cta:hover{background:#ffaf30;}
+.do-tier-cta-disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.35);cursor:not-allowed;}
+.do-tier-cta-disabled:hover{background:rgba(255,255,255,.08);}
 /* Artist chips */
 .do-section{margin-bottom:28px;}
 .do-section-title{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.45);margin-bottom:14px;}
@@ -496,4 +615,29 @@ const CSS = `
 .do-m-tier{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:20px;background:rgba(246,152,32,.1);color:#F69820;}
 .do-m-lesars{font-weight:800;color:rgba(0,215,95,.8);}
 .do-m-date{font-size:10px;color:rgba(255,255,255,.3);white-space:nowrap;}
+/* Top-up modal (dashboard-scoped, mirrors components/ArtistPage.tsx pur-*/tu-* modal pattern) */
+.do-tu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
+.do-tu-modal{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:36px 32px 28px;max-width:400px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.5);}
+.do-tu-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.08);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.6);padding:0;}
+.do-tu-close svg{width:14px;height:14px;}
+.do-tu-close:hover{background:rgba(255,255,255,.14);color:#fff;}
+.do-tu-eyebrow{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:#F69820;margin-bottom:8px;}
+.do-tu-title{font-size:20px;font-weight:900;color:#fff;margin:0 0 12px;}
+.do-tu-desc{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;margin:0 0 20px;}
+.do-tu-pack-list{display:flex;flex-direction:column;gap:10px;margin:4px 0 20px;}
+.do-tu-pack-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid rgba(255,255,255,.12);border-radius:12px;cursor:pointer;background:rgba(255,255,255,.03);transition:border-color .15s,background .15s;position:relative;font-family:inherit;text-align:left;width:100%;}
+.do-tu-pack-row:hover{border-color:#F69820;}
+.do-tu-pack-row.do-tu-selected{border-color:#F69820;background:rgba(246,152,32,.1);box-shadow:0 0 0 1px #F69820;}
+.do-tu-pack-badge{position:absolute;top:-9px;left:14px;background:#F69820;color:#000;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:100px;}
+.do-tu-pack-lesars{font-size:15px;font-weight:900;color:#fff;}
+.do-tu-pack-note{font-size:11px;color:rgba(255,255,255,.4);font-weight:600;margin-top:2px;}
+.do-tu-pack-price{font-size:16px;font-weight:900;color:#F69820;flex-shrink:0;}
+.do-tu-error{font-size:12px;font-weight:700;color:rgba(255,100,100,.9);margin:0 0 12px;}
+.do-tu-actions{display:flex;flex-direction:column;gap:10px;}
+.do-tu-confirm{padding:14px;background:#F69820;color:#000;border:none;border-radius:10px;font-family:inherit;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;text-align:center;}
+.do-tu-confirm:hover{background:#ffaf30;}
+.do-tu-confirm.do-tu-disabled{opacity:.45;cursor:not-allowed;}
+.do-tu-confirm.do-tu-disabled:hover{background:#F69820;}
+.do-tu-cancel{padding:14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
+.do-tu-cancel:hover{background:rgba(255,255,255,.14);}
 `;
