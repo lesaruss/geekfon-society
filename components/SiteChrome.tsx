@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { ADMIN_EMAIL } from "@/app/dashboard/context";
 
 type Tier = "public" | "passport" | "plus" | "pro";
 type NavItem = { label: string; href: string };
@@ -41,13 +42,16 @@ const NAV_PRO: NavItem[] = [
 
 
 
-function navForTier(tier: Tier, isAdmin = false): NavItem[] {
+function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false): NavItem[] {
   let base: NavItem[];
   if (tier === "plus")          base = NAV_PLUS;
   else if (tier === "pro")      base = NAV_PRO;
   else if (tier === "passport") base = NAV_PASSPORT;
   else                          base = NAV_PUBLIC;
-  if (isAdmin || tier === "pro" || tier === "plus") {
+  // Release Schedule is restricted to Sean's account (ADMIN_EMAIL) only - not a tier
+  // perk, not a role perk. isAdmin alone used to be enough (any super_admin/admin
+  // role), which is broader than intended. See navForTier caller for the exact check.
+  if (canSeeReleaseSchedule) {
     return [...base, { label: "Release Schedule", href: "/dashboard/release-schedule" }];
   }
   return base;
@@ -78,8 +82,8 @@ function parseTier(raw: string): Tier {
 }
 
 type Crumb = { label: string; href?: string };
-type MemberOverride = { name: string; balance: number; initial: string; tier?: string; isAdmin?: boolean };
-type AuthState = { loading: boolean; tier: Tier; name: string; initial: string; balance: number; isAdmin: boolean };
+type MemberOverride = { name: string; balance: number; initial: string; tier?: string; isAdmin?: boolean; email?: string | null };
+type AuthState = { loading: boolean; tier: Tier; name: string; initial: string; balance: number; isAdmin: boolean; email: string | null };
 
 function GeekFonLogo() {
   return (
@@ -110,6 +114,7 @@ export default function SiteChrome({
     initial: "",
     balance: 0,
     isAdmin: false,
+    email: null,
   });
 
   const [viewAs, setViewAs] = useState<Tier | null>(null);
@@ -161,6 +166,7 @@ export default function SiteChrome({
         initial: member.initial,
         balance: member.balance,
         isAdmin: member.isAdmin || false,
+        email: member.email ?? null,
       });
       return;
     }
@@ -171,7 +177,7 @@ export default function SiteChrome({
         const { data: { session } } = await supabase.auth.getSession();
         if (cancelled) return;
         if (!session?.user) {
-          setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0, isAdmin: false });
+          setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0, isAdmin: false, email: null });
           return;
         }
         const u = session.user;
@@ -198,9 +204,10 @@ export default function SiteChrome({
           initial: displayName.charAt(0).toUpperCase(),
           balance: pts?.available_points || 0,
           isAdmin,
+          email: u.email ?? null,
         });
       } catch {
-        if (!cancelled) setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0, isAdmin: false });
+        if (!cancelled) setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0, isAdmin: false, email: null });
       }
     }
     loadAuth();
@@ -208,7 +215,10 @@ export default function SiteChrome({
   }, [member]);
 
   const effectiveTier: Tier = (auth.isAdmin && viewAs) ? viewAs : auth.tier;
-  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs);
+  // Real-account gate for Release Schedule: Sean's account only, never derived from
+  // tier or role, and never visible while simulating another tier via View As.
+  const canSeeReleaseSchedule = auth.email === ADMIN_EMAIL && !viewAs;
+  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule);
   const isLoggedIn = effectiveTier !== "public" && !auth.loading;
   const tierAccent = TIER_ACCENT[effectiveTier];
   const tierLabel  = TIER_LABEL[effectiveTier];
@@ -248,16 +258,9 @@ export default function SiteChrome({
             </div>
           )}
 
-          {auth.isAdmin && viewAs !== null && (
-            <button
-              className="gviewas-exit"
-              onClick={() => { setViewAs(null); localStorage.removeItem("gfs-view-as"); window.dispatchEvent(new CustomEvent("gfs-view-as", { detail: null })); }}
-              title="Exit view-as mode"
-            >
-              <span className="gviewas-label">Viewing as: {TIER_LABEL[viewAs]}</span>
-              <span className="gviewas-x">✕</span>
-            </button>
-          )}
+          {/* Top-bar "Viewing as" chip removed 2026-07-07 per Sean - simulator state is
+              still visible/controllable from the hamburger drawer's "View as membership"
+              panel below, including its own "Reset to my account" exit control. */}
           <button className="gham" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
             <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
           </button>
@@ -382,18 +385,15 @@ const CHROME_CSS = `
 .glogin:hover { opacity: 1; }
 @media(max-width:640px) { .glogin { display: none; } }
 /* Mobile/tablet top bar (incl. iPad portrait): logo + hamburger only. Everything else
-   the top bar can show - Log in, Get Passport, LESARs balance, the admin "Viewing as"
-   exit chip - is one tap away in the hamburger drawer already, so keeping it out of the
-   bar itself avoids the crowding Sean flagged while traveling. Desktop keeps all of it. */
+   the top bar can show - Log in, Get Passport, LESARs balance - is one tap away in the
+   hamburger drawer already, so keeping it out of the bar itself avoids the crowding
+   Sean flagged while traveling. Desktop keeps all of it. The admin "Viewing as" chip
+   itself was removed from the top bar entirely on 2026-07-07 (desktop and mobile). */
 @media(max-width:900px) {
-  .gauth, .gmember-balance, .gviewas-exit { display: none; }
+  .gauth, .gmember-balance { display: none; }
 }
 .gdrawer-login { display: block; text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); text-decoration: underline; text-underline-offset: 3px; }
 .gdrawer-login:hover { color: #fff; }
-.gviewas-exit { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 20px; border: 1px solid rgba(233,30,140,.5); background: rgba(233,30,140,.12); cursor: pointer; font-family: 'Montserrat', sans-serif; }
-.gviewas-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #E91E8C; }
-.gviewas-x { font-size: 10px; color: rgba(233,30,140,.7); font-weight: 700; }
-.gviewas-exit:hover { background: rgba(233,30,140,.22); }
 .gmember-balance { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
 .gmember-balance-num { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: -.01em; }
 .gmember-balance-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: #9c1458; margin-top: 2px; }
