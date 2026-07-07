@@ -342,7 +342,7 @@ export default function RadioSchedulePage() {
                       title="Replace audio"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {us === "uploading" ? "Uploading..." : us === "done" ? "Replaced" : "Replace audio"}
+                      {us === "uploading" ? "..." : us === "done" ? "Replaced" : "Replace"}
                       <input
                         type="file"
                         accept="audio/*"
