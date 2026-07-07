@@ -45,8 +45,23 @@ export default function RadioSchedulePage() {
   const [addTitle, setAddTitle]   = useState("");
   const [addBusy, setAddBusy]     = useState(false);
 
-  const dragIdx = useRef<number | null>(null);
+  const pointerDragIdx = useRef<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
+  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  function pointerMoveToRow(clientY: number) {
+    let closest = 0;
+    let closestDist = Infinity;
+    rowRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      const dist = Math.abs(clientY - mid);
+      if (dist < closestDist) { closestDist = dist; closest = i; }
+    });
+    return closest;
+  }
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -314,24 +329,41 @@ export default function RadioSchedulePage() {
             </div>
             {onAirTracks.map((track, idx) => {
               const us = uploadStatus[track.id];
-              const isDragTarget = dragOver === idx;
+              const isDragTarget = dragOver === idx && draggingIdx !== null;
               return (
                 <div
                   key={track.id}
-                  className={`rdc-track-row${isDragTarget ? " rdc-drag-target" : ""}`}
-                  draggable
-                  onDragStart={() => { dragIdx.current = idx; }}
-                  onDragOver={(e) => { e.preventDefault(); setDragOver(idx); }}
-                  onDragLeave={() => setDragOver(null)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOver(null);
-                    if (dragIdx.current !== null) reorder(dragIdx.current, idx);
-                    dragIdx.current = null;
-                  }}
-                  onDragEnd={() => { setDragOver(null); dragIdx.current = null; }}
+                  ref={(el) => { rowRefs.current[idx] = el; }}
+                  className={`rdc-track-row${isDragTarget ? " rdc-drag-target" : ""}${draggingIdx === idx ? " rdc-track-row-dragging" : ""}`}
                 >
-                  <span className="rdc-drag-handle" title="Drag to reorder">
+                  <span
+                    className="rdc-drag-handle"
+                    title="Drag to reorder"
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                      pointerDragIdx.current = idx;
+                      setDraggingIdx(idx);
+                      setDragOver(idx);
+                    }}
+                    onPointerMove={(e) => {
+                      if (pointerDragIdx.current === null) return;
+                      setDragOver(pointerMoveToRow(e.clientY));
+                    }}
+                    onPointerUp={() => {
+                      if (pointerDragIdx.current !== null && dragOver !== null) {
+                        reorder(pointerDragIdx.current, dragOver);
+                      }
+                      pointerDragIdx.current = null;
+                      setDraggingIdx(null);
+                      setDragOver(null);
+                    }}
+                    onPointerCancel={() => {
+                      pointerDragIdx.current = null;
+                      setDraggingIdx(null);
+                      setDragOver(null);
+                    }}
+                  >
                     <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
                       <circle cx="8" cy="6" r="1.5" /><circle cx="16" cy="6" r="1.5" />
                       <circle cx="8" cy="12" r="1.5" /><circle cx="16" cy="12" r="1.5" />
@@ -455,14 +487,15 @@ const RDC_CSS = `
 .rdc-track-list { padding: 0 0 8px; }
 .rdc-track-head { display: flex; align-items: center; gap: 8px; padding: 6px 12px 8px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: rgba(255,255,255,.25); border-bottom: 1px solid rgba(255,255,255,.05); }
 .rdc-th-grow { flex: 1; }
-.rdc-track-row { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,.03); cursor: grab; transition: background .1s; }
+.rdc-track-row { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,.03); transition: background .1s; }
 .rdc-track-row:last-child { border-bottom: none; }
 .rdc-track-row:hover { background: rgba(255,255,255,.025); }
-.rdc-track-row:active { cursor: grabbing; }
 .rdc-track-row-static { cursor: default; }
+.rdc-track-row-dragging { opacity: .45; }
 .rdc-drag-target { background: rgba(246,152,32,.08) !important; border-bottom: 2px solid #F69820 !important; }
-.rdc-drag-handle { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; color: rgba(255,255,255,.2); flex-shrink: 0; cursor: grab; }
-.rdc-drag-handle:hover { color: rgba(255,255,255,.5); }
+.rdc-drag-handle { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; color: rgba(255,255,255,.3); flex-shrink: 0; cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
+.rdc-drag-handle:hover { color: rgba(255,255,255,.6); }
+.rdc-drag-handle:active { cursor: grabbing; }
 .rdc-num { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); width: 28px; text-align: center; white-space: nowrap; flex-shrink: 0; }
 .rdc-input { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); color: #fff; font-family: inherit; font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 6px; min-width: 0; box-sizing: border-box; }
 .rdc-input.rdc-th-grow { flex: 1; }
