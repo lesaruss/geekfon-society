@@ -25,6 +25,7 @@ function isOnAir(t: RadioTrack): boolean {
 }
 
 function artistName(artists: ArtistOpt[], slug: string): string {
+  if (slug === "promo") return "Promo";
   return artists.find((a) => a.slug === slug)?.name || slug;
 }
 
@@ -262,6 +263,7 @@ export default function RadioSchedulePage() {
         <div className="rdc-add-panel">
           <select className="rdc-sel" value={addArtist} onChange={(e) => setAddArtist(e.target.value)}>
             <option value="">Artist...</option>
+            <option value="promo">Promo (ads / station IDs)</option>
             {artists.map((a) => <option key={a.slug} value={a.slug}>{a.name}</option>)}
           </select>
           <input
@@ -295,7 +297,6 @@ export default function RadioSchedulePage() {
               <span style={{ width: 24 }} />
               <span style={{ width: 28 }}>#</span>
               <span className="rdc-th-grow">Track</span>
-              <span style={{ width: 160 }}>Artist</span>
               <span style={{ width: 78 }}>Audio</span>
               <span style={{ width: 60 }} />
             </div>
@@ -326,13 +327,15 @@ export default function RadioSchedulePage() {
                     </svg>
                   </span>
                   <span className="rdc-num">{idx + 1}</span>
-                  <input
-                    className="rdc-input rdc-th-grow"
-                    value={track.title}
-                    onChange={(e) => updateField(track.id, "title", e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <span className="rdc-artist-label" style={{ width: 160 }}>{artistName(artists, track.artist_slug)}</span>
+                  <div className="rdc-track-cell rdc-th-grow">
+                    <input
+                      className="rdc-input rdc-title-input"
+                      value={track.title}
+                      onChange={(e) => updateField(track.id, "title", e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span className="rdc-artist-sub">{artistName(artists, track.artist_slug)}</span>
+                  </div>
                   <span className="rdc-audio-cell" style={{ width: 78 }}>
                     <label
                       className={`rdc-upload-btn${us === "uploading" ? " rdc-uploading" : ""}${us === "done" ? " rdc-uploaded" : ""}${us === "error" ? " rdc-upload-err" : ""}`}
@@ -437,7 +440,9 @@ const RDC_CSS = `
 .rdc-input { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); color: #fff; font-family: inherit; font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 6px; min-width: 0; box-sizing: border-box; }
 .rdc-input.rdc-th-grow { flex: 1; }
 .rdc-input:focus { outline: none; border-color: #F69820; }
-.rdc-artist-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.4); flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rdc-track-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rdc-title-input { width: 100%; }
+.rdc-artist-sub { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.4); padding-left: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rdc-catalog-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.75); }
 .rdc-sel { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 8px; border-radius: 6px; cursor: pointer; color: #fff; flex-shrink: 0; }
 .rdc-sel option { background: #1a1a1a; color: #fff; }
