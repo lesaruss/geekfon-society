@@ -3,7 +3,9 @@ import { useState, useEffect } from "react";
 import { useDashboard } from "../context";
 import { supabase } from "@/lib/supabase";
 
-type OwnedTrack = { artist_slug: string; track_name: string; lesars_spent: number; purchased_at: string };
+const AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
+
+type OwnedTrack = { artist_slug: string; track_name: string; lesars_spent: number; purchased_at: string; track_url: string | null };
 
 const ARTIST_LABEL: Record<string, string> = {
   roxanne: "Roxanne",
@@ -28,7 +30,7 @@ export default function LibraryPage() {
     if (!userId) { setLoading(false); return; }
     supabase
       .from("gfs_track_purchases")
-      .select("artist_slug, track_name, lesars_spent, purchased_at")
+      .select("artist_slug, track_name, lesars_spent, purchased_at, track_url")
       .eq("user_id", userId)
       .order("purchased_at", { ascending: false })
       .then(({ data }) => {
@@ -88,16 +90,36 @@ export default function LibraryPage() {
       ) : (
         <div className="lib-grid">
           {owned.map((t, i) => (
-            <a key={i} href={`/${t.artist_slug}?tab=music`} className="lib-card">
-              <div className="lib-card-art" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={22} height={22}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <div key={i} className="lib-card">
+              <a href={`/${t.artist_slug}?tab=music`} className="lib-card-main">
+                <div className="lib-card-art" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={22} height={22}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                </div>
+                <div className="lib-card-body">
+                  <div className="lib-card-title">{t.track_name}</div>
+                  <div className="lib-card-sub">{ARTIST_LABEL[t.artist_slug] || t.artist_slug}</div>
+                </div>
+              </a>
+              <div className="lib-card-actions">
+                {t.track_url ? (
+                  <a
+                    className="lib-card-download"
+                    href={AUDIO + t.track_url}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Download ${t.track_name}`}
+                    title="Download to upload into Apple Music, Spotify, or any other app"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={14} height={14}><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>
+                    Download
+                  </a>
+                ) : (
+                  <span className="lib-card-soon">Audio coming soon</span>
+                )}
+                <div className="lib-card-cost">{t.lesars_spent} LESARs</div>
               </div>
-              <div className="lib-card-body">
-                <div className="lib-card-title">{t.track_name}</div>
-                <div className="lib-card-sub">{ARTIST_LABEL[t.artist_slug] || t.artist_slug}</div>
-              </div>
-              <div className="lib-card-cost">{t.lesars_spent} LESARs</div>
-            </a>
+            </div>
           ))}
         </div>
       )}
@@ -127,13 +149,18 @@ const CSS = `
 .lib-loading{padding:60px 24px;text-align:center;font-size:13px;color:rgba(255,255,255,.4);}
 /* Owned tracks grid */
 .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
-.lib-card{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;text-decoration:none;transition:border-color .15s,background .15s;}
+.lib-card{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;transition:border-color .15s,background .15s;}
 .lib-card:hover{border-color:rgba(246,152,32,.3);background:rgba(255,255,255,.06);}
+.lib-card-main{flex:1;min-width:0;display:flex;align-items:center;gap:14px;text-decoration:none;}
 .lib-card-art{flex-shrink:0;width:40px;height:40px;border-radius:10px;background:rgba(246,152,32,.1);color:#F69820;display:flex;align-items:center;justify-content:center;}
 .lib-card-body{flex:1;min-width:0;}
 .lib-card-title{font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lib-card-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;}
-.lib-card-cost{flex-shrink:0;font-size:10px;font-weight:800;color:rgba(246,152,32,.8);white-space:nowrap;}
+.lib-card-actions{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.lib-card-cost{font-size:10px;font-weight:800;color:rgba(246,152,32,.8);white-space:nowrap;}
+.lib-card-download{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#000;background:#F69820;padding:6px 12px;border-radius:100px;text-decoration:none;white-space:nowrap;transition:background .15s;}
+.lib-card-download:hover{background:#ffaf30;}
+.lib-card-soon{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);white-space:nowrap;}
 /* Empty state */
 .lib-empty{text-align:center;padding:60px 24px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:20px;display:flex;flex-direction:column;align-items:center;gap:16px;}
 .lib-empty-icon svg{width:72px;height:72px;}
