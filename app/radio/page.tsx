@@ -262,7 +262,7 @@ export default function RadioPage() {
   if (!authChecked || !isMember) return null;
 
   return (
-    <SiteChrome crumb={[{ label: "GeekFon Radio" }]}>
+    <SiteChrome>
       <style>{CSS}</style>
 
       <div className="rd-city-stage">
