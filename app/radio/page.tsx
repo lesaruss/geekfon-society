@@ -194,19 +194,39 @@ export default function RadioPage() {
     const changedTrack = currentPathRef.current !== resolved.path;
     if (changedTrack) {
       currentPathRef.current = resolved.path;
-      a.src = AUDIO_BASE + resolved.path;
-      a.onloadedmetadata = () => {
-        a.currentTime = resolved.offsetSeconds;
-        if (autoplay) a.play().then(() => setPlaying(true)).catch(() => {});
-      };
       a.ontimeupdate = () => setProgress(a.currentTime);
       a.ondurationchange = () => setDuration(a.duration || 0);
       a.onended = () => tuneToNow(true);
       a.onerror = () => { /* skip forward on next resync tick */ };
+      // Set currentTime again once metadata is ready - some browsers ignore
+      // a seek issued before the media is seekable, so this is a safety net
+      // on top of the immediate assignment below, not the primary path.
+      a.onloadedmetadata = () => { a.currentTime = resolved.offsetSeconds; };
+      a.src = AUDIO_BASE + resolved.path;
+      a.currentTime = resolved.offsetSeconds;
+      // play() must stay in the same synchronous tick as the click that
+      // triggered it, or the browser's autoplay policy silently blocks it -
+      // deferring this into an onloadedmetadata callback (async, off the
+      // user-gesture stack) is what caused the original bug.
+      if (autoplay) a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     } else if (Math.abs(a.currentTime - resolved.offsetSeconds) > RESYNC_DRIFT_TOLERANCE_SEC) {
       a.currentTime = resolved.offsetSeconds;
     }
   }, []);
+
+  // Show what's currently on, even before the listener presses play, so the
+  // page never reads as broken/empty while data is actually loaded and the
+  // clock is already running for everyone else.
+  useEffect(() => {
+    if (loadingPlaylist || playing) return;
+    const tick = () => {
+      const resolved = resolvePlayhead(Date.now(), rotationRef.current, overridesRef.current);
+      if (resolved) setNowPlaying(resolved);
+    };
+    tick();
+    const id = setInterval(tick, RESYNC_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [loadingPlaylist, playing]);
 
   function toggle() {
     if (rotationRef.current.length === 0) return;
