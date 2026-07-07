@@ -98,6 +98,7 @@ export default function RadioPage() {
         .eq("is_public", true)
         .neq("src_path", "PENDING")
         .lte("release_date", nowIso)
+        .order("radio_order", { ascending: true, nullsFirst: false })
         .order("artist_slug", { ascending: true })
         .order("sort_order", { ascending: true });
       if (cancelled) return;
