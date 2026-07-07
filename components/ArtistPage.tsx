@@ -386,7 +386,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [viewAs, setViewAs] = useState<string>("real");
   const [viewDropOpen, setViewDropOpen] = useState(false);
-  const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
+  const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number; trackUrl?: string } | null>(null);
   const [ownedTracks, setOwnedTracks] = useState<Set<string>>(new Set());
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
   const [topUpOpen, setTopUpOpen] = useState(false);
@@ -650,6 +650,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       p_artist_slug: slug,
       p_track_name: purchaseModal.trackName,
       p_amount: cost,
+      p_track_url: purchaseModal.trackUrl || null,
     });
     if (error || !data?.ok) {
       setPurchaseError(data?.error === "insufficient_balance"
@@ -1222,7 +1223,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   ) : (
                                     <button
                                       className="mp-btn-buy"
-                                      onClick={(e) => { e.stopPropagation(); setPurchaseModal({ trackName: t.n, price: 25 }); }}
+                                      onClick={(e) => { e.stopPropagation(); setPurchaseModal({ trackName: t.n, price: 25, trackUrl: t.url }); }}
                                       aria-label={`Buy ${t.n}`}
                                     >
                                       Buy
