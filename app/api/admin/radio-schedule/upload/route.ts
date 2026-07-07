@@ -23,7 +23,6 @@ export async function POST(req: Request) {
   const file = formData.get("file") as File | null;
   const artistSlug = formData.get("artistSlug") as string | null;
   const title = (formData.get("title") as string | null) || "Untitled";
-  const requiredTier = (formData.get("requiredTier") as string | null) || "passport";
   const replaceId = formData.get("replaceId") as string | null;
 
   if (!file || !artistSlug) {
@@ -69,7 +68,6 @@ export async function POST(req: Request) {
       artist_slug: artistSlug,
       title,
       src_path: path,
-      required_tier: requiredTier,
       is_public: true,
       release_date: new Date().toISOString(),
       sort_order: 0,
