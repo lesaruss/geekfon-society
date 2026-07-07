@@ -277,7 +277,7 @@ export default function SiteChrome({
 
       <div className={"gscrim" + (open ? " open" : "")} onClick={() => setOpen(false)} aria-hidden="true" />
 
-      <aside className={"gdrawer" + (open ? " open" : "")} aria-hidden={!open} aria-label="Site navigation">
+      <aside className={"gdrawer" + (open ? " open" : "")} aria-hidden={!open} inert={!open} aria-label="Site navigation">
         <div className="gdrawer-head">
           <GeekFonLogo />
           <button className="gx" aria-label="Close menu" onClick={() => setOpen(false)}>
@@ -453,3 +453,4 @@ const CHROME_CSS = `
 .gdva-reset { display: block; width: 100%; padding: 10px 14px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.3); background: none; border: none; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; text-align: center; }
 .gdva-reset:hover { color: rgba(255,255,255,.6); }
 `;
+
