@@ -297,7 +297,7 @@ export default function RadioSchedulePage() {
               <span style={{ width: 24 }} />
               <span style={{ width: 28 }}>#</span>
               <span className="rdc-th-grow">Track</span>
-              <span style={{ width: 78 }}>Audio</span>
+              <span style={{ width: 110 }}>Audio</span>
               <span style={{ width: 60 }} />
             </div>
             {onAirTracks.map((track, idx) => {
@@ -336,13 +336,13 @@ export default function RadioSchedulePage() {
                     />
                     <span className="rdc-artist-sub">{artistName(artists, track.artist_slug)}</span>
                   </div>
-                  <span className="rdc-audio-cell" style={{ width: 78 }}>
+                  <span className="rdc-audio-cell" style={{ width: 110 }}>
                     <label
                       className={`rdc-upload-btn${us === "uploading" ? " rdc-uploading" : ""}${us === "done" ? " rdc-uploaded" : ""}${us === "error" ? " rdc-upload-err" : ""}`}
                       title="Replace audio"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {us === "uploading" ? "..." : us === "done" ? "OK" : "REPL"}
+                      {us === "uploading" ? "Uploading..." : us === "done" ? "Replaced" : "Replace audio"}
                       <input
                         type="file"
                         accept="audio/*"
@@ -447,7 +447,7 @@ const RDC_CSS = `
 .rdc-sel { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 8px; border-radius: 6px; cursor: pointer; color: #fff; flex-shrink: 0; }
 .rdc-sel option { background: #1a1a1a; color: #fff; }
 .rdc-audio-cell { display: flex; align-items: center; flex-shrink: 0; }
-.rdc-upload-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; border-radius: 5px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); cursor: pointer; color: rgba(255,255,255,.5); font-size: 9px; font-weight: 800; flex-shrink: 0; padding: 0 6px; }
+.rdc-upload-btn { display: inline-flex; align-items: center; justify-content: center; height: 26px; border-radius: 5px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); cursor: pointer; color: rgba(255,255,255,.55); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; flex-shrink: 0; padding: 0 10px; white-space: nowrap; }
 .rdc-upload-btn:hover { background: rgba(255,255,255,.13); color: #fff; }
 .rdc-upload-btn-lg { height: 32px; padding: 0 14px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 .rdc-uploading { background: rgba(246,152,32,.15) !important; border-color: rgba(246,152,32,.3) !important; color: #F69820 !important; }
