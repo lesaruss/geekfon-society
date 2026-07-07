@@ -142,7 +142,7 @@ export async function purchaseLesarsPack(productId: keyof typeof LESARS_PACK_PRO
   try {
     const offerings = await Purchases.getOfferings();
     const pkg = offerings.current?.availablePackages.find(
-      (p) => p.storeProduct.identifier === productId
+      (p) => p.product.identifier === productId
     );
     if (!pkg) {
       return { success: false, error: `product ${productId} not found in current offering` };
