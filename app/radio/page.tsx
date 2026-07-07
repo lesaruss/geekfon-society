@@ -1,14 +1,11 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
 import SiteChrome from "@/components/SiteChrome";
+import { supabase } from "@/lib/supabase";
+import { resolvePlayhead, RadioTrack as ScheduleTrack, ScheduleOverride, ResolvedPlayhead } from "@/lib/radioSchedule";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 const AUDIO_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
-
-const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
-const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA";
-const radioSupabase = createClient(SUPA_URL, SUPA_ANON);
 
 // Display names for radio_tracks.artist_slug (this table uses full-name slugs,
 // which don't always match gfs_artists.slug - e.g. "riku-hayasaka" vs "riku").
@@ -30,17 +27,6 @@ function artistName(slug: string): string {
   return ARTIST_NAMES[slug] || slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-type RadioTrack = { artist: string; title: string; path: string };
-
 const CITIES = [
   { name: "London, UK", accent: "#F69820", desktop: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", mobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png" },
   { name: "Fort Lauderdale, FL", accent: "#00BCD4", desktop: CDN + "hf_20260619_061001_82fbd428-6543-4a12-ba50-fe80d6255515.png", mobile: CDN + "hf_20260619_061949_d919c8f7-448a-48c4-aa18-a5487e4ae4a0.png" },
@@ -51,53 +37,117 @@ const CITIES = [
   { name: "Orlando, FL", accent: "#FF9800", desktop: CDN + "hf_20260619_125302_4c4f6747-3bcb-45b2-a743-610912078942.png", mobile: CDN + "hf_20260619_125452_ad933e6f-0b03-43a4-b111-341e76b9efd9.jpeg" },
 ];
 
-// PLAYLIST is now loaded live from Supabase radio_tracks (see loadPlaylist below) -
-// the previous hardcoded 15-track list only covered 3 of 11 artists and included
-// two tracks (the-flex.mp3, vibration.mp3) that were actually superadmin-gated,
-// plus one dead file (good-luck.mp3, 400) that broke playback on rotation.
+const RESYNC_DRIFT_TOLERANCE_SEC = 2;
+const RESYNC_INTERVAL_MS = 5000;
 
 export default function RadioPage() {
-  const [playing, setPlaying] = useState(false);
-  const [trackIdx, setTrackIdx] = useState(0);
-  const [current, setCurrent] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const cityRef = useRef(0);
-  const cityPanelRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const trackIdxRef = useRef(0);
-  const [playlist, setPlaylist] = useState<RadioTrack[]>([]);
-  const [loadingPlaylist, setLoadingPlaylist] = useState(true);
-  const playlistRef = useRef<RadioTrack[]>([]);
+  // Gate: must be a registered GeekFon member (any tier) to listen.
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isMember, setIsMember] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    async function loadPlaylist() {
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        window.location.href = "/passport?next=/radio";
+        return;
+      }
+      const { data } = await supabase
+        .from("gfs_members")
+        .select("tier")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!data?.tier) {
+        window.location.href = "/passport?next=/radio";
+        return;
+      }
+      setIsMember(true);
+      setAuthChecked(true);
+    }
+    checkAuth();
+    return () => { cancelled = true; };
+  }, []);
+
+  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [nowPlaying, setNowPlaying] = useState<ResolvedPlayhead | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const cityRef = useRef(0);
+  const cityPanelRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const cityTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resyncTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [rotation, setRotation] = useState<ScheduleTrack[]>([]);
+  const [overrides, setOverrides] = useState<ScheduleOverride[]>([]);
+  const [loadingPlaylist, setLoadingPlaylist] = useState(true);
+  const rotationRef = useRef<ScheduleTrack[]>([]);
+  const overridesRef = useRef<ScheduleOverride[]>([]);
+  const currentPathRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!authChecked || !isMember) return;
+    let cancelled = false;
+    async function loadSchedule() {
       const nowIso = new Date().toISOString();
-      const { data, error } = await radioSupabase
+      const { data: trackRows } = await supabase
         .from("radio_tracks")
-        .select("artist_slug, title, src_path, release_date")
+        .select("artist_slug, title, src_path, duration_seconds, release_date")
         .eq("is_public", true)
         .neq("src_path", "PENDING")
         .lte("release_date", nowIso)
         .order("artist_slug", { ascending: true })
         .order("sort_order", { ascending: true });
       if (cancelled) return;
-      const rows = !error && data ? data : [];
-      const mapped: RadioTrack[] = rows.map(r => ({
+
+      const fixed: ScheduleTrack[] = (trackRows || []).map(r => ({
         artist: artistName(r.artist_slug as string),
         title: r.title as string,
         path: r.src_path as string,
+        durationSeconds: (r.duration_seconds as number | null) || 180,
       }));
-      const shuffled = shuffle(mapped);
-      playlistRef.current = shuffled;
-      setPlaylist(shuffled);
+      rotationRef.current = fixed;
+      setRotation(fixed);
+
+      const { data: overrideRows } = await supabase
+        .from("radio_schedule_overrides")
+        .select("kind, label, ad_src_path, starts_at, duration_seconds, cadence_seconds, track_id, radio_tracks(artist_slug, title, src_path)")
+        .eq("is_active", true);
+
+      const mapped: ScheduleOverride[] = (overrideRows || []).flatMap((o: any): ScheduleOverride[] => {
+        if (o.kind === "pinned" && o.starts_at && o.radio_tracks) {
+          const pinned: ScheduleOverride = {
+            kind: "pinned",
+            path: o.radio_tracks.src_path,
+            title: o.radio_tracks.title,
+            artist: artistName(o.radio_tracks.artist_slug),
+            startsAtMs: new Date(o.starts_at).getTime(),
+            durationSeconds: o.duration_seconds || 180,
+            label: o.label || undefined,
+          };
+          return [pinned];
+        }
+        if (o.kind === "ad_cadence") {
+          const ad: ScheduleOverride = {
+            kind: "ad_cadence",
+            adSrcPath: o.ad_src_path || null,
+            cadenceSeconds: o.cadence_seconds || 0,
+            durationSeconds: o.duration_seconds || 0,
+            label: o.label || undefined,
+          };
+          return [ad];
+        }
+        return [];
+      });
+      overridesRef.current = mapped;
+      setOverrides(mapped);
       setLoadingPlaylist(false);
     }
-    loadPlaylist();
+    loadSchedule();
     return () => { cancelled = true; };
-  }, []);
+  }, [authChecked, isMember]);
 
   const goCity = useCallback((next: number) => {
     const prev = cityRef.current;
@@ -119,8 +169,8 @@ export default function RadioPage() {
   }, []);
 
   useEffect(() => {
-    timerRef.current = setInterval(() => goCity((cityRef.current + 1) % CITIES.length), 6000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    cityTimerRef.current = setInterval(() => goCity((cityRef.current + 1) % CITIES.length), 6000);
+    return () => { if (cityTimerRef.current) clearInterval(cityTimerRef.current); };
   }, [goCity]);
 
   useEffect(() => {
@@ -131,56 +181,59 @@ export default function RadioPage() {
     });
   }, []);
 
-  function playTrack(idx: number, attempt = 0) {
-    const list = playlistRef.current;
-    if (list.length === 0) return;
-    const safeIdx = ((idx % list.length) + list.length) % list.length;
-    const track = list[safeIdx];
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
+  // Load + seek to wherever the deterministic clock says this listener should
+  // land right now, then keep playback locked to that same clock going
+  // forward - this is what makes every listener worldwide hear the same
+  // thing at the same time instead of each browser running its own copy.
+  const tuneToNow = useCallback((autoplay: boolean) => {
+    const resolved = resolvePlayhead(Date.now(), rotationRef.current, overridesRef.current);
+    if (!resolved) return;
+    setNowPlaying(resolved);
+    if (!audioRef.current) audioRef.current = new Audio();
     const a = audioRef.current;
-    a.src = AUDIO_BASE + track.path;
-    a.onended = () => {
-      const next = (trackIdxRef.current + 1) % list.length;
-      trackIdxRef.current = next;
-      setTrackIdx(next);
-      playTrack(next);
-    };
-    a.ontimeupdate = () => { setProgress(a.currentTime); };
-    a.ondurationchange = () => { setDuration(a.duration || 0); };
-    a.onerror = () => {
-      // Skip a dead/blocked file and try the next one, but bail after a full
-      // lap so a bad rotation can't spin the player forever.
-      if (attempt >= list.length) { setPlaying(false); return; }
-      const next = (trackIdxRef.current + 1) % list.length;
-      trackIdxRef.current = next;
-      setTrackIdx(next);
-      playTrack(next, attempt + 1);
-    };
-    a.play().then(() => setPlaying(true)).catch(() => {});
-  }
+    const changedTrack = currentPathRef.current !== resolved.path;
+    if (changedTrack) {
+      currentPathRef.current = resolved.path;
+      a.src = AUDIO_BASE + resolved.path;
+      a.onloadedmetadata = () => {
+        a.currentTime = resolved.offsetSeconds;
+        if (autoplay) a.play().then(() => setPlaying(true)).catch(() => {});
+      };
+      a.ontimeupdate = () => setProgress(a.currentTime);
+      a.ondurationchange = () => setDuration(a.duration || 0);
+      a.onended = () => tuneToNow(true);
+      a.onerror = () => { /* skip forward on next resync tick */ };
+    } else if (Math.abs(a.currentTime - resolved.offsetSeconds) > RESYNC_DRIFT_TOLERANCE_SEC) {
+      a.currentTime = resolved.offsetSeconds;
+    }
+  }, []);
 
   function toggle() {
-    if (playlistRef.current.length === 0) return;
-    if (!audioRef.current || audioRef.current.paused || audioRef.current.ended) {
-      playTrack(trackIdx);
-    } else if (playing) {
-      audioRef.current.pause();
-      setPlaying(false);
+    if (rotationRef.current.length === 0) return;
+    if (!playing) {
+      tuneToNow(true);
+      if (resyncTimerRef.current) clearInterval(resyncTimerRef.current);
+      resyncTimerRef.current = setInterval(() => tuneToNow(true), RESYNC_INTERVAL_MS);
     } else {
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => {});
+      audioRef.current?.pause();
+      setPlaying(false);
+      if (resyncTimerRef.current) { clearInterval(resyncTimerRef.current); resyncTimerRef.current = null; }
     }
   }
+
+  useEffect(() => {
+    return () => { if (resyncTimerRef.current) clearInterval(resyncTimerRef.current); };
+  }, []);
 
   function fmt(s: number) {
     if (!s || isNaN(s)) return "0:00";
     return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
   }
 
-  const track = playlist.length > 0 ? playlist[trackIdx % playlist.length] : null;
   const city = CITIES[current];
   const pct = duration > 0 ? (progress / duration) * 100 : 0;
+
+  if (!authChecked || !isMember) return null;
 
   return (
     <SiteChrome crumb={[{ label: "GeekFon Radio" }]}>
@@ -209,7 +262,7 @@ export default function RadioPage() {
           <button
             className={"rd-play-btn" + (playing ? " playing" : "")}
             onClick={toggle}
-            disabled={loadingPlaylist || !track}
+            disabled={loadingPlaylist || rotation.length === 0}
             aria-label={playing ? "Pause GeekFon Radio" : "Play GeekFon Radio"}
           >
             <img src="/geekfon-logo.png" alt="GeekFon Radio" className="rd-logo-img" />
@@ -234,10 +287,16 @@ export default function RadioPage() {
         <div className="rd-now-playing">
           <div className="rd-np-eyebrow">
             <span className="rd-live-dot" aria-hidden="true" />
-            {loadingPlaylist ? "TUNING IN" : playing ? "NOW PLAYING" : "READY TO TUNE IN"}
+            {loadingPlaylist
+              ? "TUNING IN"
+              : nowPlaying?.type === "ad"
+              ? "AD BREAK"
+              : nowPlaying?.type === "pinned"
+              ? "LIVE PREMIERE"
+              : playing ? "NOW PLAYING - LIVE WORLDWIDE" : "READY TO TUNE IN"}
           </div>
-          <div className="rd-np-title">{track ? track.title : loadingPlaylist ? "Loading Season 1..." : "No tracks available"}</div>
-          {track && <div className="rd-np-artist">{track.artist}</div>}
+          <div className="rd-np-title">{nowPlaying ? nowPlaying.title : loadingPlaylist ? "Loading Season 1..." : "No tracks available"}</div>
+          {nowPlaying && <div className="rd-np-artist">{nowPlaying.artist}</div>}
 
           {playing && duration > 0 && (
             <div className="rd-progress">
@@ -250,8 +309,8 @@ export default function RadioPage() {
           )}
         </div>
 
-        {!playing && !loadingPlaylist && track && (
-          <p className="rd-hint">Tap the logo to tune in</p>
+        {!playing && !loadingPlaylist && rotation.length > 0 && (
+          <p className="rd-hint">Tap the logo to tune in - everyone hears the same moment, live</p>
         )}
       </div>
     </SiteChrome>
