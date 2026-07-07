@@ -4,7 +4,21 @@ import { NextResponse } from "next/server";
 const SB_URL = "https://fwbhwfxpncrsfhttimna.supabase.co";
 const SB_SVC = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDY2MDEzOSwiZXhwIjoyMDkwMjM2MTM5fQ.Ux3OKsH_ESG8bm2ZiFHtVUb8DPsjuAn8XRYjMVjcmjI";
 
+// Release Schedule audio upload is part of the same admin-only tool - locked 2026-07-07.
+const ADMIN_EMAIL = "contact@lesaruss.com";
+
 export async function POST(req: Request) {
+  const admin0 = createClient(SB_URL, SB_SVC, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { data: { user } } = await admin0.auth.getUser(token);
+  if (user?.email !== ADMIN_EMAIL) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
   const artistSlug = formData.get("artistSlug") as string | null;
