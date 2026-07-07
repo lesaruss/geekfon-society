@@ -615,7 +615,7 @@ const CSS = `
 .do-m-tier{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:20px;background:rgba(246,152,32,.1);color:#F69820;}
 .do-m-lesars{font-weight:800;color:rgba(0,215,95,.8);}
 .do-m-date{font-size:10px;color:rgba(255,255,255,.3);white-space:nowrap;}
-/* Top-up modal (dashboard-scoped, mirrors components/ArtistPage.tsx pur-*/tu-* modal pattern) */
+/* Top-up modal (dashboard-scoped, mirrors the purchase top-up modal pattern in components/ArtistPage.tsx) */
 .do-tu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
 .do-tu-modal{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:36px 32px 28px;max-width:400px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.5);}
 .do-tu-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.08);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.6);padding:0;}
