@@ -186,6 +186,7 @@
 .mp-btn-pre.disabled,.mp-btn-pre:disabled{opacity:.4;cursor:not-allowed;color:rgba(26,26,26,.45)}
 .mp-btn-buy{border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;background:#1f8f50;color:#fff;border:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
 .mp-btn-buy:hover{background:#17763f}
+.mp-btn-owned{display:inline-flex;align-items:center;gap:5px;border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;background:var(--rx-tint);color:var(--rx-text);white-space:nowrap}
 @media(max-width:768px){
   .mp-np{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:14px 16px}
   .mp-cover{width:40px;height:40px;border-radius:10px}
