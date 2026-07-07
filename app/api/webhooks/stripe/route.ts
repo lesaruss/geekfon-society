@@ -2,42 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { creditLesars } from "@/lib/ledger";
 
 export const config = { api: { bodyParser: false } };
-
-async function creditLesars(supabase, userId, amount, plan, referenceId) {
-  const { data: existing } = await supabase
-    .from("member_points")
-    .select("available_points, total_points")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  const newAvailable = (existing?.available_points || 0) + amount;
-  const newTotal = (existing?.total_points || 0) + amount;
-
-  await supabase
-    .from("member_points")
-    .upsert(
-      {
-        user_id: userId,
-        available_points: newAvailable,
-        total_points: newTotal,
-        locked_points: 0,
-        spent_points: existing ? undefined : 0,
-      },
-      { onConflict: "user_id" }
-    );
-
-  await supabase.from("lesars_ledger").insert({
-    user_id: userId,
-    brand_slug: "geekfon",
-    event_type: "purchase",
-    amount,
-    balance_after: newAvailable,
-    description: `LESARs purchase: ${plan}`,
-    reference_id: referenceId,
-  });
-}
 
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
@@ -68,11 +35,7 @@ export async function POST(req: NextRequest) {
 
       // Cross-platform entitlement: tier is the single source of truth read by
       // both web and the native app. tier_source records which purchase surface
-      // last set it (stripe here; apple/google set it from their own webhooks).
-      // Fixed 2026-07-07: this used to filter .eq("tier", "public"), a value
-      // gfs_members.tier's check constraint never allows (free/passport/
-      // all-access/lifetime only), so a free member buying Passport never
-      // actually got upgraded. Filter corrected to "free".
+      // last set it (stripe here; the RevenueCat webhook sets apple/google).
       if (plan === "passport") {
         await supabase
           .from("gfs_members")
