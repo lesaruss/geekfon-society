@@ -48,6 +48,19 @@ export default function RadioSchedulePage() {
   const dragIdx = useRef<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
 
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!openMenuId) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [openMenuId]);
+
   const isAdmin = userEmail === ADMIN_EMAIL;
 
   // Same real-account-only gate as Release Schedule - not a tier perk, never derived
@@ -297,8 +310,7 @@ export default function RadioSchedulePage() {
               <span style={{ width: 24 }} />
               <span style={{ width: 28 }}>#</span>
               <span className="rdc-th-grow">Track</span>
-              <span style={{ width: 110 }}>Audio</span>
-              <span style={{ width: 60 }} />
+              <span style={{ width: 40 }} />
             </div>
             {onAirTracks.map((track, idx) => {
               const us = uploadStatus[track.id];
@@ -336,24 +348,39 @@ export default function RadioSchedulePage() {
                     />
                     <span className="rdc-artist-sub">{artistName(artists, track.artist_slug)}</span>
                   </div>
-                  <span className="rdc-audio-cell" style={{ width: 110 }}>
-                    <label
-                      className={`rdc-upload-btn${us === "uploading" ? " rdc-uploading" : ""}${us === "done" ? " rdc-uploaded" : ""}${us === "error" ? " rdc-upload-err" : ""}`}
-                      title="Replace audio"
-                      onClick={(e) => e.stopPropagation()}
+                  <div className="rdc-row-menu-wrap" style={{ width: 40 }} ref={openMenuId === track.id ? menuRef : undefined}>
+                    <button
+                      className="rdc-menu-btn"
+                      aria-haspopup="menu"
+                      aria-expanded={openMenuId === track.id}
+                      title="Track actions"
+                      onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === track.id ? null : track.id); }}
                     >
-                      {us === "uploading" ? "..." : us === "done" ? "Replaced" : "Replace"}
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        hidden
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(track.id, f); }}
-                      />
-                    </label>
-                  </span>
-                  <button className="rdc-pull-btn" style={{ width: 60 }} onClick={() => pullTrack(track.id)} title="Remove from rotation">
-                    Pull
-                  </button>
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                        <circle cx="12" cy="5" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="12" cy="19" r="1.8" />
+                      </svg>
+                    </button>
+                    {openMenuId === track.id && (
+                      <div className="rdc-row-dropdown" role="menu" onClick={(e) => e.stopPropagation()}>
+                        <label className="rdc-row-dd-item">
+                          {us === "uploading" ? "Uploading..." : us === "done" ? "Replaced" : "Replace audio"}
+                          <input
+                            type="file"
+                            accept="audio/*"
+                            hidden
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleUpload(track.id, f); setOpenMenuId(null); } }}
+                          />
+                        </label>
+                        <button
+                          className="rdc-row-dd-item rdc-row-dd-danger"
+                          role="menuitem"
+                          onClick={() => { pullTrack(track.id); setOpenMenuId(null); }}
+                        >
+                          Pull from rotation
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -446,15 +473,17 @@ const RDC_CSS = `
 .rdc-catalog-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.75); }
 .rdc-sel { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 8px; border-radius: 6px; cursor: pointer; color: #fff; flex-shrink: 0; }
 .rdc-sel option { background: #1a1a1a; color: #fff; }
-.rdc-audio-cell { display: flex; align-items: center; flex-shrink: 0; }
 .rdc-upload-btn { display: inline-flex; align-items: center; justify-content: center; height: 26px; border-radius: 5px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); cursor: pointer; color: rgba(255,255,255,.55); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; flex-shrink: 0; padding: 0 10px; white-space: nowrap; }
 .rdc-upload-btn:hover { background: rgba(255,255,255,.13); color: #fff; }
 .rdc-upload-btn-lg { height: 32px; padding: 0 14px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
-.rdc-uploading { background: rgba(246,152,32,.15) !important; border-color: rgba(246,152,32,.3) !important; color: #F69820 !important; }
-.rdc-uploaded { background: rgba(0,215,95,.12) !important; border-color: rgba(0,215,95,.3) !important; color: rgba(0,215,95,.9) !important; }
-.rdc-upload-err { background: rgba(255,100,100,.1) !important; border-color: rgba(255,100,100,.3) !important; color: rgba(255,100,100,.9) !important; }
-.rdc-pull-btn { background: none; border: 1px solid rgba(255,100,100,.25); color: rgba(255,100,100,.75); font-family: inherit; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; padding: 5px 8px; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
-.rdc-pull-btn:hover { background: rgba(255,100,100,.1); }
+.rdc-row-menu-wrap { position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rdc-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 6px; background: transparent; border: 1px solid transparent; cursor: pointer; color: rgba(255,255,255,.4); }
+.rdc-menu-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+.rdc-row-dropdown { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; min-width: 168px; background: #1c1c1c; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 4px; box-shadow: 0 8px 24px rgba(0,0,0,.4); display: flex; flex-direction: column; }
+.rdc-row-dd-item { display: block; width: 100%; text-align: left; background: none; border: none; color: rgba(255,255,255,.8); font-family: inherit; font-size: 12px; font-weight: 600; padding: 8px 10px; border-radius: 5px; cursor: pointer; box-sizing: border-box; }
+.rdc-row-dd-item:hover { background: rgba(255,255,255,.08); }
+.rdc-row-dd-danger { color: rgba(255,100,100,.85); }
+.rdc-row-dd-danger:hover { background: rgba(255,100,100,.1); }
 .rdc-air-btn { background: rgba(170,255,0,.1); border: 1px solid rgba(170,255,0,.25); color: #AAFF00; font-family: inherit; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; padding: 5px 10px; border-radius: 6px; cursor: pointer; flex-shrink: 0; margin-left: auto; }
 .rdc-air-btn:hover:not(:disabled) { background: rgba(170,255,0,.18); }
 .rdc-pending-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.3); flex-shrink: 0; white-space: nowrap; }
