@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import RegisterSW from "../components/RegisterSW";
+import RevenueCatBootstrap from "../components/RevenueCatBootstrap";
 
 export const metadata: Metadata = {
   title: "GeekFon Society",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body suppressHydrationWarning>
         <RegisterSW />
+        <RevenueCatBootstrap />
         {children}
       </body>
     </html>
