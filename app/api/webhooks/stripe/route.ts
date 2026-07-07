@@ -66,18 +66,25 @@ export async function POST(req: NextRequest) {
     if (userId && plan && lesars > 0) {
       await creditLesars(supabase, userId, lesars, plan, session.id);
 
+      // Cross-platform entitlement: tier is the single source of truth read by
+      // both web and the native app. tier_source records which purchase surface
+      // last set it (stripe here; apple/google set it from their own webhooks).
+      // Fixed 2026-07-07: this used to filter .eq("tier", "public"), a value
+      // gfs_members.tier's check constraint never allows (free/passport/
+      // all-access/lifetime only), so a free member buying Passport never
+      // actually got upgraded. Filter corrected to "free".
       if (plan === "passport") {
         await supabase
           .from("gfs_members")
-          .update({ tier: "passport" })
+          .update({ tier: "passport", tier_source: "stripe" })
           .eq("user_id", userId)
-          .eq("tier", "public");
+          .eq("tier", "free");
       }
 
       if (plan === "all-access") {
         await supabase
           .from("gfs_members")
-          .update({ tier: "all-access" })
+          .update({ tier: "all-access", tier_source: "stripe" })
           .eq("user_id", userId);
       }
     }
