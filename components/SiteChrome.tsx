@@ -223,6 +223,14 @@ export default function SiteChrome({
   const tierAccent = TIER_ACCENT[effectiveTier];
   const tierLabel  = TIER_LABEL[effectiveTier];
 
+  // Not simulating - showing the real account, which for admin is "Super Admin", not
+  // whatever membership tier happens to be on the underlying gfs_members row (Sean's is
+  // "passport"). Only affects the "View as membership" selector's closed-state display;
+  // the dropdown options themselves are still the 4 simulate-able tiers.
+  const isRealAdminView   = auth.isAdmin && !viewAs;
+  const viewAsDisplayLabel = isRealAdminView ? "Super Admin" : TIER_LABEL[effectiveTier];
+  const viewAsDisplayColor = isRealAdminView ? "#fff" : TIER_ACCENT[effectiveTier];
+
   return (
     <>
       <style>{CHROME_CSS}</style>
@@ -327,8 +335,8 @@ export default function SiteChrome({
           <div className="gdrawer-viewas" ref={adminRef}>
             <div className="gdva-label">View as membership</div>
             <button className={"gdva-btn" + (adminOpen ? " open" : "")} onClick={() => setAdminOpen(v => !v)} aria-haspopup="listbox" aria-expanded={adminOpen}>
-              <span className="gdva-dot" style={{ background: TIER_ACCENT[effectiveTier] }} />
-              <span style={{ color: TIER_ACCENT[effectiveTier] }}>{TIER_LABEL[effectiveTier]}</span>
+              <span className="gdva-dot" style={{ background: viewAsDisplayColor }} />
+              <span style={{ color: viewAsDisplayColor }}>{viewAsDisplayLabel}</span>
               <svg viewBox="0 0 24 24" className="gdva-caret"><path d="M6 9l6 6 6-6" /></svg>
             </button>
             {adminOpen && (
