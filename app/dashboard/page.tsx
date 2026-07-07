@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDashboard } from "./context";
 import { supabase } from "@/lib/supabase";
 
@@ -50,6 +50,17 @@ export default function DashboardOverview() {
   const [selectedPack,   setSelectedPack]   = useState<string | null>(null);
   const [topUpLoading,   setTopUpLoading]   = useState(false);
   const [topUpError,     setTopUpError]     = useState<string | null>(null);
+
+  // Real count backing the "Songs Owned" stat card below (was previously a permanent "..." placeholder)
+  const [songsOwned, setSongsOwned] = useState<number | null>(null);
+  useEffect(() => {
+    if (!userId) { setSongsOwned(0); return; }
+    supabase
+      .from("gfs_track_purchases")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .then(({ count }) => setSongsOwned(count ?? 0));
+  }, [userId]);
 
   const lesars     = points?.available_points ?? 0;
   const displayName = member?.name || userEmail || "Member";
@@ -183,7 +194,7 @@ export default function DashboardOverview() {
         </div>
         <a href="/dashboard/library" className="do-stat-card do-stat-link">
           <div className="do-stat-label">Songs Owned</div>
-          <div className="do-stat-val">{(points?.spent_points ?? 0) > 0 ? "..." : "0"}</div>
+          <div className="do-stat-val">{songsOwned === null ? "..." : songsOwned}</div>
           <div className="do-stat-sub">In library &rarr;</div>
         </a>
       </div>
