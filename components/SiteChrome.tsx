@@ -42,7 +42,7 @@ const NAV_PRO: NavItem[] = [
 
 
 
-function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false): NavItem[] {
+function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, canSeeRadioSchedule = false): NavItem[] {
   let base: NavItem[];
   if (tier === "plus")          base = NAV_PLUS;
   else if (tier === "pro")      base = NAV_PRO;
@@ -52,7 +52,12 @@ function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false):
   // perk, not a role perk. isAdmin alone used to be enough (any super_admin/admin
   // role), which is broader than intended. See navForTier caller for the exact check.
   if (canSeeReleaseSchedule) {
-    return [...base, { label: "Release Schedule", href: "/dashboard/release-schedule" }];
+    base = [...base, { label: "Release Schedule", href: "/dashboard/release-schedule" }];
+  }
+  // Radio Schedule is the admin control panel for the GeekFon Radio rotation - same
+  // account-only gate as Release Schedule (locked 2026-07-07), not a tier/role perk.
+  if (canSeeRadioSchedule) {
+    base = [...base, { label: "Radio Schedule", href: "/dashboard/radio-schedule" }];
   }
   return base;
 }
@@ -218,7 +223,8 @@ export default function SiteChrome({
   // Real-account gate for Release Schedule: Sean's account only, never derived from
   // tier or role, and never visible while simulating another tier via View As.
   const canSeeReleaseSchedule = auth.email === ADMIN_EMAIL && !viewAs;
-  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule);
+  const canSeeRadioSchedule = auth.email === ADMIN_EMAIL && !viewAs;
+  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule, canSeeRadioSchedule);
   const isLoggedIn = effectiveTier !== "public" && !auth.loading;
   const tierAccent = TIER_ACCENT[effectiveTier];
   const tierLabel  = TIER_LABEL[effectiveTier];
