@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import SiteChrome from "@/components/SiteChrome";
 import { supabase } from "@/lib/supabase";
+import { isNative, presentAllAccessPaywall } from "@/lib/revenuecat";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -179,6 +180,22 @@ export default function PassportPage() {
       window.location.href = "/login.html?redirect=/passport";
       return;
     }
+
+    // Inside the native app, All Access is sold through the App/Play Store
+    // via RevenueCat, never through Stripe (Apple/Google require the store's
+    // own in-app purchase for digital subscriptions bought in-app). On the
+    // regular website this branch is never taken, isNative() is false there.
+    if (plan === "all-access" && isNative()) {
+      setCheckingOut(true);
+      const entitled = await presentAllAccessPaywall();
+      setCheckingOut(false);
+      if (entitled) {
+        window.location.href = returnPath || "/dashboard";
+      }
+      // If not entitled (user cancelled), just leave them on this page.
+      return;
+    }
+
     setCheckingOut(true);
     try {
       const res = await fetch("/api/checkout", {
