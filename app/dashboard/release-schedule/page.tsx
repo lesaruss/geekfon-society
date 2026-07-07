@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useDashboard } from "../context";
+import { supabase } from "@/lib/supabase";
 
 type Visibility = "public" | "preview" | "members" | "pro";
 
@@ -46,7 +47,7 @@ function toDateInput(d: string | undefined): string {
 }
 
 export default function ReleaseSchedulePage() {
-  const { userEmail, member, loading } = useDashboard();
+  const { userEmail, loading } = useDashboard();
   const [artists, setArtists]           = useState<Artist[]>([]);
   const [dirty, setDirty]               = useState<Set<string>>(new Set());
   const [filter, setFilter]             = useState("all");
@@ -63,14 +64,10 @@ export default function ReleaseSchedulePage() {
   const [dragOver, setDragOver] = useState<{ slug: string; idx: number } | null>(null);
 
   const isAdmin   = userEmail === ADMIN_EMAIL;
-  const tier      = member?.tier || "public";
 
   // Respect the admin "View As Membership" simulation (same localStorage key SiteChrome
-  // and ArtistPage use). Previously this page ignored it entirely: the nav link hid itself
-  // while simulating Passport, but a direct visit to /dashboard/release-schedule still
-  // rendered the full editable tool because isAdmin bypassed everything below regardless
-  // of the simulated tier. Release Schedule is a Pro + real-admin-only tool, so while
-  // simulating, only "pro" should see it - Passport and Plus simulations must be locked out.
+  // and ArtistPage use) so a direct visit to /dashboard/release-schedule while simulating
+  // another tier behaves the same as the nav link hiding itself.
   const [viewAs, setViewAs] = useState<string | null>(null);
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("gfs-view-as") : null;
@@ -81,17 +78,25 @@ export default function ReleaseSchedulePage() {
   }, []);
   const simulating = isAdmin && viewAs !== null;
 
-  const isPro     = simulating ? viewAs === "pro" : (isAdmin || tier === "pro" || tier === "lifetime");
-  const isPlus    = simulating ? false            : (tier === "promoter" || tier === "all-access" || tier === "plus");
-  const hasAccess = isPro || isPlus;
-  const readOnly  = !isPro;
+  // Release Schedule is restricted to Sean's account (ADMIN_EMAIL) only - locked
+  // 2026-07-07 per Sean. No tier (Pro, Plus, Lifetime, Promoter) grants access anymore;
+  // it is not a membership perk. If access needs to be shared with someone else, that
+  // is a deliberate decision made by adding them explicitly, not a side effect of tier.
+  const hasAccess = isAdmin && !simulating;
+  const readOnly  = false;
+
+  async function authHeaders(): Promise<HeadersInit> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+  }
 
   useEffect(() => {
     if (loading || !hasAccess) { setDataLoading(false); return; }
-    // readOnly users (plus) can view but not edit — data still loads
-    fetch("/api/admin/release-schedule")
-      .then((r) => r.json())
-      .then((j) => { setArtists(j.artists || []); setDataLoading(false); });
+    authHeaders().then((headers) =>
+      fetch("/api/admin/release-schedule", { headers })
+        .then((r) => r.json())
+        .then((j) => { setArtists(j.artists || []); setDataLoading(false); })
+    );
   }, [loading, hasAccess]);
 
   function updateTrack(slug: string, idx: number, field: keyof Track, value: unknown) {
@@ -120,12 +125,13 @@ export default function ReleaseSchedulePage() {
 
   async function saveAll() {
     setSaving(true);
+    const headers = { "Content-Type": "application/json", ...(await authHeaders()) };
     const toSave = artists.filter((a) => dirty.has(a.slug));
     const results = await Promise.all(
       toSave.map((a) =>
         fetch("/api/admin/release-schedule", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({ slug: a.slug, tracks: a.tracks }),
         }).then((r) => r.ok)
       )
@@ -201,7 +207,8 @@ export default function ReleaseSchedulePage() {
     const form = new FormData();
     form.append("file", file);
     form.append("artistSlug", slug);
-    const res  = await fetch("/api/admin/release-schedule/upload", { method: "POST", body: form });
+    const headers = await authHeaders();
+    const res  = await fetch("/api/admin/release-schedule/upload", { method: "POST", headers, body: form });
     const json = await res.json();
     if (res.ok && json.path) {
       updateTrack(slug, idx, "url", json.path);
@@ -242,9 +249,9 @@ export default function ReleaseSchedulePage() {
               <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </div>
-          <h2>Pro or Plus Access Required</h2>
-          <p>Release Schedule is available to Plus members (view only) and Pro members / admins.</p>
-          <a href="/plus" className="rs-gate-btn">Upgrade your membership</a>
+          <h2>Admin Only</h2>
+          <p>Release Schedule is restricted to the GeekFon Society admin account.</p>
+          <a href="/dashboard" className="rs-gate-btn">Back to Dashboard</a>
         </div>
       </div>
     );
