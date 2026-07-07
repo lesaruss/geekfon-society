@@ -1,9 +1,43 @@
 "use client";
+import { useState, useEffect } from "react";
 import { useDashboard } from "../context";
+import { supabase } from "@/lib/supabase";
+
+type OwnedTrack = { artist_slug: string; track_name: string; lesars_spent: number; purchased_at: string };
+
+const ARTIST_LABEL: Record<string, string> = {
+  roxanne: "Roxanne",
+  "shamanic-resin": "Shamanic Resin",
+  "riku-hayasaka": "Riku Hayasaka",
+  "lex-from-brixton": "Lex from Brixton",
+  "lickle-bro": "Lickle Bro",
+  "lickle-sis": "Lickle Sis",
+  "mad-tings": "Mad Tings",
+  "nilo-wave": "Nilo Wave",
+  "mr-russell": "Mr. Russell",
+  "rustblood-prophets": "Rustblood Prophets",
+  "straight-and-narrow": "Straight and Narrow",
+};
 
 export default function LibraryPage() {
-  const { member, points } = useDashboard();
-  const songsOwned = 0; // TODO: wire to gfs_library table when created
+  const { userId, member, points } = useDashboard();
+  const [owned, setOwned] = useState<OwnedTrack[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) { setLoading(false); return; }
+    supabase
+      .from("gfs_track_purchases")
+      .select("artist_slug, track_name, lesars_spent, purchased_at")
+      .eq("user_id", userId)
+      .order("purchased_at", { ascending: false })
+      .then(({ data }) => {
+        setOwned(data || []);
+        setLoading(false);
+      });
+  }, [userId]);
+
+  const songsOwned = owned.length;
 
   return (
     <>
@@ -29,7 +63,9 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      {songsOwned === 0 ? (
+      {loading ? (
+        <div className="lib-loading">Loading your collection...</div>
+      ) : songsOwned === 0 ? (
         <div className="lib-empty">
           <div className="lib-empty-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" fill="none">
@@ -51,7 +87,18 @@ export default function LibraryPage() {
         </div>
       ) : (
         <div className="lib-grid">
-          {/* Song cards would render here once gfs_library is wired */}
+          {owned.map((t, i) => (
+            <a key={i} href={`/${t.artist_slug}?tab=music`} className="lib-card">
+              <div className="lib-card-art" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={22} height={22}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              </div>
+              <div className="lib-card-body">
+                <div className="lib-card-title">{t.track_name}</div>
+                <div className="lib-card-sub">{ARTIST_LABEL[t.artist_slug] || t.artist_slug}</div>
+              </div>
+              <div className="lib-card-cost">{t.lesars_spent} LESARs</div>
+            </a>
+          ))}
         </div>
       )}
 
@@ -77,6 +124,16 @@ const CSS = `
 .lib-stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px 20px;}
 .lib-stat-num{font-size:26px;font-weight:900;color:#fff;letter-spacing:-.02em;}
 .lib-stat-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.3);margin-top:4px;}
+.lib-loading{padding:60px 24px;text-align:center;font-size:13px;color:rgba(255,255,255,.4);}
+/* Owned tracks grid */
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.lib-card{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;text-decoration:none;transition:border-color .15s,background .15s;}
+.lib-card:hover{border-color:rgba(246,152,32,.3);background:rgba(255,255,255,.06);}
+.lib-card-art{flex-shrink:0;width:40px;height:40px;border-radius:10px;background:rgba(246,152,32,.1);color:#F69820;display:flex;align-items:center;justify-content:center;}
+.lib-card-body{flex:1;min-width:0;}
+.lib-card-title{font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lib-card-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;}
+.lib-card-cost{flex-shrink:0;font-size:10px;font-weight:800;color:rgba(246,152,32,.8);white-space:nowrap;}
 /* Empty state */
 .lib-empty{text-align:center;padding:60px 24px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:20px;display:flex;flex-direction:column;align-items:center;gap:16px;}
 .lib-empty-icon svg{width:72px;height:72px;}
