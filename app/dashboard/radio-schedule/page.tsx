@@ -1,679 +1,505 @@
 "use client";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useDashboard } from "../context";
+import { supabase } from "@/lib/supabase";
 
-// app/(public)/orientation/page.tsx
-// LESARUSS Grand Opening — Orientation / Front Gate content
-// Rendered inside app/(public)/layout.tsx — PublicNav + PublicFooter injected automatically.
-// No hand-rolled nav or footer here per public page lock (rule 2.7).
-//
-// Restructured 2026-07-03 (Session I, take 2) into a paginated step deck at
-// Sean's request, matching the flow and feel of the Hugh Stewart pitch
-// (hq.lesaruss.ai/pitch/hugh-stewart / mock_pages lesaruss/hugh-stewart-pitch):
-// sticky progress bar, step counter, one slide visible at a time, fixed
-// bottom Back/Next nav, dot jump-nav, keyboard arrow support. Same content
-// that lived in the long-scroll version, just paginated instead of stacked.
-//
-// The interest survey -> matches -> join flow (the real "#begin" step) is
-// three of the slides. Those three are gated: the deck's Next button becomes
-// that slide's own submit action and only advances on a successful API call,
-// everything else pages freely like the reference pitch does.
-
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { EXPERIENCES } from "@/lib/experiences";
-import { INTEREST_TAGS } from "@/lib/interest-tags";
-
-const HERO = 0;
-const WHY = 1;
-const PATHS = 2;
-const EXPERIENCES_SLIDE = 3;
-const PASS_INTRO = 4;
-const INTAKE_FORM = 5;
-const INTAKE_MATCHES = 6;
-const INTAKE_DONE = 7;
-const FOUNDING = 8;
-const NOTE = 9;
-const TOTAL = 10;
-
-interface MatchRow {
-  slug: string;
-  brand_name: string;
-  tagline: string;
+interface RadioTrack {
+  id: string;
+  artist_slug: string;
+  title: string;
+  src_path: string;
+  duration_seconds: number | null;
+  release_date: string;
+  is_public: boolean;
+  required_tier: string;
+  radio_order: number | null;
+  sort_order: number;
 }
 
-interface PassInfo {
-  pass_number: number;
-  points: number;
-  is_founding_explorer: boolean;
+interface ArtistOpt { slug: string; name: string; }
+
+const TIER_OPTS: { value: string; label: string; color: string }[] = [
+  { value: "free",       label: "Free",     color: "#4CAF50" },
+  { value: "passport",   label: "Passport", color: "#E91E8C" },
+  { value: "superadmin", label: "Hidden",   color: "rgba(255,255,255,.4)" },
+];
+
+const ADMIN_EMAIL = "contact@lesaruss.com";
+
+function tierMeta(v: string) {
+  return TIER_OPTS.find((t) => t.value === v) || TIER_OPTS[1];
 }
 
-function ArrowRight() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12h14M12 5l7 7-7 7" />
-    </svg>
-  );
+function isOnAir(t: RadioTrack): boolean {
+  return t.is_public && t.src_path !== "PENDING" && new Date(t.release_date).getTime() <= Date.now();
 }
 
-const CSS = `
-  .or-page { background: #ffffff; color: #1A1A1A; }
+function artistName(artists: ArtistOpt[], slug: string): string {
+  return artists.find((a) => a.slug === slug)?.name || slug;
+}
 
-  .or-eyebrow { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3em; color: rgba(26,26,26,0.4); margin-bottom: 20px; }
-  .or-divider { width: 40px; height: 3px; background: #F69820; margin-bottom: 32px; }
-  .or-heading { font-size: clamp(22px, 3.5vw, 36px); font-weight: 900; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 28px; color: #1A1A1A; }
-  .or-body { font-size: clamp(15px, 2vw, 17px); font-weight: 300; color: rgba(26,26,26,0.7); line-height: 1.85; margin-bottom: 20px; }
+export default function RadioSchedulePage() {
+  const { userEmail, loading } = useDashboard();
+  const [tracks, setTracks]       = useState<Record<string, RadioTrack>>({});
+  const [onAirIds, setOnAirIds]   = useState<string[]>([]);
+  const [artists, setArtists]     = useState<ArtistOpt[]>([]);
+  const [pending, setPending]     = useState<Record<string, Record<string, unknown>>>({});
+  const [saving, setSaving]       = useState(false);
+  const [toast, setToast]         = useState<string | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [uploadStatus, setUploadStatus] = useState<Record<string, string>>({});
+  const [catalogCollapsed, setCatalogCollapsed] = useState(true);
+  const [addOpen, setAddOpen]     = useState(false);
+  const [addArtist, setAddArtist] = useState("");
+  const [addTitle, setAddTitle]   = useState("");
+  const [addTier, setAddTier]     = useState("passport");
+  const [addBusy, setAddBusy]     = useState(false);
 
-  .or-hero-welcome { font-size: clamp(13px, 2vw, 15px); font-weight: 800; text-transform: uppercase; letter-spacing: 0.3em; color: #F69820; margin-bottom: 28px; }
-  .or-hero-headline { font-size: clamp(24px, 4vw, 42px); font-weight: 300; line-height: 1.45; margin-bottom: 28px; }
-  .or-hero-headline strong { font-weight: 900; }
-  .or-hero-sub { font-size: clamp(14px, 2vw, 17px); font-weight: 300; color: rgba(26,26,26,0.6); line-height: 1.8; margin-bottom: 40px; }
-  .or-hero-invite { font-size: clamp(15px, 2vw, 17px); font-weight: 700; color: #1A1A1A; margin-bottom: 40px; line-height: 1.6; }
-  .or-hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
-  .or-hint { font-size: 13.5px; color: rgba(26,26,26,0.45); margin-top: 22px; }
+  const dragIdx = useRef<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
 
-  .btn-primary { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; background: #F69820; color: #1A1A1A; padding: 14px 30px; border: none; cursor: pointer; font-family: inherit; text-decoration: none; transition: opacity 0.2s; }
-  .btn-primary:hover { opacity: 0.85; }
-  .btn-primary:focus-visible { outline: 2px solid #F69820; outline-offset: 3px; }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-ghost { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; background: transparent; color: rgba(26,26,26,0.55); padding: 13px 30px; border: 1.5px solid rgba(26,26,26,0.18); cursor: pointer; font-family: inherit; text-decoration: none; transition: border-color 0.2s, color 0.2s; }
-  .btn-ghost:hover { border-color: rgba(26,26,26,0.5); color: #1A1A1A; }
-  .btn-ghost:focus-visible { outline: 2px solid #F69820; outline-offset: 3px; }
+  const isAdmin = userEmail === ADMIN_EMAIL;
 
-  .or-paths { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 36px 0 0; }
-  .or-path-card { padding: 36px 28px; border: 1.5px solid rgba(26,26,26,0.1); background: #ffffff; }
-  .or-path-card-primary { border-color: #F69820; }
-  .or-path-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.28em; margin-bottom: 14px; }
-  .or-path-label-orange { color: #F69820; }
-  .or-path-label-muted { color: rgba(26,26,26,0.4); }
-  .or-path-title { font-size: 19px; font-weight: 900; margin-bottom: 12px; }
-  .or-path-body { font-size: 13px; font-weight: 300; color: rgba(26,26,26,0.6); line-height: 1.75; margin-bottom: 24px; }
-
-  .or-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 36px 0 0; }
-  .or-exp-card { padding: 24px 20px; background: #ffffff; border: 1.5px solid rgba(26,26,26,0.08); text-decoration: none; color: #1A1A1A; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.2s, box-shadow 0.2s; }
-  .or-exp-card:hover { border-color: rgba(246,152,32,0.4); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-  .or-exp-status { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.25em; color: rgba(26,26,26,0.35); }
-  .or-exp-name { font-size: 14px; font-weight: 800; line-height: 1.3; }
-  .or-exp-desc { font-size: 12px; font-weight: 300; color: rgba(26,26,26,0.55); line-height: 1.65; flex: 1; }
-  .or-exp-arrow { color: #F69820; align-self: flex-end; margin-top: 6px; }
-
-  .or-pass { background: #1A1A1A; color: #ffffff; padding: 44px 40px; display: flex; flex-direction: column; gap: 24px; border-radius: 18px; }
-  .or-pass-eyebrow { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3em; color: #F69820; }
-  .or-pass-heading { font-size: clamp(20px, 3.2vw, 30px); font-weight: 900; line-height: 1.2; }
-  .or-pass-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-  .or-pass-item { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; font-weight: 300; color: rgba(255,255,255,0.75); line-height: 1.6; }
-  .or-pass-dot { width: 6px; height: 6px; border-radius: 50%; background: #F69820; flex-shrink: 0; margin-top: 7px; }
-  .or-pass-sub { font-size: 13px; font-weight: 300; color: rgba(255,255,255,0.45); line-height: 1.7; margin: 0; }
-
-  .or-founding-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; margin-top: 8px; }
-  .or-amounts { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
-  .or-amount-chip { font-size: 13px; font-weight: 700; padding: 9px 18px; border: 1.5px solid rgba(26,26,26,0.15); color: #1A1A1A; background: transparent; text-decoration: none; display: inline-block; transition: border-color 0.2s, background 0.2s; }
-  .or-amount-chip:hover { border-color: #F69820; background: rgba(246,152,32,0.06); }
-
-  .or-note { max-width: 620px; }
-  .or-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
-  .or-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 5px 12px; border: 1px solid rgba(26,26,26,0.12); color: rgba(26,26,26,0.55); }
-  .or-sig-name { font-size: 17px; font-weight: 900; letter-spacing: -0.01em; margin-top: 32px; }
-  .or-sig-title { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: rgba(26,26,26,0.4); text-transform: uppercase; margin-top: 4px; }
-
-  /* Orientation intake (inside the deck, dark slides) */
-  .or-intake-form { display: flex; flex-direction: column; gap: 20px; }
-  .or-intake-row { display: flex; gap: 12px; flex-wrap: wrap; }
-  .or-intake-input { flex: 1; min-width: 200px; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.18); color: #ffffff; padding: 12px 14px; font-size: 14px; font-family: inherit; }
-  .or-intake-input::placeholder { color: rgba(255,255,255,0.4); }
-  .or-intake-input:focus-visible { outline: 2px solid #F69820; outline-offset: 2px; }
-  .or-intake-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.75); margin: 0; }
-  .or-intake-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-  .or-intake-tag { font-size: 12px; font-weight: 700; padding: 9px 16px; border: 1.5px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.75); background: transparent; cursor: pointer; font-family: inherit; transition: border-color 0.2s, background 0.2s, color 0.2s; }
-  .or-intake-tag:hover { border-color: rgba(255,255,255,0.5); }
-  .or-intake-tag:focus-visible { outline: 2px solid #F69820; outline-offset: 2px; }
-  .or-intake-tag-active { background: #F69820; border-color: #F69820; color: #1A1A1A; }
-  .or-intake-matches { display: flex; flex-direction: column; gap: 10px; }
-  .or-intake-match { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1.5px solid rgba(255,255,255,0.18); color: #ffffff; text-decoration: none; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-  .or-intake-match:hover { border-color: rgba(246,152,32,0.5); }
-  .or-intake-match input[type="checkbox"] { margin-top: 3px; accent-color: #F69820; }
-  .or-intake-match-active { border-color: #F69820; background: rgba(246,152,32,0.08); }
-  .or-intake-match span { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 700; }
-  .or-intake-match-tagline { font-size: 12px; font-weight: 300; color: rgba(255,255,255,0.55); }
-  .or-intake-error { font-size: 13px; font-weight: 600; color: #F69820; margin: 0; }
-
-  /* Deck chrome, modeled on the Hugh Stewart pitch pagination pattern */
-  .od-topbar { position: sticky; top: 62px; z-index: 50; background: #ffffff; border-bottom: 1px solid rgba(26,26,26,0.08); }
-  .od-progress { height: 4px; background: #f5f5f5; }
-  .od-progress-fill { height: 100%; background: #F69820; transition: width 0.35s ease; }
-  .od-topbar-row { display: flex; align-items: center; justify-content: flex-end; padding: 10px 24px; max-width: 900px; margin: 0 auto; }
-  .od-count { font-size: 12px; font-weight: 800; color: rgba(26,26,26,0.4); letter-spacing: 0.08em; }
-  .od-stage { max-width: 860px; margin: 0 auto; padding: 56px 24px 140px; min-height: 58vh; }
-  .od-slide { animation: odFade 0.4s ease; }
-  @keyframes odFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-  .od-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-top: 1px solid rgba(26,26,26,0.08); }
-  .od-nav-row { max-width: 860px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 24px; }
-  .od-btn { display: inline-flex; align-items: center; gap: 9px; font-family: inherit; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; padding: 12px 22px; border-radius: 999px; border: 1.5px solid rgba(26,26,26,0.15); background: #ffffff; color: #1A1A1A; cursor: pointer; }
-  .od-btn:hover { border-color: #1A1A1A; }
-  .od-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .od-btn:disabled:hover { border-color: rgba(26,26,26,0.15); }
-  .od-btn-primary { background: #1A1A1A; color: #ffffff; border-color: transparent; }
-  .od-btn-primary:hover { background: #000000; }
-  .od-dots { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; }
-  .od-dots button { width: 9px; height: 9px; border-radius: 50%; border: none; background: #d6d6d6; cursor: pointer; padding: 0; }
-  .od-dots button:focus-visible { outline: 2px solid #F69820; outline-offset: 2px; }
-  .od-dots button.on { background: #F69820; transform: scale(1.25); }
-  .od-guard { font-size: 14px; color: rgba(26,26,26,0.6); }
-  .od-guard-dark { font-size: 14px; color: rgba(255,255,255,0.7); }
-
-  @media (max-width: 768px) {
-    .od-stage { padding: 40px 20px 150px; }
-    .or-paths { grid-template-columns: 1fr; }
-    .or-grid { grid-template-columns: 1fr 1fr; }
-    .or-founding-grid { grid-template-columns: 1fr; gap: 32px; }
-    .or-pass { padding: 32px 24px; }
-  }
-  @media (max-width: 620px) {
-    .od-dots { display: none; }
-    .od-nav-row { padding: 12px 18px; }
-  }
-  @media (max-width: 480px) {
-    .or-grid { grid-template-columns: 1fr; }
-    .or-hero-actions { flex-direction: column; }
-    .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
-  }
-`;
-
-export default function OrientationPage() {
-  const [step, setStep] = useState(0);
-
-  // Intake state, shared across the three gated slides.
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [interests, setInterests] = useState<string[]>([]);
-  const [matches, setMatches] = useState<MatchRow[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [pass, setPass] = useState<PassInfo | null>(null);
-  const [joined, setJoined] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
+  // Same real-account-only gate as Release Schedule - not a tier perk, never derived
+  // from role, never visible while simulating another tier via View As.
+  const [viewAs, setViewAs] = useState<string | null>(null);
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [step]);
+    const saved = typeof window !== "undefined" ? localStorage.getItem("gfs-view-as") : null;
+    if (saved) setViewAs(saved);
+    const onViewAs = (e: Event) => setViewAs((e as CustomEvent).detail ?? null);
+    window.addEventListener("gfs-view-as", onViewAs);
+    return () => window.removeEventListener("gfs-view-as", onViewAs);
+  }, []);
+  const simulating = isAdmin && viewAs !== null;
+  const hasAccess = isAdmin && !simulating;
 
-  function toggleInterest(slug: string) {
-    setInterests((cur) => (cur.includes(slug) ? cur.filter((s) => s !== slug) : [...cur, slug]));
-  }
-
-  function toggleSelected(slug: string) {
-    setSelected((cur) => (cur.includes(slug) ? cur.filter((s) => s !== slug) : [...cur, slug]));
-  }
-
-  async function submitInterests() {
-    setError("");
-    if (!email.trim()) {
-      setError("Enter your email to claim your pass.");
-      return;
-    }
-    if (interests.length === 0) {
-      setError("Pick at least one thing you're interested in.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch("/api/orientation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, interests }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      const rankedMatches: MatchRow[] = data.matches || [];
-      setMatches(rankedMatches);
-      setSelected(rankedMatches.map((m) => m.slug));
-      setPass({ pass_number: data.pass_number, points: data.points, is_founding_explorer: data.is_founding_explorer });
-      setStep(INTAKE_MATCHES);
-    } catch {
-      setError("Something went wrong on our end. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function confirmJoin() {
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/orientation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, interests: selected }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      setPass({ pass_number: data.pass_number, points: data.points, is_founding_explorer: data.is_founding_explorer });
-      setJoined(true);
-      setStep(INTAKE_DONE);
-    } catch {
-      setError("Something went wrong on our end. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function goNext() {
-    setStep((s) => Math.min(TOTAL - 1, s + 1));
-  }
-
-  function goBack() {
-    setStep((s) => Math.max(0, s - 1));
-  }
-
-  function go(n: number) {
-    setStep(Math.max(0, Math.min(TOTAL - 1, n)));
-  }
-
-  function handlePrimaryAction() {
-    if (step === INTAKE_FORM) {
-      submitInterests();
-      return;
-    }
-    if (step === INTAKE_MATCHES) {
-      confirmJoin();
-      return;
-    }
-    if (step === NOTE) {
-      go(0);
-      return;
-    }
-    goNext();
+  async function authHeaders(): Promise<HeadersInit> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
   }
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "ArrowRight") handlePrimaryAction();
-      else if (e.key === "ArrowLeft") goBack();
+    if (loading || !hasAccess) { setDataLoading(false); return; }
+    authHeaders().then((headers) =>
+      fetch("/api/admin/radio-schedule", { headers })
+        .then((r) => r.json())
+        .then((j) => {
+          const rows: RadioTrack[] = j.tracks || [];
+          const map: Record<string, RadioTrack> = {};
+          const air: string[] = [];
+          for (const r of rows) {
+            map[r.id] = r;
+            if (isOnAir(r)) air.push(r.id);
+          }
+          setTracks(map);
+          setOnAirIds(air);
+          setArtists(j.artists || []);
+          setDataLoading(false);
+        })
+    );
+  }, [loading, hasAccess]);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  }
+
+  function markPending(id: string, fields: Record<string, unknown>) {
+    setPending((prev) => ({ ...prev, [id]: { ...prev[id], ...fields } }));
+  }
+
+  function updateField(id: string, field: keyof RadioTrack, value: unknown) {
+    setTracks((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+    markPending(id, { [field]: value });
+  }
+
+  function reorder(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return;
+    setOnAirIds((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      next.forEach((id, i) => markPending(id, { radio_order: i }));
+      return next;
+    });
+  }
+
+  function airTrack(id: string) {
+    const nowIso = new Date().toISOString();
+    setTracks((prev) => {
+      const t = prev[id];
+      const needsDate = new Date(t.release_date).getTime() > Date.now();
+      return { ...prev, [id]: { ...t, is_public: true, release_date: needsDate ? nowIso : t.release_date } };
+    });
+    setOnAirIds((prev) => {
+      const next = [...prev, id];
+      markPending(id, { is_public: true, radio_order: next.length - 1, release_date: nowIso });
+      return next;
+    });
+  }
+
+  function pullTrack(id: string) {
+    setTracks((prev) => ({ ...prev, [id]: { ...prev[id], is_public: false } }));
+    setOnAirIds((prev) => prev.filter((x) => x !== id));
+    markPending(id, { is_public: false, radio_order: null });
+  }
+
+  async function saveAll() {
+    const ids = Object.keys(pending);
+    if (ids.length === 0) return;
+    setSaving(true);
+    const headers = { "Content-Type": "application/json", ...(await authHeaders()) };
+    const updates = ids.map((id) => ({ id, ...pending[id] }));
+    const res = await fetch("/api/admin/radio-schedule", {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ updates }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      setPending({});
+      showToast(`Saved ${ids.length} track${ids.length === 1 ? "" : "s"}`);
+    } else {
+      showToast("Save failed - try again");
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, email, interests, selected, loading]);
+  }
 
-  const primaryLabel =
-    step === INTAKE_FORM ? (loading ? "Finding your matches..." : "Claim Your Explorer Pass") :
-    step === INTAKE_MATCHES ? (loading ? "Joining..." : "Join Selected & Enter") :
-    step === NOTE ? "Start Over" :
-    "Next";
+  async function handleUpload(id: string, file: File) {
+    const t = tracks[id];
+    setUploadStatus((p) => ({ ...p, [id]: "uploading" }));
+    const form = new FormData();
+    form.append("file", file);
+    form.append("artistSlug", t.artist_slug);
+    form.append("replaceId", id);
+    const headers = await authHeaders();
+    const res = await fetch("/api/admin/radio-schedule/upload", { method: "POST", headers, body: form });
+    const json = await res.json();
+    if (res.ok && json.path) {
+      updateField(id, "src_path", json.path);
+      setUploadStatus((p) => ({ ...p, [id]: "done" }));
+      setTimeout(() => setUploadStatus((p) => { const n = { ...p }; delete n[id]; return n; }), 3000);
+    } else {
+      setUploadStatus((p) => ({ ...p, [id]: "error" }));
+    }
+  }
 
-  const joinedMatches = matches.filter((m) => selected.includes(m.slug));
+  async function handleAddTrack(file: File) {
+    if (!addArtist || !addTitle) { showToast("Pick an artist and a title first"); return; }
+    setAddBusy(true);
+    const form = new FormData();
+    form.append("file", file);
+    form.append("artistSlug", addArtist);
+    form.append("title", addTitle);
+    form.append("requiredTier", addTier);
+    const headers = await authHeaders();
+    const res = await fetch("/api/admin/radio-schedule/upload", { method: "POST", headers, body: form });
+    const json = await res.json();
+    setAddBusy(false);
+    if (res.ok && json.track) {
+      const t: RadioTrack = json.track;
+      setTracks((prev) => ({ ...prev, [t.id]: t }));
+      setOnAirIds((prev) => [...prev, t.id]);
+      setAddOpen(false);
+      setAddTitle("");
+      setAddArtist("");
+      showToast(`Added "${t.title}" to the rotation`);
+    } else {
+      showToast(json.error || "Upload failed");
+    }
+  }
 
-  return (
-    <div className="or-page">
-      <style>{CSS}</style>
+  const onAirTracks = onAirIds.map((id) => tracks[id]).filter(Boolean);
+  const catalogByArtist = useMemo(() => {
+    const onAirSet = new Set(onAirIds);
+    const groups: Record<string, RadioTrack[]> = {};
+    Object.values(tracks).forEach((t) => {
+      if (onAirSet.has(t.id)) return;
+      (groups[t.artist_slug] ||= []).push(t);
+    });
+    Object.values(groups).forEach((g) => g.sort((a, b) => a.sort_order - b.sort_order));
+    return groups;
+  }, [tracks, onAirIds]);
+  const catalogCount = Object.values(catalogByArtist).reduce((s, g) => s + g.length, 0);
 
-      <div className="od-topbar">
-        <div className="od-progress">
-          <div className="od-progress-fill" style={{ width: `${(step / (TOTAL - 1)) * 100}%` }} />
+  if (loading) return <div className="rdc-center"><div className="rdc-spinner" /></div>;
+
+  if (!hasAccess) {
+    return (
+      <div className="rdc-gate">
+        <style>{RDC_CSS}</style>
+        <div className="rdc-gate-card">
+          <div className="rdc-gate-lock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <h2>Admin Only</h2>
+          <p>Radio Schedule is restricted to the GeekFon Society admin account.</p>
+          <a href="/dashboard" className="rdc-gate-btn">Back to Dashboard</a>
         </div>
-        <div className="od-topbar-row">
-          <span className="od-count">{String(step + 1).padStart(2, "0")} / {String(TOTAL).padStart(2, "0")}</span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <style>{RDC_CSS}</style>
+      {toast && <div className="rdc-toast">{toast}</div>}
+
+      <div className="rdc-header">
+        <div>
+          <div className="dp-eyebrow">Admin Tool</div>
+          <h1 className="rdc-title">Radio Schedule</h1>
+        </div>
+        <div className="rdc-header-actions">
+          <div className="rdc-stats">
+            <span>{onAirTracks.length} on air</span>
+            <span>{catalogCount} in catalog</span>
+          </div>
+          <button className="rdc-add-btn" onClick={() => setAddOpen((v) => !v)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" width="13" height="13">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Add Track
+          </button>
+          {Object.keys(pending).length > 0 && (
+            <button className="rdc-save-btn" onClick={saveAll} disabled={saving}>
+              {saving ? "Saving..." : `Save Changes (${Object.keys(pending).length})`}
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="od-stage">
-        {step === HERO && (
-          <div className="od-slide" aria-labelledby="or-hero-heading">
-            <p className="or-hero-welcome">Welcome.</p>
-            <h1 id="or-hero-heading" className="or-hero-headline">
-              If you&rsquo;ve ever wished there was one place where you could{" "}
-              <strong>learn, create, grow, contribute,</strong> and find people who
-              genuinely care about making the world a little better&hellip;
-            </h1>
-            <p className="or-hero-sub">Welcome. You&rsquo;ve just discovered LESARUSS.</p>
-            <p className="or-hero-sub">
-              This isn&rsquo;t a typical website. It&rsquo;s a collection of
-              interconnected experiences built over nearly thirty years, designed to
-              help people grow individually while building stronger communities together.
-            </p>
-            <p className="or-hero-invite">
-              Today, I&rsquo;m opening the front gate. I&rsquo;d love to invite you inside.
-            </p>
-            <div className="or-hero-actions">
-              <button className="btn-primary" onClick={goNext}>
-                Begin Orientation <ArrowRight />
-              </button>
-              <button className="btn-ghost" onClick={() => go(NOTE)}>
-                Meet Sean
-              </button>
+      {addOpen && (
+        <div className="rdc-add-panel">
+          <select className="rdc-sel" value={addArtist} onChange={(e) => setAddArtist(e.target.value)}>
+            <option value="">Artist...</option>
+            {artists.map((a) => <option key={a.slug} value={a.slug}>{a.name}</option>)}
+          </select>
+          <input
+            className="rdc-input"
+            placeholder="Track title"
+            value={addTitle}
+            onChange={(e) => setAddTitle(e.target.value)}
+          />
+          <select className="rdc-sel" value={addTier} onChange={(e) => setAddTier(e.target.value)} style={{ color: tierMeta(addTier).color }}>
+            {TIER_OPTS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+          <label className="rdc-upload-btn rdc-upload-btn-lg" style={addBusy ? { opacity: 0.5, pointerEvents: "none" } : {}}>
+            {addBusy ? "Uploading..." : "Choose audio file"}
+            <input
+              type="file"
+              accept="audio/*"
+              hidden
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAddTrack(f); }}
+            />
+          </label>
+        </div>
+      )}
+
+      {dataLoading ? (
+        <div className="rdc-center" style={{ padding: "60px 0" }}><div className="rdc-spinner" /></div>
+      ) : (
+        <>
+          {/* On-air rotation - this exact order is what plays on /radio */}
+          <div className="rdc-section-hdr">
+            <span className="rdc-live-dot" /> On Air Rotation - drag to reorder
+          </div>
+          <div className="rdc-track-list">
+            <div className="rdc-track-head">
+              <span style={{ width: 24 }} />
+              <span style={{ width: 28 }}>#</span>
+              <span className="rdc-th-grow">Track</span>
+              <span style={{ width: 130 }}>Artist</span>
+              <span style={{ width: 88 }}>Tier</span>
+              <span style={{ width: 78 }}>Audio</span>
+              <span style={{ width: 60 }} />
             </div>
-            <p className="or-hint">A guided walkthrough. Use Next, or your arrow keys, to move through.</p>
-          </div>
-        )}
-
-        {step === WHY && (
-          <div className="od-slide" aria-labelledby="or-why-heading">
-            <div className="or-divider" aria-hidden="true" />
-            <p className="or-eyebrow">Why This Exists</p>
-            <h2 id="or-why-heading" className="or-heading">Thirty years of building. One connected universe.</h2>
-            <p className="or-body">
-              Over the past three decades I&rsquo;ve had the privilege of building
-              communities around education, creativity, veganism, technology, anime,
-              entrepreneurship, media, travel, and personal transformation.
-            </p>
-            <p className="or-body">
-              Each project taught me something valuable. Eventually I realized they
-              weren&rsquo;t separate projects. They were pieces of the same puzzle.
-            </p>
-            <p className="or-body">
-              LESARUSS brings those pieces together into one connected universe
-              where every experience helps people discover something new about
-              themselves while contributing to something larger than themselves.
-            </p>
-          </div>
-        )}
-
-        {step === PATHS && (
-          <div className="od-slide" aria-labelledby="or-paths-heading">
-            <p className="or-eyebrow">Choose Your Own Adventure</p>
-            <h2 id="or-paths-heading" className="or-heading">There isn&rsquo;t a wrong path. Only your path.</h2>
-            <div className="or-paths">
-              <div className="or-path-card or-path-card-primary">
-                <p className="or-path-label or-path-label-orange">Guided</p>
-                <h3 className="or-path-title">Begin Orientation</h3>
-                <p className="or-path-body">
-                  Orientation introduces you to the LESARUSS Universe one step at
-                  a time. Get your Explorer Pass, discover which experiences match
-                  your interests, and join a community building something meaningful.
-                </p>
-                <button className="btn-primary" onClick={() => go(INTAKE_FORM)}>
-                  Start Here <ArrowRight />
-                </button>
-              </div>
-              <div className="or-path-card">
-                <p className="or-path-label or-path-label-muted">Explore Freely</p>
-                <h3 className="or-path-title">Choose Your First Experience</h3>
-                <p className="or-path-body">
-                  Others prefer to immediately begin exploring the experiences that
-                  interest them most. Browse everything below and start wherever
-                  feels right.
-                </p>
-                <button className="btn-ghost" onClick={() => go(EXPERIENCES_SLIDE)}>
-                  Explore the Universe <ArrowRight />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step === EXPERIENCES_SLIDE && (
-          <div className="od-slide" aria-labelledby="or-exp-heading">
-            <p className="or-eyebrow">Choose Your First Experience</p>
-            <h2 id="or-exp-heading" className="or-heading">Every experience exists to serve a different community.</h2>
-            <p className="or-body">
-              Some experiences are fully open. Others are opening over the coming
-              days. Every one of them is part of the same journey.
-            </p>
-            <div className="or-grid" role="list">
-              {EXPERIENCES.map((exp) => (
-                <Link key={exp.slug} href={exp.href} className="or-exp-card" role="listitem">
-                  <span className="or-exp-status">
-                    {exp.status === "available" ? "Available Now" : "Opening During Orientation"}
+            {onAirTracks.map((track, idx) => {
+              const tier = tierMeta(track.required_tier);
+              const us = uploadStatus[track.id];
+              const isDragTarget = dragOver === idx;
+              return (
+                <div
+                  key={track.id}
+                  className={`rdc-track-row${isDragTarget ? " rdc-drag-target" : ""}`}
+                  draggable
+                  onDragStart={() => { dragIdx.current = idx; }}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(idx); }}
+                  onDragLeave={() => setDragOver(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(null);
+                    if (dragIdx.current !== null) reorder(dragIdx.current, idx);
+                    dragIdx.current = null;
+                  }}
+                  onDragEnd={() => { setDragOver(null); dragIdx.current = null; }}
+                >
+                  <span className="rdc-drag-handle" title="Drag to reorder">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                      <circle cx="8" cy="6" r="1.5" /><circle cx="16" cy="6" r="1.5" />
+                      <circle cx="8" cy="12" r="1.5" /><circle cx="16" cy="12" r="1.5" />
+                      <circle cx="8" cy="18" r="1.5" /><circle cx="16" cy="18" r="1.5" />
+                    </svg>
                   </span>
-                  <span className="or-exp-name">{exp.name}</span>
-                  <span className="or-exp-desc">{exp.description}</span>
-                  <span className="or-exp-arrow" aria-hidden="true"><ArrowRight /></span>
-                </Link>
+                  <span className="rdc-num">{idx + 1}</span>
+                  <input
+                    className="rdc-input rdc-th-grow"
+                    value={track.title}
+                    onChange={(e) => updateField(track.id, "title", e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className="rdc-artist-label" style={{ width: 130 }}>{artistName(artists, track.artist_slug)}</span>
+                  <select
+                    className="rdc-sel"
+                    style={{ width: 88, color: tier.color }}
+                    value={track.required_tier}
+                    onChange={(e) => updateField(track.id, "required_tier", e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {TIER_OPTS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                  <span className="rdc-audio-cell" style={{ width: 78 }}>
+                    <label
+                      className={`rdc-upload-btn${us === "uploading" ? " rdc-uploading" : ""}${us === "done" ? " rdc-uploaded" : ""}${us === "error" ? " rdc-upload-err" : ""}`}
+                      title="Replace audio"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {us === "uploading" ? "..." : us === "done" ? "OK" : "REPL"}
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        hidden
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(track.id, f); }}
+                      />
+                    </label>
+                  </span>
+                  <button className="rdc-pull-btn" style={{ width: 60 }} onClick={() => pullTrack(track.id)} title="Remove from rotation">
+                    Pull
+                  </button>
+                </div>
+              );
+            })}
+            {onAirTracks.length === 0 && (
+              <div className="rdc-empty">Nothing on air yet - air a track from the catalog below, or add a new one.</div>
+            )}
+          </div>
+
+          {/* Full catalog - everything not currently on air */}
+          <button className="rdc-catalog-hdr" onClick={() => setCatalogCollapsed((v) => !v)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" width="14" height="14" className={`rdc-caret${!catalogCollapsed ? " open" : ""}`}>
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+            Full Catalog ({catalogCount} not on air)
+          </button>
+          {!catalogCollapsed && (
+            <div className="rdc-artist-list">
+              {Object.entries(catalogByArtist).map(([slug, list]) => (
+                <div key={slug} className="rdc-artist-card">
+                  <div className="rdc-artist-hdr-static">{artistName(artists, slug)}</div>
+                  <div className="rdc-track-list">
+                    {list.map((track) => {
+                      const tier = tierMeta(track.required_tier);
+                      const pendingRelease = new Date(track.release_date).getTime() > Date.now();
+                      return (
+                        <div key={track.id} className="rdc-track-row rdc-track-row-static">
+                          <span className="rdc-th-grow rdc-catalog-title">{track.title}</span>
+                          <select
+                            className="rdc-sel"
+                            style={{ width: 88, color: tier.color }}
+                            value={track.required_tier}
+                            onChange={(e) => updateField(track.id, "required_tier", e.target.value)}
+                          >
+                            {TIER_OPTS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                          </select>
+                          {track.src_path === "PENDING" && <span className="rdc-pending-badge">No audio</span>}
+                          {pendingRelease && track.src_path !== "PENDING" && <span className="rdc-pending-badge">Future release</span>}
+                          <button
+                            className="rdc-air-btn"
+                            disabled={track.src_path === "PENDING"}
+                            style={track.src_path === "PENDING" ? { opacity: 0.35, cursor: "not-allowed" } : {}}
+                            onClick={() => airTrack(track.id)}
+                            title="Add to on-air rotation"
+                          >
+                            Air it
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {step === PASS_INTRO && (
-          <div className="od-slide" aria-labelledby="or-pass-heading">
-            <div className="or-pass">
-              <p className="or-pass-eyebrow">Explorer Pass</p>
-              <h2 id="or-pass-heading" className="or-pass-heading">Every Explorer begins with an Explorer Pass.</h2>
-              <ul className="or-pass-list">
-                {[
-                  "Personalized Orientation",
-                  "Daily Pulse",
-                  "Early access to every experience",
-                  "111 LESARUSS Points",
-                  "Opportunities to help shape the future of the community",
-                ].map((item) => (
-                  <li key={item} className="or-pass-item">
-                    <span className="or-pass-dot" aria-hidden="true" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <p className="or-pass-sub">The more you participate, the more meaningful your journey becomes.</p>
-            </div>
-          </div>
-        )}
-
-        {step === INTAKE_FORM && (
-          <div className="od-slide" aria-labelledby="or-pass-heading">
-            <div className="or-pass">
-              <p className="or-pass-eyebrow">Claim Your Explorer Pass</p>
-              <h2 id="or-pass-heading" className="or-pass-heading">What are you interested in?</h2>
-              <div className="or-intake-form">
-                <div className="or-intake-row">
-                  <input
-                    className="or-intake-input"
-                    type="text"
-                    placeholder="First name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    autoComplete="given-name"
-                  />
-                  <input
-                    className="or-intake-input"
-                    type="email"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-                <p className="or-intake-label">Pick as many as apply.</p>
-                <div className="or-intake-tags" role="group" aria-label="Your interests">
-                  {INTEREST_TAGS.map((tag) => {
-                    const active = interests.includes(tag.slug);
-                    return (
-                      <button
-                        key={tag.slug}
-                        type="button"
-                        onClick={() => toggleInterest(tag.slug)}
-                        aria-pressed={active}
-                        className={"or-intake-tag" + (active ? " or-intake-tag-active" : "")}
-                      >
-                        {tag.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                {error && <p className="or-intake-error" role="alert">{error}</p>}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step === INTAKE_MATCHES && (
-          <div className="od-slide" aria-labelledby="or-pass-heading">
-            <div className="or-pass">
-              <p className="or-pass-eyebrow">Your Matches</p>
-              {pass ? (
-                <>
-                  <h2 id="or-pass-heading" className="or-pass-heading">You&rsquo;re Explorer #{pass.pass_number}.</h2>
-                  <p className="or-pass-sub">Here is what matches what you told us. Joining is free, select as many as you like.</p>
-                  {matches.length === 0 ? (
-                    <p className="or-pass-sub">
-                      Nothing matched exactly yet, but your pass is active. Explore everything and come back
-                      any time to add interests.
-                    </p>
-                  ) : (
-                    <div className="or-intake-matches">
-                      {matches.map((m) => {
-                        const active = selected.includes(m.slug);
-                        return (
-                          <label key={m.slug} className={"or-intake-match" + (active ? " or-intake-match-active" : "")}>
-                            <input type="checkbox" checked={active} onChange={() => toggleSelected(m.slug)} />
-                            <span>
-                              <strong>{m.brand_name}</strong>
-                              <span className="or-intake-match-tagline">{m.tagline}</span>
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {error && <p className="or-intake-error" role="alert">{error}</p>}
-                </>
-              ) : (
-                <>
-                  <h2 id="or-pass-heading" className="or-pass-heading">Complete your interests first.</h2>
-                  <p className="od-guard-dark">You have not claimed your Explorer Pass yet.</p>
-                  <button className="btn-primary" style={{ alignSelf: "flex-start" }} onClick={() => go(INTAKE_FORM)}>
-                    Go Back <ArrowRight />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {step === INTAKE_DONE && (
-          <div className="od-slide" aria-labelledby="or-pass-heading">
-            <div className="or-pass">
-              <p className="or-pass-eyebrow">Explorer Pass</p>
-              {joined && pass ? (
-                <>
-                  <h2 id="or-pass-heading" className="or-pass-heading">
-                    You are Explorer #{pass.pass_number}
-                    {pass.is_founding_explorer ? ", a Founding Explorer" : ""}.
-                  </h2>
-                  <p className="or-pass-sub">{pass.points} LESARUSS Points are on your pass.</p>
-                  {joinedMatches.length > 0 && (
-                    <div className="or-intake-matches">
-                      {joinedMatches.map((m) => (
-                        <Link key={m.slug} href={`/c/${m.slug}`} className="or-intake-match">
-                          <span>
-                            <strong>{m.brand_name}</strong>
-                            <span className="or-intake-match-tagline">{m.tagline}</span>
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                  <p className="or-pass-sub">
-                    Your Pulse will start routing you updates from everything you joined. Come back any time to add more.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h2 id="or-pass-heading" className="or-pass-heading">Select what you want to join first.</h2>
-                  <button className="btn-primary" style={{ alignSelf: "flex-start" }} onClick={() => go(INTAKE_MATCHES)}>
-                    Go Back <ArrowRight />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {step === FOUNDING && (
-          <div className="od-slide" aria-labelledby="or-founding-heading">
-            <div className="or-founding-grid">
-              <div>
-                <p className="or-eyebrow">Founding Explorers</p>
-                <h2 id="or-founding-heading" className="or-heading">
-                  This community isn&rsquo;t being built for people. It&rsquo;s being built with people.
-                </h2>
-                <p className="or-body">
-                  If you believe in what we&rsquo;re creating and would like to
-                  help bring it to life, I&rsquo;d love to invite you to become a
-                  Founding Explorer.
-                </p>
-                <p className="or-body">
-                  Every contribution helps us build new experiences, support
-                  community leaders, and continue creating resources that help
-                  people learn, connect, and contribute.
-                </p>
-              </div>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 700, marginBottom: 14, color: "rgba(26,26,26,0.45)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                  There is no required amount.
-                </p>
-                <p style={{ fontSize: 13, fontWeight: 300, color: "rgba(26,26,26,0.6)", marginBottom: 20, lineHeight: 1.7 }}>
-                  Our suggested founding contribution is $11, but you&rsquo;re
-                  welcome to contribute whatever feels meaningful to you.
-                </p>
-                <div className="or-amounts">
-                  {["$11", "$25", "$50", "$111", "$360"].map((amt) => (
-                    <Link key={amt} href={`/founding-explorer?amount=${amt.replace("$", "")}`} className="or-amount-chip">
-                      {amt}
-                    </Link>
-                  ))}
-                  <Link href="/founding-explorer" className="or-amount-chip">Custom</Link>
-                </div>
-                <Link href="/founding-explorer" className="btn-primary" style={{ marginTop: 8 }}>
-                  Become a Founding Explorer <ArrowRight />
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step === NOTE && (
-          <div className="od-slide" aria-labelledby="or-note-heading">
-            <div className="or-note">
-              <div className="or-divider" aria-hidden="true" />
-              <p className="or-eyebrow">A Personal Note</p>
-              <h2 id="or-note-heading" className="or-heading">
-                Whether we&rsquo;ve met before or today is our first conversation&hellip;
-              </h2>
-              <p className="or-body">Thank you for being here.</p>
-              <div className="or-tags">
-                {["Anime 3000", "Vegans Explore", "BCPS", "UCF", "Russell's Roving Reporters", "Chester is Cool"].map((c) => (
-                  <span key={c} className="or-tag">{c}</span>
-                ))}
-              </div>
-              <p className="or-body">
-                You&rsquo;re arriving at the beginning of something I&rsquo;ve
-                dreamed about building for a very long time. I&rsquo;m grateful
-                you&rsquo;re here. I hope you&rsquo;ll join us as we continue
-                building it together.
-              </p>
-              <p className="or-body" style={{ fontWeight: 600, color: "#1A1A1A" }}>See you inside.</p>
-              <p className="or-sig-name">Sean A. Russell</p>
-              <p className="or-sig-title">Founder, LESARUSS</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <nav className="od-nav">
-        <div className="od-nav-row">
-          <button className="od-btn" onClick={goBack} disabled={step === 0} aria-label="Previous step">
-            Back
-          </button>
-          <div className="od-dots">
-            {Array.from({ length: TOTAL }).map((_, idx) => (
-              <button
-                key={idx}
-                className={idx === step ? "on" : ""}
-                aria-label={`Go to step ${idx + 1}`}
-                onClick={() => go(idx)}
-              />
-            ))}
-          </div>
-          <button
-            className="od-btn od-btn-primary"
-            onClick={handlePrimaryAction}
-            disabled={loading}
-            aria-label="Next step"
-          >
-            {primaryLabel}
-          </button>
-        </div>
-      </nav>
-    </div>
+          )}
+        </>
+      )}
+    </>
   );
 }
+
+const RDC_CSS = `
+.rdc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+.rdc-title { font-size: clamp(22px, 4vw, 32px); font-weight: 900; text-transform: uppercase; letter-spacing: -.02em; color: #fff; margin: 4px 0 0; }
+.rdc-header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rdc-stats { display: flex; gap: 16px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: rgba(255,255,255,.35); }
+.rdc-add-btn { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.7); font-family: inherit; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; padding: 9px 16px; border-radius: 100px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+.rdc-add-btn:hover { background: rgba(255,255,255,.13); color: #fff; }
+.rdc-save-btn { background: #AAFF00; color: #000; border: none; cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; padding: 10px 20px; border-radius: 100px; transition: background .15s; white-space: nowrap; }
+.rdc-save-btn:hover:not(:disabled) { background: #c8ff40; }
+.rdc-save-btn:disabled { opacity: .5; cursor: default; }
+.rdc-add-panel { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 14px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; flex-wrap: wrap; }
+.rdc-section-hdr { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: rgba(255,255,255,.5); margin: 8px 0 10px; }
+.rdc-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #00D75F; box-shadow: 0 0 8px rgba(0,215,95,.6); flex-shrink: 0; }
+.rdc-catalog-hdr { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: none; color: rgba(255,255,255,.45); font-family: inherit; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; padding: 16px 4px 10px; cursor: pointer; text-align: left; }
+.rdc-catalog-hdr:hover { color: rgba(255,255,255,.7); }
+.rdc-caret { transition: transform .2s; flex-shrink: 0; }
+.rdc-caret.open { transform: rotate(180deg); }
+.rdc-artist-list { display: flex; flex-direction: column; gap: 10px; }
+.rdc-artist-card { border: 1px solid rgba(255,255,255,.07); border-radius: 14px; overflow: hidden; }
+.rdc-artist-hdr-static { padding: 12px 18px; background: rgba(255,255,255,.03); font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; color: rgba(255,255,255,.8); }
+.rdc-track-list { padding: 0 0 8px; }
+.rdc-track-head { display: flex; align-items: center; gap: 8px; padding: 6px 12px 8px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: rgba(255,255,255,.25); border-bottom: 1px solid rgba(255,255,255,.05); }
+.rdc-th-grow { flex: 1; }
+.rdc-track-row { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,.03); cursor: grab; transition: background .1s; }
+.rdc-track-row:last-child { border-bottom: none; }
+.rdc-track-row:hover { background: rgba(255,255,255,.025); }
+.rdc-track-row:active { cursor: grabbing; }
+.rdc-track-row-static { cursor: default; }
+.rdc-drag-target { background: rgba(246,152,32,.08) !important; border-bottom: 2px solid #F69820 !important; }
+.rdc-drag-handle { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; color: rgba(255,255,255,.2); flex-shrink: 0; cursor: grab; }
+.rdc-drag-handle:hover { color: rgba(255,255,255,.5); }
+.rdc-num { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); width: 28px; text-align: center; white-space: nowrap; flex-shrink: 0; }
+.rdc-input { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); color: #fff; font-family: inherit; font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 6px; min-width: 0; box-sizing: border-box; }
+.rdc-input.rdc-th-grow { flex: 1; }
+.rdc-input:focus { outline: none; border-color: #F69820; }
+.rdc-artist-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.4); flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rdc-catalog-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.75); }
+.rdc-sel { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 8px; border-radius: 6px; cursor: pointer; color: #fff; flex-shrink: 0; }
+.rdc-sel option { background: #1a1a1a; color: #fff; }
+.rdc-audio-cell { display: flex; align-items: center; flex-shrink: 0; }
+.rdc-upload-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; border-radius: 5px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); cursor: pointer; color: rgba(255,255,255,.5); font-size: 9px; font-weight: 800; flex-shrink: 0; padding: 0 6px; }
+.rdc-upload-btn:hover { background: rgba(255,255,255,.13); color: #fff; }
+.rdc-upload-btn-lg { height: 32px; padding: 0 14px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.rdc-uploading { background: rgba(246,152,32,.15) !important; border-color: rgba(246,152,32,.3) !important; color: #F69820 !important; }
+.rdc-uploaded { background: rgba(0,215,95,.12) !important; border-color: rgba(0,215,95,.3) !important; color: rgba(0,215,95,.9) !important; }
+.rdc-upload-err { background: rgba(255,100,100,.1) !important; border-color: rgba(255,100,100,.3) !important; color: rgba(255,100,100,.9) !important; }
+.rdc-pull-btn { background: none; border: 1px solid rgba(255,100,100,.25); color: rgba(255,100,100,.75); font-family: inherit; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; padding: 5px 8px; border-radius: 6px; cursor: pointer; flex-shrink: 0; }
+.rdc-pull-btn:hover { background: rgba(255,100,100,.1); }
+.rdc-air-btn { background: rgba(170,255,0,.1); border: 1px solid rgba(170,255,0,.25); color: #AAFF00; font-family: inherit; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; padding: 5px 10px; border-radius: 6px; cursor: pointer; flex-shrink: 0; margin-left: auto; }
+.rdc-air-btn:hover:not(:disabled) { background: rgba(170,255,0,.18); }
+.rdc-pending-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.3); flex-shrink: 0; white-space: nowrap; }
+.rdc-empty { padding: 24px 12px; font-size: 12px; color: rgba(255,255,255,.35); text-align: center; }
+.rdc-center { display: flex; align-items: center; justify-content: center; }
+.rdc-spinner { width: 28px; height: 28px; border: 2.5px solid rgba(255,255,255,.1); border-top-color: #F69820; border-radius: 50%; animation: rdcSpin .8s linear infinite; }
+@keyframes rdcSpin { to { transform: rotate(360deg); } }
+.rdc-toast { position: fixed; bottom: 24px; right: 24px; background: rgba(0,215,95,.12); border: 1px solid rgba(0,215,95,.3); color: rgba(0,215,95,.9); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: 12px 20px; border-radius: 100px; z-index: 999; animation: rdcSlide .2s ease; }
+@keyframes rdcSlide { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.rdc-gate { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
+.rdc-gate-card { max-width: 360px; width: 100%; text-align: center; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 20px; padding: 40px 32px; }
+.rdc-gate-lock { color: rgba(255,255,255,.25); margin-bottom: 16px; }
+.rdc-gate-lock svg { width: 44px; height: 44px; }
+.rdc-gate-card h2 { font-size: 20px; font-weight: 900; color: #fff; margin: 0 0 10px; }
+.rdc-gate-card p { font-size: 13px; color: rgba(255,255,255,.45); line-height: 1.6; margin: 0 0 20px; }
+.rdc-gate-btn { display: inline-block; background: #E91E8C; color: #fff; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; padding: 12px 24px; border-radius: 100px; text-decoration: none; }
+.rdc-gate-btn:hover { background: #c41874; }
+`;
