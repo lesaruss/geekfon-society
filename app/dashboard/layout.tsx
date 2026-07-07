@@ -70,7 +70,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const tier = member?.tier || "passport";
   const isAdmin = userEmail === ADMIN_EMAIL;
   const memberProp = userId
-    ? { name: displayName, balance: lesars, initial, tier, isAdmin }
+    ? { name: displayName, balance: lesars, initial, tier, isAdmin, email: userEmail }
     : undefined;
 
   async function signInWithGoogle() {
