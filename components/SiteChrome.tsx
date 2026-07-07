@@ -308,8 +308,8 @@ export default function SiteChrome({
         {!isLoggedIn && (
           <a href="/shamanic-resin" className="gdrawer-ad" onClick={() => setOpen(false)}>
             <span className="gda-eyebrow">On GeekFon Radio Now</span>
-            <span className="gda-title">Shamanic Resin</span>
-            <span className="gda-sub">All I Do Is Eat. Listen now.</span>
+            <span className="gda-title">All I Do Is Eat</span>
+            <span className="gda-sub">Shamanic Resin - listen now</span>
           </a>
         )}
 
