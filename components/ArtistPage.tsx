@@ -387,6 +387,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [viewAs, setViewAs] = useState<string>("real");
   const [viewDropOpen, setViewDropOpen] = useState(false);
   const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
+  const [ownedTracks, setOwnedTracks] = useState<Set<string>>(new Set());
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [selectedPack, setSelectedPack] = useState<string | null>(null);
@@ -450,9 +451,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       Promise.all([
         sb.from("gfs_members").select("tier").eq("user_id", user.id).single(),
         sb.from("member_points").select("available_points").eq("user_id", user.id).maybeSingle(),
-      ]).then(([{ data: member }, { data: pts }]) => {
+        slug
+          ? sb.from("gfs_track_purchases").select("track_name").eq("user_id", user.id).eq("artist_slug", slug)
+          : Promise.resolve({ data: [] as { track_name: string }[] }),
+      ]).then(([{ data: member }, { data: pts }, { data: owned }]) => {
         if (member?.tier) setUserTier(member.tier);
         if (pts?.available_points != null) setUserBalance(pts.available_points);
+        if (owned) setOwnedTracks(new Set(owned.map((o: { track_name: string }) => o.track_name)));
       });
     });
   }, []);
@@ -642,8 +647,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     const sb = createClient(SUPA_URL, SUPA_ANON!);
     const { data, error } = await sb.rpc("debit_lesars", {
       p_user_id: userId,
-      p_amount: cost,
+      p_artist_slug: slug,
       p_track_name: purchaseModal.trackName,
+      p_amount: cost,
     });
     if (error || !data?.ok) {
       setPurchaseError(data?.error === "insufficient_balance"
@@ -652,6 +658,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       return;
     }
     setUserBalance(data.balance);
+    setOwnedTracks(prev => new Set(prev).add(purchaseModal.trackName));
     setPurchaseSuccess(purchaseModal.trackName);
     setPurchaseModal(null);
     setTimeout(() => setPurchaseSuccess(null), 4000);
@@ -1207,13 +1214,20 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   >
                                     {!url ? "Soon" : trackPlayLabel(playing === url, isPreviewCappedTrack(t))}
                                   </button>
-                                  <button
-                                    className="mp-btn-buy"
-                                    onClick={(e) => { e.stopPropagation(); setPurchaseModal({ trackName: t.n, price: 25 }); }}
-                                    aria-label={`Buy ${t.n}`}
-                                  >
-                                    Buy
-                                  </button>
+                                  {ownedTracks.has(t.n) ? (
+                                    <span className="mp-btn-owned" aria-label={`${t.n} owned`}>
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" width={12} height={12}><polyline points="20 6 9 17 4 12"/></svg>
+                                      Owned
+                                    </span>
+                                  ) : (
+                                    <button
+                                      className="mp-btn-buy"
+                                      onClick={(e) => { e.stopPropagation(); setPurchaseModal({ trackName: t.n, price: 25 }); }}
+                                      aria-label={`Buy ${t.n}`}
+                                    >
+                                      Buy
+                                    </button>
+                                  )}
                                 </>
                               )}
                             </div>
