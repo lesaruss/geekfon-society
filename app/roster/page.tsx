@@ -172,7 +172,17 @@ export default function RosterPage() {
       >
         <div className="r-card-img">
           {a.profile?.heroUrl ? (
-            <img src={a.profile.heroUrl} alt={a.name} />
+            <img
+              src={a.profile.heroUrl}
+              alt={a.name}
+              // Roxanne's portrait has the head right at the top edge of the
+              // source art, so a plain top-anchored crop puts her hair under
+              // the NOW LIVE pill. Shift the visible crop down for her only -
+              // other artists have natural headroom and don't need this.
+              // Doing this per-slug (not a shared CSS change) on purpose per
+              // Sean, to prove out the fix on one artist before any rollout.
+              style={a.slug === "roxanne" ? { objectPosition: "center 20%" } : undefined}
+            />
           ) : (
             <div className="r-card-fallback" style={{ backgroundColor: accent + "33" }}>
               {a.profile?.initial || a.name.charAt(0)}
