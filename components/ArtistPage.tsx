@@ -386,7 +386,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [viewAs, setViewAs] = useState<string>("real");
   const [viewDropOpen, setViewDropOpen] = useState(false);
-  const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number; trackUrl?: string } | null>(null);
+  const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
   const [ownedTracks, setOwnedTracks] = useState<Set<string>>(new Set());
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
   const [topUpOpen, setTopUpOpen] = useState(false);
@@ -395,8 +395,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [topUpError, setTopUpError] = useState<string | null>(null);
   const [pulseShown, setPulseShown] = useState(3);
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
-  const [musicShuffle, setMusicShuffle] = useState(false);
-  const [musicRepeat, setMusicRepeat] = useState(false);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
   const [lyricsLang, setLyricsLang] = useState<"original" | "en">("en");
   const [bibleModules, setBibleModules] = useState<BibleModule[]>([]);
@@ -650,7 +648,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       p_artist_slug: slug,
       p_track_name: purchaseModal.trackName,
       p_amount: cost,
-      p_track_url: purchaseModal.trackUrl || null,
     });
     if (error || !data?.ok) {
       setPurchaseError(data?.error === "insufficient_balance"
@@ -1036,42 +1033,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   setCurrTrackIdx(i);
                   if (playing) { const a = audioRef.current; if (a) { a.pause(); setPlaying(null); setPlayingV(null); } }
                 }
-                function playPrev() {
-                  let i = safeIdx - 1;
-                  while (i >= 0 && trackLocked(tracks[i])) i--;
-                  if (i >= 0) selectTrack(i);
-                }
-                function playNext() {
-                  let i = safeIdx + 1;
-                  while (i < tracks.length && trackLocked(tracks[i])) i++;
-                  if (i < tracks.length) selectTrack(i);
-                }
-
-                const transportControls = (
-                  <div className="mp-transport">
-                    <button className={"mp-ic" + (musicShuffle ? " on" : "")} aria-label="Shuffle" onClick={() => setMusicShuffle(s => !s)}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
-                    </button>
-                    <button className="mp-ic" aria-label="Previous" onClick={playPrev}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
-                    </button>
-                    <button
-                      className="mp-orb"
-                      aria-label={npPlaying ? "Pause" : "Play"}
-                      disabled={npLocked || !npUrl}
-                      onClick={() => { if (npUrl) togglePlay(npUrl, npTrack?.v); }}
-                    >
-                      {npPlaying ? PAUSE : PLAY}
-                    </button>
-                    <button className="mp-ic" aria-label="Next" onClick={playNext}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
-                    </button>
-                    <button className={"mp-ic" + (musicRepeat ? " on" : "")} aria-label="Repeat" onClick={() => setMusicRepeat(r => !r)}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                    </button>
-                  </div>
-                );
-
                 const lyricsButton = (
                   <button className={"mp-chip" + (lyricsDrawerOpen ? " active" : "")} onClick={() => setLyricsDrawerOpen(o => !o)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={15} height={15}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1130,47 +1091,67 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   </div>
                 );
 
+                const npOwned = !!npTrack && ownedTracks.has(npTrack.n);
+                const npPlayLabel = npTrack ? trackPlayLabel(npPlaying, npPreviewCapped) : "Play";
+
                 return (
                   <section className="mp-root">
-                    {/* Now-playing card */}
+                    {/* Now-playing card - single unified layout, mobile + desktop */}
                     <div className="mp-player">
                       <div className="mp-np">
-                        <div className="mp-cover">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                        </div>
+                        <button
+                          className="mp-orb"
+                          aria-label={npPlaying ? "Pause" : "Play"}
+                          disabled={npLocked || !npUrl}
+                          onClick={() => { if (npUrl) togglePlay(npUrl, npTrack?.v, npTrack?.n); }}
+                        >
+                          {npPlaying ? PAUSE : PLAY}
+                        </button>
                         <div className="mp-npmeta">
                           <div className="mp-nptitle">{npTrack?.n || "Select a track"}</div>
                           <div className="mp-npartist">{name}</div>
                           <span className={"mp-nptag " + npBadge.cls}>{npBadge.label}</span>
                         </div>
-                        {isMobile ? (
-                          <div className="mp-mobile-controls">
-                            {transportControls}
-                            <div className="mp-chips mp-chips-mobile">{lyricsButton}</div>
-                          </div>
-                        ) : transportControls}
+                        {scrubBar}
                       </div>
 
-                      {/* Scrub bar - shared markup for desktop + mobile */}
-                      {scrubBar}
-
-                      {/* Bottom bar (desktop only - mobile shows Lyrics next to track info instead) */}
-                      {!isMobile && (
-                        <div className="mp-barrow">
-                          <div className="mp-vol">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={18} height={18}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                            <div className="mp-voltrack"><div className="mp-volfill" style={{ width: "70%" }} /></div>
-                          </div>
-                          <div className="mp-chips">{lyricsButton}</div>
+                      <div className="mp-barrow">
+                        <div className="mp-vol">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={18} height={18}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                          <div className="mp-voltrack"><div className="mp-volfill" style={{ width: "70%" }} /></div>
                         </div>
-                      )}
+                        <div className="mp-barrow-actions">
+                          {lyricsButton}
+                          <button
+                            className={"mp-btn-pre" + (!npUrl ? " disabled" : "")}
+                            disabled={!npUrl || npLocked}
+                            title={!npUrl ? "Audio coming soon" : undefined}
+                            onClick={() => { if (npUrl) togglePlay(npUrl, npTrack?.v, npTrack?.n); }}
+                            aria-label={npPlayLabel}
+                          >
+                            {!npUrl ? "Soon" : npPlayLabel}
+                          </button>
+                          {npTrack && !npLocked && (
+                            npOwned ? (
+                              <span className="mp-btn-owned" aria-label={`${npTrack.n} owned`}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" width={12} height={12}><polyline points="20 6 9 17 4 12"/></svg>
+                                Owned
+                              </span>
+                            ) : (
+                              <button
+                                className="mp-btn-buy"
+                                onClick={() => setPurchaseModal({ trackName: npTrack.n, price: 25 })}
+                                aria-label={`Buy ${npTrack.n}`}
+                              >
+                                Buy
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
 
-                      {/* Lyrics accordion drops inline directly below the Lyrics button on mobile */}
-                      {isMobile && lyricsAccordion}
+                      {lyricsAccordion}
                     </div>
-
-                    {/* Lyrics drawer (desktop: inline, below player card) */}
-                    {!isMobile && lyricsAccordion}
 
                     {/* Catalog */}
                     <div className="mp-catalog-head">
@@ -1223,7 +1204,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   ) : (
                                     <button
                                       className="mp-btn-buy"
-                                      onClick={(e) => { e.stopPropagation(); setPurchaseModal({ trackName: t.n, price: 25, trackUrl: t.url }); }}
+                                      onClick={(e) => { e.stopPropagation(); setPurchaseModal({ trackName: t.n, price: 25 }); }}
                                       aria-label={`Buy ${t.n}`}
                                     >
                                       Buy
