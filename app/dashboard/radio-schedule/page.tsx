@@ -18,17 +18,7 @@ interface RadioTrack {
 
 interface ArtistOpt { slug: string; name: string; }
 
-const TIER_OPTS: { value: string; label: string; color: string }[] = [
-  { value: "free",       label: "Free",     color: "#4CAF50" },
-  { value: "passport",   label: "Passport", color: "#E91E8C" },
-  { value: "superadmin", label: "Hidden",   color: "rgba(255,255,255,.4)" },
-];
-
 const ADMIN_EMAIL = "contact@lesaruss.com";
-
-function tierMeta(v: string) {
-  return TIER_OPTS.find((t) => t.value === v) || TIER_OPTS[1];
-}
 
 function isOnAir(t: RadioTrack): boolean {
   return t.is_public && t.src_path !== "PENDING" && new Date(t.release_date).getTime() <= Date.now();
@@ -52,7 +42,6 @@ export default function RadioSchedulePage() {
   const [addOpen, setAddOpen]     = useState(false);
   const [addArtist, setAddArtist] = useState("");
   const [addTitle, setAddTitle]   = useState("");
-  const [addTier, setAddTier]     = useState("passport");
   const [addBusy, setAddBusy]     = useState(false);
 
   const dragIdx = useRef<number | null>(null);
@@ -190,7 +179,6 @@ export default function RadioSchedulePage() {
     form.append("file", file);
     form.append("artistSlug", addArtist);
     form.append("title", addTitle);
-    form.append("requiredTier", addTier);
     const headers = await authHeaders();
     const res = await fetch("/api/admin/radio-schedule/upload", { method: "POST", headers, body: form });
     const json = await res.json();
@@ -282,9 +270,6 @@ export default function RadioSchedulePage() {
             value={addTitle}
             onChange={(e) => setAddTitle(e.target.value)}
           />
-          <select className="rdc-sel" value={addTier} onChange={(e) => setAddTier(e.target.value)} style={{ color: tierMeta(addTier).color }}>
-            {TIER_OPTS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
           <label className="rdc-upload-btn rdc-upload-btn-lg" style={addBusy ? { opacity: 0.5, pointerEvents: "none" } : {}}>
             {addBusy ? "Uploading..." : "Choose audio file"}
             <input
@@ -310,13 +295,11 @@ export default function RadioSchedulePage() {
               <span style={{ width: 24 }} />
               <span style={{ width: 28 }}>#</span>
               <span className="rdc-th-grow">Track</span>
-              <span style={{ width: 130 }}>Artist</span>
-              <span style={{ width: 88 }}>Tier</span>
+              <span style={{ width: 160 }}>Artist</span>
               <span style={{ width: 78 }}>Audio</span>
               <span style={{ width: 60 }} />
             </div>
             {onAirTracks.map((track, idx) => {
-              const tier = tierMeta(track.required_tier);
               const us = uploadStatus[track.id];
               const isDragTarget = dragOver === idx;
               return (
@@ -349,16 +332,7 @@ export default function RadioSchedulePage() {
                     onChange={(e) => updateField(track.id, "title", e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                   />
-                  <span className="rdc-artist-label" style={{ width: 130 }}>{artistName(artists, track.artist_slug)}</span>
-                  <select
-                    className="rdc-sel"
-                    style={{ width: 88, color: tier.color }}
-                    value={track.required_tier}
-                    onChange={(e) => updateField(track.id, "required_tier", e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {TIER_OPTS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
+                  <span className="rdc-artist-label" style={{ width: 160 }}>{artistName(artists, track.artist_slug)}</span>
                   <span className="rdc-audio-cell" style={{ width: 78 }}>
                     <label
                       className={`rdc-upload-btn${us === "uploading" ? " rdc-uploading" : ""}${us === "done" ? " rdc-uploaded" : ""}${us === "error" ? " rdc-upload-err" : ""}`}
@@ -399,19 +373,10 @@ export default function RadioSchedulePage() {
                   <div className="rdc-artist-hdr-static">{artistName(artists, slug)}</div>
                   <div className="rdc-track-list">
                     {list.map((track) => {
-                      const tier = tierMeta(track.required_tier);
                       const pendingRelease = new Date(track.release_date).getTime() > Date.now();
                       return (
                         <div key={track.id} className="rdc-track-row rdc-track-row-static">
                           <span className="rdc-th-grow rdc-catalog-title">{track.title}</span>
-                          <select
-                            className="rdc-sel"
-                            style={{ width: 88, color: tier.color }}
-                            value={track.required_tier}
-                            onChange={(e) => updateField(track.id, "required_tier", e.target.value)}
-                          >
-                            {TIER_OPTS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                          </select>
                           {track.src_path === "PENDING" && <span className="rdc-pending-badge">No audio</span>}
                           {pendingRelease && track.src_path !== "PENDING" && <span className="rdc-pending-badge">Future release</span>}
                           <button
