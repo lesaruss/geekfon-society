@@ -204,13 +204,18 @@ export default function RadioPage() {
       a.onloadedmetadata = () => { a.currentTime = resolved.offsetSeconds; };
       a.src = AUDIO_BASE + resolved.path;
       a.currentTime = resolved.offsetSeconds;
-      // play() must stay in the same synchronous tick as the click that
-      // triggered it, or the browser's autoplay policy silently blocks it -
-      // deferring this into an onloadedmetadata callback (async, off the
-      // user-gesture stack) is what caused the original bug.
-      if (autoplay) a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     } else if (Math.abs(a.currentTime - resolved.offsetSeconds) > RESYNC_DRIFT_TOLERANCE_SEC) {
       a.currentTime = resolved.offsetSeconds;
+    }
+    // play() must stay in the same synchronous tick as the click that
+    // triggered it, or the browser's autoplay policy silently blocks it -
+    // deferring this into an onloadedmetadata callback (async, off the
+    // user-gesture stack) caused the first bug. This has to run every time,
+    // not just on a track change - resuming from pause is the SAME track
+    // (changedTrack is false) and was the case that silently never called
+    // play() again, which is why it "didn't always play."
+    if (autoplay && a.paused) {
+      a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     }
   }, []);
 
@@ -285,7 +290,7 @@ export default function RadioPage() {
             disabled={loadingPlaylist || rotation.length === 0}
             aria-label={playing ? "Pause GeekFon Radio" : "Play GeekFon Radio"}
           >
-            <img src="/geekfon-logo.png" alt="GeekFon Radio" className="rd-logo-img" />
+            <img src="/geekfon-logo.png" alt="" aria-hidden="true" className="rd-logo-img" />
             <div className="rd-play-icon">
               {playing ? (
                 <svg viewBox="0 0 24 24" fill="white" width="36" height="36"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
@@ -296,12 +301,6 @@ export default function RadioPage() {
             {playing && <div className="rd-pulse-ring" />}
             {playing && <div className="rd-pulse-ring rd-pulse-ring-2" />}
           </button>
-
-          <div className="rd-brand-row">
-            <span className="rd-brand-geekfon"><span className="rd-brand-geek">GEEK</span><span className="rd-brand-fon">FON</span></span>
-            <span className="rd-brand-sep"></span>
-            <span className="rd-brand-radio">RADIO</span>
-          </div>
         </div>
 
         <div className="rd-now-playing">
@@ -338,12 +337,12 @@ export default function RadioPage() {
 }
 
 const CSS = `
-html, body { background: #020c0a !important; overflow-x: hidden; }
+html, body { background: #020c0a !important; overflow: hidden !important; height: 100%; }
 .gtop { background: rgba(2,12,10,0.85) !important; border-bottom-color: rgba(255,255,255,0.08) !important; backdrop-filter: blur(12px); }
 .gham { color: #fff !important; }
 .gham:hover { background: rgba(255,255,255,0.08) !important; }
 .gfs-geek { color: #fff !important; }
-.gbody { background: transparent !important; min-height: 100vh; position: relative; }
+.gbody { background: transparent !important; height: calc(100vh - 60px); position: relative; overflow: hidden; }
 
 .rd-city-stage { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .rd-city-panel { position: absolute; inset: 0; will-change: transform; }
@@ -359,9 +358,9 @@ html, body { background: #020c0a !important; overflow-x: hidden; }
 .rd-city-dot { width: 5px; height: 5px; border-radius: 50%; transition: background-color 1s ease; }
 .rd-city-name { font-size: 9px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.5); }
 
-.rd-main { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 60px); gap: 36px; padding: 60px 24px; }
+.rd-main { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 60px); overflow: hidden; gap: 24px; padding: 24px; box-sizing: border-box; }
 
-.rd-logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.rd-logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; flex-shrink: 0; }
 
 .rd-play-btn {
   position: relative; width: 190px; height: 190px; border-radius: 50%;
@@ -394,33 +393,33 @@ html, body { background: #020c0a !important; overflow-x: hidden; }
   animation: rdPulse2 2.2s ease-out infinite 1.1s;
 }
 
-.rd-brand-row { display: flex; align-items: center; gap: 10px; }
-.rd-brand-geekfon { display: inline-flex; align-items: baseline; }
-.rd-brand-geek { font-family: 'Montserrat', sans-serif; font-size: 32px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; }
-@keyframes fonHue { 0% { color: #E91E8C; } 25% { color: #00B4FF; } 50% { color: #AAFF00; } 75% { color: #F69820; } 100% { color: #E91E8C; } }
-.rd-brand-fon { font-family: 'Montserrat', sans-serif; font-size: 32px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; animation: fonHue 6s ease-in-out infinite; }
-.rd-brand-sep { width: 1px; height: 22px; background: rgba(255,255,255,0.2); }
-.rd-brand-radio { font-size: 13px; font-weight: 800; letter-spacing: .38em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
-
-.rd-now-playing { text-align: center; max-width: 420px; }
-.rd-np-eyebrow { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 10px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
+.rd-now-playing { text-align: center; max-width: 420px; flex-shrink: 0; }
+.rd-np-eyebrow { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 10px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 10px; }
 .rd-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #00e676; box-shadow: 0 0 8px rgba(0,230,118,0.7); display: inline-block; flex-shrink: 0; animation: rdLivePulse 2s ease-in-out infinite; }
 @keyframes rdLivePulse { 0%,100% { box-shadow: 0 0 6px rgba(0,230,118,0.6); } 50% { box-shadow: 0 0 16px rgba(0,230,118,0.95); } }
 
-.rd-np-title { font-size: clamp(24px, 5vw, 32px); font-weight: 900; color: #fff; letter-spacing: -0.01em; margin-bottom: 8px; }
+.rd-np-title {
+  font-size: clamp(20px, 4vw, 32px); font-weight: 900; color: #fff; letter-spacing: -0.01em; margin-bottom: 6px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
 .rd-np-artist { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.05em; }
 
-.rd-progress { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+.rd-progress { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 .rd-time { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rd-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
 .rd-bar-fill { height: 100%; background: #00B4FF; border-radius: 2px; transition: width 0.5s linear; }
 
-.rd-hint { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.28); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; }
+.rd-hint { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.28); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; flex-shrink: 0; text-align: center; }
 
 @media(max-width:480px) {
   .rd-play-btn { width: 150px; height: 150px; }
   .rd-logo-img { width: 100px; height: 100px; }
-  .rd-brand-geek, .rd-brand-fon { font-size: 26px; }
-  .rd-np-title { font-size: 22px; }
+  .rd-np-title { font-size: 20px; }
+}
+
+@media(max-height:700px) {
+  .rd-main { gap: 16px; padding: 16px; }
+  .rd-play-btn { width: 130px; height: 130px; }
+  .rd-logo-img { width: 88px; height: 88px; }
 }
 `;
