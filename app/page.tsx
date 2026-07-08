@@ -44,7 +44,7 @@ const CITIES = [
   {
     name: "Orlando, FL",
     accent: "#FF9800",
-    desktop: CDN + "hf_20260619_125302_4c4f6747-3bcb-45b2-a743-610912078942.png",
+    desktop: "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/city-backgrounds/orlando-desktop-cropped.png",
     mobile:  CDN + "hf_20260619_125452_ad933e6f-0b03-43a4-b111-341e76b9efd9.jpeg",
   },
 ];
