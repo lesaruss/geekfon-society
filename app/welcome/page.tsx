@@ -473,139 +473,105 @@ function CitySlideshow({ accent = "#9C27B0" }: { accent?: string }) {
   );
 }
 
-// ── Artist panel ──────────────────────────────────────────────────────────────
-function ArtistPanel({ onClose }: { onClose: () => void }) {
-  const [selected, setSelected] = useState(0);
+// ── Inline artist browser (fan-artists slide, right column) ──────────────────
+// Was a full-screen overlay panel (ArtistPanel) that Sean flagged as a mechanic
+// switch mid-tour - everything else in the tour is inline slide content, this
+// used to pop a separate drawer/modal. Now it's just the right-column content
+// for the fan-artists slide, same pattern as SlidePreview/CitySlideshow/etc.
+function InlineArtistBrowser({ selected, onSelect }: { selected: number; onSelect: (i: number) => void }) {
   const artist = FEATURED[selected];
-  const touchX = useRef<number | null>(null);
-  const go = (dir: number) => setSelected((i) => (i + dir + FEATURED.length) % FEATURED.length);
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 30, display: "flex", alignItems: "stretch" }}>
-      {/* Scrim */}
-      <div style={{ flex: 1, background: "rgba(0,0,0,0.5)", cursor: "pointer" }} onClick={onClose} />
-      {/* Panel */}
-      <div
-        style={{ width: "min(520px, 100vw)", background: "#0c0c1a", borderLeft: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", overflowY: "auto" }}
-        onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
-        onTouchEnd={(e) => { if (touchX.current === null) return; const dx = e.changedTouches[0].clientX - touchX.current; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); touchX.current = null; }}
-      >
-        {/* Panel header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
-          <span style={{ fontSize: "11px", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
-            Meet the Artists
-          </span>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px", padding: "8px 14px", color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 700, cursor: "pointer", letterSpacing: "0.06em" }}>
-            CLOSE
-          </button>
+    <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
+      {/* Artist selector dropdown (4 launch artists) */}
+      <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <label htmlFor="gfs-artist-select" style={{ display: "block", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>
+          Choose an artist
+        </label>
+        <div style={{ position: "relative" }}>
+          <select
+            id="gfs-artist-select"
+            value={selected}
+            onChange={(e) => onSelect(Number(e.target.value))}
+            style={{
+              width: "100%",
+              appearance: "none",
+              WebkitAppearance: "none",
+              background: "rgba(255,255,255,0.07)",
+              border: `1px solid ${artist.accent}`,
+              borderRadius: "10px",
+              padding: "12px 40px 12px 14px",
+              color: "#fff",
+              fontSize: "13px",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              fontFamily: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            {FEATURED.map((a, i) => (
+              <option key={a.slug} value={i} style={{ background: "#0c0c1a", color: "#fff" }}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.5)", pointerEvents: "none" }}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
         </div>
+      </div>
 
-        {/* Artist selector dropdown (4 launch artists) */}
-        <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
-          <label htmlFor="gfs-artist-select" style={{ display: "block", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>
-            Choose an artist
-          </label>
-          <div style={{ position: "relative" }}>
-            <select
-              id="gfs-artist-select"
-              value={selected}
-              onChange={(e) => setSelected(Number(e.target.value))}
-              style={{
-                width: "100%",
-                appearance: "none",
-                WebkitAppearance: "none",
-                background: "rgba(255,255,255,0.07)",
-                border: `1px solid ${artist.accent}`,
-                borderRadius: "10px",
-                padding: "12px 40px 12px 14px",
-                color: "#fff",
-                fontSize: "13px",
-                fontWeight: 800,
-                letterSpacing: "0.04em",
-                fontFamily: "inherit",
-                cursor: "pointer",
-              }}
-            >
-              {FEATURED.map((a, i) => (
-                <option key={a.slug} value={i} style={{ background: "#0c0c1a", color: "#fff" }}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-              style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.5)", pointerEvents: "none" }}>
-              <path d="M6 9l6 6 6-6" />
-            </svg>
+      {/* Hero image */}
+      {artist.heroUrl && (
+        <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", overflow: "hidden", borderBottom: `3px solid ${artist.accent}` }}>
+          <img
+            src={artist.heroUrl}
+            alt={artist.name}
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
+          />
+        </div>
+      )}
+
+      <div style={{ padding: "18px 16px", display: "flex", flexDirection: "column", gap: "14px" }}>
+        {/* Identity */}
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          {!artist.heroUrl && (
+            <div style={{ width: "56px", height: "56px", borderRadius: "12px", background: artist.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 900, color: "#fff", flexShrink: 0 }}>
+              {artist.initial}
+            </div>
+          )}
+          <div>
+            <div style={{ fontSize: "18px", fontWeight: 900, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{artist.name}</div>
+            <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: artist.accent, marginTop: "4px" }}>{artist.genre}</div>
           </div>
         </div>
 
-        {/* Artist detail */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          {/* Hero image - 16:9 with pagination dots */}
-          {artist.heroUrl ? (
-            <div style={{ flexShrink: 0 }}>
-              <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", overflow: "hidden", borderBottom: `3px solid ${artist.accent}` }}>
-                <img
-                  src={artist.heroUrl}
-                  alt={artist.name}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
-                />
-              </div>
-              {/* Pagination dots */}
-              <div style={{ display: "flex", justifyContent: "center", gap: "8px", padding: "12px 0 4px" }}>
-                {FEATURED.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelected(i)}
-                    aria-label={`Artist ${i + 1}`}
-                    style={{ width: i === selected ? "20px" : "6px", height: "6px", borderRadius: "3px", background: i === selected ? artist.accent : "rgba(255,255,255,0.25)", border: "none", cursor: "pointer", padding: 0, transition: "all 0.3s ease" }}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
+        {/* Blurb */}
+        <p style={{ fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.7)", margin: 0 }}>
+          {artist.tagline}
+        </p>
 
-          <div style={{ flex: 1, padding: "24px 24px", display: "flex", flexDirection: "column", gap: "18px" }}>
-            {/* Identity */}
-            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-              {!artist.heroUrl && (
-                <div style={{ width: "64px", height: "64px", borderRadius: "12px", background: artist.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 900, color: "#fff", flexShrink: 0 }}>
-                  {artist.initial}
-                </div>
-              )}
-              <div>
-                <div style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{artist.name}</div>
-                <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: artist.accent, marginTop: "4px" }}>{artist.genre}</div>
-              </div>
-            </div>
-
-            {/* Blurb */}
-            <p style={{ fontSize: "14px", lineHeight: 1.65, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-              {artist.tagline}
-            </p>
-
-            {/* Preview track */}
-            <div>
-              <div style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "10px" }}>
-                Preview
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {artist.tracks.map((t) => (
-                  <TrackPlayer key={t.title} track={t} accent={artist.accent} />
-                ))}
-              </div>
-            </div>
-
-            {/* CTA */}
-            <a
-              href={`/${artist.slug}`}
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: artist.accent, fontSize: "12px", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", textDecoration: "none", marginTop: "4px" }}
-            >
-              Full Artist Profile
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </a>
+        {/* Preview track */}
+        <div>
+          <div style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "8px" }}>
+            Preview
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {artist.tracks.map((t) => (
+              <TrackPlayer key={t.title} track={t} accent={artist.accent} />
+            ))}
           </div>
         </div>
+
+        {/* CTA */}
+        <a
+          href={`/${artist.slug}`}
+          style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: artist.accent, fontSize: "12px", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", textDecoration: "none", marginTop: "2px" }}
+        >
+          Full Artist Profile
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
       </div>
     </div>
   );
@@ -741,7 +707,7 @@ export default function WelcomePage() {
   const [pathSlide, setPathSlide] = useState(0);
   const [visible, setVisible] = useState(true);
   const [hovered, setHovered] = useState<Role | null>(null);
-  const [artistPanelOpen, setArtistPanelOpen] = useState(false);
+  const [fanArtistIndex, setFanArtistIndex] = useState(0);
   const [slideCity, setSlideCity] = useState(CITY_IMAGES[0]);
   const cityBg = useRandomCity();
 
@@ -929,15 +895,10 @@ export default function WelcomePage() {
                 )}
 
                 {currentSlide.isArtistSlide && (
-                  <button
-                    onClick={() => setArtistPanelOpen(true)}
-                    style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: currentSlide.accent, color: "#fff", border: "2px solid #000", borderRadius: "100px", padding: "14px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", cursor: "pointer", fontFamily: "inherit", marginBottom: "12px", transition: "transform 0.15s ease" }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.04)"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
-                  >
-                    See the Artists
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                  </button>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: currentSlide.accent, color: "#fff", border: "2px solid #000", borderRadius: "100px", padding: "10px 22px", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "12px" }}>
+                    Meet the launch artists
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  </div>
                 )}
 
                 {isLastSlide && currentSlide.cta && !currentSlide.isArtistSlide && (
@@ -1031,8 +992,13 @@ export default function WelcomePage() {
                       <CitySlideshow accent={currentSlide.accent} />
                     )}
 
+                    {/* fan-artists: inline artist browser (was a separate overlay panel) */}
+                    {currentSlide.isArtistSlide && (
+                      <InlineArtistBrowser selected={fanArtistIndex} onSelect={setFanArtistIndex} />
+                    )}
+
                     {/* All other roles: SlidePreview */}
-                    {role !== "label" && currentSlide.id !== "brand-audience" && (
+                    {role !== "label" && currentSlide.id !== "brand-audience" && !currentSlide.isArtistSlide && (
                       <SlidePreview slideId={currentSlide.id} accent={currentSlide.accent} />
                     )}
 
@@ -1085,10 +1051,6 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      {/* Artist panel overlay */}
-      {artistPanelOpen && (
-        <ArtistPanel onClose={() => setArtistPanelOpen(false)} />
-      )}
     </div>
     </SiteChrome>
   );
