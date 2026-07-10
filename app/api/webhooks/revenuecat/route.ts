@@ -7,7 +7,7 @@
 //
 // Configure this URL in RevenueCat > Project Settings > Integrations >
 // Webhooks, and set the same value there and in REVENUECAT_WEBHOOK_SECRET
-// as the Authorization header.
+// as the Authorization header. Configured 2026-07-10: webhook added in RevenueCat, REVENUECAT_WEBHOOK_SECRET set in Vercel.
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { creditLesars } from "@/lib/ledger";
