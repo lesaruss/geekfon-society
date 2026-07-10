@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GeekFon Society</string>
+    <string name="title_activity_main">GeekFon Society</string>
+    <string name="package_name">com.lesaruss.geekfon</string>
+    <string name="custom_url_scheme">com.lesaruss.geekfon</string>
+</resources>
