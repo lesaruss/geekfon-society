@@ -7,6 +7,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // Native-only functionality (RevenueCat purchases) is handled by
 // lib/revenuecat.ts, which no-ops on web via Capacitor.isNativePlatform().
 const config: CapacitorConfig = {
+  // Locked by Sean 2026-07-10. Do not change without a new App Store
+  // Connect / Play Console app listing - this is permanent once published.
   appId: 'com.lesaruss.geekfon',
   appName: 'GeekFon Society',
   webDir: 'mobile/www',
