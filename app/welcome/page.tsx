@@ -418,6 +418,8 @@ function ArtistPortraitGallery({ accent }: { accent: string }) {
           <button
             key={i}
             onClick={() => setPage(i)}
+            aria-label={`Show artists page ${i + 1} of ${totalPages}`}
+            aria-current={i === page}
             style={{ width: "7px", height: "7px", borderRadius: "50%", border: "none", background: i === page ? accent : "rgba(255,255,255,0.22)", cursor: "pointer", padding: 0, transition: "background 0.2s", flexShrink: 0 }}
           />
         ))}
@@ -457,10 +459,12 @@ function CitySlideshow({ accent = "#9C27B0" }: { accent?: string }) {
         <div style={{ fontSize: "20px", fontWeight: 900, color: "#fff", letterSpacing: "-0.01em" }}>{city.name}</div>
       </div>
       <div style={{ position: "absolute", top: "12px", right: "12px", display: "flex", gap: "5px" }}>
-        {CITY_DATA.map((_, i) => (
+        {CITY_DATA.map((c, i) => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
+            aria-label={`Show ${c.name}`}
+            aria-current={i === current}
             style={{ width: "5px", height: "5px", borderRadius: "50%", border: "none", background: i === current ? "#fff" : "rgba(255,255,255,0.3)", cursor: "pointer", padding: 0, transition: "background 0.2s" }}
           />
         ))}
@@ -496,29 +500,43 @@ function ArtistPanel({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Artist selector pills (4 launch artists) */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
-          {FEATURED.map((a, i) => (
-            <button
-              key={a.slug}
-              onClick={() => setSelected(i)}
+        {/* Artist selector dropdown (4 launch artists) */}
+        <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+          <label htmlFor="gfs-artist-select" style={{ display: "block", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>
+            Choose an artist
+          </label>
+          <div style={{ position: "relative" }}>
+            <select
+              id="gfs-artist-select"
+              value={selected}
+              onChange={(e) => setSelected(Number(e.target.value))}
               style={{
-                background: selected === i ? a.accent : "rgba(255,255,255,0.07)",
-                border: `1px solid ${selected === i ? a.accent : "rgba(255,255,255,0.1)"}`,
-                borderRadius: "20px",
-                padding: "7px 14px",
-                color: selected === i ? "#fff" : "rgba(255,255,255,0.6)",
-                fontSize: "11px",
+                width: "100%",
+                appearance: "none",
+                WebkitAppearance: "none",
+                background: "rgba(255,255,255,0.07)",
+                border: `1px solid ${artist.accent}`,
+                borderRadius: "10px",
+                padding: "12px 40px 12px 14px",
+                color: "#fff",
+                fontSize: "13px",
                 fontWeight: 800,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                fontFamily: "inherit",
                 cursor: "pointer",
-                transition: "all 0.15s",
               }}
             >
-              {a.name}
-            </button>
-          ))}
+              {FEATURED.map((a, i) => (
+                <option key={a.slug} value={i} style={{ background: "#0c0c1a", color: "#fff" }}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.5)", pointerEvents: "none" }}>
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </div>
         </div>
 
         {/* Artist detail */}
@@ -913,7 +931,7 @@ export default function WelcomePage() {
                 {currentSlide.isArtistSlide && (
                   <button
                     onClick={() => setArtistPanelOpen(true)}
-                    style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: currentSlide.accent, color: "#fff", border: "none", borderRadius: "100px", padding: "14px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", cursor: "pointer", fontFamily: "inherit", marginBottom: "12px", transition: "transform 0.15s ease" }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: currentSlide.accent, color: "#fff", border: "2px solid #000", borderRadius: "100px", padding: "14px 32px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.04em", cursor: "pointer", fontFamily: "inherit", marginBottom: "12px", transition: "transform 0.15s ease" }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.04)"; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
                   >
