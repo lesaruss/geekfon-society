@@ -86,22 +86,25 @@
 .card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:12px;padding:22px 24px;margin-bottom:14px}
 .card p{font-size:15px;color:var(--lr-text-75);line-height:1.75}
 @media(max-width:900px){
-  .body-layout{flex-direction:column;padding:0 16px}
+  /* Side padding matched to the onboarding tour's mobile padding (.tour-text-col /
+     .tour-right-col in app/welcome/page.tsx use 20px) so the margins feel the same
+     whether you're in the tour or on an artist's page - was 16px, felt tighter. */
+  .body-layout{flex-direction:column;padding:0 20px}
   .body-main{padding-right:0}
   .billboard{width:100%;position:static;padding-top:0;margin-top:40px}
   .bb-slot-tall{display:none}
-  .head-grid{display:flex;flex-direction:row;align-items:flex-start;gap:16px;padding:0 16px}
+  .head-grid{display:flex;flex-direction:row;align-items:flex-start;gap:16px;padding:0 20px}
   .head-art{width:100px;height:100px;min-height:unset;border-radius:12px;border:2px solid var(--rx);flex-shrink:0;object-position:top center}
   .head-art-fallback{width:100px;height:100px;min-height:unset;border-radius:12px;border:2px solid var(--rx);font-size:36px;flex-shrink:0}
   .head-meta{padding:0}
   .head-name{font-size:clamp(18px,5vw,28px)}
   .head-tagline{font-size:13px;margin-top:6px}
   .pill-row{margin-top:10px}
-  .head-topbar{padding:14px 16px 16px}
-  .tabbar{padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .head-topbar{padding:14px 20px 16px}
+  .tabbar{padding:0 20px;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tab{padding:14px 12px;font-size:12px}
 }
-.tabbar-mobile{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:2px solid var(--rx);padding:0 16px}
+.tabbar-mobile{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:2px solid var(--rx);padding:0 20px}
 .tabbar-drop-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 0;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--lr-text);background:none;border:none;cursor:pointer}
 .tabbar-drop-menu{position:absolute;left:-16px;right:-16px;top:100%;background:#fff;border-bottom:1px solid var(--lr-border);z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.09);margin-top:0}
 /* Overview tab */
