@@ -21,12 +21,12 @@ export const ALL_ACCESS_ENTITLEMENT =
 
 // Product identifiers for the three LESARs top-up packs. Match these exactly
 // to what's configured as non-subscription products in RevenueCat AND to the
-// PRICE_MAP/LESARS_MAP keys in app/api/checkout/route.ts, so both purchase
+// PRICE_MAP/LESARS_MAP keys in app/api/checkout/route.ts. Note: these use underscores, not the hyphenated plan names Stripe uses on web (pack-starter etc) - RevenueCat product identifiers cannot contain hyphens, only alphanumeric, periods, and underscores, so both purchase
 // paths (Stripe web, RevenueCat native) credit the same amounts.
 export const LESARS_PACK_PRODUCTS: Record<string, number> = {
-  "pack-starter": 500,
-  "pack-standard": 1000,
-  "pack-power": 5000,
+  "pack_starter": 500,
+  "pack_standard": 1000,
+  "pack_power": 5000,
 };
 
 let configured = false;
