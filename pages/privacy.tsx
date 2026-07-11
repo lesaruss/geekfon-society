@@ -117,105 +117,6 @@ export default function PrivacyPolicy() {
           color: rgba(232, 232, 232, 0.95) !important;
         }
 
-        /* Shared header styles from main site */
-        header.gtop {
-          position: relative;
-          z-index: 10;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background-color: rgb(26, 26, 26) !important;
-          height: 60px !important;
-          padding: 0 18px !important;
-          margin: 0 !important;
-        }
-
-        header.gtop a.glogo {
-          display: flex;
-          align-items: center;
-          text-decoration: none;
-          color: rgb(232, 232, 232);
-        }
-
-        header.gtop .gfs-logo {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        header.gtop .gfs-icon {
-          height: 32px;
-          width: auto;
-        }
-
-        header.gtop .gfs-word {
-          display: flex;
-          font-size: 1rem;
-          font-weight: 700;
-          letter-spacing: 0.05em;
-        }
-
-        header.gtop .gfs-geek {
-          color: rgb(255, 255, 255);
-        }
-
-        header.gtop .gfs-fon {
-          color: rgb(172, 253, 1);
-        }
-
-        header.gtop .gtop-right {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        header.gtop .gauth {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        header.gtop .glogin,
-        header.gtop .gcta {
-          text-decoration: none;
-          color: rgb(232, 232, 232);
-          font-size: 0.875rem;
-          cursor: pointer;
-          transition: color 0.2s;
-        }
-
-        header.gtop .gcta {
-          color: rgb(172, 253, 1);
-        }
-
-        header.gtop .glogin:hover,
-        header.gtop .gcta:hover {
-          opacity: 0.8;
-        }
-
-        header.gtop .gham {
-          display: none;
-          background: none;
-          border: none;
-          color: rgb(232, 232, 232);
-          cursor: pointer;
-          width: 32px;
-          height: 32px;
-          padding: 0;
-        }
-
-        @media (max-width: 768px) {
-          header.gtop .gauth {
-            display: none;
-          }
-
-          header.gtop .gham {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-        }
-
         footer {
           position: relative;
           z-index: 10;
@@ -231,29 +132,6 @@ export default function PrivacyPolicy() {
           color: rgba(232, 232, 232, 0.6) !important;
         }
       `}</style>
-
-      <header className="gtop">
-        <a href="/" className="glogo" aria-label="GeekFon Society home">
-          <span className="gfs-logo" aria-label="GeekFon Society">
-            <img src="/geekfon-logo.png" alt="" className="gfs-icon" aria-hidden="true" />
-            <span className="gfs-word">
-              <span className="gfs-geek">GEEK</span>
-              <span className="gfs-fon">FON</span>
-            </span>
-          </span>
-        </a>
-        <div className="gtop-right">
-          <div className="gauth">
-            <a href="/login.html" className="glogin">Log in</a>
-            <a href="/passport" className="gcta">Get Passport</a>
-          </div>
-          <button className="gham" aria-label="Open menu" aria-expanded="false">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 6h18M3 12h18M3 18h18"></path>
-            </svg>
-          </button>
-        </div>
-      </header>
 
       <main>
         <div>
