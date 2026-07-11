@@ -1,28 +1,56 @@
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'rgb(2, 12, 10)', color: 'rgb(232, 232, 232)', fontFamily: 'Montserrat, sans-serif' }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+      {/* Animated Background */}
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          backgroundImage: 'url("https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/city-backgrounds/orlando-desktop-cropped.png")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          animation: 'slideBackground 20s linear infinite',
+        }}
+      >
+        {/* Dark Overlay */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: 'rgba(2, 12, 10, 0.85)',
+        }}></div>
+      </div>
+
+      <style>{`
+        @keyframes slideBackground {
+          0% { background-position: center; }
+          50% { background-position: calc(center + 20px); }
+          100% { background-position: center; }
+        }
+      `}</style>
+
       {/* Header */}
-      <header className="border-b" style={{ borderColor: 'rgba(232, 232, 232, 0.1)' }}>
+      <header className="relative z-10 border-b" style={{ borderColor: 'rgba(232, 232, 232, 0.1)' }}>
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <a href="/" className="text-2xl font-bold tracking-wide">
+            <a href="/" className="text-2xl font-bold tracking-wide" style={{ color: 'rgb(232, 232, 232)' }}>
               <span style={{ color: '#f69820' }}>GEEK</span><span>FON</span>
             </a>
             <nav className="hidden sm:flex gap-8">
-              <a href="/#overview" className="text-sm hover:text-orange-400 transition-colors">Overview</a>
-              <a href="/roster" className="text-sm hover:text-orange-400 transition-colors">Roster</a>
-              <a href="/welcome" className="text-sm hover:text-orange-400 transition-colors">Tour</a>
+              <a href="/#overview" className="text-sm hover:text-orange-400 transition-colors" style={{ color: 'rgba(232, 232, 232, 0.8)' }}>Overview</a>
+              <a href="/roster" className="text-sm hover:text-orange-400 transition-colors" style={{ color: 'rgba(232, 232, 232, 0.8)' }}>Roster</a>
+              <a href="/welcome" className="text-sm hover:text-orange-400 transition-colors" style={{ color: 'rgba(232, 232, 232, 0.8)' }}>Tour</a>
             </nav>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="mb-2 text-5xl font-bold mb-8" style={{ color: '#f69820' }}>Privacy Policy</h1>
-        <p className="mb-8 text-sm" style={{ color: 'rgba(232, 232, 232, 0.7)' }}>Last updated: July 2026</p>
+      {/* Main Content - Centered */}
+      <main className="relative z-10 flex items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
+        <div className="max-w-3xl text-center">
+          <h1 className="text-5xl font-bold mb-2" style={{ color: '#f69820' }}>Privacy Policy</h1>
+          <p className="mb-12 text-sm" style={{ color: 'rgba(232, 232, 232, 0.7)' }}>Last updated: July 2026</p>
 
-        <div className="space-y-12">
+          <div className="space-y-12 text-left">
           <section>
             <h2 className="mb-4 text-2xl font-bold mb-6" style={{ color: '#f69820' }}>1. Introduction</h2>
             <p style={{ lineHeight: '1.7', color: 'rgba(232, 232, 232, 0.9)' }}>
@@ -148,14 +176,13 @@ export default function PrivacyPolicy() {
               <p style={{ color: 'rgba(232, 232, 232, 0.85)' }}>Website: https://geekfon.ai</p>
             </div>
           </section>
+          </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="mt-20 border-t py-8" style={{ borderColor: 'rgba(232, 232, 232, 0.1)' }}>
-        <div className="mx-auto max-w-6xl px-4 text-center text-sm" style={{ color: 'rgba(232, 232, 232, 0.6)' }}>
-          <p>&copy; 2024 LESARUSS Inc. All rights reserved.</p>
-        </div>
+      <footer className="relative z-10 border-t py-8 text-center" style={{ borderColor: 'rgba(232, 232, 232, 0.1)', color: 'rgba(232, 232, 232, 0.6)' }}>
+        <p className="text-sm">&copy; 2024 LESARUSS Inc. All rights reserved.</p>
       </footer>
     </div>
   );
