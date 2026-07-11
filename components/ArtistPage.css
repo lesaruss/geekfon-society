@@ -1,2 +1,8 @@
 
 .apg{max-width:none;margin:0;padding:0 0 80p
+
+/* Tablet: Full-width music section */
+@media(max-width: 900px) {
+  .card { padding: 22px 0; }
+  .track { padding: 13px 0; }
+}
