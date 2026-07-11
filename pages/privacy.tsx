@@ -132,57 +132,123 @@ export default function PrivacyPolicy() {
           color: rgba(232, 232, 232, 0.6) !important;
         }
 
-        /* Minimal header - ensures nav is always visible */
-        .privacy-header {
-          background-color: rgb(26, 26, 26) !important;
-          padding: 1rem 1.125rem !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: space-between !important;
-          position: relative !important;
-          z-index: 10 !important;
+        /* Exact header styles from main site */
+        header.gtop {
+          background-color: rgb(26, 26, 26);
+          height: 60px;
+          padding: 0 18px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
         }
 
-        .privacy-header a {
-          color: rgb(232, 232, 232) !important;
-          text-decoration: none !important;
-          font-weight: 700 !important;
-          font-size: 0.875rem !important;
+        header.gtop a.glogo {
+          display: flex;
+          align-items: center;
+          text-decoration: none;
         }
 
-        .privacy-header .logo-link {
-          font-size: 1rem !important;
+        header.gtop .gfs-logo {
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
 
-        .privacy-header nav {
-          display: flex !important;
-          gap: 2rem !important;
+        header.gtop .gfs-icon {
+          height: 32px;
         }
 
-        .privacy-header nav a {
-          font-size: 0.875rem !important;
-          transition: opacity 0.2s !important;
+        header.gtop .gfs-word {
+          display: flex;
+          font-size: 20px;
+          font-weight: 900;
+          letter-spacing: 0.02em;
         }
 
-        .privacy-header nav a:hover {
-          opacity: 0.7 !important;
+        header.gtop .gfs-geek {
+          color: rgb(255, 255, 255);
         }
 
-        @media (max-width: 640px) {
-          .privacy-header nav {
-            display: none !important;
+        header.gtop .gfs-fon {
+          color: rgb(187, 59, 162);
+        }
+
+        header.gtop .gtop-right {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        header.gtop .gauth {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        header.gtop .glogin,
+        header.gtop .gcta {
+          text-decoration: none;
+          color: rgb(232, 232, 232);
+          font-size: 0.875rem;
+          cursor: pointer;
+        }
+
+        header.gtop .gcta {
+          color: rgb(187, 59, 162);
+        }
+
+        header.gtop .gham {
+          display: none;
+          background: none;
+          border: none;
+          color: rgb(232, 232, 232);
+          cursor: pointer;
+          width: 32px;
+          height: 32px;
+          padding: 0;
+        }
+
+        header.gtop .gham svg {
+          width: 24px;
+          height: 24px;
+          stroke: currentColor;
+          stroke-width: 2;
+        }
+
+        @media (max-width: 768px) {
+          header.gtop .gauth {
+            display: none;
+          }
+          header.gtop .gham {
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
         }
       `}</style>
 
-      <div className="privacy-header">
-        <a href="/" className="logo-link">← GeekFon</a>
-        <nav>
-          <a href="/#overview">Overview</a>
-          <a href="/roster">Roster</a>
-          <a href="/welcome">Tour</a>
-        </nav>
-      </div>
+      <header className="gtop">
+        <a href="/" className="glogo" aria-label="GeekFon Society home">
+          <span className="gfs-logo" aria-label="GeekFon Society">
+            <img src="/geekfon-logo.png" alt="" className="gfs-icon" aria-hidden="true" />
+            <span className="gfs-word">
+              <span className="gfs-geek">GEEK</span>
+              <span className="gfs-fon">FON</span>
+            </span>
+          </span>
+        </a>
+        <div className="gtop-right">
+          <div className="gauth">
+            <a href="/login.html" className="glogin">Log in</a>
+            <a href="/passport" className="gcta">Get Passport</a>
+          </div>
+          <button className="gham" aria-label="Open menu" aria-expanded="false">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 6h18M3 12h18M3 18h18"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
 
       <main>
         <div>
