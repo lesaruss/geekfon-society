@@ -131,7 +131,58 @@ export default function PrivacyPolicy() {
           font-size: 0.875rem !important;
           color: rgba(232, 232, 232, 0.6) !important;
         }
+
+        /* Minimal header - ensures nav is always visible */
+        .privacy-header {
+          background-color: rgb(26, 26, 26) !important;
+          padding: 1rem 1.125rem !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          position: relative !important;
+          z-index: 10 !important;
+        }
+
+        .privacy-header a {
+          color: rgb(232, 232, 232) !important;
+          text-decoration: none !important;
+          font-weight: 700 !important;
+          font-size: 0.875rem !important;
+        }
+
+        .privacy-header .logo-link {
+          font-size: 1rem !important;
+        }
+
+        .privacy-header nav {
+          display: flex !important;
+          gap: 2rem !important;
+        }
+
+        .privacy-header nav a {
+          font-size: 0.875rem !important;
+          transition: opacity 0.2s !important;
+        }
+
+        .privacy-header nav a:hover {
+          opacity: 0.7 !important;
+        }
+
+        @media (max-width: 640px) {
+          .privacy-header nav {
+            display: none !important;
+          }
+        }
       `}</style>
+
+      <div className="privacy-header">
+        <a href="/" className="logo-link">← GeekFon</a>
+        <nav>
+          <a href="/#overview">Overview</a>
+          <a href="/roster">Roster</a>
+          <a href="/welcome">Tour</a>
+        </nav>
+      </div>
 
       <main>
         <div>
