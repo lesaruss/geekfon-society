@@ -73,9 +73,14 @@ export type ArtistContent = {
 
 const TABS: { key: string; label: string; admin?: boolean }[] = [
   { key: "music",    label: "Music" },
-  { key: "news",     label: "News" },
   { key: "pulse",    label: "Pulse" },
   { key: "brief",    label: "Brief", admin: true },
+];
+
+const PULSE_CHANNELS: { key: "news" | "social" | "groupchat"; label: string; locked?: boolean }[] = [
+  { key: "news",      label: "News" },
+  { key: "social",    label: "Social" },
+  { key: "groupchat", label: "Group Chat", locked: true },
 ];
 
 const PLAY = <svg viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4" /></svg>;
@@ -367,6 +372,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [tab, setTab] = useState(() => {
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("tab");
+      // "news" used to be its own top-level tab; it now lives inside Pulse as a channel.
+      if (p === "news") return "pulse";
       if (p) return p;
     }
     return "music";
@@ -394,6 +401,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [topUpLoading, setTopUpLoading] = useState(false);
   const [topUpError, setTopUpError] = useState<string | null>(null);
   const [pulseShown, setPulseShown] = useState(3);
+  const [pulseChannel, setPulseChannel] = useState<"news" | "social" | "groupchat">("news");
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
   const [lyricsLang, setLyricsLang] = useState<"original" | "en">("en");
@@ -921,95 +929,120 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   </a>
                 </div>
               ) : (
-              <>{/* Pulse tab - social feed */}
+              <>{/* Pulse tab - merged News + Social + Group Chat channels */}
               {tab === "pulse" && (
                 <section className="pulse-section">
-                  {!c.pulse || c.pulse.length === 0 ? (
-                    <div className="pulse-empty"><p>Posts coming soon.</p></div>
-                  ) : (
-                    <div className="pulse-container">
-                      {((c.pulse || []).slice(0, pulseShown)).map((post, i) => {
-                        const rawMedia = post.media || post.videoUrl || post.thumb;
-                        const mediaUrl = rawMedia ? (rawMedia.startsWith('http') ? rawMedia : MEDIA + rawMedia) : null;
-                        const eng = post.engagement || {};
-                        const likes = eng.likes ?? post.likes ?? 0;
-                        const comments = eng.comments ?? post.comments ?? 0;
-                        const shares = eng.shares ?? post.shares ?? 0;
-                        const dateStr = post.timestamp
-                          ? new Date(post.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                          : (post.date || 'Recent');
-                        const body = post.text || post.caption;
-                        const hideMedia = (e: SyntheticEvent<HTMLElement>) => {
-                          const box = e.currentTarget.closest('.pulse-media, .pulse-voice') as HTMLElement | null;
-                          if (box) box.style.display = 'none';
-                        };
-                        return (
-                        <div key={post.id || i} className="pulse-card">
-                          <div className="pulse-card-header">
-                            <div className="pulse-card-meta">
-                              {c.heroUrl ? <img src={c.heroUrl} alt={name} className="pulse-avatar" /> : <div className="pulse-avatar-init">{name.charAt(0)}</div>}
-                              <div><h4>{name}</h4><p className="pulse-date">{dateStr}</p></div>
-                            </div>
-                            {post.type && <span className="pulse-badge">{post.type}{post.memberOnly ? ' · members' : ''}</span>}
-                          </div>
-                          <div className="pulse-card-body">
-                            {body && <p className="pulse-text">{body}</p>}
-                            {mediaUrl && post.type === 'video' && (
-                              <div className="pulse-media pulse-media-video"><video src={mediaUrl} poster={post.thumb || undefined} controls playsInline preload="metadata" onError={hideMedia} /></div>
-                            )}
-                            {mediaUrl && post.type === 'photo' && (
-                              <div className="pulse-media"><img src={mediaUrl} alt="" onError={hideMedia} /></div>
-                            )}
-                            {mediaUrl && post.type === 'voice' && (
-                              <div className="pulse-voice"><audio src={mediaUrl} controls preload="metadata" onError={hideMedia} />{post.duration && <span className="pulse-voice-dur">{post.duration}</span>}</div>
-                            )}
-                          </div>
-                          <div className="pulse-stats">
-                            <span className="pulse-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>{likes.toLocaleString()}</span>
-                            <span className="pulse-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg>{comments.toLocaleString()}</span>
-                            <span className="pulse-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>{shares.toLocaleString()}</span>
-                          </div>
-                        </div>
-                        );
-                      })}
-                      {c.pulse && c.pulse.length > pulseShown && (
-                        <div className="pulse-load-container">
-                          <button className="pulse-load-btn" onClick={() => setPulseShown(n => n + 3)}>Load more</button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </section>
-              )}
-{tab === "news" && (
-                <section className="panel">
-                  <div className="pulse-articles-grid">
-                    {pulseArticles.map((n, i) => (
-                      <div key={i} className="pulse-article-card">
-                        <a href={n.href || "#"} className="pf-article-img">
-                          {n.thumb
-                            ? <img src={n.thumb} alt={n.title || ""} />
-                            : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
-                          }
-                          {n.videoUrl && (
-                            <span className="article-play-badge" aria-hidden="true">
-                              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                            </span>
-                          )}
-                          {n.tag && <span className="article-tag">{n.tag}</span>}
-                        </a>
-                        <div className="pf-article-body">
-                          {n.date && <div className="pf-article-date">{n.date}</div>}
-                          {n.title && <a href={n.href || "#"} className="pf-article-title pf-article-title-link">{n.title}</a>}
-                          {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
-                          <a href={n.href || "#"} className="article-cta">
-                            Read more
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                          </a>
-                        </div>
-                      </div>
+                  <div className="channel-row" role="tablist" aria-label="Pulse channel">
+                    {PULSE_CHANNELS.map(ch => (
+                      <button
+                        key={ch.key}
+                        className="channel-btn"
+                        aria-selected={pulseChannel === ch.key}
+                        disabled={ch.locked}
+                        title={ch.locked ? "Ships when Group Chat launches" : undefined}
+                        onClick={() => !ch.locked && setPulseChannel(ch.key)}
+                      >
+                        {ch.label}
+                        {ch.locked && <span className="channel-soon">Coming Soon</span>}
+                      </button>
                     ))}
                   </div>
+
+                  {pulseChannel === "news" && (
+                    <div className="pulse-articles-grid">
+                      {pulseArticles.map((n, i) => (
+                        <div key={i} className="pulse-article-card">
+                          <a href={n.href || "#"} className="pf-article-img">
+                            {n.thumb
+                              ? <img src={n.thumb} alt={n.title || ""} />
+                              : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
+                            }
+                            {n.videoUrl && (
+                              <span className="article-play-badge" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                              </span>
+                            )}
+                            {n.tag && <span className="article-tag">{n.tag}</span>}
+                          </a>
+                          <div className="pf-article-body">
+                            {n.date && <div className="pf-article-date">{n.date}</div>}
+                            {n.title && <a href={n.href || "#"} className="pf-article-title pf-article-title-link">{n.title}</a>}
+                            {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
+                            <a href={n.href || "#"} className="article-cta">
+                              Read more
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {pulseChannel === "social" && (
+                    !c.pulse || c.pulse.length === 0 ? (
+                      <div className="pulse-empty"><p>Posts coming soon.</p></div>
+                    ) : (
+                      <div className="pulse-container">
+                        {((c.pulse || []).slice(0, pulseShown)).map((post, i) => {
+                          const rawMedia = post.media || post.videoUrl || post.thumb;
+                          const mediaUrl = rawMedia ? (rawMedia.startsWith('http') ? rawMedia : MEDIA + rawMedia) : null;
+                          const eng = post.engagement || {};
+                          const likes = eng.likes ?? post.likes ?? 0;
+                          const comments = eng.comments ?? post.comments ?? 0;
+                          const shares = eng.shares ?? post.shares ?? 0;
+                          const dateStr = post.timestamp
+                            ? new Date(post.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            : (post.date || 'Recent');
+                          const body = post.text || post.caption;
+                          const hideMedia = (e: SyntheticEvent<HTMLElement>) => {
+                            const box = e.currentTarget.closest('.pulse-media, .pulse-voice') as HTMLElement | null;
+                            if (box) box.style.display = 'none';
+                          };
+                          return (
+                          <div key={post.id || i} className="pulse-card">
+                            <div className="pulse-card-header">
+                              <div className="pulse-card-meta">
+                                {c.heroUrl ? <img src={c.heroUrl} alt={name} className="pulse-avatar" /> : <div className="pulse-avatar-init">{name.charAt(0)}</div>}
+                                <div><h4>{name}</h4><p className="pulse-date">{dateStr}</p></div>
+                              </div>
+                              {post.type && <span className="pulse-badge">{post.type}{post.memberOnly ? ' · members' : ''}</span>}
+                            </div>
+                            <div className="pulse-card-body">
+                              {body && <p className="pulse-text">{body}</p>}
+                              {mediaUrl && post.type === 'video' && (
+                                <div className="pulse-media pulse-media-video"><video src={mediaUrl} poster={post.thumb || undefined} controls playsInline preload="metadata" onError={hideMedia} /></div>
+                              )}
+                              {mediaUrl && post.type === 'photo' && (
+                                <div className="pulse-media"><img src={mediaUrl} alt="" onError={hideMedia} /></div>
+                              )}
+                              {mediaUrl && post.type === 'voice' && (
+                                <div className="pulse-voice"><audio src={mediaUrl} controls preload="metadata" onError={hideMedia} />{post.duration && <span className="pulse-voice-dur">{post.duration}</span>}</div>
+                              )}
+                            </div>
+                            <div className="pulse-stats">
+                              <span className="pulse-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>{likes.toLocaleString()}</span>
+                              <span className="pulse-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg>{comments.toLocaleString()}</span>
+                              <span className="pulse-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>{shares.toLocaleString()}</span>
+                            </div>
+                          </div>
+                          );
+                        })}
+                        {c.pulse && c.pulse.length > pulseShown && (
+                          <div className="pulse-load-container">
+                            <button className="pulse-load-btn" onClick={() => setPulseShown(n => n + 3)}>Load more</button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
+
+                  {pulseChannel === "groupchat" && (
+                    <div className="locked-panel">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                      <div className="lp-title">Group Chat is coming soon</div>
+                      <p className="lp-sub">Live chat with {name} and other members lands here once Group Chat ships across GeekFon Society.</p>
+                    </div>
+                  )}
                 </section>
               )}
 
