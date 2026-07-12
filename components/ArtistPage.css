@@ -573,3 +573,32 @@
 .art-section-head{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;color:var(--lr-text);margin:32px 0 12px}
 .art-q{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:var(--lr-text-50);margin:28px 0 2px}
 .art-a{font-size:15px;line-height:1.8;color:var(--lr-text);margin:0 0 4px;padding:14px 18px;background:rgba(0,0,0,.035);border-radius:10px;border-left:3px solid var(--rx,#c084fc)}
+
+
+/* Members tab - card grid + card-back lightbox */
+.member-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px}
+.member-card{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:16px;padding:0;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;text-align:left;font-family:inherit;width:100%}
+.member-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.10)}
+.member-card:focus-visible{outline:2px solid var(--rx);outline-offset:2px}
+.member-thumb,.member-thumb-img{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:60px;font-weight:900;color:#fff;width:100%;object-fit:cover}
+.member-info{padding:16px 18px 18px}
+.member-name{font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;margin:0}
+.member-role{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--rx-text);margin:4px 0 8px}
+.member-hook{font-size:13px;color:var(--lr-text-75);margin:0;line-height:1.5}
+.member-tapcue{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--lr-text-30);margin-top:10px}
+
+.card-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.card-modal{background:#fff;border-radius:20px;max-width:420px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.22);overflow:hidden}
+.card-close{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.06);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#555;padding:0;z-index:2}
+.card-close svg{width:14px;height:14px}
+.card-close:hover{background:rgba(0,0,0,.1)}
+.card-close:focus-visible{outline:2px solid var(--rx);outline-offset:2px}
+.card-back-band{height:88px;display:flex;align-items:center;padding:0 28px}
+.card-back-band .cb-name{font-size:22px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:-.01em}
+.card-back-body{padding:22px 28px 28px}
+.cb-role{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--rx-text);margin-bottom:4px}
+.cb-position{font-size:13px;color:var(--lr-text-50);font-weight:700;margin-bottom:18px}
+.cb-traits{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.cb-trait{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:5px 11px;border-radius:20px;background:var(--rx-tint);color:var(--rx-text)}
+.cb-quote{font-size:16px;font-weight:700;color:var(--lr-text);line-height:1.5;margin:0 0 14px;font-style:italic}
+.cb-detail{font-size:13px;color:var(--lr-text-75);line-height:1.65;margin:0}
