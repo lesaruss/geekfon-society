@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import ArtistPage from "@/components/ArtistPage";
 import type { ArtistContent } from "@/components/ArtistPage";
 
+// force-dynamic: prevents stale full-route-cache serving pre-fix breadcrumb output (2026-07-12)
+export const dynamic = "force-dynamic";
+
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
 const ARTIST_CITY: Record<string, { desktop: string; mobile: string }> = {
