@@ -52,6 +52,7 @@ export default async function ArticleDetailPage({ params }: Props) {
       content={result.content}
       cityBg={cityBg}
       activeArticle={result.article as Parameters<typeof ArtistPage>[0]["activeArticle"]}
+      slug={artist}
     />
   );
 }
