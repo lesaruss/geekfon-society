@@ -874,7 +874,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 {visibleTabs.map(t => (
                   <button key={t.key} className="tab" aria-selected={tab === t.key} onClick={() => {
                     if (activeArticle) {
-                      const artistSlug = typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "";
+                      const artistSlug = slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "");
                       window.location.href = `/${artistSlug}?tab=${t.key}`;
                     } else {
                       setTab(t.key);
@@ -897,7 +897,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   <nav className="art-crumb">
                     <a href="/" className="art-crumb-link">GeekFon Society</a>
                     <span className="art-crumb-sep">›</span>
-                    <a href={`/${typeof window !== "undefined" ? window.location.pathname.split("/")[1] : ""}`} className="art-crumb-link">{c.name || ""}</a>
+                    <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-crumb-link">{c.name || ""}</a>
                     <span className="art-crumb-sep">›</span>
                     <span className="art-crumb-cur">{activeArticle.title}</span>
                   </nav>
@@ -923,7 +923,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       return <p key={i}>{lines.map((line: string, j: number) => <span key={j}>{line}{j < lines.length - 1 ? <br /> : null}</span>)}</p>;
                     })}
                   </div>
-                  <a href={typeof window !== "undefined" ? "/" + window.location.pathname.split("/")[1] : "/"} className="art-back">
+                  <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-back">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16}}><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
                     Back to {c.name || "Artist"}
                   </a>
