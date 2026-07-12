@@ -1,21 +1,10 @@
-:global(:root) {
-  --bg: #020c0a;
-  --surface: #0d1c14;
-  --orange: #F69820;
-  --green: #3ecf8e;
-  --text: #e8e8e8;
-  --muted: rgba(232, 232, 232, 0.5);
-  --border: rgba(246, 152, 32, 0.18);
-  --error: #ff6b6b;
-}
-
 .container {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--bg);
+  background-color: var(--auth-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,7 +75,7 @@
   max-width: 400px;
   padding: 40px;
   background: rgba(13, 28, 20, 0.8);
-  border: 1px solid var(--border);
+  border: 1px solid var(--auth-border);
   border-radius: 12px;
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -101,7 +90,7 @@
   font-weight: 900;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: var(--orange);
+  color: var(--auth-orange);
   margin-bottom: 12px;
 }
 
@@ -118,7 +107,7 @@
 .cardBody {
   font-size: 13px;
   font-weight: 400;
-  color: var(--muted);
+  color: var(--auth-muted);
   line-height: 1.65;
   margin-bottom: 28px;
 }
@@ -157,17 +146,17 @@
 }
 
 .inputField:focus {
-  border-color: var(--orange);
+  border-color: var(--auth-orange);
   box-shadow: 0 0 0 3px rgba(246, 152, 32, 0.2);
 }
 
 .inputField:focus-visible {
-  outline: 2px solid var(--orange);
+  outline: 2px solid var(--auth-orange);
   outline-offset: 2px;
 }
 
 .inputField[aria-invalid='true'] {
-  border-color: var(--error);
+  border-color: var(--auth-error);
   box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
 }
 
@@ -185,7 +174,7 @@
 
 .error {
   display: block;
-  color: var(--error);
+  color: var(--auth-error);
   font-size: 12px;
   font-weight: 600;
   padding: 10px 12px;
@@ -196,7 +185,7 @@
 }
 
 .errorMessage {
-  color: var(--error);
+  color: var(--auth-error);
   font-size: 11px;
   font-weight: 600;
   margin-top: 4px;
@@ -207,7 +196,7 @@
   width: 100%;
   padding: 12px;
   margin-top: 20px;
-  background: var(--orange);
+  background: var(--auth-orange);
   color: #000;
   border: none;
   border-radius: 8px;
@@ -268,14 +257,14 @@
 
 .formNote {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--auth-muted);
   text-align: center;
   line-height: 1.5;
   margin-top: 16px;
 }
 
 .formNote a {
-  color: var(--orange);
+  color: var(--auth-orange);
   text-decoration: none;
   font-weight: 600;
 }
@@ -296,7 +285,7 @@
 .sentBody {
   font-size: 13px;
   font-weight: 400;
-  color: var(--muted);
+  color: var(--auth-muted);
   line-height: 1.65;
   margin-bottom: 12px;
 }
@@ -309,7 +298,7 @@
   padding: 8px 12px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--orange);
+  color: var(--auth-orange);
   margin-bottom: 20px;
   word-break: break-all;
 }
@@ -341,7 +330,7 @@
 }
 
 .resendBtn:focus-visible {
-  outline: 2px solid var(--orange);
+  outline: 2px solid var(--auth-orange);
   outline-offset: 2px;
   border-radius: 2px;
 }
