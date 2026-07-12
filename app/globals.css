@@ -4,6 +4,8 @@
   --lr-text:#1a1a1a;--lr-text-75:rgba(26,26,26,0.78);--lr-text-50:rgba(26,26,26,0.55);--lr-text-30:rgba(26,26,26,0.35);
   --lr-orange:#F69820;--lr-orange-text:#7d4a00;
   --rx:#E91E8C;--rx-text:#9c1458;--rx-tint:rgba(233,30,140,0.10);
+  --auth-bg:#020c0a;--auth-surface:#0d1c14;--auth-orange:#F69820;--auth-green:#3ecf8e;
+  --auth-text:#e8e8e8;--auth-muted:rgba(232,232,232,0.5);--auth-border:rgba(246,152,32,0.18);--auth-error:#ff6b6b;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
