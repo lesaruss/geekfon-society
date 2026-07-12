@@ -292,6 +292,17 @@
 .cat td{padding:9px 10px;border-bottom:1px solid var(--lr-border);color:var(--lr-text-75)}
 .cat td.song{font-weight:700;color:var(--lr-text)}
 
+/* ---- Pulse channel sub-nav (News / Social / Group Chat) ---- */
+.channel-row{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.channel-btn{font-family:inherit;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:10px 18px;border-radius:100px;border:1.5px solid var(--lr-border);background:#fff;color:var(--lr-text-50);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.channel-btn[aria-selected="true"]{border-color:var(--rx);background:var(--rx-tint);color:var(--rx-text)}
+.channel-btn:disabled{opacity:.45;cursor:not-allowed}
+.channel-soon{font-size:9px;font-weight:900;background:rgba(0,0,0,.06);color:var(--lr-text-50);padding:2px 6px;border-radius:8px;margin-left:2px}
+.locked-panel{max-width:560px;text-align:center;padding:60px 24px;border:1.5px dashed var(--lr-border);border-radius:14px;color:var(--lr-text-50)}
+.locked-panel svg{width:32px;height:32px;stroke:var(--lr-text-30);margin-bottom:14px}
+.locked-panel .lp-title{font-size:15px;font-weight:800;color:var(--lr-text);margin-bottom:6px}
+.locked-panel .lp-sub{font-size:13px;line-height:1.6;max-width:360px;margin:0 auto}
+
 /* ---- Pulse Feed ---- */
 .pulse-feed{display:flex;flex-direction:column;gap:20px}
 /* Article grid */
