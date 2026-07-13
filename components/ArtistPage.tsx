@@ -390,7 +390,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [audioDuration, setAudioDuration] = useState<Record<string, number>>({});
   const [playingV, setPlayingV] = useState<string | null>(null);
   const [bbSlot, setBbSlot] = useState(0);
-  const [selectedMember, setSelectedMember] = useState<number | null>(null);
+  const [flippedMembers, setFlippedMembers] = useState<Set<number>>(new Set());
   const [isMobile, setIsMobile] = useState(false);
   const [tabDropOpen, setTabDropOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -1053,26 +1053,52 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 <section className="members-section">
                   <div className="bsec">The Band</div>
                   <div className="member-grid">
-                    {(c.members || []).map((m, i) => (
-                      <button
-                        type="button"
-                        key={m.name || i}
-                        className="member-card"
-                        onClick={() => setSelectedMember(i)}
-                      >
-                        {m.img ? (
-                          <img src={m.img.startsWith('http') ? m.img : MEDIA + m.img} alt={m.name} className="member-thumb-img" />
-                        ) : (
-                          <div className="member-thumb" style={{ background: m.color || c.accent || "var(--rx)" }}>{m.initial || m.name?.charAt(0)}</div>
-                        )}
-                        <div className="member-info">
-                          <p className="member-name">{m.name}</p>
-                          {m.role && <p className="member-role">{m.role}</p>}
-                          {m.hook && <p className="member-hook">{m.hook}</p>}
-                          <p className="member-tapcue">Tap to flip &rarr;</p>
-                        </div>
-                      </button>
-                    ))}
+                    {(c.members || []).map((m, i) => {
+                      const color = m.color || c.accent || "var(--rx)";
+                      const isFlipped = flippedMembers.has(i);
+                      return (
+                        <button
+                          type="button"
+                          key={m.name || i}
+                          className={"member-card" + (isFlipped ? " is-flipped" : "")}
+                          aria-pressed={isFlipped}
+                          onClick={() => setFlippedMembers(prev => {
+                            const next = new Set(prev);
+                            if (next.has(i)) next.delete(i); else next.add(i);
+                            return next;
+                          })}
+                        >
+                          <div className="member-card-inner">
+                            <div className="member-card-face member-card-front">
+                              {m.img ? (
+                                <img src={m.img.startsWith('http') ? m.img : MEDIA + m.img} alt={m.name} className="member-thumb-img" />
+                              ) : (
+                                <div className="member-thumb" style={{ background: color }}>{m.initial || m.name?.charAt(0)}</div>
+                              )}
+                              <div className="member-info">
+                                <p className="member-name">{m.name}</p>
+                                {m.role && <p className="member-role">{m.role}</p>}
+                                {m.hook && <p className="member-hook">{m.hook}</p>}
+                                <p className="member-tapcue">Tap to flip &rarr;</p>
+                              </div>
+                            </div>
+                            <div className="member-card-face member-card-back" style={{ background: color }}>
+                              <div className="mcb-name">{m.name}</div>
+                              {m.role && <div className="mcb-role">{m.role}</div>}
+                              {m.position && <div className="mcb-position">{m.position}</div>}
+                              {m.traits && m.traits.length > 0 && (
+                                <div className="mcb-traits">
+                                  {m.traits.map(t => <span key={t} className="mcb-trait">{t}</span>)}
+                                </div>
+                              )}
+                              {m.quote && <p className="mcb-quote">&quot;{m.quote}&quot;</p>}
+                              {m.detail && <p className="mcb-detail">{m.detail}</p>}
+                              <p className="mcb-tapcue">&larr; Tap to flip back</p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </section>
               )}
@@ -1676,35 +1702,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
           <span><strong>{purchaseSuccess}</strong> purchased successfully.</span>
         </div>
       )}
-
-      {/* Member card-back lightbox */}
-      {selectedMember !== null && c.members?.[selectedMember] && (() => {
-        const m = c.members[selectedMember];
-        const color = m.color || c.accent || "var(--rx)";
-        return (
-          <div className="card-overlay" role="dialog" aria-modal="true" aria-labelledby="cardName" onClick={() => setSelectedMember(null)}>
-            <div className="card-modal" onClick={e => e.stopPropagation()}>
-              <button className="card-close" onClick={() => setSelectedMember(null)} aria-label="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-              <div className="card-back-band" style={{ background: color }}>
-                <span className="cb-name" id="cardName">{m.name}</span>
-              </div>
-              <div className="card-back-body">
-                {m.role && <div className="cb-role">{m.role}</div>}
-                {m.position && <div className="cb-position">{m.position}</div>}
-                {m.traits && m.traits.length > 0 && (
-                  <div className="cb-traits">
-                    {m.traits.map(t => <span key={t} className="cb-trait">{t}</span>)}
-                  </div>
-                )}
-                {m.quote && <p className="cb-quote">&quot;{m.quote}&quot;</p>}
-                {m.detail && <p className="cb-detail">{m.detail}</p>}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
     </div>
   );
