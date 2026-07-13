@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-// roster page - 4-col desktop (4 live + 9 full-color preview), 2-col mobile
+// roster page - 4-col desktop, 2-col mobile, all 13 artists live (V excluded per canon)
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -52,27 +52,13 @@ const CITIES = [
 const SUPA = "https://fwbhwfxpncrsfhttimna.supabase.co";
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA";
 
-// Live artists
-const ARTIST_ORDER = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
-
-// Preview artists — full color, not yet activated (no click-through, no NOW LIVE badge).
-// Previously split into a grayed-out "ghost" set and a full-color "preview" set;
-// Sean asked (2026-07-13) for all of them to be full color, so they're one list now.
-const PREVIEW_ORDER = [
+// Live artists - all 13 (V is administrative, not a performing artist, and stays out
+// of the roster entirely per Sean 2026-07-13).
+const ARTIST_ORDER = [
+  "roxanne", "lex-from-brixton", "shamanic-resin", "riku",
   "straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings",
   "lord-zorlot", "vuka", "lickle-bro", "lickle-sis", "mr-russell",
 ];
-const PREVIEW_NAMES: Record<string, string> = {
-  "straight-and-narrow": "Straight and Narrow",
-  "nilo-wave":           "Nilo Wave",
-  "rustblood-prophets":  "Rustblood Prophets",
-  "mad-tings":           "Mad Tings",
-  "lord-zorlot":         "Lord Zorlot",
-  "vuka":                "Vuka",
-  "lickle-bro":          "Lickle Bro",
-  "lickle-sis":          "Lickle Sis",
-  "mr-russell":          "Mr. Russell",
-};
 
 type Artist = {
   slug: string;
@@ -87,15 +73,15 @@ type Artist = {
 
 export default function RosterPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [previewArtists, setPreviewArtists] = useState<Artist[]>([]);
   const [current, setCurrent] = useState(0);
   const currentRef = useRef(0);
   const cityPanelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    const slugList = ARTIST_ORDER.map(s => `"${s}"`).join(",");
     fetch(
-      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=in.("roxanne","lex-from-brixton","shamanic-resin","riku")`,
+      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=in.(${slugList})`,
       { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } }
     )
       .then((r) => r.json())
@@ -105,30 +91,6 @@ export default function RosterPage() {
         setArtists(ordered);
       })
       .catch(() => {});
-  }, []);
-
-  // Fetch preview artists from DB — full color, not yet activated
-  useEffect(() => {
-    const slugList = PREVIEW_ORDER.map(s => `"${s}"`).join(",");
-    fetch(
-      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=in.(${slugList})`,
-      { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } }
-    )
-      .then((r) => r.json())
-      .then((data: Artist[]) => {
-        if (!Array.isArray(data)) {
-          setPreviewArtists(PREVIEW_ORDER.map(s => ({ slug: s, name: PREVIEW_NAMES[s], profile: {} })));
-          return;
-        }
-        const ordered = PREVIEW_ORDER.map(s => {
-          const found = data.find(a => a.slug === s);
-          return found || { slug: s, name: PREVIEW_NAMES[s], profile: {} };
-        });
-        setPreviewArtists(ordered);
-      })
-      .catch(() => {
-        setPreviewArtists(PREVIEW_ORDER.map(s => ({ slug: s, name: PREVIEW_NAMES[s], profile: {} })));
-      });
   }, []);
 
   const goTo = useCallback((next: number) => {
@@ -211,33 +173,6 @@ export default function RosterPage() {
     );
   }
 
-  // Full color, not yet activated: real art (or a colored initial placeholder
-  // when no hero image exists yet, e.g. Vuka), no click-through.
-  // The "coming soon" tag lives in the bottom info block with the name (not
-  // pinned over the top of the image) so it never cuts across a face —
-  // per Sean 2026-07-13, the old top-left pin was too intrusive on these crops.
-  function PreviewCard({ a }: { a: Artist }) {
-    const accent = a.profile?.accent || "#888";
-    return (
-      <div className="r-card r-card-preview" aria-label={`${a.name} — coming soon`}>
-        <div className="r-card-img">
-          {a.profile?.heroUrl ? (
-            <img src={a.profile.heroUrl} alt={a.name} />
-          ) : (
-            <div className="r-card-fallback" style={{ backgroundColor: accent + "33" }}>
-              {a.profile?.initial || a.name.charAt(0)}
-            </div>
-          )}
-          <div className="r-card-grad" />
-        </div>
-        <div className="r-card-info">
-          <span className="r-coming-soon-badge">COMING SOON</span>
-          <span className="r-card-name">{a.name}</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <style>{CSS}</style>
@@ -288,19 +223,17 @@ export default function RosterPage() {
             </div>
           ) : (
             <>
-              {/* DESKTOP: 4-col grid — 4 live + 9 full-color preview */}
+              {/* DESKTOP: 4-col grid - all 13 artists, all clickable/NOW LIVE */}
               <div className="r-desktop-roster">
                 <div className="r-grid">
                   {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
-                  {previewArtists.map(a => <PreviewCard key={a.slug} a={a} />)}
                 </div>
               </div>
 
-              {/* MOBILE: 2-col grid — all artists */}
+              {/* MOBILE: 2-col grid - all 13 artists */}
               <div className="r-mobile-roster">
                 <div className="r-grid-mobile">
                   {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
-                  {previewArtists.map(a => <PreviewCard key={a.slug} a={a} />)}
                 </div>
               </div>
             </>
@@ -397,14 +330,6 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .r-card-name{display:block;font-size:clamp(12px,1.3vw,16px);font-weight:800;color:#fff;letter-spacing:.01em;line-height:1.2;text-transform:uppercase}
 .r-card-tag{display:block;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.06em;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .r-now-live-badge{display:inline-block;margin-bottom:6px;background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:#00e676;font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
-
-/* Preview cards — coming soon, full color, not clickable */
-.r-card-preview{pointer-events:none;cursor:default;user-select:none}
-.r-card-preview:hover{transform:none!important;box-shadow:none!important}
-
-/* Coming-soon tag now lives inline in the bottom info block (with the name),
-   not pinned over the top of the image — keeps it off faces regardless of crop. */
-.r-coming-soon-badge{display:inline-block;margin-bottom:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
 
 /* Loading */
 .r-loading{display:flex;flex-direction:column;align-items:center;gap:16px;padding:80px 0;color:rgba(255,255,255,.4);font-size:14px;letter-spacing:.08em}
