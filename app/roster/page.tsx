@@ -52,12 +52,12 @@ const CITIES = [
 const SUPA = "https://fwbhwfxpncrsfhttimna.supabase.co";
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjAxMzksImV4cCI6MjA5MDIzNjEzOX0.9mxjK0bn5WATCbNLWrHPakD6yHUDtHFHrOaklPnWkOA";
 
-// Live artists - all 13 (V is administrative, not a performing artist, and stays out
-// of the roster entirely per Sean 2026-07-13).
+// Live artists - 12 (V is administrative, not a performing artist, and stays out of the
+// roster entirely per Sean 2026-07-13. Lord Zorlot pulled 2026-07-13 - no songs yet).
 const ARTIST_ORDER = [
   "roxanne", "lex-from-brixton", "shamanic-resin", "riku",
   "straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings",
-  "lord-zorlot", "vuka", "lickle-bro", "lickle-sis", "mr-russell",
+  "vuka", "lickle-bro", "lickle-sis", "mr-russell",
 ];
 
 type Artist = {
