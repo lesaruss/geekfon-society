@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       .eq("tier_source", source);
   }
 
-  // LESARs top-up packs, consumable, no entitlement involved.
+  // Points top-up packs, consumable, no entitlement involved.
   if (userId && event.type === "NON_RENEWING_PURCHASE" && event.product_id in LESARS_PACK_PRODUCTS) {
     const amount = LESARS_PACK_PRODUCTS[event.product_id as keyof typeof LESARS_PACK_PRODUCTS];
     await creditLesars(supabase, userId, amount, event.product_id, event.transaction_id || event.id);
