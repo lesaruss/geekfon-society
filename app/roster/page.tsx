@@ -184,9 +184,11 @@ export default function RosterPage() {
               src={a.profile.heroUrl}
               alt={a.name}
               // Roxanne's portrait has the head right at the top edge of the
-              // source art, so a plain top-anchored crop puts her hair under
-              // the NOW LIVE pill. Shift the visible crop down for her only -
-              // other artists have natural headroom and don't need this.
+              // source art. Shift the visible crop down for her only - other
+              // artists have natural headroom and don't need this. (Original
+              // reason was clearance under the NOW LIVE pill, which has since
+              // moved into the bottom info block - keeping the crop anyway
+              // since it's a framing improvement independent of the pill.)
               // Doing this per-slug (not a shared CSS change) on purpose per
               // Sean, to prove out the fix on one artist before any rollout.
               style={a.slug === "roxanne" ? { objectPosition: "center 20%" } : undefined}
@@ -198,8 +200,8 @@ export default function RosterPage() {
           )}
           <div className="r-card-grad" />
         </div>
-        <div className="r-now-live-badge">NOW LIVE</div>
         <div className="r-card-info">
+          <span className="r-now-live-badge">NOW LIVE</span>
           <span className="r-card-name">{a.name}</span>
           {a.profile?.tagline && (
             <span className="r-card-tag">{a.profile.tagline}</span>
@@ -394,7 +396,7 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .r-card-info{position:absolute;bottom:0;left:0;right:0;padding:16px 14px 14px;z-index:2}
 .r-card-name{display:block;font-size:clamp(12px,1.3vw,16px);font-weight:800;color:#fff;letter-spacing:.01em;line-height:1.2;text-transform:uppercase}
 .r-card-tag{display:block;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.06em;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.r-now-live-badge{position:absolute;top:12px;left:12px;z-index:3;background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:#00e676;font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
+.r-now-live-badge{display:inline-block;margin-bottom:6px;background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:#00e676;font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
 
 /* Preview cards — coming soon, full color, not clickable */
 .r-card-preview{pointer-events:none;cursor:default;user-select:none}
