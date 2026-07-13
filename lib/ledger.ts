@@ -1,4 +1,4 @@
-// Shared LESARs crediting logic. Both the Stripe webhook (web purchases) and
+// Shared Points crediting logic. Both the Stripe webhook (web purchases) and
 // the RevenueCat webhook (native app purchases) call this so a top-up credits
 // the same way no matter which store the user bought it from.
 export async function creditLesars(
@@ -34,7 +34,7 @@ export async function creditLesars(
     event_type: "purchase_lesars",
     amount,
     balance_after: newAvailable,
-    description: `LESARs purchase: ${plan}`,
+    description: `Points purchase: ${plan}`,
     reference_id: referenceId,
   });
 }
