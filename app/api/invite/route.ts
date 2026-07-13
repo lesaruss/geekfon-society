@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     passport_artists: [],
   }, { onConflict: "user_id" });
 
-  // Seed LESARs if provided
+  // Seed Points if provided
   if (initial_lesars > 0) {
     await admin.from("member_points").upsert({
       user_id: userId,
