@@ -649,7 +649,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     }
     const cost = purchaseModal.price;
     if (userBalance < cost) {
-      setPurchaseError(`You need ${cost} LESARs but only have ${userBalance.toLocaleString()}. Get more on the Passport page.`);
+      setPurchaseError(`You need ${cost} Points but only have ${userBalance.toLocaleString()}. Get more on the Passport page.`);
       return;
     }
     setPurchaseError(null);
@@ -662,7 +662,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     });
     if (error || !data?.ok) {
       setPurchaseError(data?.error === "insufficient_balance"
-        ? `Not enough LESARs. You have ${(data?.balance || 0).toLocaleString()}, need ${cost}.`
+        ? `Not enough Points. You have ${(data?.balance || 0).toLocaleString()}, need ${cost}.`
         : "Purchase failed. Please try again.");
       return;
     }
@@ -1247,7 +1247,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     <div className="mp-catalog-head">
                       <h2 className="mp-catalog-title">{name} - Full Catalog</h2>
                     </div>
-                    <p className="mp-catalog-note">Each track is <strong>25 LESARs.</strong> Clicking Buy deducts from your LESARUSS balance instantly - no checkout required.</p>
+                    <p className="mp-catalog-note">Each track is <strong>25 Points.</strong> Clicking Buy deducts from your Points balance instantly - no checkout required.</p>
 
                     <div className="mp-rows">
                       {tracks.map((t, i) => {
@@ -1603,7 +1603,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             <h2 id="pur-title" className="pur-song-name">{purchaseModal.trackName}</h2>
             <div className="pur-price-row">
               <span className="pur-price">{purchaseModal.price}</span>
-              <span className="pur-currency">LESARs</span>
+              <span className="pur-currency">Points</span>
             </div>
             {!userId ? (
               /* Non-member state — stay in modal, no redirect */
@@ -1620,17 +1620,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               <>
                 <div className="pur-balance-row">
                   <span className="pur-balance-label">Your balance:</span>
-                  <span className={"pur-balance-val" + (userBalance < purchaseModal.price ? " pur-balance-low" : "")}>{userBalance.toLocaleString()} LESARs</span>
+                  <span className={"pur-balance-val" + (userBalance < purchaseModal.price ? " pur-balance-low" : "")}>{userBalance.toLocaleString()} Points</span>
                 </div>
                 {userBalance < purchaseModal.price && (
                   <div className="pur-topup-block">
-                    <p className="pur-low-msg">You need <strong>{(purchaseModal.price - userBalance).toLocaleString()}</strong> more LESARs to unlock this track.</p>
+                    <p className="pur-low-msg">You need <strong>{(purchaseModal.price - userBalance).toLocaleString()}</strong> more Points to unlock this track.</p>
                     <button
                       type="button"
                       className="pur-topup-btn"
                       onClick={() => { setPurchaseModal(null); setPurchaseError(null); setSelectedPack(null); setTopUpError(null); setTopUpOpen(true); }}
                     >
-                      Top Up LESARs
+                      Top Up Points
                     </button>
                   </div>
                 )}
@@ -1650,8 +1650,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         </div>
       )}
 
-      {/* LESAR top-up modal: Buy a pack, then Continue to Payment. This is the
-          single path used everywhere a member needs more LESARs, including the
+      {/* Points top-up modal: Buy a pack, then Continue to Payment. This is the
+          single path used everywhere a member needs more Points, including the
           insufficient-balance case above. Nothing is pre-selected. */}
       {topUpOpen && (
         <div className="pur-overlay" role="dialog" aria-modal="true" aria-labelledby="tu-title" onClick={() => { if (!topUpLoading) setTopUpOpen(false); }}>
@@ -1660,8 +1660,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
             <div className="pur-song-label">Top Up</div>
-            <h2 id="tu-title" className="pur-song-name">Choose a LESARs Pack</h2>
-            <p className="pur-desc" style={{ marginBottom: 16 }}>Pick a pack, then continue to payment. LESARs land in your balance the moment checkout completes.</p>
+            <h2 id="tu-title" className="pur-song-name">Choose a Points Pack</h2>
+            <p className="pur-desc" style={{ marginBottom: 16 }}>Pick a pack, then continue to payment. Points land in your balance the moment checkout completes.</p>
             <div className="tu-pack-list">
               {LESAR_PACKS.map(p => (
                 <button
@@ -1673,7 +1673,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 >
                   {p.popular && <span className="tu-pack-badge">Popular</span>}
                   <div>
-                    <div className="tu-pack-lesars">{p.lesars.toLocaleString()} LESARs</div>
+                    <div className="tu-pack-lesars">{p.lesars.toLocaleString()} Points</div>
                     <div className="tu-pack-note">{p.label}</div>
                   </div>
                   <div className="tu-pack-price">${p.price}</div>
