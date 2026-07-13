@@ -4,7 +4,30 @@ import { NextResponse } from "next/server";
 const SB_URL = "https://fwbhwfxpncrsfhttimna.supabase.co";
 const SB_SVC = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDY2MDEzOSwiZXhwIjoyMDkwMjM2MTM5fQ.Ux3OKsH_ESG8bm2ZiFHtVUb8DPsjuAn8XRYjMVjcmjI";
 
-export async function GET() {
+// This route lists every member's name, email, tier, points balance, and last login
+// using the service-role key - it had NO auth check at all until 2026-07-13. Enforce
+// the same account-only gate used by /api/admin/release-schedule so the API can't be
+// hit directly by anyone who knows the URL.
+const ADMIN_EMAIL = "contact@lesaruss.com";
+
+async function requireAdmin(req: Request): Promise<NextResponse | null> {
+  const admin = createClient(SB_URL, SB_SVC, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { data: { user } } = await admin.auth.getUser(token);
+  if (user?.email !== ADMIN_EMAIL) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  return null;
+}
+
+export async function GET(req: Request) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
   const admin = createClient(SB_URL, SB_SVC, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
