@@ -42,7 +42,7 @@ const NAV_PRO: NavItem[] = [
 
 
 
-function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, canSeeRadioSchedule = false): NavItem[] {
+function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, canSeeRadioSchedule = false, canSeeMembers = false): NavItem[] {
   let base: NavItem[];
   if (tier === "plus")          base = NAV_PLUS;
   else if (tier === "pro")      base = NAV_PRO;
@@ -58,6 +58,11 @@ function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, 
   // account-only gate as Release Schedule (locked 2026-07-07), not a tier/role perk.
   if (canSeeRadioSchedule) {
     base = [...base, { label: "Radio Schedule", href: "/dashboard/radio-schedule" }];
+  }
+  // Members list (name/email/tier/points/joined/last login) - same account-only gate,
+  // not a tier/role perk. Standalone page pulled out of the dashboard 2026-07-13.
+  if (canSeeMembers) {
+    base = [...base, { label: "Members", href: "/dashboard/members" }];
   }
   return base;
 }
@@ -224,7 +229,8 @@ export default function SiteChrome({
   // tier or role, and never visible while simulating another tier via View As.
   const canSeeReleaseSchedule = auth.email === ADMIN_EMAIL && !viewAs;
   const canSeeRadioSchedule = auth.email === ADMIN_EMAIL && !viewAs;
-  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule, canSeeRadioSchedule);
+  const canSeeMembers = auth.email === ADMIN_EMAIL && !viewAs;
+  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule, canSeeRadioSchedule, canSeeMembers);
   const isLoggedIn = effectiveTier !== "public" && !auth.loading;
   const tierAccent = TIER_ACCENT[effectiveTier];
   const tierLabel  = TIER_LABEL[effectiveTier];
