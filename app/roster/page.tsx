@@ -64,6 +64,17 @@ const GHOST_NAMES: Record<string, string> = {
   "mad-tings":           "Mad Tings",
 };
 
+// Preview artists — full color, not yet activated (no click-through, no NOW LIVE badge).
+// Ready in gfs_artists but not part of the launch reveal cadence yet.
+const PREVIEW_ORDER = ["lord-zorlot", "vuka", "lickle-bro", "lickle-sis", "mr-russell"];
+const PREVIEW_NAMES: Record<string, string> = {
+  "lord-zorlot": "Lord Zorlot",
+  "vuka":        "Vuka",
+  "lickle-bro":  "Lickle Bro",
+  "lickle-sis":  "Lickle Sis",
+  "mr-russell":  "Mr. Russell",
+};
+
 type Artist = {
   slug: string;
   name: string;
@@ -78,6 +89,7 @@ type Artist = {
 export default function RosterPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [ghostArtists, setGhostArtists] = useState<Artist[]>([]);
+  const [previewArtists, setPreviewArtists] = useState<Artist[]>([]);
   const [current, setCurrent] = useState(0);
   const currentRef = useRef(0);
   const cityPanelRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -120,6 +132,30 @@ export default function RosterPage() {
       })
       .catch(() => {
         setGhostArtists(GHOST_ORDER.map(s => ({ slug: s, name: GHOST_NAMES[s], profile: {} })));
+      });
+  }, []);
+
+  // Fetch preview artists from DB — full color, not yet activated
+  useEffect(() => {
+    const slugList = PREVIEW_ORDER.map(s => `"${s}"`).join(",");
+    fetch(
+      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=in.(${slugList})`,
+      { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } }
+    )
+      .then((r) => r.json())
+      .then((data: Artist[]) => {
+        if (!Array.isArray(data)) {
+          setPreviewArtists(PREVIEW_ORDER.map(s => ({ slug: s, name: PREVIEW_NAMES[s], profile: {} })));
+          return;
+        }
+        const ordered = PREVIEW_ORDER.map(s => {
+          const found = data.find(a => a.slug === s);
+          return found || { slug: s, name: PREVIEW_NAMES[s], profile: {} };
+        });
+        setPreviewArtists(ordered);
+      })
+      .catch(() => {
+        setPreviewArtists(PREVIEW_ORDER.map(s => ({ slug: s, name: PREVIEW_NAMES[s], profile: {} })));
       });
   }, []);
 
@@ -223,6 +259,30 @@ export default function RosterPage() {
     );
   }
 
+  // Full color, not yet activated: real art (or a colored initial placeholder
+  // when no hero image exists yet, e.g. Vuka), no click-through, no NOW LIVE badge.
+  function PreviewCard({ a }: { a: Artist }) {
+    const accent = a.profile?.accent || "#888";
+    return (
+      <div className="r-card r-card-preview" aria-label={`${a.name} — coming soon`}>
+        <div className="r-card-img">
+          {a.profile?.heroUrl ? (
+            <img src={a.profile.heroUrl} alt={a.name} />
+          ) : (
+            <div className="r-card-fallback" style={{ backgroundColor: accent + "33" }}>
+              {a.profile?.initial || a.name.charAt(0)}
+            </div>
+          )}
+          <div className="r-card-grad" />
+        </div>
+        <div className="r-coming-soon-badge">COMING SOON</div>
+        <div className="r-card-info">
+          <span className="r-card-name">{a.name}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <style>{CSS}</style>
@@ -273,19 +333,21 @@ export default function RosterPage() {
             </div>
           ) : (
             <>
-              {/* DESKTOP: 4-col grid — 4 live + 4 ghost */}
+              {/* DESKTOP: 4-col grid — 4 live + 4 ghost + 5 preview */}
               <div className="r-desktop-roster">
                 <div className="r-grid">
                   {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
                   {ghostArtists.map(a => <GhostCard key={a.slug} a={a} />)}
+                  {previewArtists.map(a => <PreviewCard key={a.slug} a={a} />)}
                 </div>
               </div>
 
-              {/* MOBILE: 2-col grid — all 8 */}
+              {/* MOBILE: 2-col grid — all artists */}
               <div className="r-mobile-roster">
                 <div className="r-grid-mobile">
                   {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
                   {ghostArtists.map(a => <GhostCard key={a.slug} a={a} />)}
+                  {previewArtists.map(a => <PreviewCard key={a.slug} a={a} />)}
                 </div>
               </div>
             </>
@@ -383,9 +445,14 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .r-card-tag{display:block;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.06em;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .r-now-live-badge{position:absolute;top:12px;left:12px;z-index:3;background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:#00e676;font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
 
-/* Ghost cards — coming soon */
+/* Ghost cards — coming soon, grayed out */
 .r-card-ghost{filter:grayscale(1) brightness(0.38);pointer-events:none;cursor:default;user-select:none}
 .r-card-ghost:hover{transform:none!important;box-shadow:none!important}
+
+/* Preview cards — coming soon, but full color (not grayed out) */
+.r-card-preview{pointer-events:none;cursor:default;user-select:none}
+.r-card-preview:hover{transform:none!important;box-shadow:none!important}
+
 .r-coming-soon-badge{position:absolute;top:12px;left:12px;z-index:3;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
 
 /* Loading */
