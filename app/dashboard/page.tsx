@@ -16,7 +16,6 @@ const TIER_MONTHLY: Record<string, number> = { passport: 1500, promoter: 2500, p
 const TIER_LABEL: Record<string, string>   = { passport: "Passport", promoter: "Promoter", pro: "Community Manager" };
 const TIER_RATE:  Record<string, number>   = { promoter: 0.10, pro: 0.25 };
 const TIER_DEFAULT_LESARS: Record<string, number> = { passport: 100, promoter: 1000, pro: 0 };
-const TIER_OPTIONS = ["passport", "promoter", "pro"];
 const ADMIN_EMAIL = "contact@lesaruss.com";
 const GOAL = 1_000_000;
 
@@ -27,22 +26,11 @@ const LESAR_PACKS: { id: string; lesars: number; price: number; label: string; p
   { id: "pack-power",    lesars: 5000, price: 33, label: "Power" },
 ];
 
-type AdminMember = { id: string; user_id: string; name: string | null; email: string | null; tier: string | null; available_points: number; created_at: string; last_sign_in: string | null; };
-
 export default function DashboardOverview() {
   const { userId, userEmail, member, points, purchases, referral, memberCount } = useDashboard();
 
   const [topupOpen,    setTopupOpen]    = useState(false);
-  const [inviteOpen,   setInviteOpen]   = useState(false);
-  const [inviteEmail,  setInviteEmail]  = useState("");
-  const [inviteLesars, setInviteLesars] = useState(100);
-  const [inviteTier,   setInviteTier]   = useState("passport");
-  const [inviteStatus, setInviteStatus] = useState<"idle"|"sending"|"done"|"error">("idle");
-  const [inviteError,  setInviteError]  = useState("");
   const [copied,       setCopied]       = useState(false);
-  const [adminMembers, setAdminMembers] = useState<AdminMember[]>([]);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [adminLoaded,  setAdminLoaded]  = useState(false);
 
   // Points top-up modal - "Buy then Continue to Payment", same pattern as components/ArtistPage.tsx.
   // Nothing is pre-selected on open (previously a pre-highlighted pack was a bug elsewhere).
@@ -82,40 +70,6 @@ export default function DashboardOverview() {
   const resetDate = new Date();
   resetDate.setMonth(resetDate.getMonth() + 1, 1);
   const resetStr = resetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-  async function loadAdminMembers() {
-    if (adminLoaded) return;
-    setAdminLoading(true);
-    try {
-      const res = await fetch("/api/admin/members");
-      const json = await res.json();
-      setAdminMembers(json.members || []);
-      setAdminLoaded(true);
-    } catch (_) {}
-    setAdminLoading(false);
-  }
-
-  function handleTierChange(t: string) {
-    setInviteTier(t);
-    setInviteLesars(TIER_DEFAULT_LESARS[t] ?? 0);
-  }
-
-  async function sendInvite(e: React.FormEvent) {
-    e.preventDefault();
-    setInviteStatus("sending"); setInviteError("");
-    try {
-      const res = await fetch("/api/invite", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail, initial_lesars: inviteLesars, tier: inviteTier }),
-      });
-      const json = await res.json();
-      if (!res.ok) { setInviteError(json.error || "Failed"); setInviteStatus("error"); return; }
-      setInviteStatus("done");
-      setInviteEmail(""); setInviteLesars(100); setInviteTier("passport");
-      loadAdminMembers();
-      setTimeout(() => { setInviteOpen(false); setInviteStatus("idle"); }, 2500);
-    } catch (_) { setInviteError("Network error"); setInviteStatus("error"); }
-  }
 
   function copyLink() {
     if (!referral?.ref_code) return;
@@ -374,63 +328,13 @@ export default function DashboardOverview() {
         )}
       </div>
 
-      {/* Admin console */}
+      {/* Admin console - moved to its own page 2026-07-13, superadmin only (see /dashboard/members) */}
       {isAdmin && (
         <div className="do-section do-admin" style={{marginTop:32}}>
           <div className="do-section-row">
             <div className="do-section-title" style={{color:"rgba(255,255,255,.8)"}}>Members Console</div>
-            <button className="do-invite-trigger" onClick={() => { setInviteOpen(v => !v); setInviteStatus("idle"); if (!adminLoaded) loadAdminMembers(); }}>
-              {inviteOpen ? "Cancel" : "+ Invite Member"}
-            </button>
+            <a className="do-invite-trigger" href="/dashboard/members">Manage Members</a>
           </div>
-
-          {inviteOpen && (
-            <form className="do-invite-form" onSubmit={sendInvite}>
-              <div className="do-invite-row">
-                <div className="do-invite-field">
-                  <label className="do-invite-label">Email address</label>
-                  <input className="do-invite-input" type="email" required placeholder="member@example.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-                </div>
-                <div className="do-invite-field">
-                  <label className="do-invite-label">Tier</label>
-                  <select className="do-invite-select" value={inviteTier} onChange={e => handleTierChange(e.target.value)}>
-                    {TIER_OPTIONS.map(t => <option key={t} value={t}>{TIER_LABEL[t]}</option>)}
-                  </select>
-                </div>
-                <div className="do-invite-field">
-                  <label className="do-invite-label">Seed Points</label>
-                  <input className="do-invite-input" type="number" min={0} step={100} value={inviteLesars} onChange={e => setInviteLesars(Number(e.target.value))} />
-                </div>
-              </div>
-              <div className="do-invite-actions">
-                <button type="submit" className="do-invite-submit" disabled={inviteStatus === "sending"}>
-                  {inviteStatus === "sending" ? "Sending..." : inviteStatus === "done" ? "Sent!" : "Send Magic Link"}
-                </button>
-                {inviteError && <span className="do-invite-error">{inviteError}</span>}
-                {inviteStatus === "done" && <span className="do-invite-success">Invite sent to {inviteEmail}</span>}
-              </div>
-            </form>
-          )}
-
-          {adminLoading ? <div className="dp-spinner" /> : adminMembers.length > 0 && (
-            <div className="do-members-wrap">
-              <table className="do-members-table">
-                <thead><tr><th>Name</th><th>Email</th><th>Tier</th><th>Points</th><th>Joined</th><th>Last login</th></tr></thead>
-                <tbody>
-                  {adminMembers.map(m => (
-                    <tr key={m.id}>
-                      <td className="do-m-name">{m.name || "-"}</td>
-                      <td className="do-m-email">{m.email || "-"}</td>
-                      <td><span className={"do-m-tier t-" + (m.tier || "passport")}>{TIER_LABEL[m.tier || "passport"] || m.tier}</span></td>
-                      <td className="do-m-lesars">{(m.available_points || 0).toLocaleString()}</td>
-                      <td className="do-m-date">{m.created_at ? new Date(m.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "-"}</td>
-                      <td className="do-m-date">{m.last_sign_in ? new Date(m.last_sign_in).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "Never"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       )}
 
@@ -602,30 +506,6 @@ const CSS = `
 .do-admin{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;}
 .do-invite-trigger{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#000;background:#F69820;border:none;cursor:pointer;font-family:inherit;padding:9px 18px;border-radius:100px;transition:background .15s;}
 .do-invite-trigger:hover{background:#ffaf30;}
-.do-invite-form{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:20px;margin-bottom:20px;margin-top:16px;}
-.do-invite-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:12px;}
-@media(max-width:700px){.do-invite-row{grid-template-columns:1fr;}}
-.do-invite-label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.4);margin-bottom:6px;}
-.do-invite-input,.do-invite-select{width:100%;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;background:rgba(255,255,255,.06);color:#fff;box-sizing:border-box;}
-.do-invite-input:focus,.do-invite-select:focus{outline:none;border-color:#F69820;}
-.do-invite-select option{background:#1a1a1a;color:#fff;}
-.do-invite-actions{display:flex;align-items:center;gap:14px;}
-.do-invite-submit{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#000;background:#F69820;border:none;cursor:pointer;font-family:inherit;padding:10px 22px;border-radius:100px;transition:background .15s;}
-.do-invite-submit:hover:not(:disabled){background:#ffaf30;}
-.do-invite-submit:disabled{opacity:.5;cursor:default;}
-.do-invite-error{font-size:12px;font-weight:700;color:rgba(255,100,100,.9);}
-.do-invite-success{font-size:12px;font-weight:700;color:rgba(0,215,95,.9);}
-.do-members-wrap{overflow-x:auto;border:1px solid rgba(255,255,255,.07);border-radius:12px;margin-top:16px;}
-.do-members-table{width:100%;border-collapse:collapse;font-size:12px;}
-.do-members-table th{text-align:left;padding:10px 14px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);}
-.do-members-table td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
-.do-members-table tr:last-child td{border-bottom:none;}
-.do-members-table tr:hover td{background:rgba(255,255,255,.02);}
-.do-m-name{font-weight:700;color:#fff;}
-.do-m-email{color:rgba(255,255,255,.5);font-size:11px;}
-.do-m-tier{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:20px;background:rgba(246,152,32,.1);color:#F69820;}
-.do-m-lesars{font-weight:800;color:rgba(0,215,95,.8);}
-.do-m-date{font-size:10px;color:rgba(255,255,255,.3);white-space:nowrap;}
 /* Top-up modal (dashboard-scoped, mirrors the purchase top-up modal pattern in components/ArtistPage.tsx) */
 .do-tu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
 .do-tu-modal{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:36px 32px 28px;max-width:400px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.5);}
