@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-// roster page - 4-col desktop (8 artists: 4 live + 4 ghost), 2-col mobile
+// roster page - 4-col desktop (4 live + 9 full-color preview), 2-col mobile
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -55,24 +55,23 @@ const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 // Live artists
 const ARTIST_ORDER = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
 
-// Ghost artists — grayed out, non-clickable, "COMING SOON"
-const GHOST_ORDER = ["straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings"];
-const GHOST_NAMES: Record<string, string> = {
+// Preview artists — full color, not yet activated (no click-through, no NOW LIVE badge).
+// Previously split into a grayed-out "ghost" set and a full-color "preview" set;
+// Sean asked (2026-07-13) for all of them to be full color, so they're one list now.
+const PREVIEW_ORDER = [
+  "straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings",
+  "lord-zorlot", "vuka", "lickle-bro", "lickle-sis", "mr-russell",
+];
+const PREVIEW_NAMES: Record<string, string> = {
   "straight-and-narrow": "Straight and Narrow",
   "nilo-wave":           "Nilo Wave",
   "rustblood-prophets":  "Rustblood Prophets",
   "mad-tings":           "Mad Tings",
-};
-
-// Preview artists — full color, not yet activated (no click-through, no NOW LIVE badge).
-// Ready in gfs_artists but not part of the launch reveal cadence yet.
-const PREVIEW_ORDER = ["lord-zorlot", "vuka", "lickle-bro", "lickle-sis", "mr-russell"];
-const PREVIEW_NAMES: Record<string, string> = {
-  "lord-zorlot": "Lord Zorlot",
-  "vuka":        "Vuka",
-  "lickle-bro":  "Lickle Bro",
-  "lickle-sis":  "Lickle Sis",
-  "mr-russell":  "Mr. Russell",
+  "lord-zorlot":         "Lord Zorlot",
+  "vuka":                "Vuka",
+  "lickle-bro":          "Lickle Bro",
+  "lickle-sis":          "Lickle Sis",
+  "mr-russell":          "Mr. Russell",
 };
 
 type Artist = {
@@ -88,7 +87,6 @@ type Artist = {
 
 export default function RosterPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [ghostArtists, setGhostArtists] = useState<Artist[]>([]);
   const [previewArtists, setPreviewArtists] = useState<Artist[]>([]);
   const [current, setCurrent] = useState(0);
   const currentRef = useRef(0);
@@ -107,32 +105,6 @@ export default function RosterPage() {
         setArtists(ordered);
       })
       .catch(() => {});
-  }, []);
-
-  // Fetch ghost artists from DB (may have hero images already)
-  useEffect(() => {
-    const slugList = GHOST_ORDER.map(s => `"${s}"`).join(",");
-    fetch(
-      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=in.(${slugList})`,
-      { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } }
-    )
-      .then((r) => r.json())
-      .then((data: Artist[]) => {
-        if (!Array.isArray(data)) {
-          // No DB rows yet — build stubs from GHOST_NAMES
-          setGhostArtists(GHOST_ORDER.map(s => ({ slug: s, name: GHOST_NAMES[s], profile: {} })));
-          return;
-        }
-        // Merge DB data with name fallback; preserve GHOST_ORDER
-        const ordered = GHOST_ORDER.map(s => {
-          const found = data.find(a => a.slug === s);
-          return found || { slug: s, name: GHOST_NAMES[s], profile: {} };
-        });
-        setGhostArtists(ordered);
-      })
-      .catch(() => {
-        setGhostArtists(GHOST_ORDER.map(s => ({ slug: s, name: GHOST_NAMES[s], profile: {} })));
-      });
   }, []);
 
   // Fetch preview artists from DB — full color, not yet activated
@@ -237,30 +209,11 @@ export default function RosterPage() {
     );
   }
 
-  function GhostCard({ a }: { a: Artist }) {
-    const accent = a.profile?.accent || "#888";
-    return (
-      <div className="r-card r-card-ghost" aria-label={`${a.name} — coming soon`}>
-        <div className="r-card-img">
-          {a.profile?.heroUrl ? (
-            <img src={a.profile.heroUrl} alt="" aria-hidden="true" />
-          ) : (
-            <div className="r-card-fallback" style={{ backgroundColor: accent + "22" }}>
-              {a.profile?.initial || a.name.charAt(0)}
-            </div>
-          )}
-          <div className="r-card-grad" />
-        </div>
-        <div className="r-coming-soon-badge">COMING SOON</div>
-        <div className="r-card-info">
-          <span className="r-card-name">{a.name}</span>
-        </div>
-      </div>
-    );
-  }
-
   // Full color, not yet activated: real art (or a colored initial placeholder
-  // when no hero image exists yet, e.g. Vuka), no click-through, no NOW LIVE badge.
+  // when no hero image exists yet, e.g. Vuka), no click-through.
+  // The "coming soon" tag lives in the bottom info block with the name (not
+  // pinned over the top of the image) so it never cuts across a face —
+  // per Sean 2026-07-13, the old top-left pin was too intrusive on these crops.
   function PreviewCard({ a }: { a: Artist }) {
     const accent = a.profile?.accent || "#888";
     return (
@@ -275,8 +228,8 @@ export default function RosterPage() {
           )}
           <div className="r-card-grad" />
         </div>
-        <div className="r-coming-soon-badge">COMING SOON</div>
         <div className="r-card-info">
+          <span className="r-coming-soon-badge">COMING SOON</span>
           <span className="r-card-name">{a.name}</span>
         </div>
       </div>
@@ -333,11 +286,10 @@ export default function RosterPage() {
             </div>
           ) : (
             <>
-              {/* DESKTOP: 4-col grid — 4 live + 4 ghost + 5 preview */}
+              {/* DESKTOP: 4-col grid — 4 live + 9 full-color preview */}
               <div className="r-desktop-roster">
                 <div className="r-grid">
                   {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
-                  {ghostArtists.map(a => <GhostCard key={a.slug} a={a} />)}
                   {previewArtists.map(a => <PreviewCard key={a.slug} a={a} />)}
                 </div>
               </div>
@@ -346,7 +298,6 @@ export default function RosterPage() {
               <div className="r-mobile-roster">
                 <div className="r-grid-mobile">
                   {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
-                  {ghostArtists.map(a => <GhostCard key={a.slug} a={a} />)}
                   {previewArtists.map(a => <PreviewCard key={a.slug} a={a} />)}
                 </div>
               </div>
@@ -445,15 +396,13 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .r-card-tag{display:block;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.06em;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .r-now-live-badge{position:absolute;top:12px;left:12px;z-index:3;background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:#00e676;font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
 
-/* Ghost cards — coming soon, grayed out */
-.r-card-ghost{filter:grayscale(1) brightness(0.38);pointer-events:none;cursor:default;user-select:none}
-.r-card-ghost:hover{transform:none!important;box-shadow:none!important}
-
-/* Preview cards — coming soon, but full color (not grayed out) */
+/* Preview cards — coming soon, full color, not clickable */
 .r-card-preview{pointer-events:none;cursor:default;user-select:none}
 .r-card-preview:hover{transform:none!important;box-shadow:none!important}
 
-.r-coming-soon-badge{position:absolute;top:12px;left:12px;z-index:3;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
+/* Coming-soon tag now lives inline in the bottom info block (with the name),
+   not pinned over the top of the image — keeps it off faces regardless of crop. */
+.r-coming-soon-badge{display:inline-block;margin-bottom:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
 
 /* Loading */
 .r-loading{display:flex;flex-direction:column;align-items:center;gap:16px;padding:80px 0;color:rgba(255,255,255,.4);font-size:14px;letter-spacing:.08em}
