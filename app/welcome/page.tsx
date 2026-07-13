@@ -171,8 +171,8 @@ const PATH_SLIDES: Record<Role, SlideData[]> = {
   fan: [
     { id: "fan-artists", headline: "Meet the Artists", body: "Step into their lives. Follow their stories. Hear the music.", detail: "We release a few artists at a time, so the world grows as you do. Each one has a full biography, a discography, and a Pulse feed of their own. None of them are real. All of the music is. And the music is only the start: series, live shows, and more are on the way.", accent: "#E91E8C", isArtistSlide: true },
     { id: "fan-pulse", headline: "The Pulse", body: "Your favorite artist posts every day. You're in the conversation.", detail: "Video, photo, text - the Pulse is each artist's personal feed. Comment on a post. React to a drop. The artist responds. This is not a playlist. This is a living relationship with a character who shows up every day.", accent: "#F69820" },
-    { id: "fan-tokens", headline: "LESARs Unlock\nEverything", body: "Start free with 111 LESARs. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 LESARs. Unlock a single song for 100 LESARs, or go All Access for every track an artist drops. LESARs are not limited to GeekFon: spend them to redeem songs and unlock experiences across 15+ brands in the LESARUSS universe. Buy more anytime.", accent: "#9C27B0" },
-    { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every LESAR you spend on an artist counts as a vote. Rankings update in real time and decide which songs we play most and which get a music video first. Your votes carry across the network, including TopSpot USA and Anime 3000, and help set the charts on TopSpot Global. Your support shapes multiple communities at once.", accent: "#2196F3" },
+    { id: "fan-tokens", headline: "Points Unlock\nEverything", body: "Start free with 111 Points. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 Points. Unlock a single song for 100 Points, or go All Access for every track an artist drops. Points are not limited to GeekFon: spend them to redeem songs and unlock experiences across 15+ brands in the LESARUSS universe. Buy more anytime.", accent: "#9C27B0" },
+    { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every Point you spend on an artist counts as a vote. Rankings update in real time and decide which songs we play most and which get a music video first. Your votes carry across the network, including TopSpot USA and Anime 3000, and help set the charts on TopSpot Global. Your support shapes multiple communities at once.", accent: "#2196F3" },
     { id: "fan-radio", headline: "GeekFon Radio", body: "Old-school radio, reinvented. New songs every week, 24/7.", detail: "GeekFon Radio is a constant feed, just like traditional radio: no on-demand, no saving, just every artist playing in the background while you live your day. New songs drop weekly, and members hear songs that are not even available to redeem yet. It is an exclusive perk of the $11/month Passport: 24/7 access to nearly every song in the Society.", accent: "#00BCD4", cta: { label: "Join the Society", href: "/passport" } },
   ],
   label: [
@@ -182,8 +182,8 @@ const PATH_SLIDES: Record<Role, SlideData[]> = {
     { id: "label-cta", headline: "Let's Talk\nLicensing", body: "GeekFon Society is actively expanding its licensing and partnership pipeline.", detail: "We are open to sync licensing, master licensing, catalog co-ownership discussions, and distribution partnerships. If you work with original IP and are looking for clean, commercial-ready music built for the modern era, this is the conversation.", accent: "#9C27B0", cta: { label: "Get In Touch", href: "mailto:contact@lesaruss.com" } },
   ],
   brand: [
-    { id: "brand-audience", headline: "Multiple Cities.\nOne Community.", body: "Tokyo. Seoul. Fort Lauderdale. Berlin.", detail: "GeekFon Society is a global music community organized around cities and built around daily content, live events, and a LESARs economy. The audience is music-first, culture-forward, and already spending. Active cities include Tokyo, Seoul, Fort Lauderdale, and Berlin, with more launching as the Society grows.", accent: "#F69820" },
-    { id: "brand-ecosystem", headline: "The LESARs\nEcosystem", body: "Your brand is inside the unlock, not on top of it.", detail: "Fans spend LESARs to support artists, unlock content, and participate in rankings. Brands can sponsor LESARs packages, fund artist moments, donate products for sampling and giveaways, or create exclusive drops. When a fan unlocks something your brand powered, your name belongs in that moment - not over it.", accent: "#E91E8C" },
+    { id: "brand-audience", headline: "Multiple Cities.\nOne Community.", body: "Tokyo. Seoul. Fort Lauderdale. Berlin.", detail: "GeekFon Society is a global music community organized around cities and built around daily content, live events, and a Points economy. The audience is music-first, culture-forward, and already spending. Active cities include Tokyo, Seoul, Fort Lauderdale, and Berlin, with more launching as the Society grows.", accent: "#F69820" },
+    { id: "brand-ecosystem", headline: "The Points\nEcosystem", body: "Your brand is inside the unlock, not on top of it.", detail: "Fans spend Points to support artists, unlock content, and participate in rankings. Brands can sponsor Points packages, fund artist moments, donate products for sampling and giveaways, or create exclusive drops. When a fan unlocks something your brand powered, your name belongs in that moment - not over it.", accent: "#E91E8C" },
     { id: "brand-events", headline: "Live Activations\nThat Get Filmed", body: "Every show is a content shoot. Every activation feeds the archive.", detail: "GeekFon Society produces events at anime conventions, after-parties, and city-based activations. Every event produces footage for the Pulse feed, the animated series pipeline, and the archive. A sponsorship here is not a banner at one event. It is content that lives in the universe.", accent: "#2196F3" },
     { id: "brand-cta", headline: "Your Brand Inside\nthe Universe", body: "Integrations that belong in the world. Not ads. Moments.", detail: "We build sponsor relationships that feel native to the GeekFon universe. Your brand does not interrupt the experience. It enhances it. If that is the kind of partnership you are looking for, let's build it.", accent: "#F69820", cta: { label: "Become a Sponsor", href: "mailto:contact@lesaruss.com" } },
   ],
@@ -205,11 +205,11 @@ const SLIDE_AUDIO: Record<string, { url: string; label: string }> = {
   "label-cta":           { url: HF_CDN + "hf_20260704_093459_7f1079bd-9d62-4b48-bda4-c9704ce842fb.mp3", label: "Let's Talk Licensing" },
   "fan-artists":         { url: HF_CDN + "hf_20260704_093505_9e69c939-f6b4-4147-b89a-b4555d870de7.mp3", label: "Meet the Artists" },
   "fan-pulse":           { url: HF_CDN + "hf_20260704_093512_bdf50a49-86d8-4911-9636-d683f13e4971.mp3", label: "The Pulse" },
-  "fan-tokens":          { url: HF_CDN + "hf_20260704_093519_9e9448e0-474c-4471-85bb-6b39f0020425.mp3", label: "LESARs Unlock Everything" },
+  "fan-tokens":          { url: HF_CDN + "hf_20260704_093519_9e9448e0-474c-4471-85bb-6b39f0020425.mp3", label: "Points Unlock Everything" },
   "fan-voting":          { url: HF_CDN + "hf_20260704_093526_43af9bbb-e56f-4787-8246-5427db5ac434.mp3", label: "Vote. Rank. Impact." },
   "fan-radio":           { url: HF_CDN + "hf_20260704_093534_cbaf090b-8a1e-439b-85af-d45e88c1a41b.mp3", label: "GeekFon Radio" },
   "brand-audience":      { url: HF_CDN + "hf_20260704_093539_5e20b015-f780-4f78-82e1-768a6ee38daa.mp3", label: "Multiple Cities. One Community." },
-  "brand-ecosystem":     { url: HF_CDN + "hf_20260704_093546_5640c321-c4d7-402a-95d3-20858f57e6a8.mp3", label: "The LESARs Ecosystem" },
+  "brand-ecosystem":     { url: HF_CDN + "hf_20260704_093546_5640c321-c4d7-402a-95d3-20858f57e6a8.mp3", label: "The Points Ecosystem" },
   "brand-events":        { url: HF_CDN + "hf_20260704_093551_3014e676-c597-423b-b6be-bc69455ea302.mp3", label: "Live Activations That Get Filmed" },
   "brand-cta":           { url: HF_CDN + "hf_20260704_093559_6513f683-9b9f-42b2-8728-f9d51894e8c1.mp3", label: "Your Brand Inside the Universe" },
   "promoter-live":       { url: HF_CDN + "hf_20260704_093604_9d24c5bd-8ed0-475d-8874-b22c4fc60805.mp3", label: "GeekFon Society Goes Live" },
@@ -330,10 +330,10 @@ const SLIDE_ICONS: Record<string, (color: string) => ReactElement> = {
 
 function SlidePreview({ slideId, accent }: { slideId: string; accent: string }) {
   const label = {
-    "fan-artists": "Artist Profiles", "fan-pulse": "The Pulse", "fan-tokens": "LESARs",
+    "fan-artists": "Artist Profiles", "fan-pulse": "The Pulse", "fan-tokens": "Points",
     "fan-voting": "Rankings", "fan-radio": "GeekFon Radio", "label-ip": "IP Catalog",
     "label-licensing": "Sync Licensing", "label-pipeline": "TalentVangelist", "label-cta": "Contact",
-    "brand-audience": "Global Cities", "brand-ecosystem": "LESARs Economy", "brand-events": "Live Events",
+    "brand-audience": "Global Cities", "brand-ecosystem": "Points Economy", "brand-events": "Live Events",
     "brand-cta": "Sponsorships", "promoter-live": "Live Shows", "promoter-production": "Content Pipeline",
     "promoter-cities": "Season 1", "promoter-cta": "Book the Act",
   }[slideId] || "GeekFon";
