@@ -126,7 +126,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
             <h1 className="dl-gate-title">Members only</h1>
             <p className="dl-gate-sub">
-              Sign in to access your dashboard, LESARs balance, and Passport artists.
+              Sign in to access your dashboard, Points balance, and Passport artists.
             </p>
             <button className="dl-google-btn" onClick={signInWithGoogle}>
               <svg viewBox="0 0 24 24" width="18" height="18">
