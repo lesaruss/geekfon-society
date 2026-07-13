@@ -19,7 +19,7 @@ import { RevenueCatUI, PAYWALL_RESULT } from "@revenuecat/purchases-capacitor-ui
 export const ALL_ACCESS_ENTITLEMENT =
   process.env.NEXT_PUBLIC_RC_ENTITLEMENT_ALL_ACCESS || "all_access";
 
-// Product identifiers for the three LESARs top-up packs. Match these exactly
+// Product identifiers for the three Points top-up packs. Match these exactly
 // to what's configured as non-subscription products in RevenueCat AND to the
 // PRICE_MAP/LESARS_MAP keys in app/api/checkout/route.ts. Note: these use underscores, not the hyphenated plan names Stripe uses on web (pack-starter etc) - RevenueCat product identifiers cannot contain hyphens, only alphanumeric, periods, and underscores, so both purchase
 // paths (Stripe web, RevenueCat native) credit the same amounts.
@@ -136,7 +136,7 @@ export async function presentAllAccessPaywall(): Promise<boolean> {
   }
 }
 
-/** Purchase one of the LESARs top-up packs directly (no paywall UI needed for consumables). */
+/** Purchase one of the Points top-up packs directly (no paywall UI needed for consumables). */
 export async function purchaseLesarsPack(productId: keyof typeof LESARS_PACK_PRODUCTS) {
   if (!isNative()) return { success: false, error: "not-native" as const };
   try {
