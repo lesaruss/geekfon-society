@@ -79,6 +79,10 @@ const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolea
   { key: "brief",    label: "Brief", admin: true },
 ];
 
+// Artists with real Pulse content built out. Everyone else's Pulse is Super Admin-only
+// until it's populated - Sean, 2026-07-13.
+const POPULATED_PULSE_ARTISTS = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
+
 const PULSE_CHANNELS: { key: "news" | "social" | "groupchat"; label: string; locked?: boolean }[] = [
   { key: "news",      label: "News" },
   { key: "social",    label: "Social" },
@@ -871,7 +875,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
           {/* Tab bar */}
           {(() => {
             const canSeeBrief = isSuperAdmin || (!!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 3);
-            const visibleTabs = TABS.filter(t => (!t.admin || canSeeBrief) && (!t.needsMembers || (c.members && c.members.length > 0)));
+            // Pulse is locked to Super Admin only for artists outside the original 4
+            // (Roxanne, Lex from Brixton, Shamanic Resin, Riku) until their Pulse content
+            // is actually populated - Sean, 2026-07-13. Not a tier perk, an account-only gate.
+            const canSeePulse = isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "");
+            const visibleTabs = TABS.filter(t =>
+              (!t.admin || canSeeBrief) &&
+              (!t.needsMembers || (c.members && c.members.length > 0)) &&
+              (t.key !== "pulse" || canSeePulse)
+            );
             return (
               <div className="tabbar" role="tablist">
                 {visibleTabs.map(t => (
@@ -933,7 +945,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 </div>
               ) : (
               <>{/* Pulse tab - merged News + Social + Group Chat channels */}
-              {tab === "pulse" && (
+              {/* Defense in depth: also gate the actual content, not just the tab button,
+                  since ?tab=pulse can set tab state directly from a deep link. */}
+              {tab === "pulse" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+                <section className="pulse-section">
+                  <div className="pulse-empty"><p>Pulse content for {c.name || "this artist"} is still being built. Check back soon.</p></div>
+                </section>
+              )}
+              {tab === "pulse" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
                 <section className="pulse-section">
                   <div className="channel-row" role="tablist" aria-label="Pulse channel">
                     {PULSE_CHANNELS.map(ch => (
