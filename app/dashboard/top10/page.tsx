@@ -4,7 +4,14 @@ import { supabase } from "@/lib/supabase";
 
 const STORAGE_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/artists";
 
-const FEATURED_SLUGS = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
+// Tracks every live roster artist (matches app/roster/page.tsx ARTIST_ORDER). Lord
+// Zorlot stays out - no songs yet, nothing to rank on. V stays out - administrative,
+// not a performer. Sean, 2026-07-13.
+const FEATURED_SLUGS = [
+  "roxanne", "lex-from-brixton", "shamanic-resin", "riku",
+  "straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings",
+  "vuka", "lickle-bro", "lickle-sis", "mr-russell",
+];
 
 type RankedArtist = {
   slug: string;
