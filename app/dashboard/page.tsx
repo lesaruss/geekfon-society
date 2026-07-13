@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 // already on the legacy promoter/pro tiers keep their access; see TIER_MONTHLY/TIER_LABEL/
 // TIER_RATE below, which still carry those tiers for that reason.
 const PASSPORT_TIERS = [
-  { id: "passport", label: "Passport", price: "$11/mo", lesars: 1500, desc: "Fan access. Stream, explore, and collect LESARs. The first step into the GeekFon universe.", cta: "Get Passport", inviteOnly: false },
+  { id: "passport", label: "Passport", price: "$11/mo", lesars: 1500, desc: "Fan access. Stream, explore, and collect Points. The first step into the GeekFon universe.", cta: "Get Passport", inviteOnly: false },
   { id: "plus",     label: "Plus",     price: "Invite Only", lesars: 0, desc: "Earned through member support. Street-team access, revenue-share on referrals, and priority access to exclusive artist events.", cta: "Coming Soon", inviteOnly: true },
 ];
 const TIER_MONTHLY: Record<string, number> = { passport: 1500, promoter: 2500, pro: 6000 };
@@ -44,7 +44,7 @@ export default function DashboardOverview() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminLoaded,  setAdminLoaded]  = useState(false);
 
-  // LESAR top-up modal - "Buy then Continue to Payment", same pattern as components/ArtistPage.tsx.
+  // Points top-up modal - "Buy then Continue to Payment", same pattern as components/ArtistPage.tsx.
   // Nothing is pre-selected on open (previously a pre-highlighted pack was a bug elsewhere).
   const [topUpModalOpen, setTopUpModalOpen] = useState(false);
   const [selectedPack,   setSelectedPack]   = useState<string | null>(null);
@@ -170,7 +170,7 @@ export default function DashboardOverview() {
             <div className="do-welcome-since">Passport holder since {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
           </div>
           <button className="do-topup-hero-btn" onClick={openTopUpModal}>
-            + Top Up LESARs
+            + Top Up Points
           </button>
         </div>
       </div>
@@ -183,12 +183,12 @@ export default function DashboardOverview() {
           <div className="do-stat-sub">Active</div>
         </div>
         <div className="do-stat-card">
-          <div className="do-stat-label">Monthly LESARs</div>
+          <div className="do-stat-label">Monthly Points</div>
           <div className="do-stat-val do-val-green">{monthlyAllot.toLocaleString()}</div>
           <div className="do-stat-sub">Resets {resetStr}</div>
         </div>
         <div className="do-stat-card">
-          <div className="do-stat-label">Banked LESARs</div>
+          <div className="do-stat-label">Banked Points</div>
           <div className="do-stat-val">{lesars.toLocaleString()}</div>
           <div className="do-stat-sub">Spendable</div>
         </div>
@@ -203,10 +203,10 @@ export default function DashboardOverview() {
       <div className="do-main-grid">
         {/* Balance card */}
         <div className="do-balance-card">
-          <div className="do-card-eyebrow">LESARs Balance</div>
+          <div className="do-card-eyebrow">Points Balance</div>
           <div>
             <div className="do-bal-label">Monthly (Leaderboard)</div>
-            <div className="do-bal-amount">{monthlyAllot.toLocaleString()}<span className="do-bal-unit">LESARs</span></div>
+            <div className="do-bal-amount">{monthlyAllot.toLocaleString()}<span className="do-bal-unit">Points</span></div>
           </div>
           <div className="do-bal-divider" />
           <div className="do-bal-secondary">
@@ -221,7 +221,7 @@ export default function DashboardOverview() {
           </div>
           <div className="do-bal-reset">Monthly balance resets {resetStr}. Earn more by attending events, completing challenges, and engaging with artists.</div>
           <button className="do-btn-topup" onClick={openTopUpModal}>
-            + Top up LESARs
+            + Top up Points
           </button>
           <button className="do-btn-plans" onClick={() => setTopupOpen(v => !v)}>
             {topupOpen ? "- Hide plans" : "View Passport plans"}
@@ -236,7 +236,7 @@ export default function DashboardOverview() {
           </div>
           <div className="do-psp-features">
             {[
-              `${monthlyAllot.toLocaleString()} LESARs every month`,
+              `${monthlyAllot.toLocaleString()} Points every month`,
               "Early access to new drops",
               "Member-only artist content",
               "Leaderboard eligibility",
@@ -273,7 +273,7 @@ export default function DashboardOverview() {
                 {t.inviteOnly && !(tier === t.id) && <div className="do-tier-invite-badge">Invite Only</div>}
                 <div className="do-tier-name">{t.label}</div>
                 <div className="do-tier-price">{t.price}</div>
-                {t.lesars > 0 && <div className="do-tier-lesars">{t.lesars.toLocaleString()} LESARs/mo</div>}
+                {t.lesars > 0 && <div className="do-tier-lesars">{t.lesars.toLocaleString()} Points/mo</div>}
                 <div className="do-tier-desc">{t.desc}</div>
                 {t.inviteOnly ? (
                   <button className="do-tier-cta do-tier-cta-disabled" disabled aria-disabled="true">{t.cta}</button>
@@ -349,12 +349,12 @@ export default function DashboardOverview() {
       <div className="do-section" style={{marginTop:32}}>
         <div className="do-section-row">
           <div className="do-section-title">Purchase History</div>
-          <button className="do-section-action" onClick={openTopUpModal}>+ Top up LESARs</button>
+          <button className="do-section-action" onClick={openTopUpModal}>+ Top up Points</button>
         </div>
         {purchases.length === 0 ? (
           <div className="dp-empty">
             <p>No purchases yet.</p>
-            <button className="dp-btn-outline" onClick={openTopUpModal}>Explore LESAR packs</button>
+            <button className="dp-btn-outline" onClick={openTopUpModal}>Explore Points packs</button>
           </div>
         ) : (
           <div className="do-purchases">
@@ -398,7 +398,7 @@ export default function DashboardOverview() {
                   </select>
                 </div>
                 <div className="do-invite-field">
-                  <label className="do-invite-label">Seed LESARs</label>
+                  <label className="do-invite-label">Seed Points</label>
                   <input className="do-invite-input" type="number" min={0} step={100} value={inviteLesars} onChange={e => setInviteLesars(Number(e.target.value))} />
                 </div>
               </div>
@@ -415,7 +415,7 @@ export default function DashboardOverview() {
           {adminLoading ? <div className="dp-spinner" /> : adminMembers.length > 0 && (
             <div className="do-members-wrap">
               <table className="do-members-table">
-                <thead><tr><th>Name</th><th>Email</th><th>Tier</th><th>LESARs</th><th>Joined</th><th>Last login</th></tr></thead>
+                <thead><tr><th>Name</th><th>Email</th><th>Tier</th><th>Points</th><th>Joined</th><th>Last login</th></tr></thead>
                 <tbody>
                   {adminMembers.map(m => (
                     <tr key={m.id}>
@@ -434,7 +434,7 @@ export default function DashboardOverview() {
         </div>
       )}
 
-      {/* LESAR top-up modal: same "Buy then Continue to Payment" pattern as components/ArtistPage.tsx.
+      {/* Points top-up modal: same "Buy then Continue to Payment" pattern as components/ArtistPage.tsx.
           Nothing is pre-selected when the modal opens. */}
       {topUpModalOpen && (
         <div className="do-tu-overlay" role="dialog" aria-modal="true" aria-labelledby="do-tu-title" onClick={() => { if (!topUpLoading) setTopUpModalOpen(false); }}>
@@ -443,8 +443,8 @@ export default function DashboardOverview() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
             <div className="do-tu-eyebrow">Top Up</div>
-            <h2 id="do-tu-title" className="do-tu-title">Choose a LESARs Pack</h2>
-            <p className="do-tu-desc">Pick a pack, then continue to payment. LESARs land in your balance the moment checkout completes.</p>
+            <h2 id="do-tu-title" className="do-tu-title">Choose a Points Pack</h2>
+            <p className="do-tu-desc">Pick a pack, then continue to payment. Points land in your balance the moment checkout completes.</p>
             <div className="do-tu-pack-list">
               {LESAR_PACKS.map(p => (
                 <button
@@ -456,7 +456,7 @@ export default function DashboardOverview() {
                 >
                   {p.popular && <span className="do-tu-pack-badge">Popular</span>}
                   <div>
-                    <div className="do-tu-pack-lesars">{p.lesars.toLocaleString()} LESARs</div>
+                    <div className="do-tu-pack-lesars">{p.lesars.toLocaleString()} Points</div>
                     <div className="do-tu-pack-note">{p.label}</div>
                   </div>
                   <div className="do-tu-pack-price">${p.price}</div>
