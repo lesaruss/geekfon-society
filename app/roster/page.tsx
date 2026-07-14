@@ -145,6 +145,10 @@ export default function RosterPage() {
             <img
               src={a.profile.heroUrl}
               alt={a.name}
+              loading="lazy"
+              decoding="async"
+              width={400}
+              height={400}
               // Roxanne's portrait has the head right at the top edge of the
               // source art. Shift the visible crop down for her only - other
               // artists have natural headroom and don't need this. (Original
@@ -348,3 +352,4 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
   .r-header { margin-bottom:36px; }
 }
 `;
+
