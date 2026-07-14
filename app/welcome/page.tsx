@@ -983,13 +983,6 @@ export default function WelcomePage() {
                   </p>
                 )}
 
-                {currentSlide.isArtistSlide && (
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: currentSlide.accent, color: "#fff", border: "2px solid #000", borderRadius: "100px", padding: "10px 22px", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "12px" }}>
-                    Browse the full roster
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                  </div>
-                )}
-
                 {isLastSlide && currentSlide.cta && !currentSlide.isArtistSlide && (
                   <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
                     <a
