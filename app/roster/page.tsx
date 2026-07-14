@@ -227,18 +227,10 @@ export default function RosterPage() {
             </div>
           ) : (
             <>
-              {/* DESKTOP: 4-col grid - all 13 artists, all clickable/NOW LIVE */}
-              <div className="r-desktop-roster">
-                <div className="r-grid">
-                  {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
-                </div>
-              </div>
-
-              {/* MOBILE: 2-col grid - all 13 artists */}
-              <div className="r-mobile-roster">
-                <div className="r-grid-mobile">
-                  {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
-                </div>
+              {/* Single grid, all 13 artists - column count is CSS-driven (4-col desktop, 2-col mobile) */}
+              {/* so images render once instead of twice (was doubling every artist's image request) */}
+              <div className="r-grid">
+                {artists.map(a => <ArtistCard key={a.slug} a={a} />)}
               </div>
             </>
           )}
@@ -298,10 +290,6 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .r-title{font-size:clamp(40px,7vw,72px);font-weight:900;color:#fff;letter-spacing:-.03em;line-height:.95;margin:0 0 14px;text-shadow:0 0 40px rgba(0,0,0,.8)}
 .r-sub{font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin:0}
 
-/* Desktop roster - shown on large screens */
-.r-desktop-roster { display:block; }
-.r-mobile-roster  { display:none; }
-
 /* Slide viewport */
 .r-slide-viewport { position:relative; overflow:hidden; }
 .r-slide {
@@ -342,9 +330,7 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 
 /* Mobile */
 @media(max-width:768px){
-  .r-desktop-roster { display:none; }
-  .r-mobile-roster  { display:block; }
-  .r-grid-mobile { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .r-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
   .r-page { padding:32px 16px 80px; }
   .r-city-stage { height:100vh; }
   .r-city-stage::before { height:30%; }
