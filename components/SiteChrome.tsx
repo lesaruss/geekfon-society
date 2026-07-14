@@ -273,7 +273,7 @@ export default function SiteChrome({
           )}
           {!auth.loading && !isLoggedIn && (
             <div className="gauth">
-              <a href="/login.html" className="glogin">Log in</a>
+              <a href="/login" className="glogin">Log in</a>
               <a href="/passport" className="gcta">Get Passport</a>
             </div>
           )}
@@ -331,7 +331,7 @@ export default function SiteChrome({
           <div className="gdrawer-cta">
             <a href="/passport" className="gdrawer-cta-btn" onClick={() => setOpen(false)}>Get Your Passport</a>
             <p className="gdrawer-cta-sub">Join GeekFon Society and unlock your dashboard, Points, and exclusive artist content.</p>
-            <a href="/login.html" className="gdrawer-login" onClick={() => setOpen(false)}>Already a member? Log in</a>
+            <a href="/login" className="gdrawer-login" onClick={() => setOpen(false)}>Already a member? Log in</a>
           </div>
         )}
 
