@@ -213,7 +213,7 @@ const SLIDE_AUDIO: Record<string, { url: string; label: string }> = {
   "label-cta":           { url: HF_CDN + "hf_20260704_093459_7f1079bd-9d62-4b48-bda4-c9704ce842fb.mp3", label: "Let's Talk Licensing" },
   "fan-artists":         { url: "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/hf_20260714_075712_9e686e71-c000-4d26-a2b6-6729fbec0eec.wav", label: "Meet the Roster" },
   "fan-pulse":           { url: HF_CDN + "hf_20260714_095820_96c4ad1a-91d5-44f4-8fa8-868180c0b8e4.wav", label: "The Pulse" },
-  "fan-tokens":          { url: HF_CDN + "hf_20260714_095822_78094464-f1d4-455f-b1a1-4d1537e30d43.wav", label: "Points Unlock Everything" },
+  "fan-tokens":          { url: HF_CDN + "hf_20260714_101319_cc0adbb9-31db-45be-a727-d99d0f16dd7b.wav", label: "Points Unlock Everything" },
   "fan-voting":          { url: HF_CDN + "hf_20260714_095823_365554cb-7bc9-43d5-b7b3-1d5190590bca.wav", label: "Vote. Rank. Impact." },
   "fan-radio":           { url: HF_CDN + "hf_20260714_095825_23118177-924b-4a25-97dd-47f54b262581.wav", label: "GeekFon Radio" },
   "brand-audience":      { url: HF_CDN + "hf_20260704_093539_5e20b015-f780-4f78-82e1-768a6ee38daa.mp3", label: "Multiple Cities. One Community." },
