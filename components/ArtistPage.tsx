@@ -54,7 +54,7 @@ type BibleModule = {
 
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
-  heroUrl?: string; initial?: string; tagline?: string;
+  heroUrl?: string; profileUrl?: string; initial?: string; tagline?: string;
   crumb?: { label: string; href?: string }[]; pills?: Pill[];
   message?: { ja?: string; en?: string; audio?: string; audioEn?: string; audioJa?: string };
   quote?: string; bio?: string[]; stats?: Stat[]; tracks?: Track[]; news?: News[];
@@ -830,7 +830,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             {/* Artist hero + meta */}
             <div className="head-grid">
               {c.heroUrl ? (
-                <img className="head-art" src={c.heroUrl} alt={name + " portrait"} />
+                <img className="head-art" src={c.heroUrl} alt={name + " portrait"} decoding="async" />
               ) : (
                 <div className="head-art-fallback">{c.initial || name.charAt(0)}</div>
               )}
@@ -1024,7 +1024,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                           <div key={post.id || i} className="pulse-card">
                             <div className="pulse-card-header">
                               <div className="pulse-card-meta">
-                                {c.heroUrl ? <img src={c.heroUrl} alt={name} className="pulse-avatar" /> : <div className="pulse-avatar-init">{name.charAt(0)}</div>}
+                                {(c.profileUrl || c.heroUrl) ? <img src={c.profileUrl || c.heroUrl} alt={name} className="pulse-avatar" loading="lazy" decoding="async" /> : <div className="pulse-avatar-init">{name.charAt(0)}</div>}
                                 <div><h4>{name}</h4><p className="pulse-date">{dateStr}</p></div>
                               </div>
                               {post.type && <span className="pulse-badge">{post.type}{post.memberOnly ? ' · members' : ''}</span>}
@@ -1725,6 +1725,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     </div>
   );
 }
+
 
 
 
