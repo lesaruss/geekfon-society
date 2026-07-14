@@ -178,10 +178,10 @@ const ROLE_META: Record<Role, { label: string; tagline: string; accent: string; 
 const PATH_SLIDES: Record<Role, SlideData[]> = {
   fan: [
     { id: "fan-artists", headline: "Meet the Roster", body: "More than music. A world for every artist, and it's growing.", detail: "This is the GeekFon artist roster. Each one has music, a biography, and a Pulse feed today, with interviews, video, and an animated series on the way.", accent: "#E91E8C", isArtistSlide: true },
-    { id: "fan-pulse", headline: "The Pulse", body: "Your favorite artist posts every day. You're in the conversation.", detail: "Video, photo, text - the Pulse is each artist's personal feed. Comment on a post. React to a drop. The artist responds. This is not a playlist. This is a living relationship with a character who shows up every day.", accent: "#F69820" },
-    { id: "fan-tokens", headline: "Points Unlock\nEverything", body: "Start free with 111 Points. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 Points. Unlock a single song for 100 Points, or go All Access for every track an artist drops. Points are not limited to GeekFon: spend them to redeem songs and unlock experiences across 15+ brands in the LESARUSS universe. Buy more anytime.", accent: "#9C27B0" },
-    { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every Point you spend on an artist counts as a vote. Rankings update in real time and decide which songs we play most and which get a music video first. Your votes carry across the network, including TopSpot USA and Anime 3000, and help set the charts on TopSpot Global. Your support shapes multiple communities at once.", accent: "#2196F3" },
-    { id: "fan-radio", headline: "GeekFon Radio", body: "Old-school radio, reinvented. New songs every week, 24/7.", detail: "GeekFon Radio is a constant feed, just like traditional radio: no on-demand, no saving, just every artist playing in the background while you live your day. New songs drop weekly, and members hear songs that are not even available to redeem yet. It is an exclusive perk of the $11/month Passport: 24/7 access to nearly every song in the Society.", accent: "#00BCD4", cta: { label: "Join the Society", href: "/passport" } },
+    { id: "fan-pulse", headline: "The Pulse", body: "Your favorite artist posts every day. You're in the conversation.", detail: "The Pulse is your doorway into each artist's life: video, photos, and text. News, social media, and a group chat are all coming soon to GeekFon Society.", accent: "#F69820" },
+    { id: "fan-tokens", headline: "Points Unlock\nEverything", body: "Start free with 111 Points. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 Points. Unlock a single song for 25 Points, or apply to our Plus program for access to every song in the catalog. Points aren't limited to GeekFon: spend and redeem them across LESARUSS brands, throughout the LESARUSS universe.", accent: "#9C27B0" },
+    { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every Point you spend on an artist toward a track lets us know. It helps set the rankings, both on GeekFon Radio and across the site itself.", accent: "#2196F3" },
+    { id: "fan-radio", headline: "GeekFon Radio", body: "Old-school radio, reinvented. New songs weekly, 24/7.", detail: "GeekFon Radio is your constant feed, just like traditional radio: no on-demand, no saving, just every artist playing in the background while you live your day. Hear songs not released to the public - an exclusive perk of being a registered member.", accent: "#00BCD4", cta: { label: "Join the Society", href: "/passport" } },
   ],
   label: [
     { id: "label-ip", headline: "An IP Catalog\nReady to License", body: "Original music on every major platform, ready for sync.", detail: "GeekFon Society is fully distributed and available on Spotify, Apple Music, and every major platform. The roster spans genres: pop, alternative, hip-hop, electronic, and beyond, with new artists announced monthly. All original LESARUSS IP. No sample clearances. No competing rights.", accent: "#9C27B0" },
@@ -1003,12 +1003,14 @@ export default function WelcomePage() {
                         Become a Member
                       </a>
                     )}
-                    <button
-                      onClick={() => transition(() => { setPhase("picker"); setRole(null); })}
-                      style={{ background: "none", border: "none", padding: "0", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", textDecoration: "underline", textUnderlineOffset: "3px" }}
-                    >
-                      See other paths
-                    </button>
+                    {role !== "fan" && (
+                      <button
+                        onClick={() => transition(() => { setPhase("picker"); setRole(null); })}
+                        style={{ background: "none", border: "none", padding: "0", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", textDecoration: "underline", textUnderlineOffset: "3px" }}
+                      >
+                        See other paths
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1084,15 +1086,6 @@ export default function WelcomePage() {
                       <SlidePreview slideId={currentSlide.id} accent={currentSlide.accent} />
                     )}
 
-                    {/* Compact audio module beneath visual - not on the artist slide,
-                        the bottom-bar narration button already covers it there */}
-                    {!currentSlide.isArtistSlide && SLIDE_AUDIO[currentSlide.id] && (
-                      <TourAudioModule
-                        track={SLIDE_AUDIO[currentSlide.id]}
-                        accent={currentSlide.accent}
-                        label={SLIDE_AUDIO[currentSlide.id].label}
-                      />
-                    )}
                   </div>
                 )}
               </div>
