@@ -416,7 +416,7 @@ const CHROME_CSS = `
 .gdrawer.open { transform: translateX(0); }
 .gfs-nav-circle { height: 28px; width: 28px; object-fit: contain; flex-shrink: 0; cursor: pointer; border-radius: 50%; filter: brightness(0) saturate(100%) invert(51%) sepia(98%) saturate(1200%) hue-rotate(178deg) brightness(103%) contrast(104%); opacity: .9; }
 .gfs-nav-circle:hover { opacity: 1; }
-.gdrawer-head { display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 0 14px 0 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.gdrawer-head { display: flex; align-items: center; justify-content: space-between; height: calc(60px + env(safe-area-inset-top, 0px)); box-sizing: border-box; padding: env(safe-area-inset-top, 0px) 14px 0 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
 .gx { width: 34px; height: 34px; border: none; background: none; cursor: pointer; color: rgba(255,255,255,.6); display: flex; align-items: center; justify-content: center; border-radius: 7px; }
 .gx:hover { background: rgba(255,255,255,.08); color: #fff; }
 .gx svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
@@ -452,4 +452,5 @@ const CHROME_CSS = `
 .gdva-reset { display: block; width: 100%; padding: 10px 14px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.3); background: none; border: none; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; text-align: center; }
 .gdva-reset:hover { color: rgba(255,255,255,.6); }
 `;
+
 
