@@ -239,7 +239,7 @@ export default function PrivacyPolicy() {
         </a>
         <div className="gtop-right">
           <div className="gauth">
-            <a href="/login.html" className="glogin">Log in</a>
+            <a href="/login" className="glogin">Log in</a>
             <a href="/passport" className="gcta">Get Passport</a>
           </div>
           <button className="gham" aria-label="Open menu" aria-expanded="false">
