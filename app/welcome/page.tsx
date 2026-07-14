@@ -297,7 +297,7 @@ function TrackPlayer({ track, accent }: { track: ArtistCard["tracks"][number]; a
 // One preview song each, real files mapped from public.radio_tracks.
 const PREVIEW: Record<string, { title: string; path: string }> = {
   "roxanne":          { title: "Life's Tough",     path: "roxanne/lifes-tough.mp3" },
-  "lex-from-brixton": { title: "Be Yourself",      path: "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3" },
+  "lex-from-brixton": { title: "Brixton Baby",      path: "lex-from-brixton/brixton-baby.mp3" },
   "shamanic-resin":   { title: "Real Dream",       path: "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3" },
   "riku":             { title: "Lottery of Love",  path: "riku-hayasaka/lottery-of-love.mp3" },
 };
@@ -522,58 +522,83 @@ function InlineArtistBrowser({ selected, onSelect }: { selected: number; onSelec
         </div>
       </div>
 
-      {/* Hero image */}
-      {artist.heroUrl && (
-        <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", overflow: "hidden", borderBottom: `3px solid ${artist.accent}` }}>
-          <img
-            src={artist.heroUrl}
-            alt={artist.name}
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
-          />
-        </div>
-      )}
-
-      <div style={{ padding: "18px 16px", display: "flex", flexDirection: "column", gap: "14px" }}>
-        {/* Identity */}
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          {!artist.heroUrl && (
-            <div style={{ width: "56px", height: "56px", borderRadius: "12px", background: artist.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 900, color: "#fff", flexShrink: 0 }}>
+      {/* Identity row (square image + text) and free song sit below the selector.
+          Dropped the old full-width 16:9 hero to a compact square so the card
+          reads faster and does not eat the whole panel. No link out to the full
+          artist profile here on purpose - this keeps the fan inside the tour. */}
+      <div style={{ padding: "18px 16px", display: "flex", flexDirection: "column", gap: "16px" }}>
+        {/* Row 1: square image left, text right */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
+          {artist.heroUrl ? (
+            <div style={{ position: "relative", width: "84px", height: "84px", flexShrink: 0, borderRadius: "12px", overflow: "hidden", border: `2px solid ${artist.accent}` }}>
+              <img
+                src={artist.heroUrl}
+                alt={artist.name}
+                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
+              />
+            </div>
+          ) : (
+            <div style={{ width: "84px", height: "84px", borderRadius: "12px", background: artist.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 900, color: "#fff", flexShrink: 0 }}>
               {artist.initial}
             </div>
           )}
-          <div>
-            <div style={{ fontSize: "18px", fontWeight: 900, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{artist.name}</div>
-            <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: artist.accent, marginTop: "4px" }}>{artist.genre}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: "17px", fontWeight: 900, letterSpacing: "-0.01em", lineHeight: 1.15 }}>{artist.name}</div>
+            <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: artist.accent, margin: "4px 0 8px" }}>{artist.genre}</div>
+            <p style={{ fontSize: "12.5px", lineHeight: 1.55, color: "rgba(255,255,255,0.7)", margin: 0 }}>{artist.tagline}</p>
           </div>
         </div>
 
-        {/* Blurb */}
-        <p style={{ fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-          {artist.tagline}
-        </p>
-
-        {/* Preview track */}
+        {/* Row 2: the one free song live on this artist's own page */}
         <div>
           <div style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "8px" }}>
-            Preview
+            Free Song
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {artist.tracks.map((t) => (
-              <TrackPlayer key={t.title} track={t} accent={artist.accent} />
-            ))}
-          </div>
+          {artist.tracks[0] && <TrackPlayer track={artist.tracks[0]} accent={artist.accent} />}
         </div>
-
-        {/* CTA */}
-        <a
-          href={`/${artist.slug}`}
-          style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: artist.accent, fontSize: "12px", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", textDecoration: "none", marginTop: "2px" }}
-        >
-          Full Artist Profile
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </a>
       </div>
     </div>
+  );
+}
+// ── Tour audio: bottom-bar narration toggle (sits between Back and Next) ─────
+function TourNarrationButton({ track, accent }: { track: { url: string; label: string }; accent: string }) {
+  const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  function toggle() {
+    if (state === "unavailable") return;
+    if (!audioRef.current) {
+      const a = new Audio(track.url);
+      a.addEventListener("error", () => setState("unavailable"));
+      a.addEventListener("loadedmetadata", () => { setState("playing"); a.play(); });
+      a.addEventListener("ended", () => setState("idle"));
+      audioRef.current = a;
+      setState("loading");
+      a.load();
+      return;
+    }
+    const a = audioRef.current;
+    if (state === "playing") { a.pause(); setState("idle"); }
+    else { a.play().then(() => setState("playing")).catch(() => setState("unavailable")); }
+  }
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  const isPlaying = state === "playing";
+  const isLoading = state === "loading";
+
+  return (
+    <button
+      onClick={toggle}
+      aria-label={isPlaying ? "Pause narration" : "Listen to this page"}
+      title={isPlaying ? "Pause narration" : "Listen to this page"}
+      style={{ width: "40px", height: "40px", borderRadius: "50%", background: isPlaying ? accent : "rgba(255,255,255,0.08)", border: `1px solid ${isPlaying ? accent : "rgba(255,255,255,0.16)"}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s ease" }}
+    >
+      {isLoading
+        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="40" strokeDashoffset="20" style={{ animation: "spin 0.8s linear infinite" }} /></svg>
+        : isPlaying
+          ? <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          : <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
+    </button>
   );
 }
 
@@ -1032,7 +1057,12 @@ export default function WelcomePage() {
           )}
         </div>
 
-        <ProgressDots total={totalSteps} current={currentStep} accent={roleAccent} />
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          {phase === "path" && currentSlide && SLIDE_AUDIO[currentSlide.id] && (
+            <TourNarrationButton key={currentSlide.id} track={SLIDE_AUDIO[currentSlide.id]} accent={roleAccent} />
+          )}
+          <ProgressDots total={totalSteps} current={currentStep} accent={roleAccent} />
+        </div>
 
         <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "16px" }}>
           <a href="/passport" style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", color: "rgba(255,255,255,0.45)", textDecoration: "none", textTransform: "uppercase" }}>
