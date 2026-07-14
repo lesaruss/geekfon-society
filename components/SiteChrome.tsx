@@ -369,7 +369,7 @@ export default function SiteChrome({
 }
 
 const CHROME_CSS = `
-.gtop { position: sticky; top: 0; z-index: 40; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 18px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,.08); }
+.gtop { position: sticky; top: 0; z-index: 40; height: calc(60px + env(safe-area-inset-top, 0px)); box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: env(safe-area-inset-top, 0px) 18px 0 18px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,.08); }
 .gtop-right { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
 .gham { width: 40px; height: 40px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #fff; flex-shrink: 0; }
 .gham:hover { background: rgba(255,255,255,0.1); }
