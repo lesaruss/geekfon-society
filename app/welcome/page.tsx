@@ -177,7 +177,7 @@ const ROLE_META: Record<Role, { label: string; tagline: string; accent: string; 
 
 const PATH_SLIDES: Record<Role, SlideData[]> = {
   fan: [
-    { id: "fan-artists", headline: "Meet the Roster", body: "More than music. A world for every artist, and it's growing.", detail: "This is the GeekFon artist roster. Each one has music, a biography, and a Pulse feed today, with interviews, video, and an animated series on the way. The deeper you go, the more of their world opens up. And we're just getting started.", accent: "#E91E8C", isArtistSlide: true },
+    { id: "fan-artists", headline: "Meet the Roster", body: "More than music. A world for every artist, and it's growing.", detail: "This is the GeekFon artist roster. Each one has music, a biography, and a Pulse feed today, with interviews, video, and an animated series on the way.", accent: "#E91E8C", isArtistSlide: true },
     { id: "fan-pulse", headline: "The Pulse", body: "Your favorite artist posts every day. You're in the conversation.", detail: "Video, photo, text - the Pulse is each artist's personal feed. Comment on a post. React to a drop. The artist responds. This is not a playlist. This is a living relationship with a character who shows up every day.", accent: "#F69820" },
     { id: "fan-tokens", headline: "Points Unlock\nEverything", body: "Start free with 111 Points. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 Points. Unlock a single song for 100 Points, or go All Access for every track an artist drops. Points are not limited to GeekFon: spend them to redeem songs and unlock experiences across 15+ brands in the LESARUSS universe. Buy more anytime.", accent: "#9C27B0" },
     { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every Point you spend on an artist counts as a vote. Rankings update in real time and decide which songs we play most and which get a music video first. Your votes carry across the network, including TopSpot USA and Anime 3000, and help set the charts on TopSpot Global. Your support shapes multiple communities at once.", accent: "#2196F3" },
@@ -577,7 +577,7 @@ function InlineArtistBrowser({ selected, onSelect }: { selected: number; onSelec
           <div style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "8px" }}>
             Free Song
           </div>
-          {artist.tracks[0] && <TrackPlayer track={artist.tracks[0]} accent={artist.accent} />}
+          {artist.tracks[0] && <TrackPlayer key={artist.slug} track={artist.tracks[0]} accent={artist.accent} />}
         </div>
       </div>
     </div>
@@ -876,7 +876,10 @@ export default function WelcomePage() {
         .gfs-fon-hue { animation: fonHue 6s ease-in-out infinite; }
         @media(max-width:899px){
           .gfs-main{overflow-y:auto !important}
-          .gfs-outer-content{padding-left:0 !important;padding-right:0 !important;padding-top:0 !important}
+          .gfs-outer-content--path{padding-left:0 !important;padding-right:0 !important;padding-top:0 !important}
+        }
+        @media(max-width:640px){
+          .gfs-outer-content:not(.gfs-outer-content--path){padding-left:24px !important;padding-right:24px !important}
         }
         .tour-slide-wrap{display:flex;flex-direction:column;width:100%;align-items:flex-start}
         .tour-text-col{width:100%;padding:28px 20px 16px;min-width:0;box-sizing:border-box}
@@ -902,7 +905,7 @@ export default function WelcomePage() {
           Pagination + Skip now live in the bottom bar below. */}
 
       {/* Main content */}
-      <div className="gfs-outer-content" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: phase === "path" ? "0 0 100px" : "40px 60px 100px", position: "relative", zIndex: 10, width: "100%" }}>
+      <div className={`gfs-outer-content${phase === "path" ? " gfs-outer-content--path" : ""}`} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: phase === "path" ? "0 0 100px" : "48px 80px 100px", position: "relative", zIndex: 10, width: "100%" }}>
         <div
           key={`${phase}-${pathSlide}`}
           className="slide-content"
