@@ -39,7 +39,7 @@ type ArtistCard = {
 const ARTISTS: ArtistCard[] = [
   {
     slug: "roxanne", name: "Roxanne", initial: "R", accent: "#E91E8C",
-    genre: "J-Pop / Pop", tagline: "The voice that disappeared - and came back with everything to say.",
+    genre: "J-Pop / Tokyo, Japan", tagline: "The voice that disappeared - and came back with everything to say.",
     heroUrl: SUPA_MEDIA + "roxanne/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "roxanne/full.mp3", full: true },
@@ -50,7 +50,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "lex-from-brixton", name: "Lex from Brixton", initial: "L", accent: "#F69820",
-    genre: "Grime / Hip-Hop", tagline: "Brixton in the bloodline. Grime in the grammar. No translations needed.",
+    genre: "Hip-Hop / London, UK", tagline: "Brixton in the bloodline. Grime in the grammar. No translations needed.",
     heroUrl: SUPA_MEDIA + "lex-from-brixton/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "lex-from-brixton/full.mp3", full: true },
@@ -61,7 +61,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "nilo-wave", name: "Nilo Wave", initial: "N", accent: "#00BCD4",
-    genre: "Caribbean / Electronic", tagline: "Caribbean rhythms rebuilt from the ground up. The wave is the message.",
+    genre: "Reggaeton / Puerto Rico", tagline: "Caribbean rhythms rebuilt from the ground up. The wave is the message.",
     heroUrl: SUPA_MEDIA + "nilo-wave/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "nilo-wave/full.mp3", full: true },
@@ -72,7 +72,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "shamanic-resin", name: "Shamanic Resin", initial: "S", accent: "#9C27B0",
-    genre: "K-Pop / Electronics", tagline: "Where K-Pop architecture meets ritual electronics. This is not a performance. It is a ceremony.",
+    genre: "K-Pop / Seoul, Korea", tagline: "Where K-Pop architecture meets ritual electronics. This is not a performance. It is a ceremony.",
     heroUrl: SUPA_MEDIA + "shamanic-resin/hero.png",
     tracks: [
       { title: "All I Do Is Eat", url: SUPA_AUDIO + "shamanic-resin/all-i-do-is-eat.mp3", full: true },
@@ -83,7 +83,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "riku", name: "Riku Hayasaka", initial: "RH", accent: "#2196F3",
-    genre: "Indie Pop / Bilingual", tagline: "Indie pop built in two languages. The melody is the translation.",
+    genre: "J-Pop / Japan", tagline: "Indie pop built in two languages. The melody is the translation.",
     heroUrl: SUPA_MEDIA + "riku/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "riku/full.mp3", full: true },
@@ -94,7 +94,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "lickle-bro", name: "Lickle Bro", initial: "LB", accent: "#4CAF50",
-    genre: "R&B / Dancehall", tagline: "R&B and dancehall raised in the same house. The harmony was inevitable.",
+    genre: "Dancehall / London, UK", tagline: "R&B and dancehall raised in the same house. The harmony was inevitable.",
     heroUrl: SUPA_MEDIA + "lickle-bro/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "lickle-bro/full.mp3", full: true },
@@ -105,7 +105,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "lickle-sis", name: "Lickle Sis", initial: "LS", accent: "#FF5722",
-    genre: "Soul / R&B", tagline: "Soul at full volume. She is not asking for permission.",
+    genre: "Dembow / London, UK", tagline: "Soul at full volume. She is not asking for permission.",
     heroUrl: SUPA_MEDIA + "lickle-sis/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "lickle-sis/full.mp3", full: true },
@@ -116,7 +116,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "mad-tings", name: "Mad Tings", initial: "MT", accent: "#E91E63",
-    genre: "Grime / Dubstep", tagline: "Grime energy. Dubstep weight. The whole thing turned up to a frequency most systems cannot handle.",
+    genre: "Hip-Hop / London, UK", tagline: "Grime energy. Dubstep weight. The whole thing turned up to a frequency most systems cannot handle.",
     heroUrl: SUPA_MEDIA + "mad-tings/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "mad-tings/full.mp3", full: true },
@@ -127,7 +127,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "mr-russell", name: "Mr. Russell", initial: "MR", accent: "#90A4AE",
-    genre: "Hip-Hop", tagline: "Hip-hop that knows where it has been and does not need to prove where it is going.",
+    genre: "Hip-Hop / NYC", tagline: "Hip-hop that knows where it has been and does not need to prove where it is going.",
     heroUrl: SUPA_MEDIA + "mr-russell/hero.jpg",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "mr-russell/full.mp3", full: true },
@@ -138,7 +138,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "rustblood-prophets", name: "Rustblood Prophets", initial: "RP", accent: "#F44336",
-    genre: "Alternative / Dark", tagline: "Alternative and dark and not sorry about either one.",
+    genre: "Alternative / Berlin, Germany", tagline: "Alternative and dark and not sorry about either one.",
     heroUrl: SUPA_MEDIA + "rustblood-prophets/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "rustblood-prophets/full.mp3", full: true },
@@ -149,7 +149,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "straight-and-narrow", name: "Straight and Narrow", initial: "SN", accent: "#A1887F",
-    genre: "Hip-Hop / Alternative", tagline: "Hip-hop with a double meaning and alternative instincts. The name is the story.",
+    genre: "Country / Nashville", tagline: "Hip-hop with a double meaning and alternative instincts. The name is the story.",
     heroUrl: SUPA_MEDIA + "straight-and-narrow/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "straight-and-narrow/full.mp3", full: true },
@@ -160,7 +160,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "vuka", name: "Vuka", initial: "V", accent: "#FFB300",
-    genre: "Amapiano", tagline: "Amapiano built for a continent the Society hasn't reached yet.",
+    genre: "Amapiano / Johannesburg, South Africa", tagline: "Amapiano built for a continent the Society hasn't reached yet.",
     heroUrl: "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/hf_20260713_122846_dae7867b-1428-4544-a3f9-5c5455318b69.png",
     tracks: [
       { title: "Fall Into Rhythm", url: SUPA_AUDIO + "vuka/fall-into-rhythm.mp3", full: true },
