@@ -171,13 +171,13 @@ export default function PassportPage() {
   async function handleJoin(plan?: string) {
     // Free signup goes straight to the registration form (magic-link sign-up).
     if (!plan || plan === "free") {
-      window.location.href = "/register.html";
+      window.location.href = "/register";
       return;
     }
     // Paid plans require an authenticated member. Send guests to log in,
     // then bring them back to the passport page to complete the purchase.
     if (!userId) {
-      window.location.href = "/login.html?redirect=/passport";
+      window.location.href = "/login?redirect=/passport";
       return;
     }
 
