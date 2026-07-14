@@ -42,7 +42,7 @@ const NAV_PRO: NavItem[] = [
 
 
 
-function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, canSeeRadioSchedule = false): NavItem[] {
+function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, canSeeRadioSchedule = false, canSeeMembers = false): NavItem[] {
   let base: NavItem[];
   if (tier === "plus")          base = NAV_PLUS;
   else if (tier === "pro")      base = NAV_PRO;
@@ -58,6 +58,11 @@ function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, 
   // account-only gate as Release Schedule (locked 2026-07-07), not a tier/role perk.
   if (canSeeRadioSchedule) {
     base = [...base, { label: "Radio Schedule", href: "/dashboard/radio-schedule" }];
+  }
+  // Members list (name/email/tier/points/joined/last login) - same account-only gate,
+  // not a tier/role perk. Standalone page pulled out of the dashboard 2026-07-13.
+  if (canSeeMembers) {
+    base = [...base, { label: "Members", href: "/dashboard/members" }];
   }
   return base;
 }
@@ -224,7 +229,8 @@ export default function SiteChrome({
   // tier or role, and never visible while simulating another tier via View As.
   const canSeeReleaseSchedule = auth.email === ADMIN_EMAIL && !viewAs;
   const canSeeRadioSchedule = auth.email === ADMIN_EMAIL && !viewAs;
-  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule, canSeeRadioSchedule);
+  const canSeeMembers = auth.email === ADMIN_EMAIL && !viewAs;
+  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule, canSeeRadioSchedule, canSeeMembers);
   const isLoggedIn = effectiveTier !== "public" && !auth.loading;
   const tierAccent = TIER_ACCENT[effectiveTier];
   const tierLabel  = TIER_LABEL[effectiveTier];
@@ -262,12 +268,12 @@ export default function SiteChrome({
           {!auth.loading && isLoggedIn && auth.balance > 0 && (
             <div className="gmember-balance">
               <span className="gmember-balance-num">{auth.balance.toLocaleString()}</span>
-              <span className="gmember-balance-label">LESARs</span>
+              <span className="gmember-balance-label">Points</span>
             </div>
           )}
           {!auth.loading && !isLoggedIn && (
             <div className="gauth">
-              <a href="/login.html" className="glogin">Log in</a>
+              <a href="/login" className="glogin">Log in</a>
               <a href="/passport" className="gcta">Get Passport</a>
             </div>
           )}
@@ -305,14 +311,6 @@ export default function SiteChrome({
           </a>
         )}
 
-        {!isLoggedIn && (
-          <a href="/shamanic-resin" className="gdrawer-ad" onClick={() => setOpen(false)}>
-            <span className="gda-eyebrow">On GeekFon Radio Now</span>
-            <span className="gda-title">All I Do Is Eat</span>
-            <span className="gda-sub">Shamanic Resin - listen now</span>
-          </a>
-        )}
-
         {isLoggedIn ? (
           <div className="gdrawer-member">
             <div className="gdm-avatar" style={{ background: tierAccent }}>{auth.initial}</div>
@@ -325,15 +323,15 @@ export default function SiteChrome({
             {auth.balance > 0 && (
               <div className="gdm-balance">
                 <div className="gdm-balance-num">{auth.balance.toLocaleString()}</div>
-                <div className="gdm-balance-label" style={{ color: tierAccent }}>LESARs</div>
+                <div className="gdm-balance-label" style={{ color: tierAccent }}>Points</div>
               </div>
             )}
           </div>
         ) : (
           <div className="gdrawer-cta">
             <a href="/passport" className="gdrawer-cta-btn" onClick={() => setOpen(false)}>Get Your Passport</a>
-            <p className="gdrawer-cta-sub">Join GeekFon Society and unlock your dashboard, LESARs, and exclusive artist content.</p>
-            <a href="/login.html" className="gdrawer-login" onClick={() => setOpen(false)}>Already a member? Log in</a>
+            <p className="gdrawer-cta-sub">Join GeekFon Society and unlock your dashboard, Points, and exclusive artist content.</p>
+            <a href="/login" className="gdrawer-login" onClick={() => setOpen(false)}>Already a member? Log in</a>
           </div>
         )}
 
@@ -371,7 +369,7 @@ export default function SiteChrome({
 }
 
 const CHROME_CSS = `
-.gtop { position: sticky; top: 0; z-index: 40; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 18px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,.08); }
+.gtop { position: sticky; top: 0; z-index: 40; height: calc(60px + env(safe-area-inset-top, 0px)); box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: env(safe-area-inset-top, 0px) 18px 0 18px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,.08); }
 .gtop-right { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
 .gham { width: 40px; height: 40px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #fff; flex-shrink: 0; }
 .gham:hover { background: rgba(255,255,255,0.1); }
@@ -399,7 +397,7 @@ const CHROME_CSS = `
 .glogin:hover { opacity: 1; }
 @media(max-width:640px) { .glogin { display: none; } }
 /* Mobile/tablet top bar (incl. iPad portrait): logo + hamburger only. Everything else
-   the top bar can show - Log in, Get Passport, LESARs balance - is one tap away in the
+   the top bar can show - Log in, Get Passport, Points balance - is one tap away in the
    hamburger drawer already, so keeping it out of the bar itself avoids the crowding
    Sean flagged while traveling. Desktop keeps all of it. The admin "Viewing as" chip
    itself was removed from the top bar entirely on 2026-07-07 (desktop and mobile). */
@@ -435,12 +433,7 @@ const CHROME_CSS = `
 .gdm-balance { text-align: right; flex-shrink: 0; }
 .gdm-balance-num { font-size: 14px; font-weight: 900; color: #fff; }
 .gdm-balance-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; margin-top: 1px; }
-.gdrawer-ad { display: block; margin: 6px 16px 0; padding: 16px; border-radius: 10px; background: linear-gradient(135deg, rgba(156,39,176,.24), rgba(156,39,176,.06)); border: 1px solid rgba(156,39,176,.45); text-decoration: none; }
-.gdrawer-ad:hover { background: linear-gradient(135deg, rgba(156,39,176,.34), rgba(156,39,176,.1)); }
-.gda-eyebrow { display: block; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: #cf9bff; margin-bottom: 7px; }
-.gda-title { display: block; font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -.01em; }
-.gda-sub { display: block; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.6); margin-top: 4px; }
-.gdrawer-cta { margin-top: auto; padding: 20px 18px; border-top: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; gap: 12px; }
+.gdrawer-cta { padding: 20px 18px; border-top: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; gap: 12px; }
 .gdrawer-cta-btn { display: block; text-align: center; padding: 13px 20px; border-radius: 100px; background: #E91E8C; color: #fff; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; text-decoration: none; }
 .gdrawer-cta-btn:hover { background: #c41874; }
 .gdrawer-cta-sub { font-size: 11px; font-weight: 500; line-height: 1.6; color: rgba(255,255,255,.35); margin: 0; }

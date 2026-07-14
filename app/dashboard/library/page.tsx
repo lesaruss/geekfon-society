@@ -57,7 +57,7 @@ export default function LibraryPage() {
         </div>
         <div className="lib-stat">
           <div className="lib-stat-num">{(points?.available_points ?? 0).toLocaleString()}</div>
-          <div className="lib-stat-label">LESARs Available</div>
+          <div className="lib-stat-label">Points Available</div>
         </div>
         <div className="lib-stat">
           <div className="lib-stat-num">{(member?.passport_artists || []).length}</div>
@@ -81,7 +81,7 @@ export default function LibraryPage() {
             </svg>
           </div>
           <h2 className="lib-empty-title">Your library is empty</h2>
-          <p className="lib-empty-sub">Start exploring artists and collecting their music with your LESARs.</p>
+          <p className="lib-empty-sub">Start exploring artists and collecting their music with your Points.</p>
           <div className="lib-empty-actions">
             <a href="/roster" className="lib-cta-primary">Browse Artists</a>
             <a href="/radio" className="lib-cta-secondary">GeekFon Radio</a>
@@ -117,7 +117,7 @@ export default function LibraryPage() {
                 ) : (
                   <span className="lib-card-soon">Audio coming soon</span>
                 )}
-                <div className="lib-card-cost">{t.lesars_spent} LESARs</div>
+                <div className="lib-card-cost">{t.lesars_spent} Points</div>
               </div>
             </div>
           ))}
@@ -129,7 +129,7 @@ export default function LibraryPage() {
           <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#F69820" strokeWidth="1.5"/><path d="M10 7v4M10 13h.01" stroke="#F69820" strokeWidth="1.5" strokeLinecap="round"/></svg>
         </div>
         <p className="lib-info-text">
-          Songs are purchased with LESARs. Every Passport member earns LESARs monthly. Visit an artist page to collect their tracks.
+          Songs are purchased with Points. Every Passport member earns Points monthly. Visit an artist page to collect their tracks.
         </p>
       </div>
     </>

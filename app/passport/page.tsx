@@ -31,7 +31,7 @@ const PERKS = [
   },
   {
     icon: "◆",
-    title: "Earn LESARs Every Day",
+    title: "Earn Points Every Day",
     desc: "Get points for listening, sharing, and bringing people in. Your activity is your currency.",
     accent: "#9C27B0",
   },
@@ -44,7 +44,7 @@ const PERKS = [
   {
     icon: "◈",
     title: "Leaderboard and Artist Top 10",
-    desc: "Compete with the community. Vote on the Artist Top 10. Your LESARs, your influence.",
+    desc: "Compete with the community. Vote on the Artist Top 10. Your Points, your influence.",
     accent: "#FF5722",
   },
 ];
@@ -171,13 +171,13 @@ export default function PassportPage() {
   async function handleJoin(plan?: string) {
     // Free signup goes straight to the registration form (magic-link sign-up).
     if (!plan || plan === "free") {
-      window.location.href = "/register.html";
+      window.location.href = "/register";
       return;
     }
     // Paid plans require an authenticated member. Send guests to log in,
     // then bring them back to the passport page to complete the purchase.
     if (!userId) {
-      window.location.href = "/login.html?redirect=/passport";
+      window.location.href = "/login?redirect=/passport";
       return;
     }
 
@@ -241,7 +241,7 @@ export default function PassportPage() {
             <div className="pp-hero-price">Free to Join</div>
             <h1 className="pp-hero-title">GeekFon Passport</h1>
             <p className="pp-hero-sub">
-              Your membership into the GeekFon universe. Listen, earn LESARs, unlock tracks,
+              Your membership into the GeekFon universe. Listen, earn Points, unlock tracks,
               and build your place in the community. Free to start. Power up when you&apos;re ready.
             </p>
             <button className="pp-hero-cta" onClick={() => setStep("plans")} aria-label="See GeekFon Passport plans">
@@ -273,7 +273,7 @@ export default function PassportPage() {
           <div className="pp-pricing-label">Choose your path</div>
           <h2 id="pp-plans-heading" className="pp-pricing-heading">Start free. Go deeper when you&apos;re ready.</h2>
           <p className="pp-pricing-sub">
-            Every Passport is free. LESARs are how you move inside the ecosystem - earn them by
+            Every Passport is free. Points are how you move inside the ecosystem - earn them by
             participating, or get more to unlock tracks faster. The $11 membership puts everything on autopilot.
           </p>
 
@@ -284,11 +284,11 @@ export default function PassportPage() {
               <div className="pp-tier-name">Free Forever</div>
               <div className="pp-tier-price">Free</div>
               <div className="pp-tier-period">no card required</div>
-              <div className="pp-tier-highlight">111 LESARs</div>
+              <div className="pp-tier-highlight">111 Points</div>
               <div className="pp-tier-highlight-sub">to get you started</div>
               <ul className="pp-tier-items">
-                <li>111 LESARs loaded on signup - enough to unlock your first track</li>
-                <li>Earn LESARs by listening, sharing, and referring friends</li>
+                <li>111 Points loaded on signup - enough to unlock your first track</li>
+                <li>Earn Points by listening, sharing, and referring friends</li>
                 <li>Full access to GeekFon Radio</li>
                 <li>Vote on the Artist Top 10</li>
                 <li>Your activity builds your rank in the community</li>
@@ -304,10 +304,10 @@ export default function PassportPage() {
               <div className="pp-tier-name">All Access</div>
               <div className="pp-tier-price"><span>$</span>11</div>
               <div className="pp-tier-period">per month, cancel any time</div>
-              <div className="pp-tier-highlight">1,500 LESARs</div>
+              <div className="pp-tier-highlight">1,500 Points</div>
               <div className="pp-tier-highlight-sub">every month, automatically</div>
               <ul className="pp-tier-items">
-                <li>1,500 LESARs per month - enough for 15 tracks</li>
+                <li>1,500 Points per month - enough for 15 tracks</li>
                 <li>Early access to every new track before public release</li>
                 <li>24/7 GeekFon Radio, including unreleased songs</li>
                 <li>Eligible for the GeekFon Plus street team</li>

@@ -217,7 +217,7 @@ export default function PlusApplyPage() {
               <p className="plus-section-text">
                 GeekFon Plus reps represent the community in their city - at events, on the ground,
                 and online. You promote the artists, bring people in, and build your chapter.
-                In return, you get early access to every track, exclusive LESARs, event priority,
+                In return, you get early access to every track, exclusive Points, event priority,
                 and real opportunities to earn from the work you put in.
                 We do not accept everyone. We look for people who already move like this.
               </p>
@@ -231,7 +231,7 @@ export default function PlusApplyPage() {
                   { icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75", label: "City chapter", desc: "Your own chapter. Your city. Your reputation." },
                   { icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z", label: "Verified rep status", desc: "Official Plus badge, credentials, and team brief" },
                   { icon: "M2.5 18.5l7-7 4 4L20.5 8M22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6", label: "Income opportunities", desc: "Earn from events, referrals, and brand campaigns" },
-                  { icon: "M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM12 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4z", label: "Exclusive LESARs", desc: "Bonus points for every rep activity you complete" },
+                  { icon: "M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM12 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4z", label: "Exclusive Points", desc: "Bonus points for every rep activity you complete" },
                   { icon: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01", label: "Event priority", desc: "First access to every GeekFon live event" },
                 ].map((perk, i) => (
                   <div key={i} className="plus-perk">
@@ -420,7 +420,7 @@ export default function PlusApplyPage() {
                   { n: "01", t: "Apply", d: "Submit your application and video." },
                   { n: "02", t: "Review", d: "The team watches every video personally." },
                   { n: "03", t: "Selection", d: "If chosen, you get a direct invite." },
-                  { n: "04", t: "Activate", d: "Get your badge, LESARs bonus, and city brief." },
+                  { n: "04", t: "Activate", d: "Get your badge, Points bonus, and city brief." },
                 ].map((s, i) => (
                   <div key={i} className="plus-step">
                     <div className="plus-step-n">{s.n}</div>

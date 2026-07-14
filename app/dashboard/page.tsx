@@ -9,14 +9,13 @@ import { supabase } from "@/lib/supabase";
 // already on the legacy promoter/pro tiers keep their access; see TIER_MONTHLY/TIER_LABEL/
 // TIER_RATE below, which still carry those tiers for that reason.
 const PASSPORT_TIERS = [
-  { id: "passport", label: "Passport", price: "$11/mo", lesars: 1500, desc: "Fan access. Stream, explore, and collect LESARs. The first step into the GeekFon universe.", cta: "Get Passport", inviteOnly: false },
+  { id: "passport", label: "Passport", price: "$11/mo", lesars: 1500, desc: "Fan access. Stream, explore, and collect Points. The first step into the GeekFon universe.", cta: "Get Passport", inviteOnly: false },
   { id: "plus",     label: "Plus",     price: "Invite Only", lesars: 0, desc: "Earned through member support. Street-team access, revenue-share on referrals, and priority access to exclusive artist events.", cta: "Coming Soon", inviteOnly: true },
 ];
 const TIER_MONTHLY: Record<string, number> = { passport: 1500, promoter: 2500, pro: 6000 };
 const TIER_LABEL: Record<string, string>   = { passport: "Passport", promoter: "Promoter", pro: "Community Manager" };
 const TIER_RATE:  Record<string, number>   = { promoter: 0.10, pro: 0.25 };
 const TIER_DEFAULT_LESARS: Record<string, number> = { passport: 100, promoter: 1000, pro: 0 };
-const TIER_OPTIONS = ["passport", "promoter", "pro"];
 const ADMIN_EMAIL = "contact@lesaruss.com";
 const GOAL = 1_000_000;
 
@@ -27,24 +26,13 @@ const LESAR_PACKS: { id: string; lesars: number; price: number; label: string; p
   { id: "pack-power",    lesars: 5000, price: 33, label: "Power" },
 ];
 
-type AdminMember = { id: string; user_id: string; name: string | null; email: string | null; tier: string | null; available_points: number; created_at: string; last_sign_in: string | null; };
-
 export default function DashboardOverview() {
   const { userId, userEmail, member, points, purchases, referral, memberCount } = useDashboard();
 
   const [topupOpen,    setTopupOpen]    = useState(false);
-  const [inviteOpen,   setInviteOpen]   = useState(false);
-  const [inviteEmail,  setInviteEmail]  = useState("");
-  const [inviteLesars, setInviteLesars] = useState(100);
-  const [inviteTier,   setInviteTier]   = useState("passport");
-  const [inviteStatus, setInviteStatus] = useState<"idle"|"sending"|"done"|"error">("idle");
-  const [inviteError,  setInviteError]  = useState("");
   const [copied,       setCopied]       = useState(false);
-  const [adminMembers, setAdminMembers] = useState<AdminMember[]>([]);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [adminLoaded,  setAdminLoaded]  = useState(false);
 
-  // LESAR top-up modal - "Buy then Continue to Payment", same pattern as components/ArtistPage.tsx.
+  // Points top-up modal - "Buy then Continue to Payment", same pattern as components/ArtistPage.tsx.
   // Nothing is pre-selected on open (previously a pre-highlighted pack was a bug elsewhere).
   const [topUpModalOpen, setTopUpModalOpen] = useState(false);
   const [selectedPack,   setSelectedPack]   = useState<string | null>(null);
@@ -82,40 +70,6 @@ export default function DashboardOverview() {
   const resetDate = new Date();
   resetDate.setMonth(resetDate.getMonth() + 1, 1);
   const resetStr = resetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-  async function loadAdminMembers() {
-    if (adminLoaded) return;
-    setAdminLoading(true);
-    try {
-      const res = await fetch("/api/admin/members");
-      const json = await res.json();
-      setAdminMembers(json.members || []);
-      setAdminLoaded(true);
-    } catch (_) {}
-    setAdminLoading(false);
-  }
-
-  function handleTierChange(t: string) {
-    setInviteTier(t);
-    setInviteLesars(TIER_DEFAULT_LESARS[t] ?? 0);
-  }
-
-  async function sendInvite(e: React.FormEvent) {
-    e.preventDefault();
-    setInviteStatus("sending"); setInviteError("");
-    try {
-      const res = await fetch("/api/invite", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail, initial_lesars: inviteLesars, tier: inviteTier }),
-      });
-      const json = await res.json();
-      if (!res.ok) { setInviteError(json.error || "Failed"); setInviteStatus("error"); return; }
-      setInviteStatus("done");
-      setInviteEmail(""); setInviteLesars(100); setInviteTier("passport");
-      loadAdminMembers();
-      setTimeout(() => { setInviteOpen(false); setInviteStatus("idle"); }, 2500);
-    } catch (_) { setInviteError("Network error"); setInviteStatus("error"); }
-  }
 
   function copyLink() {
     if (!referral?.ref_code) return;
@@ -170,7 +124,7 @@ export default function DashboardOverview() {
             <div className="do-welcome-since">Passport holder since {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
           </div>
           <button className="do-topup-hero-btn" onClick={openTopUpModal}>
-            + Top Up LESARs
+            + Top Up Points
           </button>
         </div>
       </div>
@@ -183,12 +137,12 @@ export default function DashboardOverview() {
           <div className="do-stat-sub">Active</div>
         </div>
         <div className="do-stat-card">
-          <div className="do-stat-label">Monthly LESARs</div>
+          <div className="do-stat-label">Monthly Points</div>
           <div className="do-stat-val do-val-green">{monthlyAllot.toLocaleString()}</div>
           <div className="do-stat-sub">Resets {resetStr}</div>
         </div>
         <div className="do-stat-card">
-          <div className="do-stat-label">Banked LESARs</div>
+          <div className="do-stat-label">Banked Points</div>
           <div className="do-stat-val">{lesars.toLocaleString()}</div>
           <div className="do-stat-sub">Spendable</div>
         </div>
@@ -203,10 +157,10 @@ export default function DashboardOverview() {
       <div className="do-main-grid">
         {/* Balance card */}
         <div className="do-balance-card">
-          <div className="do-card-eyebrow">LESARs Balance</div>
+          <div className="do-card-eyebrow">Points Balance</div>
           <div>
             <div className="do-bal-label">Monthly (Leaderboard)</div>
-            <div className="do-bal-amount">{monthlyAllot.toLocaleString()}<span className="do-bal-unit">LESARs</span></div>
+            <div className="do-bal-amount">{monthlyAllot.toLocaleString()}<span className="do-bal-unit">Points</span></div>
           </div>
           <div className="do-bal-divider" />
           <div className="do-bal-secondary">
@@ -221,7 +175,7 @@ export default function DashboardOverview() {
           </div>
           <div className="do-bal-reset">Monthly balance resets {resetStr}. Earn more by attending events, completing challenges, and engaging with artists.</div>
           <button className="do-btn-topup" onClick={openTopUpModal}>
-            + Top up LESARs
+            + Top up Points
           </button>
           <button className="do-btn-plans" onClick={() => setTopupOpen(v => !v)}>
             {topupOpen ? "- Hide plans" : "View Passport plans"}
@@ -236,7 +190,7 @@ export default function DashboardOverview() {
           </div>
           <div className="do-psp-features">
             {[
-              `${monthlyAllot.toLocaleString()} LESARs every month`,
+              `${monthlyAllot.toLocaleString()} Points every month`,
               "Early access to new drops",
               "Member-only artist content",
               "Leaderboard eligibility",
@@ -273,7 +227,7 @@ export default function DashboardOverview() {
                 {t.inviteOnly && !(tier === t.id) && <div className="do-tier-invite-badge">Invite Only</div>}
                 <div className="do-tier-name">{t.label}</div>
                 <div className="do-tier-price">{t.price}</div>
-                {t.lesars > 0 && <div className="do-tier-lesars">{t.lesars.toLocaleString()} LESARs/mo</div>}
+                {t.lesars > 0 && <div className="do-tier-lesars">{t.lesars.toLocaleString()} Points/mo</div>}
                 <div className="do-tier-desc">{t.desc}</div>
                 {t.inviteOnly ? (
                   <button className="do-tier-cta do-tier-cta-disabled" disabled aria-disabled="true">{t.cta}</button>
@@ -349,12 +303,12 @@ export default function DashboardOverview() {
       <div className="do-section" style={{marginTop:32}}>
         <div className="do-section-row">
           <div className="do-section-title">Purchase History</div>
-          <button className="do-section-action" onClick={openTopUpModal}>+ Top up LESARs</button>
+          <button className="do-section-action" onClick={openTopUpModal}>+ Top up Points</button>
         </div>
         {purchases.length === 0 ? (
           <div className="dp-empty">
             <p>No purchases yet.</p>
-            <button className="dp-btn-outline" onClick={openTopUpModal}>Explore LESAR packs</button>
+            <button className="dp-btn-outline" onClick={openTopUpModal}>Explore Points packs</button>
           </div>
         ) : (
           <div className="do-purchases">
@@ -374,67 +328,17 @@ export default function DashboardOverview() {
         )}
       </div>
 
-      {/* Admin console */}
+      {/* Admin console - moved to its own page 2026-07-13, superadmin only (see /dashboard/members) */}
       {isAdmin && (
         <div className="do-section do-admin" style={{marginTop:32}}>
           <div className="do-section-row">
             <div className="do-section-title" style={{color:"rgba(255,255,255,.8)"}}>Members Console</div>
-            <button className="do-invite-trigger" onClick={() => { setInviteOpen(v => !v); setInviteStatus("idle"); if (!adminLoaded) loadAdminMembers(); }}>
-              {inviteOpen ? "Cancel" : "+ Invite Member"}
-            </button>
+            <a className="do-invite-trigger" href="/dashboard/members">Manage Members</a>
           </div>
-
-          {inviteOpen && (
-            <form className="do-invite-form" onSubmit={sendInvite}>
-              <div className="do-invite-row">
-                <div className="do-invite-field">
-                  <label className="do-invite-label">Email address</label>
-                  <input className="do-invite-input" type="email" required placeholder="member@example.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-                </div>
-                <div className="do-invite-field">
-                  <label className="do-invite-label">Tier</label>
-                  <select className="do-invite-select" value={inviteTier} onChange={e => handleTierChange(e.target.value)}>
-                    {TIER_OPTIONS.map(t => <option key={t} value={t}>{TIER_LABEL[t]}</option>)}
-                  </select>
-                </div>
-                <div className="do-invite-field">
-                  <label className="do-invite-label">Seed LESARs</label>
-                  <input className="do-invite-input" type="number" min={0} step={100} value={inviteLesars} onChange={e => setInviteLesars(Number(e.target.value))} />
-                </div>
-              </div>
-              <div className="do-invite-actions">
-                <button type="submit" className="do-invite-submit" disabled={inviteStatus === "sending"}>
-                  {inviteStatus === "sending" ? "Sending..." : inviteStatus === "done" ? "Sent!" : "Send Magic Link"}
-                </button>
-                {inviteError && <span className="do-invite-error">{inviteError}</span>}
-                {inviteStatus === "done" && <span className="do-invite-success">Invite sent to {inviteEmail}</span>}
-              </div>
-            </form>
-          )}
-
-          {adminLoading ? <div className="dp-spinner" /> : adminMembers.length > 0 && (
-            <div className="do-members-wrap">
-              <table className="do-members-table">
-                <thead><tr><th>Name</th><th>Email</th><th>Tier</th><th>LESARs</th><th>Joined</th><th>Last login</th></tr></thead>
-                <tbody>
-                  {adminMembers.map(m => (
-                    <tr key={m.id}>
-                      <td className="do-m-name">{m.name || "-"}</td>
-                      <td className="do-m-email">{m.email || "-"}</td>
-                      <td><span className={"do-m-tier t-" + (m.tier || "passport")}>{TIER_LABEL[m.tier || "passport"] || m.tier}</span></td>
-                      <td className="do-m-lesars">{(m.available_points || 0).toLocaleString()}</td>
-                      <td className="do-m-date">{m.created_at ? new Date(m.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "-"}</td>
-                      <td className="do-m-date">{m.last_sign_in ? new Date(m.last_sign_in).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "Never"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       )}
 
-      {/* LESAR top-up modal: same "Buy then Continue to Payment" pattern as components/ArtistPage.tsx.
+      {/* Points top-up modal: same "Buy then Continue to Payment" pattern as components/ArtistPage.tsx.
           Nothing is pre-selected when the modal opens. */}
       {topUpModalOpen && (
         <div className="do-tu-overlay" role="dialog" aria-modal="true" aria-labelledby="do-tu-title" onClick={() => { if (!topUpLoading) setTopUpModalOpen(false); }}>
@@ -443,8 +347,8 @@ export default function DashboardOverview() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
             <div className="do-tu-eyebrow">Top Up</div>
-            <h2 id="do-tu-title" className="do-tu-title">Choose a LESARs Pack</h2>
-            <p className="do-tu-desc">Pick a pack, then continue to payment. LESARs land in your balance the moment checkout completes.</p>
+            <h2 id="do-tu-title" className="do-tu-title">Choose a Points Pack</h2>
+            <p className="do-tu-desc">Pick a pack, then continue to payment. Points land in your balance the moment checkout completes.</p>
             <div className="do-tu-pack-list">
               {LESAR_PACKS.map(p => (
                 <button
@@ -456,7 +360,7 @@ export default function DashboardOverview() {
                 >
                   {p.popular && <span className="do-tu-pack-badge">Popular</span>}
                   <div>
-                    <div className="do-tu-pack-lesars">{p.lesars.toLocaleString()} LESARs</div>
+                    <div className="do-tu-pack-lesars">{p.lesars.toLocaleString()} Points</div>
                     <div className="do-tu-pack-note">{p.label}</div>
                   </div>
                   <div className="do-tu-pack-price">${p.price}</div>
@@ -602,30 +506,6 @@ const CSS = `
 .do-admin{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;}
 .do-invite-trigger{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#000;background:#F69820;border:none;cursor:pointer;font-family:inherit;padding:9px 18px;border-radius:100px;transition:background .15s;}
 .do-invite-trigger:hover{background:#ffaf30;}
-.do-invite-form{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:20px;margin-bottom:20px;margin-top:16px;}
-.do-invite-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:12px;}
-@media(max-width:700px){.do-invite-row{grid-template-columns:1fr;}}
-.do-invite-label{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.4);margin-bottom:6px;}
-.do-invite-input,.do-invite-select{width:100%;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;background:rgba(255,255,255,.06);color:#fff;box-sizing:border-box;}
-.do-invite-input:focus,.do-invite-select:focus{outline:none;border-color:#F69820;}
-.do-invite-select option{background:#1a1a1a;color:#fff;}
-.do-invite-actions{display:flex;align-items:center;gap:14px;}
-.do-invite-submit{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#000;background:#F69820;border:none;cursor:pointer;font-family:inherit;padding:10px 22px;border-radius:100px;transition:background .15s;}
-.do-invite-submit:hover:not(:disabled){background:#ffaf30;}
-.do-invite-submit:disabled{opacity:.5;cursor:default;}
-.do-invite-error{font-size:12px;font-weight:700;color:rgba(255,100,100,.9);}
-.do-invite-success{font-size:12px;font-weight:700;color:rgba(0,215,95,.9);}
-.do-members-wrap{overflow-x:auto;border:1px solid rgba(255,255,255,.07);border-radius:12px;margin-top:16px;}
-.do-members-table{width:100%;border-collapse:collapse;font-size:12px;}
-.do-members-table th{text-align:left;padding:10px 14px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);}
-.do-members-table td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
-.do-members-table tr:last-child td{border-bottom:none;}
-.do-members-table tr:hover td{background:rgba(255,255,255,.02);}
-.do-m-name{font-weight:700;color:#fff;}
-.do-m-email{color:rgba(255,255,255,.5);font-size:11px;}
-.do-m-tier{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:20px;background:rgba(246,152,32,.1);color:#F69820;}
-.do-m-lesars{font-weight:800;color:rgba(0,215,95,.8);}
-.do-m-date{font-size:10px;color:rgba(255,255,255,.3);white-space:nowrap;}
 /* Top-up modal (dashboard-scoped, mirrors the purchase top-up modal pattern in components/ArtistPage.tsx) */
 .do-tu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
 .do-tu-modal{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:36px 32px 28px;max-width:400px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.5);}

@@ -39,7 +39,7 @@ type ArtistCard = {
 const ARTISTS: ArtistCard[] = [
   {
     slug: "roxanne", name: "Roxanne", initial: "R", accent: "#E91E8C",
-    genre: "J-Pop / Pop", tagline: "The voice that disappeared - and came back with everything to say.",
+    genre: "J-Pop / Tokyo, Japan", tagline: "The voice that disappeared - and came back with everything to say.",
     heroUrl: SUPA_MEDIA + "roxanne/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "roxanne/full.mp3", full: true },
@@ -50,7 +50,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "lex-from-brixton", name: "Lex from Brixton", initial: "L", accent: "#F69820",
-    genre: "Grime / Hip-Hop", tagline: "Brixton in the bloodline. Grime in the grammar. No translations needed.",
+    genre: "Hip-Hop / London, UK", tagline: "Brixton in the bloodline. Grime in the grammar. No translations needed.",
     heroUrl: SUPA_MEDIA + "lex-from-brixton/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "lex-from-brixton/full.mp3", full: true },
@@ -61,7 +61,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "nilo-wave", name: "Nilo Wave", initial: "N", accent: "#00BCD4",
-    genre: "Caribbean / Electronic", tagline: "Caribbean rhythms rebuilt from the ground up. The wave is the message.",
+    genre: "Reggaeton / Puerto Rico", tagline: "Caribbean rhythms rebuilt from the ground up. The wave is the message.",
     heroUrl: SUPA_MEDIA + "nilo-wave/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "nilo-wave/full.mp3", full: true },
@@ -72,7 +72,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "shamanic-resin", name: "Shamanic Resin", initial: "S", accent: "#9C27B0",
-    genre: "K-Pop / Electronics", tagline: "Where K-Pop architecture meets ritual electronics. This is not a performance. It is a ceremony.",
+    genre: "K-Pop / Seoul, Korea", tagline: "Where K-Pop architecture meets ritual electronics. This is not a performance. It is a ceremony.",
     heroUrl: SUPA_MEDIA + "shamanic-resin/hero.png",
     tracks: [
       { title: "All I Do Is Eat", url: SUPA_AUDIO + "shamanic-resin/all-i-do-is-eat.mp3", full: true },
@@ -83,7 +83,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "riku", name: "Riku Hayasaka", initial: "RH", accent: "#2196F3",
-    genre: "Indie Pop / Bilingual", tagline: "Indie pop built in two languages. The melody is the translation.",
+    genre: "J-Pop / Japan", tagline: "Indie pop built in two languages. The melody is the translation.",
     heroUrl: SUPA_MEDIA + "riku/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "riku/full.mp3", full: true },
@@ -94,7 +94,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "lickle-bro", name: "Lickle Bro", initial: "LB", accent: "#4CAF50",
-    genre: "R&B / Dancehall", tagline: "R&B and dancehall raised in the same house. The harmony was inevitable.",
+    genre: "Dancehall / London, UK", tagline: "R&B and dancehall raised in the same house. The harmony was inevitable.",
     heroUrl: SUPA_MEDIA + "lickle-bro/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "lickle-bro/full.mp3", full: true },
@@ -105,7 +105,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "lickle-sis", name: "Lickle Sis", initial: "LS", accent: "#FF5722",
-    genre: "Soul / R&B", tagline: "Soul at full volume. She is not asking for permission.",
+    genre: "Dembow / London, UK", tagline: "Soul at full volume. She is not asking for permission.",
     heroUrl: SUPA_MEDIA + "lickle-sis/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "lickle-sis/full.mp3", full: true },
@@ -116,7 +116,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "mad-tings", name: "Mad Tings", initial: "MT", accent: "#E91E63",
-    genre: "Grime / Dubstep", tagline: "Grime energy. Dubstep weight. The whole thing turned up to a frequency most systems cannot handle.",
+    genre: "Hip-Hop / London, UK", tagline: "Grime energy. Dubstep weight. The whole thing turned up to a frequency most systems cannot handle.",
     heroUrl: SUPA_MEDIA + "mad-tings/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "mad-tings/full.mp3", full: true },
@@ -127,7 +127,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "mr-russell", name: "Mr. Russell", initial: "MR", accent: "#90A4AE",
-    genre: "Hip-Hop", tagline: "Hip-hop that knows where it has been and does not need to prove where it is going.",
+    genre: "Hip-Hop / NYC", tagline: "Hip-hop that knows where it has been and does not need to prove where it is going.",
     heroUrl: SUPA_MEDIA + "mr-russell/hero.jpg",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "mr-russell/full.mp3", full: true },
@@ -138,7 +138,7 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "rustblood-prophets", name: "Rustblood Prophets", initial: "RP", accent: "#F44336",
-    genre: "Alternative / Dark", tagline: "Alternative and dark and not sorry about either one.",
+    genre: "Alternative / Berlin, Germany", tagline: "Alternative and dark and not sorry about either one.",
     heroUrl: SUPA_MEDIA + "rustblood-prophets/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "rustblood-prophets/full.mp3", full: true },
@@ -149,13 +149,21 @@ const ARTISTS: ArtistCard[] = [
   },
   {
     slug: "straight-and-narrow", name: "Straight and Narrow", initial: "SN", accent: "#A1887F",
-    genre: "Hip-Hop / Alternative", tagline: "Hip-hop with a double meaning and alternative instincts. The name is the story.",
+    genre: "Country / Nashville", tagline: "Hip-hop with a double meaning and alternative instincts. The name is the story.",
     heroUrl: SUPA_MEDIA + "straight-and-narrow/hero.png",
     tracks: [
       { title: "Full Song", url: SUPA_AUDIO + "straight-and-narrow/full.mp3", full: true },
       { title: "Preview 1", url: SUPA_AUDIO + "straight-and-narrow/sample-a.mp3" },
       { title: "Preview 2", url: SUPA_AUDIO + "straight-and-narrow/sample-b.mp3" },
       { title: "Preview 3", url: SUPA_AUDIO + "straight-and-narrow/sample-c.mp3" },
+    ],
+  },
+  {
+    slug: "vuka", name: "Vuka", initial: "V", accent: "#FFB300",
+    genre: "Amapiano / Johannesburg, South Africa", tagline: "Amapiano built for a continent the Society hasn't reached yet.",
+    heroUrl: "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/hf_20260713_122846_dae7867b-1428-4544-a3f9-5c5455318b69.png",
+    tracks: [
+      { title: "Fall Into Rhythm", url: SUPA_AUDIO + "vuka/fall-into-rhythm.mp3", full: true },
     ],
   },
 ];
@@ -169,11 +177,11 @@ const ROLE_META: Record<Role, { label: string; tagline: string; accent: string; 
 
 const PATH_SLIDES: Record<Role, SlideData[]> = {
   fan: [
-    { id: "fan-artists", headline: "Meet the Artists", body: "Step into their lives. Follow their stories. Hear the music.", detail: "We release a few artists at a time, so the world grows as you do. Each one has a full biography, a discography, and a Pulse feed of their own. None of them are real. All of the music is. And the music is only the start: series, live shows, and more are on the way.", accent: "#E91E8C", isArtistSlide: true },
-    { id: "fan-pulse", headline: "The Pulse", body: "Your favorite artist posts every day. You're in the conversation.", detail: "Video, photo, text - the Pulse is each artist's personal feed. Comment on a post. React to a drop. The artist responds. This is not a playlist. This is a living relationship with a character who shows up every day.", accent: "#F69820" },
-    { id: "fan-tokens", headline: "LESARs Unlock\nEverything", body: "Start free with 111 LESARs. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 LESARs. Unlock a single song for 100 LESARs, or go All Access for every track an artist drops. LESARs are not limited to GeekFon: spend them to redeem songs and unlock experiences across 15+ brands in the LESARUSS universe. Buy more anytime.", accent: "#9C27B0" },
-    { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every LESAR you spend on an artist counts as a vote. Rankings update in real time and decide which songs we play most and which get a music video first. Your votes carry across the network, including TopSpot USA and Anime 3000, and help set the charts on TopSpot Global. Your support shapes multiple communities at once.", accent: "#2196F3" },
-    { id: "fan-radio", headline: "GeekFon Radio", body: "Old-school radio, reinvented. New songs every week, 24/7.", detail: "GeekFon Radio is a constant feed, just like traditional radio: no on-demand, no saving, just every artist playing in the background while you live your day. New songs drop weekly, and members hear songs that are not even available to redeem yet. It is an exclusive perk of the $11/month Passport: 24/7 access to nearly every song in the Society.", accent: "#00BCD4", cta: { label: "Join the Society", href: "/passport" } },
+    { id: "fan-artists", headline: "Meet the Roster", body: "More than music. A world for every artist, and it's growing.", detail: "This is the GeekFon artist roster. Each one has music, a biography, and a Pulse feed today, with interviews, video, and an animated series on the way.", accent: "#E91E8C", isArtistSlide: true },
+    { id: "fan-pulse", headline: "The Pulse", body: "Your favorite artist posts every day. You're in the conversation.", detail: "The Pulse is your doorway into each artist's life: video, photos, and text. News, social media, and a group chat are all coming soon to GeekFon Society.", accent: "#F69820" },
+    { id: "fan-tokens", headline: "Points Unlock\nEverything", body: "Start free with 111 Points. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 Points. Unlock a single song for 25 Points, or apply to our Plus program for access to every song in the catalog. Points aren't limited to GeekFon: spend and redeem them across LESARUSS brands, throughout the LESARUSS universe.", accent: "#9C27B0" },
+    { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every Point you spend on an artist toward a track lets us know. It helps set the rankings, both on GeekFon Radio and across the site itself.", accent: "#2196F3" },
+    { id: "fan-radio", headline: "GeekFon Radio", body: "Old-school radio, reinvented. New songs weekly, 24/7.", detail: "GeekFon Radio is your constant feed, just like traditional radio: no on-demand, no saving, just every artist playing in the background while you live your day. Hear songs not released to the public - an exclusive perk of being a registered member.", accent: "#00BCD4", cta: { label: "Join the Society", href: "/passport" } },
   ],
   label: [
     { id: "label-ip", headline: "An IP Catalog\nReady to License", body: "Original music on every major platform, ready for sync.", detail: "GeekFon Society is fully distributed and available on Spotify, Apple Music, and every major platform. The roster spans genres: pop, alternative, hip-hop, electronic, and beyond, with new artists announced monthly. All original LESARUSS IP. No sample clearances. No competing rights.", accent: "#9C27B0" },
@@ -182,8 +190,8 @@ const PATH_SLIDES: Record<Role, SlideData[]> = {
     { id: "label-cta", headline: "Let's Talk\nLicensing", body: "GeekFon Society is actively expanding its licensing and partnership pipeline.", detail: "We are open to sync licensing, master licensing, catalog co-ownership discussions, and distribution partnerships. If you work with original IP and are looking for clean, commercial-ready music built for the modern era, this is the conversation.", accent: "#9C27B0", cta: { label: "Get In Touch", href: "mailto:contact@lesaruss.com" } },
   ],
   brand: [
-    { id: "brand-audience", headline: "Multiple Cities.\nOne Community.", body: "Tokyo. Seoul. Fort Lauderdale. Berlin.", detail: "GeekFon Society is a global music community organized around cities and built around daily content, live events, and a LESARs economy. The audience is music-first, culture-forward, and already spending. Active cities include Tokyo, Seoul, Fort Lauderdale, and Berlin, with more launching as the Society grows.", accent: "#F69820" },
-    { id: "brand-ecosystem", headline: "The LESARs\nEcosystem", body: "Your brand is inside the unlock, not on top of it.", detail: "Fans spend LESARs to support artists, unlock content, and participate in rankings. Brands can sponsor LESARs packages, fund artist moments, donate products for sampling and giveaways, or create exclusive drops. When a fan unlocks something your brand powered, your name belongs in that moment - not over it.", accent: "#E91E8C" },
+    { id: "brand-audience", headline: "Multiple Cities.\nOne Community.", body: "Tokyo. Seoul. Fort Lauderdale. Berlin.", detail: "GeekFon Society is a global music community organized around cities and built around daily content, live events, and a Points economy. The audience is music-first, culture-forward, and already spending. Active cities include Tokyo, Seoul, Fort Lauderdale, and Berlin, with more launching as the Society grows.", accent: "#F69820" },
+    { id: "brand-ecosystem", headline: "The Points\nEcosystem", body: "Your brand is inside the unlock, not on top of it.", detail: "Fans spend Points to support artists, unlock content, and participate in rankings. Brands can sponsor Points packages, fund artist moments, donate products for sampling and giveaways, or create exclusive drops. When a fan unlocks something your brand powered, your name belongs in that moment - not over it.", accent: "#E91E8C" },
     { id: "brand-events", headline: "Live Activations\nThat Get Filmed", body: "Every show is a content shoot. Every activation feeds the archive.", detail: "GeekFon Society produces events at anime conventions, after-parties, and city-based activations. Every event produces footage for the Pulse feed, the animated series pipeline, and the archive. A sponsorship here is not a banner at one event. It is content that lives in the universe.", accent: "#2196F3" },
     { id: "brand-cta", headline: "Your Brand Inside\nthe Universe", body: "Integrations that belong in the world. Not ads. Moments.", detail: "We build sponsor relationships that feel native to the GeekFon universe. Your brand does not interrupt the experience. It enhances it. If that is the kind of partnership you are looking for, let's build it.", accent: "#F69820", cta: { label: "Become a Sponsor", href: "mailto:contact@lesaruss.com" } },
   ],
@@ -203,13 +211,13 @@ const SLIDE_AUDIO: Record<string, { url: string; label: string }> = {
   "label-licensing":     { url: HF_CDN + "hf_20260704_093447_900dd9a2-0ad3-49c9-afac-5cf84d0ccb20.mp3", label: "Sync. Film. TV. Campaigns." },
   "label-pipeline":      { url: HF_CDN + "hf_20260704_093453_b35a943f-f135-4b80-8ebd-073bd42e6c92.mp3", label: "The Proof of Concept" },
   "label-cta":           { url: HF_CDN + "hf_20260704_093459_7f1079bd-9d62-4b48-bda4-c9704ce842fb.mp3", label: "Let's Talk Licensing" },
-  "fan-artists":         { url: HF_CDN + "hf_20260704_093505_9e69c939-f6b4-4147-b89a-b4555d870de7.mp3", label: "Meet the Artists" },
-  "fan-pulse":           { url: HF_CDN + "hf_20260704_093512_bdf50a49-86d8-4911-9636-d683f13e4971.mp3", label: "The Pulse" },
-  "fan-tokens":          { url: HF_CDN + "hf_20260704_093519_9e9448e0-474c-4471-85bb-6b39f0020425.mp3", label: "LESARs Unlock Everything" },
-  "fan-voting":          { url: HF_CDN + "hf_20260704_093526_43af9bbb-e56f-4787-8246-5427db5ac434.mp3", label: "Vote. Rank. Impact." },
-  "fan-radio":           { url: HF_CDN + "hf_20260704_093534_cbaf090b-8a1e-439b-85af-d45e88c1a41b.mp3", label: "GeekFon Radio" },
+  "fan-artists":         { url: "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/hf_20260714_075712_9e686e71-c000-4d26-a2b6-6729fbec0eec.wav", label: "Meet the Roster" },
+  "fan-pulse":           { url: HF_CDN + "hf_20260714_095820_96c4ad1a-91d5-44f4-8fa8-868180c0b8e4.wav", label: "The Pulse" },
+  "fan-tokens":          { url: HF_CDN + "hf_20260714_095822_78094464-f1d4-455f-b1a1-4d1537e30d43.wav", label: "Points Unlock Everything" },
+  "fan-voting":          { url: HF_CDN + "hf_20260714_095823_365554cb-7bc9-43d5-b7b3-1d5190590bca.wav", label: "Vote. Rank. Impact." },
+  "fan-radio":           { url: HF_CDN + "hf_20260714_095825_23118177-924b-4a25-97dd-47f54b262581.wav", label: "GeekFon Radio" },
   "brand-audience":      { url: HF_CDN + "hf_20260704_093539_5e20b015-f780-4f78-82e1-768a6ee38daa.mp3", label: "Multiple Cities. One Community." },
-  "brand-ecosystem":     { url: HF_CDN + "hf_20260704_093546_5640c321-c4d7-402a-95d3-20858f57e6a8.mp3", label: "The LESARs Ecosystem" },
+  "brand-ecosystem":     { url: HF_CDN + "hf_20260704_093546_5640c321-c4d7-402a-95d3-20858f57e6a8.mp3", label: "The Points Ecosystem" },
   "brand-events":        { url: HF_CDN + "hf_20260704_093551_3014e676-c597-423b-b6be-bc69455ea302.mp3", label: "Live Activations That Get Filmed" },
   "brand-cta":           { url: HF_CDN + "hf_20260704_093559_6513f683-9b9f-42b2-8728-f9d51894e8c1.mp3", label: "Your Brand Inside the Universe" },
   "promoter-live":       { url: HF_CDN + "hf_20260704_093604_9d24c5bd-8ed0-475d-8874-b22c4fc60805.mp3", label: "GeekFon Society Goes Live" },
@@ -296,12 +304,27 @@ function TrackPlayer({ track, accent }: { track: ArtistCard["tracks"][number]; a
 // ── Featured launch artists (See the Artist popup) ────────────────────────────
 // One preview song each, real files mapped from public.radio_tracks.
 const PREVIEW: Record<string, { title: string; path: string }> = {
-  "roxanne":          { title: "Life's Tough",     path: "roxanne/lifes-tough.mp3" },
-  "lex-from-brixton": { title: "Be Yourself",      path: "lex-from-brixton/281c82da-c92e-4650-a046-23a97a327a51.mp3" },
-  "shamanic-resin":   { title: "Real Dream",       path: "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3" },
-  "riku":             { title: "Lottery of Love",  path: "riku-hayasaka/lottery-of-love.mp3" },
+  "roxanne":            { title: "Life's Tough",         path: "roxanne/lifes-tough.mp3" },
+  "lex-from-brixton":   { title: "Brixton Baby",          path: "lex-from-brixton/brixton-baby.mp3" },
+  "shamanic-resin":     { title: "Real Dream",            path: "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3" },
+  "riku":               { title: "Lottery of Love",       path: "riku-hayasaka/lottery-of-love.mp3" },
+  "straight-and-narrow":{ title: "Dead Broke",            path: "straight-and-narrow/dead-broke.mp3" },
+  "nilo-wave":          { title: "De Borinquen Pa Jamaica (feat. Lickle Bro)", path: "nilo-wave/de-borinquen-pa-jamaica-feat-lickle-bro.mp3" },
+  "rustblood-prophets": { title: "Beyond Space and Time", path: "rustblood-prophets/beyond-space-and-time.mp3" },
+  "mad-tings":          { title: "Never Broke Us",        path: "mad-tings/never-broke-us.mp3" },
+  "vuka":               { title: "Fall Into Rhythm",      path: "vuka/fall-into-rhythm.mp3" },
+  "lickle-bro":         { title: "Let Em",                 path: "lickle-bro/let-em.mp3" },
+  "lickle-sis":         { title: "No Te Me Montes",       path: "lickle-sis/no-te-me-montes.mp3" },
+  "mr-russell":         { title: "Super Nintendo Sega Genesis Solo Mix", path: "mr-russell/super-nintendo-sega-genesis-solo-mix.mp3" },
 };
-const FEATURED: ArtistCard[] = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"].map((s) => {
+// Same order as the live /roster page (ARTIST_ORDER), so this dropdown always matches
+// whoever is actually promoted to the roster.
+const TOUR_ARTIST_ORDER = [
+  "roxanne", "lex-from-brixton", "shamanic-resin", "riku",
+  "straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings",
+  "vuka", "lickle-bro", "lickle-sis", "mr-russell",
+];
+const FEATURED: ArtistCard[] = TOUR_ARTIST_ORDER.map((s) => {
   const base = ARTISTS.find((a) => a.slug === s)!;
   const pv = PREVIEW[s];
   return { ...base, tracks: [{ title: pv.title, url: SUPA_AUDIO + pv.path }] };
@@ -330,10 +353,10 @@ const SLIDE_ICONS: Record<string, (color: string) => ReactElement> = {
 
 function SlidePreview({ slideId, accent }: { slideId: string; accent: string }) {
   const label = {
-    "fan-artists": "Artist Profiles", "fan-pulse": "The Pulse", "fan-tokens": "LESARs",
+    "fan-artists": "Artist Profiles", "fan-pulse": "The Pulse", "fan-tokens": "Points",
     "fan-voting": "Rankings", "fan-radio": "GeekFon Radio", "label-ip": "IP Catalog",
     "label-licensing": "Sync Licensing", "label-pipeline": "TalentVangelist", "label-cta": "Contact",
-    "brand-audience": "Global Cities", "brand-ecosystem": "LESARs Economy", "brand-events": "Live Events",
+    "brand-audience": "Global Cities", "brand-ecosystem": "Points Economy", "brand-events": "Live Events",
     "brand-cta": "Sponsorships", "promoter-live": "Live Shows", "promoter-production": "Content Pipeline",
     "promoter-cities": "Season 1", "promoter-cta": "Book the Act",
   }[slideId] || "GeekFon";
@@ -522,61 +545,100 @@ function InlineArtistBrowser({ selected, onSelect }: { selected: number; onSelec
         </div>
       </div>
 
-      {/* Hero image */}
-      {artist.heroUrl && (
-        <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", overflow: "hidden", borderBottom: `3px solid ${artist.accent}` }}>
-          <img
-            src={artist.heroUrl}
-            alt={artist.name}
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
-          />
-        </div>
-      )}
-
-      <div style={{ padding: "18px 16px", display: "flex", flexDirection: "column", gap: "14px" }}>
-        {/* Identity */}
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          {!artist.heroUrl && (
-            <div style={{ width: "56px", height: "56px", borderRadius: "12px", background: artist.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: 900, color: "#fff", flexShrink: 0 }}>
+      {/* Identity row (square image + text) and free song sit below the selector.
+          Dropped the old full-width 16:9 hero to a compact square so the card
+          reads faster and does not eat the whole panel. No link out to the full
+          artist profile here on purpose - this keeps the fan inside the tour. */}
+      <div style={{ padding: "18px 16px", display: "flex", flexDirection: "column", gap: "16px" }}>
+        {/* Row 1: square image left, text right */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
+          {artist.heroUrl ? (
+            <div style={{ position: "relative", width: "84px", height: "84px", flexShrink: 0, borderRadius: "12px", overflow: "hidden", border: `2px solid ${artist.accent}` }}>
+              <img
+                src={artist.heroUrl}
+                alt={artist.name}
+                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }}
+              />
+            </div>
+          ) : (
+            <div style={{ width: "84px", height: "84px", borderRadius: "12px", background: artist.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 900, color: "#fff", flexShrink: 0 }}>
               {artist.initial}
             </div>
           )}
-          <div>
-            <div style={{ fontSize: "18px", fontWeight: 900, letterSpacing: "-0.01em", lineHeight: 1.1 }}>{artist.name}</div>
-            <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: artist.accent, marginTop: "4px" }}>{artist.genre}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: "17px", fontWeight: 900, letterSpacing: "-0.01em", lineHeight: 1.15 }}>{artist.name}</div>
+            <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: artist.accent, margin: "4px 0 8px" }}>{artist.genre}</div>
+            <p style={{ fontSize: "12.5px", lineHeight: 1.55, color: "rgba(255,255,255,0.7)", margin: 0 }}>{artist.tagline}</p>
           </div>
         </div>
 
-        {/* Blurb */}
-        <p style={{ fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-          {artist.tagline}
-        </p>
-
-        {/* Preview track */}
+        {/* Row 2: the one free song live on this artist's own page */}
         <div>
           <div style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "8px" }}>
-            Preview
+            Free Song
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {artist.tracks.map((t) => (
-              <TrackPlayer key={t.title} track={t} accent={artist.accent} />
-            ))}
-          </div>
+          {artist.tracks[0] && <TrackPlayer key={artist.slug} track={artist.tracks[0]} accent={artist.accent} />}
         </div>
-
-        {/* CTA */}
-        <a
-          href={`/${artist.slug}`}
-          style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: artist.accent, fontSize: "12px", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", textDecoration: "none", marginTop: "2px" }}
-        >
-          Full Artist Profile
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </a>
       </div>
     </div>
   );
 }
+// ── Tour audio: bottom-bar narration toggle (sits between Back and Next) ─────
+function TourNarrationButton({ track, accent }: { track: { url: string; label: string }; accent: string }) {
+  const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  function clearTimer() { if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; } }
+
+  function start() {
+    const a = new Audio(track.url);
+    a.addEventListener("playing", () => { clearTimer(); setState("playing"); });
+    a.addEventListener("pause", () => setState((s) => (s === "unavailable" ? s : "idle")));
+    a.addEventListener("ended", () => setState("idle"));
+    a.addEventListener("error", () => { clearTimer(); setState("unavailable"); });
+    audioRef.current = a;
+    setState("loading");
+    // If actual playback hasn't started within 8s (stalled stream, bad CDN response,
+    // etc.) stop spinning forever and surface it instead of hanging silently.
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
+  }
+
+  function toggle() {
+    if (state === "loading") return;
+    const a = audioRef.current;
+    if (!a) { start(); return; }
+    if (state === "playing") { a.pause(); return; }
+    if (state === "unavailable") { a.pause(); audioRef.current = null; start(); return; }
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
+  }
+
+  useEffect(() => () => { clearTimer(); audioRef.current?.pause(); }, []);
+
+  const isPlaying = state === "playing";
+  const isLoading = state === "loading";
+  const isUnavailable = state === "unavailable";
+
+  return (
+    <button
+      onClick={toggle}
+      aria-label={isPlaying ? "Pause narration" : isUnavailable ? "Narration unavailable, tap to retry" : "Listen to this page"}
+      title={isPlaying ? "Pause narration" : isUnavailable ? "Narration unavailable - tap to retry" : "Listen to this page"}
+      style={{ width: "40px", height: "40px", borderRadius: "50%", background: isPlaying ? accent : isUnavailable ? "rgba(255,90,90,0.18)" : "rgba(255,255,255,0.08)", border: `1px solid ${isPlaying ? accent : isUnavailable ? "rgba(255,110,110,0.6)" : "rgba(255,255,255,0.16)"}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s ease" }}
+    >
+      {isLoading
+        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="40" strokeDashoffset="20" style={{ animation: "spin 0.8s linear infinite" }} /></svg>
+        : isPlaying
+          ? <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          : isUnavailable
+            ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff9090" strokeWidth="2.5" strokeLinecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+            : <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
+    </button>
+  );
+}
 // ── Progress dots ─────────────────────────────────────────────────────────────
 function ProgressDots({ total, current, accent }: { total: number; current: number; accent: string }) {
   return (
@@ -593,28 +655,39 @@ function TourSoloPlayer({ track, accent }: { track: { url: string; label: string
   const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearTimer() { if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; } }
+
+  function start() {
+    const a = new Audio(track.url);
+    a.addEventListener("playing", () => { clearTimer(); setState("playing"); });
+    a.addEventListener("pause", () => setState((s) => (s === "unavailable" ? s : "idle")));
+    a.addEventListener("timeupdate", () => { setProgress(a.currentTime / (a.duration || 1)); });
+    a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
+    a.addEventListener("error", () => { clearTimer(); setState("unavailable"); });
+    audioRef.current = a;
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
+  }
 
   function toggle() {
-    if (state === "unavailable") return;
-    if (!audioRef.current) {
-      const a = new Audio(track.url);
-      a.addEventListener("error", () => setState("unavailable"));
-      a.addEventListener("loadedmetadata", () => { setState("playing"); a.play(); });
-      a.addEventListener("timeupdate", () => { setProgress(a.currentTime / (a.duration || 1)); });
-      a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
-      audioRef.current = a;
-      setState("loading");
-      a.load();
-      return;
-    }
+    if (state === "loading") return;
     const a = audioRef.current;
-    if (state === "playing") { a.pause(); setState("idle"); }
-    else { a.play().then(() => setState("playing")).catch(() => setState("unavailable")); }
+    if (!a) { start(); return; }
+    if (state === "playing") { a.pause(); return; }
+    if (state === "unavailable") { a.pause(); audioRef.current = null; start(); return; }
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
   }
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  useEffect(() => () => { clearTimer(); audioRef.current?.pause(); }, []);
 
   const isPlaying = state === "playing";
   const isLoading = state === "loading";
+  const isUnavailable = state === "unavailable";
   const wvH = [5,8,13,17,23,27,30,25,19,27,30,22,15,23,30,23,17,25,27,19,13,17,23,30,25,21,17,13,9,7,5,9,13,18,24,30,24,19,14,10];
 
   return (
@@ -628,16 +701,18 @@ function TourSoloPlayer({ track, accent }: { track: { url: string; label: string
       {/* Play + info */}
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px" }}>
         <button onClick={toggle} aria-label={isPlaying ? "Pause" : "Play"}
-          style={{ width: "46px", height: "46px", borderRadius: "50%", background: accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          style={{ width: "46px", height: "46px", borderRadius: "50%", background: isUnavailable ? "rgba(255,90,90,0.6)" : accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {isLoading
             ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="40" strokeDashoffset="20" style={{ animation: "spin 0.8s linear infinite" }} /></svg>
             : isPlaying
               ? <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-              : <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
+              : isUnavailable
+                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+                : <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{track.label}</div>
-          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>{isLoading ? "Loading..." : isPlaying ? "Playing" : "Tap to listen"}</div>
+          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>{isLoading ? "Loading..." : isPlaying ? "Playing" : isUnavailable ? "Unavailable - tap to retry" : "Tap to listen"}</div>
         </div>
       </div>
       {/* Progress */}
@@ -647,51 +722,63 @@ function TourSoloPlayer({ track, accent }: { track: { url: string; label: string
     </div>
   );
 }
-
 // ── Tour audio: compact module strip (slides 2+, sits below visual) ───────────
 function TourAudioModule({ track, accent, label }: { track: { url: string }; accent: string; label: string }) {
   const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const LIMIT = 20;
 
-  function toggle() {
-    if (state === "unavailable") return;
-    if (!audioRef.current) {
-      const a = new Audio(track.url);
-      a.addEventListener("error", () => setState("unavailable"));
-      a.addEventListener("loadedmetadata", () => { setState("playing"); a.play(); });
-      a.addEventListener("timeupdate", () => {
-        if (a.currentTime >= LIMIT) { a.pause(); a.currentTime = 0; setState("idle"); setProgress(0); return; }
-        setProgress(a.currentTime / LIMIT);
-      });
-      a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
-      audioRef.current = a;
-      setState("loading");
-      a.load();
-      return;
-    }
-    const a = audioRef.current;
-    if (state === "playing") { a.pause(); setState("idle"); }
-    else { a.play().then(() => setState("playing")).catch(() => setState("unavailable")); }
+  function clearTimer() { if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; } }
+
+  function start() {
+    const a = new Audio(track.url);
+    a.addEventListener("playing", () => { clearTimer(); setState("playing"); });
+    a.addEventListener("pause", () => setState((s) => (s === "unavailable" ? s : "idle")));
+    a.addEventListener("timeupdate", () => {
+      if (a.currentTime >= LIMIT) { a.pause(); a.currentTime = 0; setState("idle"); setProgress(0); return; }
+      setProgress(a.currentTime / LIMIT);
+    });
+    a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
+    a.addEventListener("error", () => { clearTimer(); setState("unavailable"); });
+    audioRef.current = a;
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
   }
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  function toggle() {
+    if (state === "loading") return;
+    const a = audioRef.current;
+    if (!a) { start(); return; }
+    if (state === "playing") { a.pause(); return; }
+    if (state === "unavailable") { a.pause(); audioRef.current = null; start(); return; }
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
+  }
+
+  useEffect(() => () => { clearTimer(); audioRef.current?.pause(); }, []);
 
   const isPlaying = state === "playing";
   const isLoading = state === "loading";
+  const isUnavailable = state === "unavailable";
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: "10px" }}>
       <button onClick={toggle} aria-label={isPlaying ? "Pause" : "Play"}
-        style={{ width: "32px", height: "32px", borderRadius: "50%", background: accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        style={{ width: "32px", height: "32px", borderRadius: "50%", background: isUnavailable ? "rgba(255,90,90,0.6)" : accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         {isLoading
           ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="40" strokeDashoffset="20" style={{ animation: "spin 0.8s linear infinite" }} /></svg>
           : isPlaying
             ? <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-            : <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
+            : isUnavailable
+              ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+              : <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
       </button>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.8)", marginBottom: "5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</div>
+        <div style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.8)", marginBottom: "5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{isUnavailable ? "Unavailable - tap to retry" : label}</div>
         <div style={{ height: "3px", background: "rgba(255,255,255,0.1)", borderRadius: "2px" }}>
           <div style={{ height: "100%", width: `${progress * 100}%`, background: accent, borderRadius: "2px", transition: "width 0.1s linear" }} />
         </div>
@@ -699,7 +786,6 @@ function TourAudioModule({ track, accent, label }: { track: { url: string }; acc
     </div>
   );
 }
-
 // ── Main component ────────────────────────────────────────────────────────────
 export default function WelcomePage() {
   const [phase, setPhase] = useState<Phase>("picker");
@@ -790,7 +876,10 @@ export default function WelcomePage() {
         .gfs-fon-hue { animation: fonHue 6s ease-in-out infinite; }
         @media(max-width:899px){
           .gfs-main{overflow-y:auto !important}
-          .gfs-outer-content{padding-left:0 !important;padding-right:0 !important;padding-top:0 !important}
+          .gfs-outer-content--path{padding-left:0 !important;padding-right:0 !important;padding-top:0 !important}
+        }
+        @media(max-width:640px){
+          .gfs-outer-content:not(.gfs-outer-content--path){padding-left:24px !important;padding-right:24px !important}
         }
         .tour-slide-wrap{display:flex;flex-direction:column;width:100%;align-items:flex-start}
         .tour-text-col{width:100%;padding:28px 20px 16px;min-width:0;box-sizing:border-box}
@@ -816,7 +905,7 @@ export default function WelcomePage() {
           Pagination + Skip now live in the bottom bar below. */}
 
       {/* Main content */}
-      <div className="gfs-outer-content" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: phase === "path" ? "0 0 100px" : "40px 60px 100px", position: "relative", zIndex: 10, width: "100%" }}>
+      <div className={`gfs-outer-content${phase === "path" ? " gfs-outer-content--path" : ""}`} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-start", padding: phase === "path" ? "0 0 100px" : "48px 80px 100px", position: "relative", zIndex: 10, width: "100%" }}>
         <div
           key={`${phase}-${pathSlide}`}
           className="slide-content"
@@ -894,13 +983,6 @@ export default function WelcomePage() {
                   </p>
                 )}
 
-                {currentSlide.isArtistSlide && (
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: currentSlide.accent, color: "#fff", border: "2px solid #000", borderRadius: "100px", padding: "10px 22px", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "12px" }}>
-                    Meet the launch artists
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                  </div>
-                )}
-
                 {isLastSlide && currentSlide.cta && !currentSlide.isArtistSlide && (
                   <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
                     <a
@@ -921,12 +1003,14 @@ export default function WelcomePage() {
                         Become a Member
                       </a>
                     )}
-                    <button
-                      onClick={() => transition(() => { setPhase("picker"); setRole(null); })}
-                      style={{ background: "none", border: "none", padding: "0", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", textDecoration: "underline", textUnderlineOffset: "3px" }}
-                    >
-                      See other paths
-                    </button>
+                    {role !== "fan" && (
+                      <button
+                        onClick={() => transition(() => { setPhase("picker"); setRole(null); })}
+                        style={{ background: "none", border: "none", padding: "0", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", textDecoration: "underline", textUnderlineOffset: "3px" }}
+                      >
+                        See other paths
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1002,14 +1086,6 @@ export default function WelcomePage() {
                       <SlidePreview slideId={currentSlide.id} accent={currentSlide.accent} />
                     )}
 
-                    {/* Compact audio module beneath visual */}
-                    {SLIDE_AUDIO[currentSlide.id] && (
-                      <TourAudioModule
-                        track={SLIDE_AUDIO[currentSlide.id]}
-                        accent={currentSlide.accent}
-                        label={SLIDE_AUDIO[currentSlide.id].label}
-                      />
-                    )}
                   </div>
                 )}
               </div>
@@ -1032,7 +1108,12 @@ export default function WelcomePage() {
           )}
         </div>
 
-        <ProgressDots total={totalSteps} current={currentStep} accent={roleAccent} />
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          {phase === "path" && currentSlide && SLIDE_AUDIO[currentSlide.id] && (
+            <TourNarrationButton key={currentSlide.id} track={SLIDE_AUDIO[currentSlide.id]} accent={roleAccent} />
+          )}
+          <ProgressDots total={totalSteps} current={currentStep} accent={roleAccent} />
+        </div>
 
         <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "16px" }}>
           <a href="/passport" style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", color: "rgba(255,255,255,0.45)", textDecoration: "none", textTransform: "uppercase" }}>

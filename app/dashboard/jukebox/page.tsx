@@ -36,7 +36,7 @@ export default function JukeboxPage() {
             <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Owned tracks</div>
           </div>
           <div style={{ flex: 1, padding: '14px 20px', background: '#1a1a1a' }}>
-            <div style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)' }}>LESAR Balance</div>
+            <div style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)' }}>Points Balance</div>
             <div style={{ fontSize: '20px', fontWeight: 900, color: '#F69820' }}>140</div>
             <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>28 plays available</div>
           </div>

@@ -83,9 +83,9 @@ export default function LeaderboardPage() {
     <>
       <style>{CSS}</style>
       <div className="lb-head">
-        <div className="lb-eyebrow">LESARs Leaderboard</div>
+        <div className="lb-eyebrow">Points Leaderboard</div>
         <h1 className="lb-title">Season 1 Rankings</h1>
-        <p className="lb-sub">Top 10 members earn bonus LESARs at the end of each 111-day season.</p>
+        <p className="lb-sub">Top 10 members earn bonus Points at the end of each 111-day season.</p>
       </div>
 
       <div className="lb-season-bar">
@@ -95,7 +95,7 @@ export default function LeaderboardPage() {
         </div>
         <div className="lb-season-prize">
           <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M10 2l2.5 5.5L18 8.5l-4 4 1 5.5L10 15l-5 3 1-5.5-4-4 5.5-1L10 2z" fill="#F69820"/></svg>
-          Bonus LESARs for top 10
+          Bonus Points for top 10
         </div>
       </div>
 
@@ -140,7 +140,7 @@ export default function LeaderboardPage() {
             {/* No rank yet */}
             {userId && !myRank && !inTopTen && (
               <div className="lb-no-rank">
-                You are not yet ranked. Earn LESARs to enter the leaderboard.
+                You are not yet ranked. Earn Points to enter the leaderboard.
               </div>
             )}
           </div>
@@ -152,7 +152,7 @@ export default function LeaderboardPage() {
       )}
 
       <div className="lb-earn-strip">
-        <div className="lb-earn-title">Earn more LESARs</div>
+        <div className="lb-earn-title">Earn more Points</div>
         <div className="lb-earn-actions">
           <a href="/roster" className="lb-earn-card">
             <div className="lb-earn-card-label">Discover Artists</div>

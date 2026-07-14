@@ -12,14 +12,18 @@ export async function POST(req: NextRequest) {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Auth check - only admin can invite
+  // Auth check - only admin can invite. Fixed 2026-07-13: this used to only check
+  // the token WHEN an Authorization header was present, which meant a request sent
+  // with no header at all skipped the check entirely (fail-open) - the dashboard
+  // client never actually sent this header, so in practice ANYONE could invite an
+  // email and seed an arbitrary Points balance. Now fails closed: no header/invalid
+  // token/wrong email all get rejected before any write happens.
   const authHeader = req.headers.get("authorization");
-  if (authHeader) {
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await admin.auth.getUser(token);
-    if (user?.email !== ADMIN_EMAIL) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+  const token = authHeader?.replace("Bearer ", "");
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { data: { user } } = await admin.auth.getUser(token);
+  if (user?.email !== ADMIN_EMAIL) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { email, initial_lesars = 0, tier = "passport" } = await req.json();
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
     passport_artists: [],
   }, { onConflict: "user_id" });
 
-  // Seed LESARs if provided
+  // Seed Points if provided
   if (initial_lesars > 0) {
     await admin.from("member_points").upsert({
       user_id: userId,
