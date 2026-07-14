@@ -564,82 +564,95 @@ function InlineArtistBrowser({ selected, onSelect }: { selected: number; onSelec
 function TourNarrationButton({ track, accent }: { track: { url: string; label: string }; accent: string }) {
   const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearTimer() { if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; } }
+
+  function start() {
+    const a = new Audio(track.url);
+    a.addEventListener("playing", () => { clearTimer(); setState("playing"); });
+    a.addEventListener("pause", () => setState((s) => (s === "unavailable" ? s : "idle")));
+    a.addEventListener("ended", () => setState("idle"));
+    a.addEventListener("error", () => { clearTimer(); setState("unavailable"); });
+    audioRef.current = a;
+    setState("loading");
+    // If actual playback hasn't started within 8s (stalled stream, bad CDN response,
+    // etc.) stop spinning forever and surface it instead of hanging silently.
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
+  }
 
   function toggle() {
-    if (state === "unavailable") return;
-    if (!audioRef.current) {
-      const a = new Audio(track.url);
-      a.addEventListener("error", () => setState("unavailable"));
-      a.addEventListener("loadedmetadata", () => { setState("playing"); a.play(); });
-      a.addEventListener("ended", () => setState("idle"));
-      audioRef.current = a;
-      setState("loading");
-      a.load();
-      return;
-    }
+    if (state === "loading") return;
     const a = audioRef.current;
-    if (state === "playing") { a.pause(); setState("idle"); }
-    else { a.play().then(() => setState("playing")).catch(() => setState("unavailable")); }
+    if (!a) { start(); return; }
+    if (state === "playing") { a.pause(); return; }
+    if (state === "unavailable") { a.pause(); audioRef.current = null; start(); return; }
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
   }
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  useEffect(() => () => { clearTimer(); audioRef.current?.pause(); }, []);
 
   const isPlaying = state === "playing";
   const isLoading = state === "loading";
+  const isUnavailable = state === "unavailable";
 
   return (
     <button
       onClick={toggle}
-      aria-label={isPlaying ? "Pause narration" : "Listen to this page"}
-      title={isPlaying ? "Pause narration" : "Listen to this page"}
-      style={{ width: "40px", height: "40px", borderRadius: "50%", background: isPlaying ? accent : "rgba(255,255,255,0.08)", border: `1px solid ${isPlaying ? accent : "rgba(255,255,255,0.16)"}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s ease" }}
+      aria-label={isPlaying ? "Pause narration" : isUnavailable ? "Narration unavailable, tap to retry" : "Listen to this page"}
+      title={isPlaying ? "Pause narration" : isUnavailable ? "Narration unavailable - tap to retry" : "Listen to this page"}
+      style={{ width: "40px", height: "40px", borderRadius: "50%", background: isPlaying ? accent : isUnavailable ? "rgba(255,90,90,0.18)" : "rgba(255,255,255,0.08)", border: `1px solid ${isPlaying ? accent : isUnavailable ? "rgba(255,110,110,0.6)" : "rgba(255,255,255,0.16)"}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s ease" }}
     >
       {isLoading
         ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="40" strokeDashoffset="20" style={{ animation: "spin 0.8s linear infinite" }} /></svg>
         : isPlaying
           ? <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-          : <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
+          : isUnavailable
+            ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff9090" strokeWidth="2.5" strokeLinecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+            : <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
     </button>
   );
 }
-
-// ── Progress dots ─────────────────────────────────────────────────────────────
-function ProgressDots({ total, current, accent }: { total: number; current: number; accent: string }) {
-  return (
-    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} style={{ width: i === current ? "20px" : "6px", height: "6px", borderRadius: "3px", background: i === current ? accent : "rgba(255,255,255,0.25)", transition: "all 0.3s ease" }} />
-      ))}
-    </div>
-  );
-}
-
-// ── Tour audio: standalone player (slide 1, no cover art) ────────────────────
 function TourSoloPlayer({ track, accent }: { track: { url: string; label: string }; accent: string }) {
   const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearTimer() { if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; } }
+
+  function start() {
+    const a = new Audio(track.url);
+    a.addEventListener("playing", () => { clearTimer(); setState("playing"); });
+    a.addEventListener("pause", () => setState((s) => (s === "unavailable" ? s : "idle")));
+    a.addEventListener("timeupdate", () => { setProgress(a.currentTime / (a.duration || 1)); });
+    a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
+    a.addEventListener("error", () => { clearTimer(); setState("unavailable"); });
+    audioRef.current = a;
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
+  }
 
   function toggle() {
-    if (state === "unavailable") return;
-    if (!audioRef.current) {
-      const a = new Audio(track.url);
-      a.addEventListener("error", () => setState("unavailable"));
-      a.addEventListener("loadedmetadata", () => { setState("playing"); a.play(); });
-      a.addEventListener("timeupdate", () => { setProgress(a.currentTime / (a.duration || 1)); });
-      a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
-      audioRef.current = a;
-      setState("loading");
-      a.load();
-      return;
-    }
+    if (state === "loading") return;
     const a = audioRef.current;
-    if (state === "playing") { a.pause(); setState("idle"); }
-    else { a.play().then(() => setState("playing")).catch(() => setState("unavailable")); }
+    if (!a) { start(); return; }
+    if (state === "playing") { a.pause(); return; }
+    if (state === "unavailable") { a.pause(); audioRef.current = null; start(); return; }
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
   }
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  useEffect(() => () => { clearTimer(); audioRef.current?.pause(); }, []);
 
   const isPlaying = state === "playing";
   const isLoading = state === "loading";
+  const isUnavailable = state === "unavailable";
   const wvH = [5,8,13,17,23,27,30,25,19,27,30,22,15,23,30,23,17,25,27,19,13,17,23,30,25,21,17,13,9,7,5,9,13,18,24,30,24,19,14,10];
 
   return (
@@ -653,16 +666,18 @@ function TourSoloPlayer({ track, accent }: { track: { url: string; label: string
       {/* Play + info */}
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px" }}>
         <button onClick={toggle} aria-label={isPlaying ? "Pause" : "Play"}
-          style={{ width: "46px", height: "46px", borderRadius: "50%", background: accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          style={{ width: "46px", height: "46px", borderRadius: "50%", background: isUnavailable ? "rgba(255,90,90,0.6)" : accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {isLoading
             ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="40" strokeDashoffset="20" style={{ animation: "spin 0.8s linear infinite" }} /></svg>
             : isPlaying
               ? <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-              : <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
+              : isUnavailable
+                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+                : <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{track.label}</div>
-          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>{isLoading ? "Loading..." : isPlaying ? "Playing" : "Tap to listen"}</div>
+          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>{isLoading ? "Loading..." : isPlaying ? "Playing" : isUnavailable ? "Unavailable - tap to retry" : "Tap to listen"}</div>
         </div>
       </div>
       {/* Progress */}
@@ -672,51 +687,63 @@ function TourSoloPlayer({ track, accent }: { track: { url: string; label: string
     </div>
   );
 }
-
 // ── Tour audio: compact module strip (slides 2+, sits below visual) ───────────
 function TourAudioModule({ track, accent, label }: { track: { url: string }; accent: string; label: string }) {
   const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const LIMIT = 20;
 
-  function toggle() {
-    if (state === "unavailable") return;
-    if (!audioRef.current) {
-      const a = new Audio(track.url);
-      a.addEventListener("error", () => setState("unavailable"));
-      a.addEventListener("loadedmetadata", () => { setState("playing"); a.play(); });
-      a.addEventListener("timeupdate", () => {
-        if (a.currentTime >= LIMIT) { a.pause(); a.currentTime = 0; setState("idle"); setProgress(0); return; }
-        setProgress(a.currentTime / LIMIT);
-      });
-      a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
-      audioRef.current = a;
-      setState("loading");
-      a.load();
-      return;
-    }
-    const a = audioRef.current;
-    if (state === "playing") { a.pause(); setState("idle"); }
-    else { a.play().then(() => setState("playing")).catch(() => setState("unavailable")); }
+  function clearTimer() { if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; } }
+
+  function start() {
+    const a = new Audio(track.url);
+    a.addEventListener("playing", () => { clearTimer(); setState("playing"); });
+    a.addEventListener("pause", () => setState((s) => (s === "unavailable" ? s : "idle")));
+    a.addEventListener("timeupdate", () => {
+      if (a.currentTime >= LIMIT) { a.pause(); a.currentTime = 0; setState("idle"); setProgress(0); return; }
+      setProgress(a.currentTime / LIMIT);
+    });
+    a.addEventListener("ended", () => { setState("idle"); setProgress(0); });
+    a.addEventListener("error", () => { clearTimer(); setState("unavailable"); });
+    audioRef.current = a;
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
   }
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  function toggle() {
+    if (state === "loading") return;
+    const a = audioRef.current;
+    if (!a) { start(); return; }
+    if (state === "playing") { a.pause(); return; }
+    if (state === "unavailable") { a.pause(); audioRef.current = null; start(); return; }
+    setState("loading");
+    timeoutRef.current = setTimeout(() => setState("unavailable"), 8000);
+    a.play().catch(() => { clearTimer(); setState("unavailable"); });
+  }
+
+  useEffect(() => () => { clearTimer(); audioRef.current?.pause(); }, []);
 
   const isPlaying = state === "playing";
   const isLoading = state === "loading";
+  const isUnavailable = state === "unavailable";
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: "10px" }}>
       <button onClick={toggle} aria-label={isPlaying ? "Pause" : "Play"}
-        style={{ width: "32px", height: "32px", borderRadius: "50%", background: accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        style={{ width: "32px", height: "32px", borderRadius: "50%", background: isUnavailable ? "rgba(255,90,90,0.6)" : accent, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         {isLoading
           ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="40" strokeDashoffset="20" style={{ animation: "spin 0.8s linear infinite" }} /></svg>
           : isPlaying
             ? <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-            : <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
+            : isUnavailable
+              ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+              : <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20"/></svg>}
       </button>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.8)", marginBottom: "5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</div>
+        <div style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.8)", marginBottom: "5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{isUnavailable ? "Unavailable - tap to retry" : label}</div>
         <div style={{ height: "3px", background: "rgba(255,255,255,0.1)", borderRadius: "2px" }}>
           <div style={{ height: "100%", width: `${progress * 100}%`, background: accent, borderRadius: "2px", transition: "width 0.1s linear" }} />
         </div>
@@ -724,7 +751,6 @@ function TourAudioModule({ track, accent, label }: { track: { url: string }; acc
     </div>
   );
 }
-
 // ── Main component ────────────────────────────────────────────────────────────
 export default function WelcomePage() {
   const [phase, setPhase] = useState<Phase>("picker");
