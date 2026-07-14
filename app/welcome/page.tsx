@@ -616,6 +616,18 @@ function TourNarrationButton({ track, accent }: { track: { url: string; label: s
     </button>
   );
 }
+// ── Progress dots ─────────────────────────────────────────────────────────────
+function ProgressDots({ total, current, accent }: { total: number; current: number; accent: string }) {
+  return (
+    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} style={{ width: i === current ? "20px" : "6px", height: "6px", borderRadius: "3px", background: i === current ? accent : "rgba(255,255,255,0.25)", transition: "all 0.3s ease" }} />
+      ))}
+    </div>
+  );
+}
+
+// ── Tour audio: standalone player (slide 1, no cover art) ────────────────────
 function TourSoloPlayer({ track, accent }: { track: { url: string; label: string }; accent: string }) {
   const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
   const [progress, setProgress] = useState(0);
