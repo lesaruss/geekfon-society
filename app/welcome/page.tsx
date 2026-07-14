@@ -179,7 +179,7 @@ const PATH_SLIDES: Record<Role, SlideData[]> = {
   fan: [
     { id: "fan-artists", headline: "Meet the Roster", body: "More than music. A world for every artist, and it's growing.", detail: "This is the GeekFon artist roster. Each one has music, a biography, and a Pulse feed today, with interviews, video, and an animated series on the way.", accent: "#E91E8C", isArtistSlide: true },
     { id: "fan-pulse", headline: "The Pulse", body: "Your favorite artist posts every day. You're in the conversation.", detail: "The Pulse is your doorway into each artist's life: video, photos, and text. News, social media, and a group chat are all coming soon to GeekFon Society.", accent: "#F69820" },
-    { id: "fan-tokens", headline: "Points Unlock\nEverything", body: "Start free with 111 Points. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 Points. Unlock a single song for 25 Points, or apply to our Plus program for access to every song in the catalog. Points aren't limited to GeekFon: spend and redeem them across LESARUSS brands, throughout the LESARUSS universe.", accent: "#9C27B0" },
+    { id: "fan-tokens", headline: "Points Unlock\nEverything", body: "Start free with 111 Points. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 Points. Unlock a single song for 25 Points, or go All Access for access to every song in the catalog. Points aren't limited to GeekFon: spend and redeem them across LESARUSS brands, throughout the LESARUSS universe.", accent: "#9C27B0" },
     { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every Point you spend on an artist toward a track lets us know. It helps set the rankings, both on GeekFon Radio and across the site itself.", accent: "#2196F3" },
     { id: "fan-radio", headline: "GeekFon Radio", body: "Old-school radio, reinvented. New songs weekly, 24/7.", detail: "GeekFon Radio is your constant feed, just like traditional radio: no on-demand, no saving, just every artist playing in the background while you live your day. Hear songs not released to the public - an exclusive perk of being a registered member.", accent: "#00BCD4", cta: { label: "Join the Society", href: "/passport" } },
   ],
@@ -213,7 +213,7 @@ const SLIDE_AUDIO: Record<string, { url: string; label: string }> = {
   "label-cta":           { url: HF_CDN + "hf_20260704_093459_7f1079bd-9d62-4b48-bda4-c9704ce842fb.mp3", label: "Let's Talk Licensing" },
   "fan-artists":         { url: "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/hf_20260714_075712_9e686e71-c000-4d26-a2b6-6729fbec0eec.wav", label: "Meet the Roster" },
   "fan-pulse":           { url: HF_CDN + "hf_20260714_095820_96c4ad1a-91d5-44f4-8fa8-868180c0b8e4.wav", label: "The Pulse" },
-  "fan-tokens":          { url: HF_CDN + "hf_20260714_101319_cc0adbb9-31db-45be-a727-d99d0f16dd7b.wav", label: "Points Unlock Everything" },
+  "fan-tokens":          { url: HF_CDN + "hf_20260714_104150_cb4ef4a4-eda6-4de6-b291-76ae4abedd92.wav", label: "Points Unlock Everything" },
   "fan-voting":          { url: HF_CDN + "hf_20260714_095823_365554cb-7bc9-43d5-b7b3-1d5190590bca.wav", label: "Vote. Rank. Impact." },
   "fan-radio":           { url: HF_CDN + "hf_20260714_095825_23118177-924b-4a25-97dd-47f54b262581.wav", label: "GeekFon Radio" },
   "brand-audience":      { url: HF_CDN + "hf_20260704_093539_5e20b015-f780-4f78-82e1-768a6ee38daa.mp3", label: "Multiple Cities. One Community." },
