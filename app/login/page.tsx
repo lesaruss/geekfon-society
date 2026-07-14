@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import SiteChrome from '@/components/SiteChrome';
 import styles from './page.module.css';
 
 type State = 'form' | 'sending' | 'code-entry';
@@ -294,8 +295,10 @@ function LoginPageInner() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
-      <LoginPageInner />
-    </Suspense>
+    <SiteChrome>
+      <Suspense fallback={null}>
+        <LoginPageInner />
+      </Suspense>
+    </SiteChrome>
   );
 }
