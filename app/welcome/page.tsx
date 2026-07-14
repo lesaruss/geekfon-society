@@ -158,6 +158,14 @@ const ARTISTS: ArtistCard[] = [
       { title: "Preview 3", url: SUPA_AUDIO + "straight-and-narrow/sample-c.mp3" },
     ],
   },
+  {
+    slug: "vuka", name: "Vuka", initial: "V", accent: "#FFB300",
+    genre: "Amapiano", tagline: "Amapiano built for a continent the Society hasn't reached yet.",
+    heroUrl: "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/hf_20260713_122846_dae7867b-1428-4544-a3f9-5c5455318b69.png",
+    tracks: [
+      { title: "Fall Into Rhythm", url: SUPA_AUDIO + "vuka/fall-into-rhythm.mp3", full: true },
+    ],
+  },
 ];
 
 const ROLE_META: Record<Role, { label: string; tagline: string; accent: string; icon: ReactElement }> = {
@@ -169,7 +177,7 @@ const ROLE_META: Record<Role, { label: string; tagline: string; accent: string; 
 
 const PATH_SLIDES: Record<Role, SlideData[]> = {
   fan: [
-    { id: "fan-artists", headline: "Meet the Artists", body: "Step into their lives. Follow their stories. Hear the music.", detail: "We release a few artists at a time, so the world grows as you do. Each one has a full biography, a discography, and a Pulse feed of their own. None of them are real. All of the music is. And the music is only the start: series, live shows, and more are on the way.", accent: "#E91E8C", isArtistSlide: true },
+    { id: "fan-artists", headline: "Meet the Roster", body: "More than music. A world for every artist, and it's growing.", detail: "This is the GeekFon artist roster. Each one has music, a biography, and a Pulse feed today, with interviews, video, and an animated series on the way. The deeper you go, the more of their world opens up. And we're just getting started.", accent: "#E91E8C", isArtistSlide: true },
     { id: "fan-pulse", headline: "The Pulse", body: "Your favorite artist posts every day. You're in the conversation.", detail: "Video, photo, text - the Pulse is each artist's personal feed. Comment on a post. React to a drop. The artist responds. This is not a playlist. This is a living relationship with a character who shows up every day.", accent: "#F69820" },
     { id: "fan-tokens", headline: "Points Unlock\nEverything", body: "Start free with 111 Points. Unlock songs across the whole universe.", detail: "Your free membership starts you with 111 Points. Unlock a single song for 100 Points, or go All Access for every track an artist drops. Points are not limited to GeekFon: spend them to redeem songs and unlock experiences across 15+ brands in the LESARUSS universe. Buy more anytime.", accent: "#9C27B0" },
     { id: "fan-voting", headline: "Vote. Rank. Impact.", body: "Your votes shape what the whole Society hears.", detail: "Every Point you spend on an artist counts as a vote. Rankings update in real time and decide which songs we play most and which get a music video first. Your votes carry across the network, including TopSpot USA and Anime 3000, and help set the charts on TopSpot Global. Your support shapes multiple communities at once.", accent: "#2196F3" },
@@ -203,7 +211,7 @@ const SLIDE_AUDIO: Record<string, { url: string; label: string }> = {
   "label-licensing":     { url: HF_CDN + "hf_20260704_093447_900dd9a2-0ad3-49c9-afac-5cf84d0ccb20.mp3", label: "Sync. Film. TV. Campaigns." },
   "label-pipeline":      { url: HF_CDN + "hf_20260704_093453_b35a943f-f135-4b80-8ebd-073bd42e6c92.mp3", label: "The Proof of Concept" },
   "label-cta":           { url: HF_CDN + "hf_20260704_093459_7f1079bd-9d62-4b48-bda4-c9704ce842fb.mp3", label: "Let's Talk Licensing" },
-  "fan-artists":         { url: HF_CDN + "hf_20260704_093505_9e69c939-f6b4-4147-b89a-b4555d870de7.mp3", label: "Meet the Artists" },
+  "fan-artists":         { url: "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/hf_20260714_075712_9e686e71-c000-4d26-a2b6-6729fbec0eec.wav", label: "Meet the Roster" },
   "fan-pulse":           { url: HF_CDN + "hf_20260704_093512_bdf50a49-86d8-4911-9636-d683f13e4971.mp3", label: "The Pulse" },
   "fan-tokens":          { url: HF_CDN + "hf_20260704_093519_9e9448e0-474c-4471-85bb-6b39f0020425.mp3", label: "Points Unlock Everything" },
   "fan-voting":          { url: HF_CDN + "hf_20260704_093526_43af9bbb-e56f-4787-8246-5427db5ac434.mp3", label: "Vote. Rank. Impact." },
@@ -296,12 +304,27 @@ function TrackPlayer({ track, accent }: { track: ArtistCard["tracks"][number]; a
 // ── Featured launch artists (See the Artist popup) ────────────────────────────
 // One preview song each, real files mapped from public.radio_tracks.
 const PREVIEW: Record<string, { title: string; path: string }> = {
-  "roxanne":          { title: "Life's Tough",     path: "roxanne/lifes-tough.mp3" },
-  "lex-from-brixton": { title: "Brixton Baby",      path: "lex-from-brixton/brixton-baby.mp3" },
-  "shamanic-resin":   { title: "Real Dream",       path: "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3" },
-  "riku":             { title: "Lottery of Love",  path: "riku-hayasaka/lottery-of-love.mp3" },
+  "roxanne":            { title: "Life's Tough",         path: "roxanne/lifes-tough.mp3" },
+  "lex-from-brixton":   { title: "Brixton Baby",          path: "lex-from-brixton/brixton-baby.mp3" },
+  "shamanic-resin":     { title: "Real Dream",            path: "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3" },
+  "riku":               { title: "Lottery of Love",       path: "riku-hayasaka/lottery-of-love.mp3" },
+  "straight-and-narrow":{ title: "Dead Broke",            path: "straight-and-narrow/dead-broke.mp3" },
+  "nilo-wave":          { title: "De Borinquen Pa Jamaica (feat. Lickle Bro)", path: "nilo-wave/de-borinquen-pa-jamaica-feat-lickle-bro.mp3" },
+  "rustblood-prophets": { title: "Beyond Space and Time", path: "rustblood-prophets/beyond-space-and-time.mp3" },
+  "mad-tings":          { title: "Never Broke Us",        path: "mad-tings/never-broke-us.mp3" },
+  "vuka":               { title: "Fall Into Rhythm",      path: "vuka/fall-into-rhythm.mp3" },
+  "lickle-bro":         { title: "Let Em",                 path: "lickle-bro/let-em.mp3" },
+  "lickle-sis":         { title: "No Te Me Montes",       path: "lickle-sis/no-te-me-montes.mp3" },
+  "mr-russell":         { title: "Super Nintendo Sega Genesis Solo Mix", path: "mr-russell/super-nintendo-sega-genesis-solo-mix.mp3" },
 };
-const FEATURED: ArtistCard[] = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"].map((s) => {
+// Same order as the live /roster page (ARTIST_ORDER), so this dropdown always matches
+// whoever is actually promoted to the roster.
+const TOUR_ARTIST_ORDER = [
+  "roxanne", "lex-from-brixton", "shamanic-resin", "riku",
+  "straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings",
+  "vuka", "lickle-bro", "lickle-sis", "mr-russell",
+];
+const FEATURED: ArtistCard[] = TOUR_ARTIST_ORDER.map((s) => {
   const base = ARTISTS.find((a) => a.slug === s)!;
   const pv = PREVIEW[s];
   return { ...base, tracks: [{ title: pv.title, url: SUPA_AUDIO + pv.path }] };
@@ -959,7 +982,7 @@ export default function WelcomePage() {
 
                 {currentSlide.isArtistSlide && (
                   <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: currentSlide.accent, color: "#fff", border: "2px solid #000", borderRadius: "100px", padding: "10px 22px", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "12px" }}>
-                    Meet the launch artists
+                    Browse the full roster
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                   </div>
                 )}
@@ -1065,8 +1088,9 @@ export default function WelcomePage() {
                       <SlidePreview slideId={currentSlide.id} accent={currentSlide.accent} />
                     )}
 
-                    {/* Compact audio module beneath visual */}
-                    {SLIDE_AUDIO[currentSlide.id] && (
+                    {/* Compact audio module beneath visual - not on the artist slide,
+                        the bottom-bar narration button already covers it there */}
+                    {!currentSlide.isArtistSlide && SLIDE_AUDIO[currentSlide.id] && (
                       <TourAudioModule
                         track={SLIDE_AUDIO[currentSlide.id]}
                         accent={currentSlide.accent}
