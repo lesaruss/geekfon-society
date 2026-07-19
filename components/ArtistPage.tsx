@@ -66,9 +66,9 @@ export type ArtistContent = {
   pulse?: PulsePost[];
   introVideoUrl?: string;
   videoThumbUrl?: string;
-  skyscraperUrl?: string; skyscraperLink?: string;
-  primaryAdUrl?: string; primaryAdLink?: string;
-  featureAdUrl?: string; featureAdLink?: string;
+  skyscraperUrl?: string; skyscraperLink?: string; skyscraperPlacementId?: string; skyscraperCampaignId?: string;
+  primaryAdUrl?: string; primaryAdLink?: string; primaryAdPlacementId?: string; primaryAdCampaignId?: string;
+  featureAdUrl?: string; featureAdLink?: string; featureAdPlacementId?: string; featureAdCampaignId?: string;
   members?: { name: string; initial?: string; color?: string; img?: string; role?: string; position?: string; hook?: string; traits?: string[]; quote?: string; detail?: string }[];
 };
 
@@ -421,6 +421,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [showVoteModal, setShowVoteModal] = useState<"non-member" | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function handleAdClick(placementId?: string, campaignId?: string) {
+    if (!placementId || !campaignId) return;
+    try {
+      const payload = JSON.stringify({ placement_id: placementId, campaign_id: campaignId });
+      navigator.sendBeacon(SUPA_URL + '/functions/v1/ad-click', new Blob([payload], { type: 'text/plain' }));
+    } catch (e) { /* click still resolves to the advertiser even if the beacon fails */ }
+  }
   const c = content || {};
   const name = c.name || "Artist";
   const vars = {
@@ -1530,7 +1538,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 {/* Slide 0: Skyscraper 300x600 */}
                 <div className={"bb-slide" + (bbSlot === 0 ? " active" : "")}>
                   {c.skyscraperUrl ? (
-                    <a href={c.skyscraperLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                    <a href={c.skyscraperLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.skyscraperPlacementId, c.skyscraperCampaignId)}>
                       <img src={c.skyscraperUrl} alt="Advertisement" className="bb-ad-img" />
                     </a>
                   ) : (
@@ -1545,7 +1553,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
                   {isMobile ? (
                     c.primaryAdUrl ? (
-                      <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                      <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.primaryAdPlacementId, c.primaryAdCampaignId)}>
                         <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
                       </a>
                     ) : (
@@ -1558,7 +1566,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   ) : (
                     <div className="bb-stacked">
                       {c.primaryAdUrl ? (
-                        <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                        <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.primaryAdPlacementId, c.primaryAdCampaignId)}>
                           <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
                         </a>
                       ) : (
@@ -1569,7 +1577,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         </div>
                       )}
                       {c.featureAdUrl ? (
-                        <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                        <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.featureAdPlacementId, c.featureAdCampaignId)}>
                           <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
                         </a>
                       ) : (
@@ -1586,7 +1594,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 {isMobile && (
                   <div className={"bb-slide" + (bbSlot === 2 ? " active" : "")}>
                     {c.featureAdUrl ? (
-                      <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link">
+                      <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.featureAdPlacementId, c.featureAdCampaignId)}>
                         <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
                       </a>
                     ) : (
