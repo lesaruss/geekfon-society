@@ -175,7 +175,7 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
       opts
     ),
     fetch(
-      `${url}/rest/v1/gfs_active_ads?or=(artist_slug.eq.${encodeURIComponent(slug)},artist_slug.eq.global)&active=eq.true&select=slot_id,image_url,link_url,artist_slug`,
+      `${url}/functions/v1/ad-resolve?brand_slug=geekfon-society&page_slug=${encodeURIComponent('/[artist]')}`,
       opts
     ),
   ]);
@@ -220,21 +220,15 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
     }
   }
 
-  // Merge active ads (artist-specific overrides global)
+  // Merge ad-resolve slots (real Ad Console inventory - replaces gfs_active_ads 2026-07-19)
   if (adsRes && adsRes.ok) {
-    const adRows: { slot_id: string; image_url: string; link_url: string; artist_slug: string }[] = await adsRes.json();
-    // Sort so artist-specific ads win over global
-    const sorted = [...adRows].sort((a, b) => (a.artist_slug === slug ? -1 : 1) - (b.artist_slug === slug ? -1 : 1));
-    for (const ad of sorted) {
-      if (ad.slot_id === "primary-ad"  && !profile.primaryAdUrl)  { profile.primaryAdUrl  = ad.image_url; profile.primaryAdLink  = ad.link_url; }
-      if (ad.slot_id === "feature-ad"  && !profile.featureAdUrl)  { profile.featureAdUrl  = ad.image_url; profile.featureAdLink  = ad.link_url; }
-      if (ad.slot_id === "skyscraper"  && !profile.skyscraperUrl) { profile.skyscraperUrl = ad.image_url; profile.skyscraperLink = ad.link_url; }
-    }
-    // Artist-specific always wins
-    for (const ad of sorted.filter(a => a.artist_slug === slug)) {
-      if (ad.slot_id === "primary-ad")  { profile.primaryAdUrl  = ad.image_url; profile.primaryAdLink  = ad.link_url; }
-      if (ad.slot_id === "feature-ad")  { profile.featureAdUrl  = ad.image_url; profile.featureAdLink  = ad.link_url; }
-      if (ad.slot_id === "skyscraper")  { profile.skyscraperUrl = ad.image_url; profile.skyscraperLink = ad.link_url; }
+    const adData: { slots?: { slot_id: string; image_url: string | null; link_url: string | null; placement_id: string; campaign_id: string | null }[] } = await adsRes.json();
+    const slots = adData.slots || [];
+    for (const s of slots) {
+      if (!s.image_url || !s.campaign_id) continue;
+      if (s.slot_id === "gfs-artist-primary-ad")  { profile.primaryAdUrl  = s.image_url; profile.primaryAdLink  = s.link_url || undefined; profile.primaryAdPlacementId  = s.placement_id; profile.primaryAdCampaignId  = s.campaign_id; }
+      if (s.slot_id === "gfs-artist-feature-ad")  { profile.featureAdUrl  = s.image_url; profile.featureAdLink  = s.link_url || undefined; profile.featureAdPlacementId  = s.placement_id; profile.featureAdCampaignId  = s.campaign_id; }
+      if (s.slot_id === "gfs-artist-skyscraper")  { profile.skyscraperUrl = s.image_url; profile.skyscraperLink = s.link_url || undefined; profile.skyscraperPlacementId = s.placement_id; profile.skyscraperCampaignId = s.campaign_id; }
     }
   }
 
