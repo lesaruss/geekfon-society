@@ -116,6 +116,7 @@ function RegisterPageInner() {
           dateOfBirth,
           email,
           tier,
+          acceptTerms,
         }),
       });
 
