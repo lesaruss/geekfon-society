@@ -3,41 +3,33 @@ import { useState, useEffect } from "react";
 import { useDashboard } from "./context";
 import { supabase } from "@/lib/supabase";
 
-// Plan lineup shown in the dashboard's Passport plan panel. Community Manager ($44/mo)
-// and Promoter ($22/mo) signup tiers were retired 2026-07-06 - Passport is now the only
-// self-serve paid tier, and Plus is invite-only (earned, not purchased). Existing members
-// already on the legacy promoter/pro tiers keep their access; see TIER_MONTHLY/TIER_LABEL/
-// TIER_RATE below, which still carry those tiers for that reason.
-const PASSPORT_TIERS = [
-  { id: "passport", label: "Passport", price: "$11/mo", lesars: 1500, desc: "Fan access. Stream, explore, and collect Points. The first step into the GeekFon universe.", cta: "Get Passport", inviteOnly: false },
-  { id: "plus",     label: "Plus",     price: "Invite Only", lesars: 0, desc: "Earned through member support. Street-team access, revenue-share on referrals, and priority access to exclusive artist events.", cta: "Coming Soon", inviteOnly: true },
-];
+// Passport plan picker + Points top-up (both retired 2026-07-23, see components/ArtistPage.tsx
+// for the replacement model: free membership + one-time $11 per-artist unlock) removed from
+// here. TIER_MONTHLY/TIER_LABEL/TIER_RATE are left in place - the affiliate/referral portal
+// below still keys off promoter/pro tier for existing affiliates' commission math, and that
+// program wasn't part of this retirement.
 const TIER_MONTHLY: Record<string, number> = { passport: 1500, promoter: 2500, pro: 6000 };
 const TIER_LABEL: Record<string, string>   = { passport: "Passport", promoter: "Promoter", pro: "Community Manager" };
 const TIER_RATE:  Record<string, number>   = { promoter: 0.10, pro: 0.25 };
-const TIER_DEFAULT_LESARS: Record<string, number> = { passport: 100, promoter: 1000, pro: 0 };
 const ADMIN_EMAIL = "contact@lesaruss.com";
 const GOAL = 1_000_000;
 
-// Same pack shape/pricing as components/ArtistPage.tsx LESAR_PACKS - keep in sync if either changes.
-const LESAR_PACKS: { id: string; lesars: number; price: number; label: string; popular?: boolean }[] = [
-  { id: "pack-starter",  lesars: 500,  price: 5,  label: "Starter" },
-  { id: "pack-standard", lesars: 1000, price: 11, label: "Standard", popular: true },
-  { id: "pack-power",    lesars: 5000, price: 33, label: "Power" },
-];
-
 export default function DashboardOverview() {
-  const { userId, userEmail, member, points, purchases, referral, memberCount } = useDashboard();
+  const { userId, userEmail, member, purchases, referral, memberCount } = useDashboard();
 
-  const [topupOpen,    setTopupOpen]    = useState(false);
-  const [copied,       setCopied]       = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // Points top-up modal - "Buy then Continue to Payment", same pattern as components/ArtistPage.tsx.
-  // Nothing is pre-selected on open (previously a pre-highlighted pack was a bug elsewhere).
-  const [topUpModalOpen, setTopUpModalOpen] = useState(false);
-  const [selectedPack,   setSelectedPack]   = useState<string | null>(null);
-  const [topUpLoading,   setTopUpLoading]   = useState(false);
-  const [topUpError,     setTopUpError]     = useState<string | null>(null);
+  // Artists this member has unlocked via the one-time $11 Full Experience purchase
+  // (components/ArtistPage.tsx handleUnlockArtist). Replaces the old Points balance.
+  const [unlockedArtists, setUnlockedArtists] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (!userId) { setUnlockedArtists([]); return; }
+    supabase
+      .from("gfs_artist_unlocks")
+      .select("artist_slug")
+      .eq("user_id", userId)
+      .then(({ data }) => setUnlockedArtists((data || []).map(r => r.artist_slug)));
+  }, [userId]);
 
   // Real count backing the "Songs Owned" stat card below (was previously a permanent "..." placeholder)
   const [songsOwned, setSongsOwned] = useState<number | null>(null);
@@ -50,7 +42,6 @@ export default function DashboardOverview() {
       .then(({ count }) => setSongsOwned(count ?? 0));
   }, [userId]);
 
-  const lesars     = points?.available_points ?? 0;
   const displayName = member?.name || userEmail || "Member";
   const tier       = member?.tier || "passport";
   const tierLabel  = TIER_LABEL[tier] || tier;
@@ -59,56 +50,12 @@ export default function DashboardOverview() {
   const commissionPct = TIER_RATE[tier] ? (TIER_RATE[tier] * 100).toFixed(0) : null;
   const progressPct   = Math.min((memberCount / GOAL) * 100, 100);
   const passportArtists = member?.passport_artists || [];
-  const monthlyAllot = TIER_MONTHLY[tier] ?? 1500;
-
-  // Renewal date: approximate next billing cycle (30 days from now as placeholder)
-  const renewalDate = new Date();
-  renewalDate.setDate(renewalDate.getDate() + 30);
-  const renewalStr = renewalDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-
-  // Reset date (start of next month)
-  const resetDate = new Date();
-  resetDate.setMonth(resetDate.getMonth() + 1, 1);
-  const resetStr = resetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   function copyLink() {
     if (!referral?.ref_code) return;
     navigator.clipboard.writeText(`https://geekfon.ai/join?ref=${referral.ref_code}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
-
-  function openTopUpModal() {
-    setSelectedPack(null);
-    setTopUpError(null);
-    setTopUpModalOpen(true);
-  }
-
-  async function handleTopUpCheckout() {
-    if (!selectedPack) return;
-    if (!userId) {
-      window.location.href = `/passport?return=${encodeURIComponent("/dashboard")}`;
-      return;
-    }
-    setTopUpError(null);
-    setTopUpLoading(true);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: selectedPack, userId, returnUrl: "/dashboard" }),
-      });
-      const { url, error } = await res.json();
-      if (url) {
-        window.location.href = url;
-      } else {
-        setTopUpError(error || "Checkout failed. Please try again.");
-        setTopUpLoading(false);
-      }
-    } catch {
-      setTopUpError("Checkout failed. Please try again.");
-      setTopUpLoading(false);
-    }
   }
 
   return (
@@ -123,9 +70,6 @@ export default function DashboardOverview() {
             <h1 className="do-welcome-name">Welcome back, {displayName}</h1>
             <div className="do-welcome-since">Passport holder since {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
           </div>
-          <button className="do-topup-hero-btn" onClick={openTopUpModal}>
-            + Top Up Points
-          </button>
         </div>
       </div>
 
@@ -137,14 +81,9 @@ export default function DashboardOverview() {
           <div className="do-stat-sub">Active</div>
         </div>
         <div className="do-stat-card">
-          <div className="do-stat-label">Monthly Points</div>
-          <div className="do-stat-val do-val-green">{monthlyAllot.toLocaleString()}</div>
-          <div className="do-stat-sub">Resets {resetStr}</div>
-        </div>
-        <div className="do-stat-card">
-          <div className="do-stat-label">Banked Points</div>
-          <div className="do-stat-val">{lesars.toLocaleString()}</div>
-          <div className="do-stat-sub">Spendable</div>
+          <div className="do-stat-label">Artists Unlocked</div>
+          <div className="do-stat-val do-val-green">{unlockedArtists === null ? "..." : unlockedArtists.length}</div>
+          <div className="do-stat-sub">Full Experience</div>
         </div>
         <a href="/dashboard/library" className="do-stat-card do-stat-link">
           <div className="do-stat-label">Songs Owned</div>
@@ -153,47 +92,46 @@ export default function DashboardOverview() {
         </a>
       </div>
 
-      {/* Balance + Passport grid */}
+      {/* Unlocks + Passport grid - replaces the old Points Balance card + Passport plan picker,
+          both retired 2026-07-23. Free membership is the only tier now; the paid mechanic is a
+          one-time $11 per-artist unlock (see components/ArtistPage.tsx handleUnlockArtist). */}
       <div className="do-main-grid">
-        {/* Balance card */}
+        {/* Unlocks card */}
         <div className="do-balance-card">
-          <div className="do-card-eyebrow">Points Balance</div>
-          <div>
-            <div className="do-bal-label">Monthly (Leaderboard)</div>
-            <div className="do-bal-amount">{monthlyAllot.toLocaleString()}<span className="do-bal-unit">Points</span></div>
-          </div>
-          <div className="do-bal-divider" />
-          <div className="do-bal-secondary">
-            <div>
-              <div className="do-bal-sec-label">Banked</div>
-              <div className="do-bal-sec-val">{lesars.toLocaleString()}</div>
-            </div>
-            <div style={{textAlign:"right"}}>
-              <div className="do-bal-sec-label">Earned this month</div>
-              <div className="do-bal-sec-val do-val-green-sm">+{monthlyAllot.toLocaleString()}</div>
-            </div>
-          </div>
-          <div className="do-bal-reset">Monthly balance resets {resetStr}. Earn more by attending events, completing challenges, and engaging with artists.</div>
-          <button className="do-btn-topup" onClick={openTopUpModal}>
-            + Top up Points
-          </button>
-          <button className="do-btn-plans" onClick={() => setTopupOpen(v => !v)}>
-            {topupOpen ? "- Hide plans" : "View Passport plans"}
-          </button>
+          <div className="do-card-eyebrow">Full Experience Unlocks</div>
+          {unlockedArtists === null ? (
+            <div className="do-bal-reset">Loading...</div>
+          ) : unlockedArtists.length === 0 ? (
+            <>
+              <div className="do-bal-amount" style={{ fontSize: 20, color: "rgba(255,255,255,.7)" }}>No artists unlocked yet</div>
+              <div className="do-bal-reset">Every song plays free once it&apos;s released. Unlock any artist once for $11 to hear their full catalog right now, including tracks that haven&apos;t dropped yet.</div>
+            </>
+          ) : (
+            <>
+              <div className="do-bal-label">Unlocked</div>
+              <div className="do-artist-chips" style={{ marginTop: 8 }}>
+                {unlockedArtists.map(slug => (
+                  <a key={slug} href={`/${slug}`} className="do-artist-chip">{slug.replace(/-/g, " ")}</a>
+                ))}
+              </div>
+            </>
+          )}
+          <a href="/roster" className="do-btn-topup" style={{ textDecoration: "none", display: "block", textAlign: "center" }}>
+            Browse Artists
+          </a>
         </div>
 
         {/* Passport card */}
         <div className="do-psp-card">
           <div className="do-psp-badge">
             <div className="do-psp-dot" />
-            <span className="do-psp-badge-label">Passport Active</span>
+            <span className="do-psp-badge-label">Free Member</span>
           </div>
           <div className="do-psp-features">
             {[
-              `${monthlyAllot.toLocaleString()} Points every month`,
-              "Early access to new drops",
-              "Member-only artist content",
-              "Leaderboard eligibility",
+              "Stream every released song, free, always",
+              "Preview any unreleased track before it drops",
+              "Unlock an artist's full catalog once for $11 - yours forever",
               "GeekFon Radio full access",
             ].map(f => (
               <div key={f} className="do-psp-feature">
@@ -202,43 +140,9 @@ export default function DashboardOverview() {
               </div>
             ))}
           </div>
-          <div className="do-psp-renewal">
-            Next renewal: <span>{renewalStr}</span>{" "}
-            {tier === "passport" && "· $11.00/mo"}
-            {tier === "promoter" && "· $22.00/mo"}
-            {tier === "pro" && "· $44.00/mo"}
-          </div>
+          <div className="do-psp-renewal">No subscription, no monthly charge. Member since {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}.</div>
         </div>
       </div>
-
-      {/* Passport plan picker */}
-      {topupOpen && (
-        <div className="do-tier-panel">
-          <div className="do-tier-head">
-            <div className="do-tier-panel-title">Passport Plans</div>
-            <button className="do-tier-close" onClick={() => setTopupOpen(false)} aria-label="Close">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" width="16" height="16"><path d="M6 6l12 12M18 6L6 18"/></svg>
-            </button>
-          </div>
-          <div className="do-tier-grid">
-            {PASSPORT_TIERS.map(t => (
-              <div key={t.id} className={"do-tier-card" + (tier === t.id ? " current" : "") + (t.inviteOnly ? " invite-only" : "")}>
-                {tier === t.id && <div className="do-tier-cur-badge">Current plan</div>}
-                {t.inviteOnly && !(tier === t.id) && <div className="do-tier-invite-badge">Invite Only</div>}
-                <div className="do-tier-name">{t.label}</div>
-                <div className="do-tier-price">{t.price}</div>
-                {t.lesars > 0 && <div className="do-tier-lesars">{t.lesars.toLocaleString()} Points/mo</div>}
-                <div className="do-tier-desc">{t.desc}</div>
-                {t.inviteOnly ? (
-                  <button className="do-tier-cta do-tier-cta-disabled" disabled aria-disabled="true">{t.cta}</button>
-                ) : tier !== t.id ? (
-                  <a href={`/passport?tier=${t.id}`} className="do-tier-cta">{t.cta}</a>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Passport artists */}
       {passportArtists.length > 0 && (
@@ -299,16 +203,15 @@ export default function DashboardOverview() {
         </div>
       )}
 
-      {/* Purchase history */}
+      {/* Purchase history - historical record only; Points packs are retired, nothing new lands here */}
       <div className="do-section" style={{marginTop:32}}>
         <div className="do-section-row">
           <div className="do-section-title">Purchase History</div>
-          <button className="do-section-action" onClick={openTopUpModal}>+ Top up Points</button>
         </div>
         {purchases.length === 0 ? (
           <div className="dp-empty">
             <p>No purchases yet.</p>
-            <button className="dp-btn-outline" onClick={openTopUpModal}>Explore Points packs</button>
+            <a href="/roster" className="dp-btn-outline">Browse Artists</a>
           </div>
         ) : (
           <div className="do-purchases">
@@ -338,49 +241,6 @@ export default function DashboardOverview() {
         </div>
       )}
 
-      {/* Points top-up modal: same "Buy then Continue to Payment" pattern as components/ArtistPage.tsx.
-          Nothing is pre-selected when the modal opens. */}
-      {topUpModalOpen && (
-        <div className="do-tu-overlay" role="dialog" aria-modal="true" aria-labelledby="do-tu-title" onClick={() => { if (!topUpLoading) setTopUpModalOpen(false); }}>
-          <div className="do-tu-modal" onClick={e => e.stopPropagation()}>
-            <button className="do-tu-close" onClick={() => setTopUpModalOpen(false)} aria-label="Close" disabled={topUpLoading}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-            <div className="do-tu-eyebrow">Top Up</div>
-            <h2 id="do-tu-title" className="do-tu-title">Choose a Points Pack</h2>
-            <p className="do-tu-desc">Pick a pack, then continue to payment. Points land in your balance the moment checkout completes.</p>
-            <div className="do-tu-pack-list">
-              {LESAR_PACKS.map(p => (
-                <button
-                  type="button"
-                  key={p.id}
-                  className={"do-tu-pack-row" + (selectedPack === p.id ? " do-tu-selected" : "")}
-                  onClick={() => setSelectedPack(p.id)}
-                  aria-pressed={selectedPack === p.id}
-                >
-                  {p.popular && <span className="do-tu-pack-badge">Popular</span>}
-                  <div>
-                    <div className="do-tu-pack-lesars">{p.lesars.toLocaleString()} Points</div>
-                    <div className="do-tu-pack-note">{p.label}</div>
-                  </div>
-                  <div className="do-tu-pack-price">${p.price}</div>
-                </button>
-              ))}
-            </div>
-            {topUpError && <p className="do-tu-error">{topUpError}</p>}
-            <div className="do-tu-actions">
-              <button
-                className={"do-tu-confirm" + (!selectedPack || topUpLoading ? " do-tu-disabled" : "")}
-                disabled={!selectedPack || topUpLoading}
-                onClick={handleTopUpCheckout}
-              >
-                {topUpLoading ? "Redirecting..." : "Continue to Payment"}
-              </button>
-              <button className="do-tu-cancel" onClick={() => setTopUpModalOpen(false)} disabled={topUpLoading}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
@@ -395,7 +255,7 @@ const CSS = `
 .do-topup-hero-btn{flex-shrink:0;padding:13px 24px;border-radius:100px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;border:1px solid rgba(0,215,95,.3);background:rgba(0,215,95,.14);color:rgba(0,215,95,.95);cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap;margin-top:2px;}
 .do-topup-hero-btn:hover{background:rgba(0,215,95,.22);}
 /* Stats row */
-.do-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.do-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
 .do-stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px 20px;}
 .do-stat-link{text-decoration:none;display:block;transition:background .15s,border-color .15s;}
 .do-stat-link:hover{background:rgba(255,255,255,.07);border-color:rgba(246,152,32,.3);}
