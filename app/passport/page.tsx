@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import SiteChrome from "@/components/SiteChrome";
 import { supabase } from "@/lib/supabase";
-import { isNative, presentAllAccessPaywall } from "@/lib/revenuecat";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -33,23 +32,23 @@ const PERKS = [
   },
   {
     icon: "◆",
-    short: "Points",
-    title: "Earn Points Every Day",
-    desc: "Get points for listening, sharing, and bringing people in. Your activity is your currency.",
+    short: "Unlock",
+    title: "Unlock Any Artist for $11",
+    desc: "One price, once, forever. Unlock an artist's full catalog - every song, released or not - no subscription required.",
     accent: "#9C27B0",
   },
   {
     icon: "⚡",
     short: "Early Access",
-    title: "Early Track Access",
-    desc: "Get every new song before it hits Spotify and the public. Passport is the first door in.",
+    title: "Preview Every New Track",
+    desc: "Hear a preview of every new song before it drops. Unlock the artist to hear the whole thing before anyone else.",
     accent: "#00BCD4",
   },
   {
     icon: "◈",
     short: "Leaderboard",
     title: "Leaderboard and Artist Top 10",
-    desc: "Compete with the community. Vote on the Artist Top 10. Your Points, your influence.",
+    desc: "Compete with the community and vote on the Artist Top 10.",
     accent: "#FF5722",
   },
 ];
@@ -113,6 +112,7 @@ const CSS = `
 .pp-pricing-sub { font-size: 15px; color: rgba(255,255,255,.55); margin: 0 auto 48px; line-height: 1.6; text-align: center; max-width: 620px; }
 .pp-pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
 @media (max-width: 720px) { .pp-pricing-grid { grid-template-columns: 1fr; gap: 2px; } }
+.pp-pricing-grid-single { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
 
 .pp-tier { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); padding: 40px 32px 36px; display: flex; flex-direction: column; position: relative; }
 .pp-tier.featured { background: rgba(233,30,140,.08); border-color: rgba(233,30,140,.35); }
@@ -212,7 +212,6 @@ export default function PassportPage() {
   const [cityVisible, setCityVisible] = useState(true);
   const [returnPath, setReturnPath] = useState("/dashboard");
   const [userId, setUserId] = useState<string | null>(null);
-  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -262,52 +261,11 @@ export default function PassportPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleNext, handleBack, slideIdx]);
 
-  async function handleJoin(plan?: string) {
-    // Free signup goes straight to the registration form (magic-link sign-up).
-    if (!plan || plan === "free") {
-      window.location.href = "/register";
-      return;
-    }
-    // Paid plans require an authenticated member. Send guests to log in,
-    // then bring them back to the passport page to complete the purchase.
-    if (!userId) {
-      window.location.href = "/login?redirect=/passport";
-      return;
-    }
-
-    // Inside the native app, All Access is sold through the App/Play Store
-    // via RevenueCat, never through Stripe (Apple/Google require the store's
-    // own in-app purchase for digital subscriptions bought in-app). On the
-    // regular website this branch is never taken, isNative() is false there.
-    if (plan === "all-access" && isNative()) {
-      setCheckingOut(true);
-      const entitled = await presentAllAccessPaywall();
-      setCheckingOut(false);
-      if (entitled) {
-        window.location.href = returnPath || "/dashboard";
-      }
-      // If not entitled (user cancelled), just leave them on this page.
-      return;
-    }
-
-    setCheckingOut(true);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, userId, returnUrl: returnPath }),
-      });
-      const { url, error } = await res.json();
-      if (url) {
-        window.location.href = url;
-      } else {
-        console.error("[checkout]", error);
-        setCheckingOut(false);
-      }
-    } catch (err) {
-      console.error("[checkout]", err);
-      setCheckingOut(false);
-    }
+  // All Access ($11/mo subscription) retired 2026-07-23 along with the Points economy -
+  // free signup (registration) is the only path from this page now. Per-artist unlocks
+  // happen on the artist's own page (components/ArtistPage.tsx handleUnlockArtist), not here.
+  function handleJoin() {
+    window.location.href = "/register";
   }
 
   const perk = PERKS[activePerk];
@@ -337,8 +295,8 @@ export default function PassportPage() {
                 <div className="pp-hero-price">Free to Join</div>
                 <h1 className="pp-hero-title">GeekFon Passport</h1>
                 <p className="pp-hero-sub">
-                  Your membership into the GeekFon universe. Listen, earn Points, unlock tracks,
-                  and build your place in the community. Free to start. Power up when you&apos;re ready.
+                  Your membership into the GeekFon universe. Stream every release for free, forever,
+                  and unlock any artist&apos;s full catalog for $11 whenever you&apos;re ready.
                 </p>
                 <button className="pp-hero-cta" onClick={handleNext} aria-label="Get your GeekFon Passport">
                   Get Your Passport
@@ -374,55 +332,34 @@ export default function PassportPage() {
               </div>
             )}
 
-            {/* Slide 3: Choose Your Path */}
+            {/* Slide 3: Join - single free tier. All Access ($11/mo) and the Points economy
+                were retired 2026-07-23; the only paid mechanic now is the one-time $11
+                per-artist unlock, sold on each artist's own page. */}
             {slideIdx === 2 && (
               <div className="pp-pricing-wrap">
-                <div className="pp-pricing-label">Choose your path</div>
-                <h2 className="pp-pricing-heading">Start free. Go deeper when you&apos;re ready.</h2>
+                <div className="pp-pricing-label">Join GeekFon Society</div>
+                <h2 className="pp-pricing-heading">Free to join. Pay only for what you love.</h2>
                 <p className="pp-pricing-sub">
-                  Every Passport is free. Points are how you move inside the ecosystem, earn them by
-                  participating, or go All Access and get more automatically.
+                  Membership is free, forever. Stream every released song at no cost. When an artist
+                  clicks, unlock their full catalog once for $11 - including anything not out yet.
                 </p>
 
-                <div className="pp-pricing-grid" role="list">
+                <div className="pp-pricing-grid pp-pricing-grid-single" role="list">
 
                   {/* --- FREE --- */}
-                  <div className="pp-tier" role="listitem">
+                  <div className="pp-tier featured" role="listitem">
                     <div className="pp-tier-name">Free Forever</div>
                     <div className="pp-tier-price">Free</div>
                     <div className="pp-tier-period">no card required</div>
-                    <div className="pp-tier-highlight">111 Points</div>
-                    <div className="pp-tier-highlight-sub">to get you started</div>
                     <ul className="pp-tier-items">
-                      <li>111 Points loaded on signup - enough to unlock your first track</li>
-                      <li>Earn Points by listening, sharing, and referring friends</li>
+                      <li>Stream every officially released song, always free</li>
+                      <li>Preview any track before it drops</li>
                       <li>Full access to GeekFon Radio</li>
                       <li>Vote on the Artist Top 10</li>
-                      <li>Your activity builds your rank in the community</li>
+                      <li>Unlock any artist&apos;s full catalog once for $11 - yours forever</li>
                     </ul>
-                    <button className="pp-tier-btn secondary" onClick={() => handleJoin("free")}>
+                    <button className="pp-tier-btn primary" onClick={handleJoin}>
                       Join Free
-                    </button>
-                  </div>
-
-                  {/* --- $11/MONTH (All Access, best value) --- */}
-                  <div className="pp-tier featured" role="listitem">
-                    <div className="pp-tier-badge">Best Value</div>
-                    <div className="pp-tier-name">All Access</div>
-                    <div className="pp-tier-price"><span>$</span>11</div>
-                    <div className="pp-tier-period">per month, cancel any time</div>
-                    <div className="pp-tier-highlight">1,500 Points</div>
-                    <div className="pp-tier-highlight-sub">every month, automatically</div>
-                    <ul className="pp-tier-items">
-                      <li>1,500 Points per month - enough for 15 tracks</li>
-                      <li>Early access to every new track before public release</li>
-                      <li>24/7 GeekFon Radio, including unreleased songs</li>
-                      <li>Eligible for the GeekFon Plus street team</li>
-                      <li>Leaderboard ranking and Artist Top 10 voting power</li>
-                      <li>Priority access to exclusive artist drops and events</li>
-                    </ul>
-                    <button className="pp-tier-btn primary" onClick={() => !checkingOut && handleJoin("all-access")} disabled={checkingOut}>
-                      {checkingOut ? "Redirecting..." : "Get All Access"}
                     </button>
                   </div>
 
