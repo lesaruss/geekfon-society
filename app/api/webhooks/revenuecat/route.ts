@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { creditLesars } from "@/lib/ledger";
-import { ALL_ACCESS_ENTITLEMENT, LESARS_PACK_PRODUCTS } from "@/lib/revenuecat";
+import { ALL_ACCESS_ENTITLEMENT, LESARS_PACK_PRODUCTS, ARTIST_UNLOCK_PRODUCTS } from "@/lib/revenuecat";
 
 function mapStore(store: string | undefined): "apple" | "google" | "stripe" | null {
   switch (store) {
@@ -90,6 +90,33 @@ export async function POST(req: NextRequest) {
   if (userId && event.type === "NON_RENEWING_PURCHASE" && event.product_id in LESARS_PACK_PRODUCTS) {
     const amount = LESARS_PACK_PRODUCTS[event.product_id as keyof typeof LESARS_PACK_PRODUCTS];
     await creditLesars(supabase, userId, amount, event.product_id, event.transaction_id || event.id);
+  }
+
+  // Per-artist "Full Experience" unlock, added 2026-07-23 - a non-consumable,
+  // one product per artist (see ARTIST_UNLOCK_PRODUCTS), granting permanent
+  // playback access to that artist's full catalog. RevenueCat reports
+  // non-consumables as NON_SUBSCRIPTION purchases (not INITIAL_PURCHASE,
+  // which is subscription/entitlement-only), but both are checked here
+  // defensively since RevenueCat's exact event.type for non-consumables has
+  // varied across SDK versions.
+  if (
+    userId &&
+    source &&
+    (event.type === "NON_SUBSCRIPTION" || event.type === "INITIAL_PURCHASE") &&
+    event.product_id in ARTIST_UNLOCK_PRODUCTS
+  ) {
+    const artistSlug = ARTIST_UNLOCK_PRODUCTS[event.product_id as keyof typeof ARTIST_UNLOCK_PRODUCTS];
+    await supabase
+      .from("gfs_artist_unlocks")
+      .upsert(
+        {
+          user_id: userId,
+          artist_slug: artistSlug,
+          source,
+          external_id: event.transaction_id || event.id,
+        },
+        { onConflict: "user_id,artist_slug" }
+      );
   }
 
   return NextResponse.json({ received: true });
