@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const { fullName, dateOfBirth, email, tier } = await req.json();
+    const { fullName, dateOfBirth, email, tier, acceptTerms } = await req.json();
 
     // Validate input
     if (!fullName || !dateOfBirth || !email) {
       return NextResponse.json(
         { error: 'Full name, date of birth, and email are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!acceptTerms) {
+      return NextResponse.json(
+        { error: 'You must agree to the Terms of Service' },
         { status: 400 }
       );
     }
@@ -29,26 +36,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Call Supabase gfs-register function
+    // This used to call a Supabase function named "gfs-register" that never
+    // existed in this project (confirmed via list_edge_functions 2026-07-23),
+    // which is why every account-creation attempt errored, including the one
+    // Apple's reviewer hit during the 2026-07-17 rejection. gfs-auth-email
+    // already handles both login and register mode: in register mode it
+    // stages the profile in gfs_pending_profiles, creates the auth user, and
+    // emails the sign-in code. gfs-auth-verify (added 2026-07-23) confirms the
+    // code and promotes the pending profile into a real gfs_members row.
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://fwbhwfxpncrsfhttimna.supabase.co';
     const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/gfs-register`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/gfs-auth-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseServiceRoleKey}`,
       },
       body: JSON.stringify({
-        fullName,
-        dateOfBirth,
+        mode: 'register',
         email,
+        name: fullName,
+        dob: dateOfBirth,
+        tos: acceptTerms,
         tier: tier || 'free',
       }),
     });
 
     if (!response.ok) {
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       return NextResponse.json(
         { error: data.error || 'Failed to create account' },
         { status: response.status }
