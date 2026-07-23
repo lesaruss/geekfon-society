@@ -51,6 +51,25 @@ export async function POST(req: NextRequest) {
           .eq("user_id", userId);
       }
     }
+
+    // Per-artist "Full Experience" unlock (added 2026-07-23). Separate branch
+    // from the lesars>0 block above since this plan intentionally carries
+    // 0 lesars - it is not a Points purchase, it just grants permanent
+    // playback access to one artist's full catalog, released or not.
+    if (userId && plan === "artist-unlock" && session.metadata?.artist_slug) {
+      await supabase
+        .from("gfs_artist_unlocks")
+        .upsert(
+          {
+            user_id: userId,
+            artist_slug: session.metadata.artist_slug,
+            source: "stripe",
+            amount_cents: session.amount_total ?? 1100,
+            external_id: session.id,
+          },
+          { onConflict: "user_id,artist_slug" }
+        );
+    }
   }
 
   if (event.type === "invoice.payment_succeeded") {
