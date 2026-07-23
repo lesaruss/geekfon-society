@@ -8,6 +8,13 @@ const PRICE_MAP: Record<string, string | undefined> = {
   "pack-power":    process.env.STRIPE_PRICE_LESARS_POWER,
   "all-access":    process.env.STRIPE_PRICE_ALL_ACCESS,
   "passport":      process.env.STRIPE_PRICE_PASSPORT,
+  // Added 2026-07-23: one-time $11 per-artist "Full Experience" unlock,
+  // the only paid mechanic going forward - see gfs_artist_unlocks. The
+  // Points packs and All-Access rows above are left in place (no longer
+  // reachable from any UI) rather than deleted, since the RevenueCat
+  // webhook still references them and ripping them out isn't needed to
+  // ship this.
+  "artist-unlock": process.env.STRIPE_PRICE_ARTIST_UNLOCK,
 };
 
 const LESARS_MAP: Record<string, number> = {
@@ -16,6 +23,7 @@ const LESARS_MAP: Record<string, number> = {
   "pack-power":    5000,
   "all-access":    1500,
   "passport":      111,
+  "artist-unlock": 0,
 };
 
 export async function POST(req: NextRequest) {
@@ -26,10 +34,14 @@ export async function POST(req: NextRequest) {
   );
 
   try {
-    const { plan, userId, returnUrl } = await req.json();
+    const { plan, userId, returnUrl, artistSlug } = await req.json();
 
     if (!plan || !PRICE_MAP[plan]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    }
+
+    if (plan === "artist-unlock" && !artistSlug) {
+      return NextResponse.json({ error: "artistSlug is required for artist-unlock" }, { status: 400 });
     }
 
     if (userId) {
@@ -62,6 +74,7 @@ export async function POST(req: NextRequest) {
         user_id: userId || "",
         plan,
         lesars: String(LESARS_MAP[plan] || 0),
+        ...(plan === "artist-unlock" ? { artist_slug: artistSlug } : {}),
       },
       ...(userId && { client_reference_id: userId }),
     });
