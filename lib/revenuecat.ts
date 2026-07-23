@@ -158,6 +158,62 @@ export async function purchaseLesarsPack(productId: keyof typeof LESARS_PACK_PRO
   }
 }
 
+// Per-artist "Full Experience" unlock product identifiers, added 2026-07-23.
+// Each artist gets its own non-consumable RevenueCat product (not one shared
+// product for all artists) so Purchases.restorePurchases() can correctly
+// tell which specific artists a returning user already unlocked. These
+// product IDs will not exist in RevenueCat/App Store Connect until manually
+// configured there - see project memory (incident_geekfon_ios_build3_rejection
+// and the 2026-07-23 pricing pivot notes) for the full list still to be set up.
+export const ARTIST_UNLOCK_PRODUCTS: Record<string, string> = {
+  "unlock_lex_from_brixton":    "lex-from-brixton",
+  "unlock_lickle_bro":          "lickle-bro",
+  "unlock_lickle_sis":          "lickle-sis",
+  "unlock_lord_zorlot":         "lord-zorlot",
+  "unlock_mad_tings":           "mad-tings",
+  "unlock_mr_russell":          "mr-russell",
+  "unlock_nilo_wave":           "nilo-wave",
+  "unlock_riku":                "riku",
+  "unlock_roxanne":             "roxanne",
+  "unlock_rustblood_prophets":  "rustblood-prophets",
+  "unlock_shamanic_resin":      "shamanic-resin",
+  "unlock_straight_and_narrow": "straight-and-narrow",
+  "unlock_v":                   "v",
+  "unlock_vuka":                "vuka",
+};
+
+function artistUnlockProductId(artistSlug: string): string | undefined {
+  return Object.keys(ARTIST_UNLOCK_PRODUCTS).find(
+    (id) => ARTIST_UNLOCK_PRODUCTS[id as keyof typeof ARTIST_UNLOCK_PRODUCTS] === artistSlug
+  );
+}
+
+/** Purchase the one-time Full Experience unlock for a specific artist. */
+export async function purchaseArtistUnlock(artistSlug: string) {
+  if (!isNative()) return { success: false, error: "not-native" as const };
+  const productId = artistUnlockProductId(artistSlug);
+  if (!productId) {
+    return { success: false, error: `no RevenueCat product configured for artist ${artistSlug}` };
+  }
+  try {
+    const offerings = await Purchases.getOfferings();
+    const pkg = offerings.current?.availablePackages.find(
+      (p) => p.product.identifier === productId
+    );
+    if (!pkg) {
+      return { success: false, error: `product ${productId} not found in current offering` };
+    }
+    const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
+    return { success: true, customerInfo };
+  } catch (err: any) {
+    if (err?.userCancelled) {
+      return { success: false, error: "cancelled" as const };
+    }
+    console.error("[revenuecat] purchaseArtistUnlock failed", err);
+    return { success: false, error: String(err) };
+  }
+}
+
 /** Restore prior purchases, e.g. after a reinstall or a new device. */
 export async function restorePurchases() {
   if (!isNative()) return null;
