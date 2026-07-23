@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import SiteChrome from '@/components/SiteChrome';
 import styles from './page.module.css';
+import { signInWithProvider } from '@/lib/socialAuth';
 
 type State = 'form' | 'sending' | 'code-entry';
 type Tier = 'free' | 'passport' | 'all-access' | 'lifetime';
@@ -27,6 +28,17 @@ function RegisterPageInner() {
   const [codeError, setCodeError] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<'google' | 'apple' | null>(null);
+
+  const handleSocialSignIn = async (provider: 'google' | 'apple') => {
+    setSocialLoading(provider);
+    try {
+      await signInWithProvider(provider);
+    } finally {
+      setSocialLoading(null);
+    }
+  };
+
 
   // Check if already logged in
   useEffect(() => {
@@ -207,6 +219,30 @@ function RegisterPageInner() {
             <p className={styles.cardBody}>
               Create your account to unlock exclusive content and connect with the community.
             </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '20px 0' }}>
+              <button
+                type="button"
+                onClick={() => handleSocialSignIn('google')}
+                disabled={socialLoading !== null}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '13px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {socialLoading === 'google' ? 'Connecting...' : 'Continue with Google'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSocialSignIn('apple')}
+                disabled={socialLoading !== null}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '13px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: '#fff', color: '#000', fontWeight: 700, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {socialLoading === 'apple' ? 'Connecting...' : 'Continue with Apple'}
+              </button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0 20px', color: 'rgba(255,255,255,0.35)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.12)' }} />
+              or
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.12)' }} />
+            </div>
 
             {error && (
               <div className={styles.error} role="alert" aria-live="polite">
