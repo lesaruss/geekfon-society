@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { SyntheticEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { isNative, purchaseArtistUnlock } from "@/lib/revenuecat";
 import "./ArtistPage.css";
 
 const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
@@ -9,12 +10,6 @@ const SUPA_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1
 
 const AUDIO = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
 const MEDIA = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/";
-
-const LESAR_PACKS: { id: string; lesars: number; price: number; label: string; popular?: boolean }[] = [
-  { id: "pack-starter",  lesars: 500,  price: 5,  label: "Starter" },
-  { id: "pack-standard", lesars: 1000, price: 11, label: "Standard", popular: true },
-  { id: "pack-power",    lesars: 5000, price: 33, label: "Power" },
-];
 
 type Track = { n: string; m: string; v: string; url?: string; scheduledFor?: string; hasRemix?: boolean; isRemix?: boolean; isFinale?: boolean; isPremiere?: boolean; lyricsOriginal?: string; lyricsOriginalLang?: string; lyricsEn?: string };
 type Stat = { v: string; l: string };
@@ -389,7 +384,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [userTier, setUserTier] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userBalance, setUserBalance] = useState<number>(0);
-  const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [audioProgress, setAudioProgress] = useState<Record<string, number>>({});
   const [audioDuration, setAudioDuration] = useState<Record<string, number>>({});
   const [playingV, setPlayingV] = useState<string | null>(null);
@@ -400,13 +394,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [viewAs, setViewAs] = useState<string>("real");
   const [viewDropOpen, setViewDropOpen] = useState(false);
-  const [purchaseModal, setPurchaseModal] = useState<{ trackName: string; price: number } | null>(null);
-  const [ownedTracks, setOwnedTracks] = useState<Set<string>>(new Set());
-  const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
-  const [topUpOpen, setTopUpOpen] = useState(false);
-  const [selectedPack, setSelectedPack] = useState<string | null>(null);
-  const [topUpLoading, setTopUpLoading] = useState(false);
-  const [topUpError, setTopUpError] = useState<string | null>(null);
+  // Replaced 2026-07-23: per-track Points purchase + Points top-up modal
+  // retired in favor of a single one-time $11 per-artist unlock.
+  const [unlockedArtist, setUnlockedArtist] = useState(false);
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [unlockSuccess, setUnlockSuccess] = useState(false);
   const [pulseShown, setPulseShown] = useState(3);
   const [pulseChannel, setPulseChannel] = useState<"news" | "social" | "groupchat">("news");
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
@@ -473,12 +466,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         sb.from("gfs_members").select("tier").eq("user_id", user.id).single(),
         sb.from("member_points").select("available_points").eq("user_id", user.id).maybeSingle(),
         slug
-          ? sb.from("gfs_track_purchases").select("track_name").eq("user_id", user.id).eq("artist_slug", slug)
-          : Promise.resolve({ data: [] as { track_name: string }[] }),
-      ]).then(([{ data: member }, { data: pts }, { data: owned }]) => {
+          ? sb.from("gfs_artist_unlocks").select("id").eq("user_id", user.id).eq("artist_slug", slug).maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]).then(([{ data: member }, { data: pts }, { data: unlock }]) => {
         if (member?.tier) setUserTier(member.tier);
         if (pts?.available_points != null) setUserBalance(pts.available_points);
-        if (owned) setOwnedTracks(new Set(owned.map((o: { track_name: string }) => o.track_name)));
+        if (unlock) setUnlockedArtist(true);
       });
     });
   }, []);
@@ -565,7 +558,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     if (!a || !playing) return;
     // Tier enforcement: trackLocked already prevents fully-locked tracks from playing.
     // One-tier-up preview tracks are allowed to play but get capped at PREVIEW_CAP_SECONDS.
-    if (isPreviewCappedV(playingV) && a.currentTime >= PREVIEW_CAP_SECONDS) {
+    if (playingV === "capped" && a.currentTime >= PREVIEW_CAP_SECONDS) {
       a.pause();
       a.currentTime = 0;
       setAudioProgress(prev => ({ ...prev, [playing]: 0 })); // reset visible scrub position, not just the audio element
@@ -589,16 +582,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     a.currentTime = pct * maxTime;
   }
 
-  // Visibility helpers
-  // Tier hierarchy (track v field → who can play):
-  //   public  = everyone, no account needed
-  //   preview = Passport+  (locked for public/anonymous)
-  //   members = Plus+      (locked for public + Passport)
-  //   pro     = Pro only   (locked for everyone below Pro)
-  // scheduledFor: if in the future → always locked regardless of tier
+  // Visibility helpers - rebuilt 2026-07-23 per Sean's pricing simplification.
+  // Old model: 4-tier subscription ladder (public/preview/members/pro) plus a
+  // 25-Point per-track micro-purchase. New model: every song is visible and
+  // previewable; once a song's real release date passes it's free for
+  // everyone; paying $11 once per artist unlocks that artist's entire
+  // catalog immediately, released or not. TIER_RANK/effectiveTier are left
+  // in place - still used for the sign-in check, the Brief tab, and the
+  // super-admin view-as simulator - just no longer used to gate playback.
   const TIER_RANK: Record<string, number> = { passport: 1, promoter: 2, pro: 3 };
-  // One-tier-up preview window, in seconds (locked-out-tier tracks stop here — see onTimeUpdate)
-  const PREVIEW_CAP_SECONDS = 20;
+  // Preview window for a not-yet-released, not-yet-unlocked track, in seconds.
+  const PREVIEW_CAP_SECONDS = 30;
 
   function isScheduledFuture(t: Track): boolean {
     if (!t.scheduledFor) return false;
@@ -608,109 +602,70 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     return rel > now;
   }
 
-  // Rank a track's required visibility tier: public=0, preview(Passport)=1, members(Plus)=2, pro=3
-  function visibilityRank(v?: string | null): number {
-    if (v === "preview") return 1;
-    if (v === "members") return 2;
-    if (v === "pro")     return 3;
-    return 0;
-  }
-  function userTierRank(): number {
-    return effectiveTier ? (TIER_RANK[effectiveTier] || 0) : 0;
-  }
-  // Cascading preview rule: whatever tier you have, you can preview (capped) the tier exactly one above.
-  // Passport previews Plus, Plus previews Pro, public previews Passport-tier. Two+ tiers up stays fully locked.
-  function isPreviewCappedV(v?: string | null): boolean {
-    if (isSuperAdmin && viewAs === "real") return false;
-    if (!v || v === "public") return false;
-    return visibilityRank(v) - userTierRank() === 1;
-  }
+  // A track is preview-capped only if it hasn't hit its release date yet
+  // and the viewer hasn't paid to unlock this artist. Tracks with no
+  // scheduledFor at all are treated as already released (most catalog
+  // tracks predate this field being populated).
   function isPreviewCappedTrack(t: Track): boolean {
-    return isPreviewCappedV(t.v);
+    if (isSuperAdmin && viewAs === "real") return false;
+    if (unlockedArtist) return false;
+    return isScheduledFuture(t);
   }
 
+  // Nothing is ever hidden anymore - every song a fan can see builds the
+  // case for unlocking. "Locked" now only means "preview only, not full song".
   function trackLocked(t: Track): boolean {
-    // Super admin in real mode: bypass all locks (see + play everything)
-    if (isSuperAdmin && viewAs === "real") return false;
-    if (t.v === "public") return false;
-    // Tier is the only gate now (release-date scheduling no longer locks/hides a track - Sean, 2026-07-06)
-    // Unlocked at your own tier or below, or previewable (capped) exactly one tier up
-    return visibilityRank(t.v) - userTierRank() > 1;
+    return isPreviewCappedTrack(t);
   }
 
   function trackBadge(t: Track): { label: string; cls: string } {
-    const v = t.v;
-    if (v === "public")  return { label: "Free",    cls: "vb-public" };
-    if (v === "preview") return { label: "Passport", cls: "vb-passport" };
-    if (v === "members") return { label: "Plus",     cls: "vb-members" };
-    if (v === "pro")     return { label: "Pro",      cls: "vb-pro" };
-    return                     { label: "Locked",   cls: "vb-locked" };
+    if (!isPreviewCappedTrack(t)) return { label: "Free", cls: "vb-public" };
+    return { label: "Preview", cls: "vb-passport" };
   }
 
-  // Purchase routing: always open the modal — modal handles non-member/low-balance states
-  function handleBadgeClick(t: Track) {
-    setPurchaseModal({ trackName: t.n, price: 25 });
+  // Route straight to the artist-level unlock instead of a per-track modal.
+  function handleBadgeClick(_t: Track) {
+    handleUnlockArtist();
   }
 
-  async function handlePurchaseConfirm() {
-    if (!purchaseModal) return;
-    if (!effectiveTier || !userId) {
-      const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
-      window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`;
-      return;
-    }
-    const cost = purchaseModal.price;
-    if (userBalance < cost) {
-      setPurchaseError(`You need ${cost} Points but only have ${userBalance.toLocaleString()}. Get more on the Passport page.`);
-      return;
-    }
-    setPurchaseError(null);
-    const sb = createClient(SUPA_URL, SUPA_ANON!);
-    const { data, error } = await sb.rpc("debit_lesars", {
-      p_user_id: userId,
-      p_artist_slug: slug,
-      p_track_name: purchaseModal.trackName,
-      p_amount: cost,
-    });
-    if (error || !data?.ok) {
-      setPurchaseError(data?.error === "insufficient_balance"
-        ? `Not enough Points. You have ${(data?.balance || 0).toLocaleString()}, need ${cost}.`
-        : "Purchase failed. Please try again.");
-      return;
-    }
-    setUserBalance(data.balance);
-    setOwnedTracks(prev => new Set(prev).add(purchaseModal.trackName));
-    setPurchaseSuccess(purchaseModal.trackName);
-    setPurchaseModal(null);
-    setTimeout(() => setPurchaseSuccess(null), 4000);
-  }
-
-  async function handleTopUpCheckout() {
-    if (!selectedPack) return;
+  async function handleUnlockArtist() {
+    if (unlockedArtist || unlockLoading) return;
     if (!userId) {
       const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
-      window.location.href = `/passport?return=${encodeURIComponent(returnPath)}`;
+      window.location.href = `/login?redirect=${encodeURIComponent(returnPath)}`;
       return;
     }
-    setTopUpError(null);
-    setTopUpLoading(true);
+    setUnlockError(null);
+    setUnlockLoading(true);
     try {
+      if (isNative()) {
+        const result = await purchaseArtistUnlock(slug || "");
+        if (result.success) {
+          setUnlockedArtist(true);
+          setUnlockSuccess(true);
+          setTimeout(() => setUnlockSuccess(false), 4000);
+        } else if (result.error !== "cancelled") {
+          setUnlockError(typeof result.error === "string" ? result.error : "Purchase failed. Please try again.");
+        }
+        setUnlockLoading(false);
+        return;
+      }
       const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: selectedPack, userId, returnUrl: returnPath }),
+        body: JSON.stringify({ plan: "artist-unlock", userId, artistSlug: slug, returnUrl: returnPath }),
       });
       const { url, error } = await res.json();
       if (url) {
         window.location.href = url;
       } else {
-        setTopUpError(error || "Checkout failed. Please try again.");
-        setTopUpLoading(false);
+        setUnlockError(error || "Checkout failed. Please try again.");
+        setUnlockLoading(false);
       }
     } catch {
-      setTopUpError("Checkout failed. Please try again.");
-      setTopUpLoading(false);
+      setUnlockError("Checkout failed. Please try again.");
+      setUnlockLoading(false);
     }
   }
   function trackPlayLabel(isPlaying: boolean, isPreviewCapped = false): string {
@@ -722,20 +677,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       const d = t.scheduledFor!.split("T")[0];
       const [, m, day] = d.split("-");
       const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      return `Available ${months[+m - 1]} ${+day}`;
+      return `Full song ${months[+m - 1]} ${+day}`;
     }
-    if (t.v === "preview") return "Passport required";
-    if (t.v === "members") return "Plus required";
-    if (t.v === "pro")     return "Pro required";
-    return "Locked";
+    return "Preview";
   }
   // Schedule tab: maps visibility to user-facing tier label + style
-  function scheduleTier(v: string): { label: string; cls: string } {
-    if (v === "public")  return { label: "Public",   cls: "st-free" };
-    if (v === "preview") return { label: "Passport", cls: "st-preview" };
-    if (v === "members") return { label: "Plus",     cls: "st-plus" };
-    if (v === "pro")     return { label: "Pro",      cls: "st-pro" };
-    return                     { label: "Passport",  cls: "st-passport" };
+  function scheduleTier(isAvailable: boolean): { label: string; cls: string } {
+    return isAvailable ? { label: "Free", cls: "st-free" } : { label: "Unlock", cls: "st-preview" };
   }
   // Show all tracks in schedule so users can see what's coming + upgrade CTAs
   function scheduleVisible(_v: string): boolean {
@@ -1135,7 +1083,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 const safeIdx = Math.min(currTrackIdx, tracks.length - 1);
                 const npTrack = tracks[safeIdx];
                 const npUrl = npTrack?.url ? AUDIO + npTrack.url : null;
-                const npLocked = npTrack ? trackLocked(npTrack) : true;
                 const npPlaying = !!npUrl && playing === npUrl;
                 const npProgress = npUrl ? (audioProgress[npUrl] || 0) : 0;
                 const npDuration = npUrl ? (audioDuration[npUrl] || 0) : 0;
@@ -1208,7 +1155,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   </div>
                 );
 
-                const npOwned = !!npTrack && ownedTracks.has(npTrack.n);
                 const npPlayLabel = npTrack ? trackPlayLabel(npPlaying, npPreviewCapped) : "Play";
 
                 return (
@@ -1219,8 +1165,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         <button
                           className="mp-orb"
                           aria-label={npPlaying ? "Pause" : "Play"}
-                          disabled={npLocked || !npUrl}
-                          onClick={() => { if (npUrl) togglePlay(npUrl, npTrack?.v, npTrack?.n); }}
+                          disabled={!npUrl}
+                          onClick={() => { if (npUrl) togglePlay(npUrl, npTrack && isPreviewCappedTrack(npTrack) ? "capped" : undefined, npTrack?.n); }}
                         >
                           {npPlaying ? PAUSE : PLAY}
                         </button>
@@ -1241,28 +1187,22 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                           {lyricsButton}
                           <button
                             className={"mp-btn-pre" + (!npUrl ? " disabled" : "")}
-                            disabled={!npUrl || npLocked}
+                            disabled={!npUrl}
                             title={!npUrl ? "Audio coming soon" : undefined}
-                            onClick={() => { if (npUrl) togglePlay(npUrl, npTrack?.v, npTrack?.n); }}
+                            onClick={() => { if (npUrl) togglePlay(npUrl, npTrack && isPreviewCappedTrack(npTrack) ? "capped" : undefined, npTrack?.n); }}
                             aria-label={npPlayLabel}
                           >
                             {!npUrl ? "Soon" : npPlayLabel}
                           </button>
-                          {npTrack && !npLocked && (
-                            npOwned ? (
-                              <span className="mp-btn-owned" aria-label={`${npTrack.n} owned`}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" width={12} height={12}><polyline points="20 6 9 17 4 12"/></svg>
-                                Owned
-                              </span>
-                            ) : (
-                              <button
-                                className="mp-btn-buy"
-                                onClick={() => setPurchaseModal({ trackName: npTrack.n, price: 25 })}
-                                aria-label={`Buy ${npTrack.n}`}
-                              >
-                                Buy
-                              </button>
-                            )
+                          {npTrack && npPreviewCapped && (
+                            <button
+                              className="mp-btn-buy"
+                              onClick={handleUnlockArtist}
+                              disabled={unlockLoading}
+                              aria-label={`Unlock the full GeekFon Society experience for ${name}`}
+                            >
+                              {unlockLoading ? "..." : "Unlock $11"}
+                            </button>
                           )}
                         </div>
                       </div>
@@ -1273,21 +1213,33 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     {/* Catalog */}
                     <div className="mp-catalog-head">
                       <h2 className="mp-catalog-title">{name} - Full Catalog</h2>
+                      {!unlockedArtist && (
+                        <button
+                          className="mp-btn-buy"
+                          onClick={handleUnlockArtist}
+                          disabled={unlockLoading}
+                        >
+                          {unlockLoading ? "Redirecting..." : "Unlock Full Experience - $11"}
+                        </button>
+                      )}
                     </div>
-                    <p className="mp-catalog-note">Each track is <strong>25 Points.</strong> Clicking Buy deducts from your Points balance instantly - no checkout required.</p>
+                    <p className="mp-catalog-note">
+                      {unlockedArtist
+                        ? "You've unlocked every song by " + name + ", released or not."
+                        : "Every song plays free once it's officially released. Unlock the Full Experience once for $11 to hear everything by " + name + " right now, including tracks that haven't dropped yet."}
+                    </p>
+                    {unlockError && <p className="pur-error">{unlockError}</p>}
 
                     <div className="mp-rows">
                       {tracks.map((t, i) => {
                         const url = t.url ? AUDIO + t.url : null;
                         const locked = trackLocked(t);
-                        // Two-or-more tiers above the viewer: fully hidden, not shown as a locked row
-                        if (locked) return null;
                         const isCurr = i === safeIdx;
                         return (
                           <div
                             key={i}
                             className={"mp-row" + (isCurr ? " current" : "") + (locked ? " locked" : "")}
-                            onClick={() => { if (!locked) { setCurrTrackIdx(i); if (url) togglePlay(url, t.v, t.n); } }}
+                            onClick={() => { setCurrTrackIdx(i); if (url) togglePlay(url, isPreviewCappedTrack(t) ? "capped" : undefined, t.n); }}
                           >
                             <div className="mp-row-art">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={18} height={18}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
@@ -1295,40 +1247,19 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             <div className="mp-row-meta">
                               <div className="mp-row-title">{t.n}</div>
                               <div className="mp-row-sub">{name}{t.m ? ` - ${t.m}` : ""}</div>
+                              {locked && <div className="mp-row-date">{trackLockedLabel(t)}</div>}
                             </div>
                             <div className="mp-row-state">
-                              {locked ? (
-                                <>
-                                  <span className="mp-badge-lk">{isScheduledFuture(t) ? "SOON" : "LOCKED"}</span>
-                                  <span className="mp-row-date">{trackLockedLabel(t)}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <button
-                                    className={"mp-btn-pre" + (!url ? " disabled" : "")}
-                                    disabled={!url}
-                                    title={!url ? "Audio coming soon" : undefined}
-                                    onClick={(e) => { e.stopPropagation(); if (url) { setCurrTrackIdx(i); togglePlay(url, t.v, t.n); } }}
-                                    aria-label={trackPlayLabel(playing === url, isPreviewCappedTrack(t))}
-                                  >
-                                    {!url ? "Soon" : trackPlayLabel(playing === url, isPreviewCappedTrack(t))}
-                                  </button>
-                                  {ownedTracks.has(t.n) ? (
-                                    <span className="mp-btn-owned" aria-label={`${t.n} owned`}>
-                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" width={12} height={12}><polyline points="20 6 9 17 4 12"/></svg>
-                                      Owned
-                                    </span>
-                                  ) : (
-                                    <button
-                                      className="mp-btn-buy"
-                                      onClick={(e) => { e.stopPropagation(); setPurchaseModal({ trackName: t.n, price: 25 }); }}
-                                      aria-label={`Buy ${t.n}`}
-                                    >
-                                      Buy
-                                    </button>
-                                  )}
-                                </>
-                              )}
+                              {locked && <span className="mp-badge-lk">PREVIEW</span>}
+                              <button
+                                className={"mp-btn-pre" + (!url ? " disabled" : "")}
+                                disabled={!url}
+                                title={!url ? "Audio coming soon" : undefined}
+                                onClick={(e) => { e.stopPropagation(); if (url) { setCurrTrackIdx(i); togglePlay(url, isPreviewCappedTrack(t) ? "capped" : undefined, t.n); } }}
+                                aria-label={trackPlayLabel(playing === url, isPreviewCappedTrack(t))}
+                              >
+                                {!url ? "Soon" : trackPlayLabel(playing === url, isPreviewCappedTrack(t))}
+                              </button>
                             </div>
                           </div>
                         );
@@ -1350,14 +1281,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   });
                 const seasons = Array.from(new Set(sorted.map(t => t.m || "Season 1")));
                 function renderRow(t: Track, i: number) {
-                  const tier = scheduleTier(t.v);
-                  const releaseDate = t.scheduledFor ? new Date(t.scheduledFor) : null;
-                  const isReleased = releaseDate ? releaseDate <= today : false;
-                  const userCanAccess = t.v === "public"
-                    || (t.v === "preview" && !!effectiveTier)
-                    || (t.v === "members" && !!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 2)
-                    || (t.v === "pro"     && !!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 3);
-                  const isAvailable = isReleased && userCanAccess;
+                  const isAvailable = unlockedArtist || !isScheduledFuture(t);
+                  const tier = scheduleTier(isAvailable);
                   const releasedLabel = t.scheduledFor ? `Released ${t.scheduledFor.split("T")[0]}` : "Available now";
                   const statusLabel = isAvailable ? releasedLabel : (t.scheduledFor ? t.scheduledFor.split("T")[0] : "Coming soon");
                   return (
@@ -1379,7 +1304,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       <button
                         className={"sch-tier-pill sch-tier-pill-btn " + tier.cls}
                         onClick={() => handleBadgeClick(t)}
-                        aria-label={`${tier.label} - click to purchase ${t.n}`}
+                        aria-label={isAvailable ? `${t.n} is free to play` : `Unlock the full GeekFon Society experience for ${name}`}
                       >
                         {tier.label}
                       </button>
@@ -1399,7 +1324,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         </div>
                       );
                     })}
-                    <p className="sch-footnote">Release windows update as the season progresses. Upgrade your membership to unlock early access.</p>
+                    <p className="sch-footnote">Release windows update as the season progresses. Unlock the Full Experience to hear everything early.</p>
                   </section>
                 );
               })()}
@@ -1619,114 +1544,16 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
 
       </div>
 
-      {/* Purchase confirmation modal */}
-      {purchaseModal && (
-        <div className="pur-overlay" role="dialog" aria-modal="true" aria-labelledby="pur-title" onClick={() => setPurchaseModal(null)}>
-          <div className="pur-modal" onClick={e => e.stopPropagation()}>
-            <button className="pur-close" onClick={() => setPurchaseModal(null)} aria-label="Close">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-            <div className="pur-song-label">Purchase</div>
-            <h2 id="pur-title" className="pur-song-name">{purchaseModal.trackName}</h2>
-            <div className="pur-price-row">
-              <span className="pur-price">{purchaseModal.price}</span>
-              <span className="pur-currency">Points</span>
-            </div>
-            {!userId ? (
-              /* Non-member state — stay in modal, no redirect */
-              <>
-                <p className="pur-desc">Create a free Passport account to purchase tracks and support the artists you love.</p>
-                <div className="pur-actions">
-                  <a href="/passport" className="pur-confirm">Register — It&apos;s Free</a>
-                  <button className="pur-cancel" onClick={() => { setPurchaseModal(null); setPurchaseError(null); }}>Not now</button>
-                </div>
-                <p className="pur-guest-note">Already a member? <a href="/passport" className="pur-guest-link">Sign in</a></p>
-              </>
-            ) : (
-              /* Member state */
-              <>
-                <div className="pur-balance-row">
-                  <span className="pur-balance-label">Your balance:</span>
-                  <span className={"pur-balance-val" + (userBalance < purchaseModal.price ? " pur-balance-low" : "")}>{userBalance.toLocaleString()} Points</span>
-                </div>
-                {userBalance < purchaseModal.price && (
-                  <div className="pur-topup-block">
-                    <p className="pur-low-msg">You need <strong>{(purchaseModal.price - userBalance).toLocaleString()}</strong> more Points to unlock this track.</p>
-                    <button
-                      type="button"
-                      className="pur-topup-btn"
-                      onClick={() => { setPurchaseModal(null); setPurchaseError(null); setSelectedPack(null); setTopUpError(null); setTopUpOpen(true); }}
-                    >
-                      Top Up Points
-                    </button>
-                  </div>
-                )}
-                <p className="pur-desc">You&apos;ll receive lifetime access to this track. Purchase is tied to your account.</p>
-                {purchaseError && <p className="pur-error">{purchaseError}</p>}
-                <div className="pur-actions">
-                  {userBalance < purchaseModal.price ? (
-                    <button className="pur-confirm pur-disabled" disabled>Insufficient Balance</button>
-                  ) : (
-                    <button className="pur-confirm" onClick={handlePurchaseConfirm}>Confirm Purchase</button>
-                  )}
-                  <button className="pur-cancel" onClick={() => { setPurchaseModal(null); setPurchaseError(null); }}>Cancel</button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Points top-up modal: Buy a pack, then Continue to Payment. This is the
-          single path used everywhere a member needs more Points, including the
-          insufficient-balance case above. Nothing is pre-selected. */}
-      {topUpOpen && (
-        <div className="pur-overlay" role="dialog" aria-modal="true" aria-labelledby="tu-title" onClick={() => { if (!topUpLoading) setTopUpOpen(false); }}>
-          <div className="pur-modal" onClick={e => e.stopPropagation()}>
-            <button className="pur-close" onClick={() => setTopUpOpen(false)} aria-label="Close" disabled={topUpLoading}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-            <div className="pur-song-label">Top Up</div>
-            <h2 id="tu-title" className="pur-song-name">Choose a Points Pack</h2>
-            <p className="pur-desc" style={{ marginBottom: 16 }}>Pick a pack, then continue to payment. Points land in your balance the moment checkout completes.</p>
-            <div className="tu-pack-list">
-              {LESAR_PACKS.map(p => (
-                <button
-                  type="button"
-                  key={p.id}
-                  className={"tu-pack-row" + (selectedPack === p.id ? " tu-selected" : "")}
-                  onClick={() => setSelectedPack(p.id)}
-                  aria-pressed={selectedPack === p.id}
-                >
-                  {p.popular && <span className="tu-pack-badge">Popular</span>}
-                  <div>
-                    <div className="tu-pack-lesars">{p.lesars.toLocaleString()} Points</div>
-                    <div className="tu-pack-note">{p.label}</div>
-                  </div>
-                  <div className="tu-pack-price">${p.price}</div>
-                </button>
-              ))}
-            </div>
-            {topUpError && <p className="pur-error">{topUpError}</p>}
-            <div className="pur-actions">
-              <button
-                className={"pur-confirm" + (!selectedPack || topUpLoading ? " pur-disabled" : "")}
-                disabled={!selectedPack || topUpLoading}
-                onClick={handleTopUpCheckout}
-              >
-                {topUpLoading ? "Redirecting..." : "Continue to Payment"}
-              </button>
-              <button className="pur-cancel" onClick={() => setTopUpOpen(false)} disabled={topUpLoading}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Purchase success toast */}
-      {purchaseSuccess && (
+      {/* Unlock success toast - replaces the old per-track purchase modal +
+          Points top-up modal, both retired 2026-07-23 in favor of the single
+          one-time $11 per-artist unlock (handleUnlockArtist above). On web,
+          handleUnlockArtist redirects straight to Stripe Checkout, so there's
+          nothing to confirm in-page; this toast only fires on the native
+          RevenueCat purchase path, which resolves without leaving the app. */}
+      {unlockSuccess && (
         <div className="pur-toast" role="status" aria-live="polite">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-          <span><strong>{purchaseSuccess}</strong> purchased successfully.</span>
+          <span><strong>{name}</strong> unlocked. Enjoy the Full Experience.</span>
         </div>
       )}
 
