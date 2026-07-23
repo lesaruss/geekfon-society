@@ -47,6 +47,37 @@ type BibleModule = {
   updated_at: string;
 };
 
+// One row per song from public.song_release_briefs (see app/api/admin/release-briefs/route.ts).
+// Read-only in the Brief tab for now - editing happens directly in Supabase until a producer
+// UI is built (see task tracker, 2026-07-23).
+type ReleaseBrief = {
+  id: string;
+  track_name: string;
+  album_title: string | null;
+  track_number: number | null;
+  season: string | null;
+  producer: string | null;
+  label_name: string | null;
+  copyright_line: string | null;
+  songwriter_name: string | null;
+  songwriter_pro: string | null;
+  songwriter_ipi: string | null;
+  ai_vocals: boolean;
+  ai_lyrics: boolean;
+  ai_production: boolean;
+  ai_tool_used: string | null;
+  ai_rights_confirmed: boolean;
+  ai_disclosure_notes: string | null;
+  cover_art_status: string;
+  music_video_status: string;
+  promo_video_status: string;
+  master_audio_status: string;
+  distrokid_status: string;
+  distrokid_release_id: string | null;
+  brief_status: string;
+  updated_at: string;
+};
+
 export type ArtistContent = {
   name?: string; accent?: string; accentText?: string; accentTint?: string;
   heroUrl?: string; profileUrl?: string; initial?: string; tagline?: string;
@@ -149,6 +180,7 @@ function BiblePanel({
   bibleModules, bibleLoading, bibleOpenModule, setBibleOpenModule,
   MODULE_ORDER, isPopulated, statusColor, renderBibleValue,
   slug, sonic, visual, songAudits, copy,
+  releaseBriefs, releaseBriefsLoading, releaseBriefOpen, setReleaseBriefOpen,
 }: {
   bibleModules: BibleModule[];
   bibleLoading: boolean;
@@ -164,6 +196,10 @@ function BiblePanel({
   visual?: ArtistContent["visual"];
   songAudits?: ArtistContent["songAudits"];
   copy: (e: React.MouseEvent<HTMLButtonElement>, text: string) => void;
+  releaseBriefs: ReleaseBrief[];
+  releaseBriefsLoading: boolean;
+  releaseBriefOpen: string | null;
+  setReleaseBriefOpen: (id: string | null) => void;
 }) {
   const [bibleSearch, setBibleSearch] = useState("");
   const [bibleStatusFilter, setBibleStatusFilter] = useState<"all"|"draft"|"review"|"complete">("all");
@@ -186,12 +222,141 @@ function BiblePanel({
     return matchSearch && matchStatus;
   });
 
+  // Release Tracker status colors - separate small vocabulary from the Bible's
+  // draft/review/approved/complete scale, since these track distribution readiness
+  // (needed/in_progress/ready, not_submitted/submitted/live/rejected) not narrative completeness.
+  function releaseStatusColor(s: string): { color: string; bg: string } {
+    if (s === "ready" || s === "approved" || s === "submitted" || s === "live") return { color: "#16a34a", bg: "#dcfce7" };
+    if (s === "in_progress" || s === "ready_for_review") return { color: "#2563eb", bg: "#dbeafe" };
+    if (s === "rejected") return { color: "#dc2626", bg: "#fee2e2" };
+    if (s === "not_planned") return { color: "#9ca3af", bg: "#f3f4f6" };
+    return { color: "#9ca3af", bg: "#f3f4f6" }; // needed / draft / not_submitted
+  }
+
+  const briefsByAlbum = releaseBriefs.reduce((acc, b) => {
+    const key = b.album_title || "Unassigned";
+    (acc[key] = acc[key] || []).push(b);
+    return acc;
+  }, {} as Record<string, ReleaseBrief[]>);
+
   return (
     <section className="panel">
       {/* Header */}
       <div className="adminbar" style={{marginBottom:12}}>
         <span className="t">Artist Bible</span>
         <span className="s">{slug || "unknown"} &nbsp;|&nbsp; super admin only</span>
+      </div>
+
+      {/* Release Tracker - per-song brief pulled from song_release_briefs. Answers the
+          questions each song needs before it can go out (DistroKid or otherwise):
+          songwriter/PRO credit, AI disclosure, and the cover art / video / master-audio
+          asset slots a producer owns. Read-only here; edit in Supabase until a full
+          producer UI exists. */}
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
+          <span style={{fontSize:11,fontWeight:700,letterSpacing:.5,color:"#6b7280"}}>RELEASE TRACKER</span>
+          {releaseBriefs.length > 0 && (
+            <span style={{fontSize:11,fontWeight:700,color:"#9ca3af"}}>{releaseBriefs.length} song{releaseBriefs.length === 1 ? "" : "s"}</span>
+          )}
+        </div>
+
+        {releaseBriefsLoading && <p className="hint" style={{paddingLeft:4}}>Loading release briefs...</p>}
+        {!releaseBriefsLoading && releaseBriefs.length === 0 && (
+          <div className="card" style={{color:"var(--rx-text)",fontSize:13}}>
+            No release briefs yet for <strong>{slug}</strong>. Add rows to song_release_briefs to start tracking.
+          </div>
+        )}
+
+        {!releaseBriefsLoading && Object.entries(briefsByAlbum).map(([album, tracks]) => (
+          <div key={album} style={{marginBottom:14}}>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:.6,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>
+              {album}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:2}}>
+              {tracks.map(b => {
+                const isOpen = releaseBriefOpen === b.id;
+                const bs = releaseStatusColor(b.brief_status);
+                return (
+                  <div key={b.id} style={{borderRadius:10,border:"1px solid",borderColor:isOpen?"var(--rx)":"rgba(0,0,0,0.08)",overflow:"hidden",background:"#fff",transition:"border-color .15s"}}>
+                    <button
+                      onClick={() => setReleaseBriefOpen(isOpen ? null : b.id)}
+                      style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"11px 14px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}
+                    >
+                      <span style={{flex:1,fontSize:13,fontWeight:600,color:"#111"}}>
+                        {b.track_number ? `${b.track_number}. ` : ""}{b.track_name}
+                      </span>
+                      {b.producer && <span style={{fontSize:11,color:"#9ca3af"}}>{b.producer}</span>}
+                      <span style={{fontSize:10,fontWeight:700,letterSpacing:.5,padding:"2px 8px",borderRadius:20,background:bs.bg,color:bs.color}}>
+                        {b.brief_status.replace(/_/g," ").toUpperCase()}
+                      </span>
+                      <span style={{fontSize:16,color:"#9ca3af",transform:isOpen?"rotate(180deg)":"none",transition:"transform .15s"}}>&#8964;</span>
+                    </button>
+                    {isOpen && (
+                      <div style={{padding:"0 14px 14px",borderTop:"1px solid rgba(0,0,0,0.05)",display:"flex",flexDirection:"column",gap:10,marginTop:10}}>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:16}}>
+                          <div>
+                            <div style={{fontSize:10,color:"#9ca3af",textTransform:"uppercase",letterSpacing:.4}}>Label</div>
+                            <div style={{fontSize:13}}>{b.label_name || "—"}</div>
+                          </div>
+                          <div>
+                            <div style={{fontSize:10,color:"#9ca3af",textTransform:"uppercase",letterSpacing:.4}}>Copyright</div>
+                            <div style={{fontSize:13}}>{b.copyright_line || "—"}</div>
+                          </div>
+                          <div>
+                            <div style={{fontSize:10,color:"#9ca3af",textTransform:"uppercase",letterSpacing:.4}}>Songwriter</div>
+                            <div style={{fontSize:13}}>{b.songwriter_name || "—"}{b.songwriter_pro ? ` (${b.songwriter_pro})` : ""}</div>
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontSize:10,color:"#9ca3af",textTransform:"uppercase",letterSpacing:.4,marginBottom:4}}>AI Disclosure</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                            {(["ai_vocals","ai_lyrics","ai_production"] as const).map(k => (
+                              <span key={k} style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20,
+                                background: b[k] ? "#fef3c7" : "#f3f4f6", color: b[k] ? "#92400e" : "#9ca3af"}}>
+                                {k.replace("ai_","").toUpperCase()}: {b[k] ? "AI" : "None"}
+                              </span>
+                            ))}
+                            {b.ai_tool_used && <span style={{fontSize:11,color:"#6b7280"}}>Tool: {b.ai_tool_used}</span>}
+                            <span style={{fontSize:11,fontWeight:700,color: b.ai_rights_confirmed ? "#16a34a" : "#dc2626"}}>
+                              Rights {b.ai_rights_confirmed ? "confirmed" : "NOT confirmed"}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontSize:10,color:"#9ca3af",textTransform:"uppercase",letterSpacing:.4,marginBottom:4}}>Assets</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                            {([
+                              ["Cover Art", b.cover_art_status],
+                              ["Music Video", b.music_video_status],
+                              ["Promo Video", b.promo_video_status],
+                              ["Master Audio", b.master_audio_status],
+                            ] as const).map(([label, val]) => {
+                              const sc = releaseStatusColor(val);
+                              return (
+                                <span key={label} style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20,background:sc.bg,color:sc.color}}>
+                                  {label}: {val.replace(/_/g," ")}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                          <div style={{fontSize:10,color:"#9ca3af",textTransform:"uppercase",letterSpacing:.4}}>DistroKid</div>
+                          {(() => { const sc = releaseStatusColor(b.distrokid_status); return (
+                            <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20,background:sc.bg,color:sc.color}}>
+                              {b.distrokid_status.replace(/_/g," ")}
+                            </span>
+                          ); })()}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        <div style={{height:1,background:"rgba(0,0,0,0.07)",margin:"14px 0 0"}} />
       </div>
 
       {/* Phase Progress Tracker */}
@@ -408,6 +573,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [bibleModules, setBibleModules] = useState<BibleModule[]>([]);
   const [bibleLoading, setBibleLoading] = useState(false);
   const [bibleOpenModule, setBibleOpenModule] = useState<string | null>(null);
+  // Release Tracker - per-song release brief (songwriter/PRO/AI disclosure/asset status),
+  // fetched from song_release_briefs via the authenticated admin route, not the anon key
+  // (this data is business-sensitive - see app/api/admin/release-briefs/route.ts).
+  const [releaseBriefs, setReleaseBriefs] = useState<ReleaseBrief[]>([]);
+  const [releaseBriefsLoading, setReleaseBriefsLoading] = useState(false);
+  const [releaseBriefOpen, setReleaseBriefOpen] = useState<string | null>(null);
   const [hasVotedToday, setHasVotedToday] = useState(false);
   const [voteLoading, setVoteLoading] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
@@ -512,6 +683,25 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         if (data) setBibleModules(data as BibleModule[]);
         setBibleLoading(false);
       });
+  }, [tab, slug]);
+
+  // Fetch song_release_briefs (Release Tracker) when Brief tab opens - goes through the
+  // authenticated admin route, not a direct anon-key table read, since this carries real
+  // songwriter/PRO/distribution-status data.
+  useEffect(() => {
+    if (tab !== "brief" || !slug || !SUPA_ANON) return;
+    if (releaseBriefs.length > 0) return; // already loaded
+    setReleaseBriefsLoading(true);
+    const sb = createClient(SUPA_URL, SUPA_ANON);
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.access_token) { setReleaseBriefsLoading(false); return; }
+      fetch(`/api/admin/release-briefs?artist=${encodeURIComponent(slug)}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+        .then(r => r.json())
+        .then(({ briefs }) => { if (briefs) setReleaseBriefs(briefs as ReleaseBrief[]); })
+        .finally(() => setReleaseBriefsLoading(false));
+    });
   }, [tab, slug]);
 
   // Billboard auto-rotate every 6s
@@ -1445,6 +1635,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     visual={c.visual}
                     songAudits={c.songAudits}
                     copy={copy}
+                    releaseBriefs={releaseBriefs}
+                    releaseBriefsLoading={releaseBriefsLoading}
+                    releaseBriefOpen={releaseBriefOpen}
+                    setReleaseBriefOpen={setReleaseBriefOpen}
                   />
                 );
               })()}
