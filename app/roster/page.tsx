@@ -99,14 +99,29 @@ export default function RosterPage() {
     const prevP = cityPanelRefs.current[prev];
     const nextP = cityPanelRefs.current[next];
     if (!prevP || !nextP) return;
+    // Bug fix 2026-07-24: this used to force a synchronous reflow
+    // (`void nextP.offsetHeight`) right after flipping `transition` off then
+    // back on, every 5.2s, on a position:fixed layer that covers the full
+    // viewport on mobile (.r-city-stage height:100vh). That forced layout
+    // flush + the repeated transition toggle made mobile Safari/Chrome
+    // demote and re-promote the compositor layer each cycle, which painted
+    // as a visible flash across whatever sat above it - the artist thumbnail
+    // grid. Swapped the forced-reflow trick for a double rAF (browser paints
+    // the "snapped to the right" frame first, then the transitioned frame
+    // starts cleanly on the next frame) so there's no synchronous layout
+    // flush of the whole document.
     nextP.style.transition = "none";
     nextP.style.transform = "translateX(100%)";
-    void nextP.offsetHeight;
     const ease = "cubic-bezier(0.25,0.46,0.45,0.94)";
-    nextP.style.transition = `transform 0.95s ${ease}`;
-    prevP.style.transition = `transform 0.95s ${ease}`;
-    nextP.style.transform = "translateX(0)";
-    prevP.style.transform = "translateX(-105%)";
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!nextP || !prevP) return;
+        nextP.style.transition = `transform 0.95s ${ease}`;
+        prevP.style.transition = `transform 0.95s ${ease}`;
+        nextP.style.transform = "translateX(0)";
+        prevP.style.transform = "translateX(-105%)";
+      });
+    });
     setTimeout(() => {
       if (prevP) { prevP.style.transition = "none"; prevP.style.transform = "translateX(100%)"; }
     }, 980);
@@ -273,16 +288,16 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 @keyframes rd4{from{transform:translate(0,0)}to{transform:translate(-4vw,6vh)}}
 @keyframes rd5{from{transform:translate(0,0) scale(1)}to{transform:translate(5vw,-5vh) scale(1.3)}}
 
-.r-city-stage{position:fixed;bottom:0;left:0;right:0;height:56vh;overflow:hidden;z-index:2;pointer-events:none}
+.r-city-stage{position:fixed;bottom:0;left:0;right:0;height:56vh;overflow:hidden;z-index:2;pointer-events:none;contain:layout style paint}
 .r-city-stage::before{content:'';position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(to bottom,rgba(2,12,10,1) 0%,transparent 100%);z-index:10}
-.r-city-panel{position:absolute;top:0;left:0;width:100%;height:100%;will-change:transform}
+.r-city-panel{position:absolute;top:0;left:0;width:100%;height:100%;will-change:transform;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;contain:layout style paint}
 .r-city-panel picture{display:block;width:100%;height:100%}
 .r-city-panel img{width:100%;height:100%;object-fit:cover;object-position:center bottom;display:block}
 .r-city-label{position:fixed;bottom:20px;right:24px;z-index:20;display:flex;align-items:center;gap:8px;pointer-events:none}
 .r-city-dot{width:5px;height:5px;border-radius:50%;transition:background-color 1s ease}
 .r-city-name{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55)}
 
-.r-page{position:relative;z-index:10;padding:48px 32px 100px;max-width:1080px;margin:0 auto;min-height:calc(100vh - 60px)}
+.r-page{position:relative;z-index:10;isolation:isolate;padding:48px 32px 100px;max-width:1080px;margin:0 auto;min-height:calc(100vh - 60px)}
 .r-header{text-align:center;margin-bottom:52px}
 .r-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);margin:0 0 14px}
 .r-live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#00e676;box-shadow:0 0 8px rgba(0,230,118,.7);animation:rpulse 2s ease-in-out infinite;flex-shrink:0}
