@@ -1362,6 +1362,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 // per-slug piloting in app/roster/page.tsx (Roxanne's image crop).
                 const useRowLyrics = slug === "lex-from-brixton";
 
+                // 2026-07-24 round 3: super-admins viewing "as real" already bypass every
+                // preview cap (see isPreviewCappedTrack above), so the "Unlock Full
+                // Experience" upsell was still showing to Sean even though he already has
+                // full access. hasFullAccess folds that bypass into the same check as an
+                // actual paid unlock, so the CTA only shows to people who'd actually benefit
+                // from clicking it.
+                const hasFullAccess = unlockedArtist || (isSuperAdmin && viewAs === "real");
+
                 function rowLyricsFor(t: Track) {
                   const hasTranslation = !!(t.lyricsEn && t.lyricsOriginalLang && t.lyricsOriginalLang !== "en");
                   const text = lyricsLang === "original" || !hasTranslation ? t.lyricsOriginal : t.lyricsEn;
@@ -1428,7 +1436,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     {/* Catalog */}
                     <div className="mp-catalog-head">
                       <h2 className="mp-catalog-title">{name} - Full Catalog</h2>
-                      {!unlockedArtist && (
+                      {!hasFullAccess && !useRowLyrics && (
                         <button
                           className="mp-btn-buy"
                           onClick={handleUnlockArtist}
@@ -1439,7 +1447,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       )}
                     </div>
                     <p className="mp-catalog-note">
-                      {unlockedArtist
+                      {hasFullAccess
                         ? "You've unlocked every song by " + name + ", released or not."
                         : "Every song plays free once it's officially released. Unlock the Full Experience once for $11 to hear everything by " + name + " right now, including tracks that haven't dropped yet."}
                     </p>
@@ -1589,6 +1597,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         );
                       })}
                     </div>
+                    {useRowLyrics && !hasFullAccess && (
+                      <button
+                        className="mp-btn-buy mp-catalog-unlock-bottom"
+                        onClick={handleUnlockArtist}
+                        disabled={unlockLoading}
+                      >
+                        {unlockLoading ? "Redirecting..." : "Unlock Full Experience - $11"}
+                      </button>
+                    )}
                   </section>
                 );
               })()}
