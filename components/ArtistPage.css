@@ -186,7 +186,10 @@
 /* 2026-07-24 round 2: Lex from Brixton row layout - thumbnail is the play
    button, scrub bar in the middle, Lyrics-only button on the right; locked
    (unreleased/not-unlocked) tracks get a distinct grayed row + Unlock CTA. */
-.mp-row-play{grid-template-columns:44px 1fr auto}
+/* 2026-07-24 round 3: more breathing room between the play button, the
+   title/scrub column, and the Lyrics button - Sean felt round 2 was cramped. */
+.mp-row-play{grid-template-columns:44px 1fr auto;column-gap:24px;padding:14px 18px}
+.mp-catalog-unlock-bottom{margin-top:14px;width:100%}
 .mp-row-thumb{width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .mp-row-playbtn{background:var(--rx);border:none;cursor:pointer;color:#fff;transition:box-shadow .15s,transform .08s}
 .mp-row-playbtn:hover:not(:disabled){box-shadow:0 4px 14px rgba(0,0,0,.22)}
@@ -200,7 +203,7 @@
 .mp-row-scrub .mp-bar{flex:1;height:5px;border-radius:999px;background:#ececf2;position:relative;cursor:pointer}
 .mp-row-scrub .mp-bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--rx)}
 .mp-row-scrub .mp-bar-knob{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;background:#fff;border:2px solid var(--rx);box-shadow:0 1px 4px rgba(0,0,0,.18)}
-.mp-row-locked-cta{grid-template-columns:44px 1fr auto;opacity:.75;background:#fafafa;cursor:default}
+.mp-row-locked-cta{grid-template-columns:44px 1fr auto;column-gap:24px;padding:14px 18px;opacity:.75;background:#fafafa;cursor:default}
 .mp-row-locked-cta:hover{border-color:var(--lr-border);box-shadow:none}
 .mp-row-thumb-locked{background:rgba(0,0,0,.06);color:rgba(26,26,26,.4)}
 .mp-row-locked-cta .mp-row-title{color:rgba(26,26,26,.65)}
