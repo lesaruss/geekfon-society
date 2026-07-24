@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import type { SyntheticEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { isNative, purchaseArtistUnlock } from "@/lib/revenuecat";
@@ -570,6 +570,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
   const [lyricsLang, setLyricsLang] = useState<"original" | "en">("en");
+  // 2026-07-24: per-row lyrics toggle for the leaner music-tab layout (Lex from
+  // Brixton pilot only, see useRowLyrics below). Only one row's lyrics show at
+  // a time, matching the existing single-drawer behavior of the hero player.
+  const [rowLyricsOpenIdx, setRowLyricsOpenIdx] = useState<number | null>(null);
   const [bibleModules, setBibleModules] = useState<BibleModule[]>([]);
   const [bibleLoading, setBibleLoading] = useState(false);
   const [bibleOpenModule, setBibleOpenModule] = useState<string | null>(null);
@@ -1347,58 +1351,79 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
 
                 const npPlayLabel = npTrack ? trackPlayLabel(npPlaying, npPreviewCapped) : "Play";
 
+                // 2026-07-24: Sean's direction - the hero "now playing" card was too
+                // big and duplicated the play control (orb up top + a second Play
+                // button in the action row). Piloting a leaner layout on Lex from
+                // Brixton only: no hero section at all, play + lyrics controls live
+                // directly on each song row, and the currently-playing/selected song
+                // is communicated purely via the row highlight (.mp-row.current,
+                // which already existed). If this reads well, extend useRowLyrics to
+                // the rest of the roster - see ArtistCard/roster precedent for
+                // per-slug piloting in app/roster/page.tsx (Roxanne's image crop).
+                const useRowLyrics = slug === "lex-from-brixton";
+
+                function rowLyricsFor(t: Track) {
+                  const hasTranslation = !!(t.lyricsEn && t.lyricsOriginalLang && t.lyricsOriginalLang !== "en");
+                  const text = lyricsLang === "original" || !hasTranslation ? t.lyricsOriginal : t.lyricsEn;
+                  return { hasTranslation, text };
+                }
+
                 return (
                   <section className="mp-root">
-                    {/* Now-playing card - single unified layout, mobile + desktop */}
-                    <div className="mp-player">
-                      <div className="mp-np">
-                        <button
-                          className="mp-orb"
-                          aria-label={npPlaying ? "Pause" : "Play"}
-                          disabled={!npUrl}
-                          onClick={() => { if (npUrl) togglePlay(npUrl, npTrack && isPreviewCappedTrack(npTrack) ? "capped" : undefined, npTrack?.n); }}
-                        >
-                          {npPlaying ? PAUSE : PLAY}
-                        </button>
-                        <div className="mp-npmeta">
-                          <div className="mp-nptitle">{npTrack?.n || "Select a track"}</div>
-                          <div className="mp-npartist">{name}</div>
-                          <span className={"mp-nptag " + npBadge.cls}>{npBadge.label}</span>
-                        </div>
-                        {scrubBar}
-                      </div>
-
-                      <div className="mp-barrow">
-                        <div className="mp-vol">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={18} height={18}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                          <div className="mp-voltrack"><div className="mp-volfill" style={{ width: "70%" }} /></div>
-                        </div>
-                        <div className="mp-barrow-actions">
-                          {lyricsButton}
+                    {!useRowLyrics && (
+                      <>
+                      {/* Now-playing card - single unified layout, mobile + desktop */}
+                      <div className="mp-player">
+                        <div className="mp-np">
                           <button
-                            className={"mp-btn-pre" + (!npUrl ? " disabled" : "")}
+                            className="mp-orb"
+                            aria-label={npPlaying ? "Pause" : "Play"}
                             disabled={!npUrl}
-                            title={!npUrl ? "Audio coming soon" : undefined}
                             onClick={() => { if (npUrl) togglePlay(npUrl, npTrack && isPreviewCappedTrack(npTrack) ? "capped" : undefined, npTrack?.n); }}
-                            aria-label={npPlayLabel}
                           >
-                            {!npUrl ? "Soon" : npPlayLabel}
+                            {npPlaying ? PAUSE : PLAY}
                           </button>
-                          {npTrack && npPreviewCapped && (
-                            <button
-                              className="mp-btn-buy"
-                              onClick={handleUnlockArtist}
-                              disabled={unlockLoading}
-                              aria-label={`Unlock the full GeekFon Society experience for ${name}`}
-                            >
-                              {unlockLoading ? "..." : "Unlock $11"}
-                            </button>
-                          )}
+                          <div className="mp-npmeta">
+                            <div className="mp-nptitle">{npTrack?.n || "Select a track"}</div>
+                            <div className="mp-npartist">{name}</div>
+                            <span className={"mp-nptag " + npBadge.cls}>{npBadge.label}</span>
+                          </div>
+                          {scrubBar}
                         </div>
-                      </div>
 
-                      {lyricsAccordion}
-                    </div>
+                        <div className="mp-barrow">
+                          <div className="mp-vol">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={18} height={18}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            <div className="mp-voltrack"><div className="mp-volfill" style={{ width: "70%" }} /></div>
+                          </div>
+                          <div className="mp-barrow-actions">
+                            {lyricsButton}
+                            <button
+                              className={"mp-btn-pre" + (!npUrl ? " disabled" : "")}
+                              disabled={!npUrl}
+                              title={!npUrl ? "Audio coming soon" : undefined}
+                              onClick={() => { if (npUrl) togglePlay(npUrl, npTrack && isPreviewCappedTrack(npTrack) ? "capped" : undefined, npTrack?.n); }}
+                              aria-label={npPlayLabel}
+                            >
+                              {!npUrl ? "Soon" : npPlayLabel}
+                            </button>
+                            {npTrack && npPreviewCapped && (
+                              <button
+                                className="mp-btn-buy"
+                                onClick={handleUnlockArtist}
+                                disabled={unlockLoading}
+                                aria-label={`Unlock the full GeekFon Society experience for ${name}`}
+                              >
+                                {unlockLoading ? "..." : "Unlock $11"}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {lyricsAccordion}
+                      </div>
+                      </>
+                    )}
 
                     {/* Catalog */}
                     <div className="mp-catalog-head">
@@ -1420,14 +1445,16 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     </p>
                     {unlockError && <p className="pur-error">{unlockError}</p>}
 
-                    <div className="mp-rows">
+                    <div className={"mp-rows" + (useRowLyrics ? " mp-rows-row-lyrics" : "")}>
                       {tracks.map((t, i) => {
                         const url = t.url ? AUDIO + t.url : null;
                         const locked = trackLocked(t);
                         const isCurr = i === safeIdx;
+                        const rowLyricsOpen = useRowLyrics && rowLyricsOpenIdx === i;
+                        const { hasTranslation: rowHasTranslation, text: rowLyricsText } = rowLyricsFor(t);
                         return (
+                          <Fragment key={i}>
                           <div
-                            key={i}
                             className={"mp-row" + (isCurr ? " current" : "") + (locked ? " locked" : "")}
                             onClick={() => { setCurrTrackIdx(i); if (url) togglePlay(url, isPreviewCappedTrack(t) ? "capped" : undefined, t.n); }}
                           >
@@ -1441,6 +1468,16 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             </div>
                             <div className="mp-row-state">
                               {locked && <span className="mp-badge-lk">PREVIEW</span>}
+                              {useRowLyrics && (
+                                <button
+                                  className={"mp-chip" + (rowLyricsOpen ? " active" : "")}
+                                  onClick={(e) => { e.stopPropagation(); setRowLyricsOpenIdx(prev => prev === i ? null : i); }}
+                                  aria-label={rowLyricsOpen ? `Hide lyrics for ${t.n}` : `Show lyrics for ${t.n}`}
+                                >
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={14} height={14}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                  Lyrics
+                                </button>
+                              )}
                               <button
                                 className={"mp-btn-pre" + (!url ? " disabled" : "")}
                                 disabled={!url}
@@ -1452,6 +1489,41 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               </button>
                             </div>
                           </div>
+                          {rowLyricsOpen && (
+                            <div className="mp-lyrics-inline mp-lyrics-inline-row">
+                              <div className="mp-lyrics-head">
+                                <span className="mp-lyrics-label">Lyrics</span>
+                                <span className="mp-lyrics-track">{t.n}</span>
+                                {rowHasTranslation && (
+                                  <div className="mp-lyrics-lang" role="group" aria-label="Lyrics language">
+                                    <button
+                                      className={"mp-lyrics-lang-btn" + (lyricsLang === "original" ? " active" : "")}
+                                      aria-pressed={lyricsLang === "original"}
+                                      onClick={() => setLyricsLang("original")}
+                                    >
+                                      {(t.lyricsOriginalLang || "ja").toUpperCase()}
+                                    </button>
+                                    <button
+                                      className={"mp-lyrics-lang-btn" + (lyricsLang === "en" ? " active" : "")}
+                                      aria-pressed={lyricsLang === "en"}
+                                      onClick={() => setLyricsLang("en")}
+                                    >
+                                      EN
+                                    </button>
+                                  </div>
+                                )}
+                                <button className="mp-lyrics-close" onClick={() => setRowLyricsOpenIdx(null)}>&#x2715;</button>
+                              </div>
+                              <div className="mp-lyrics-body">
+                                {rowLyricsText ? (
+                                  <p className="mp-lyrics-text">{rowLyricsText}</p>
+                                ) : (
+                                  <p style={{ color: "var(--lr-text-50)", fontSize: 13 }}>Lyrics sync coming soon.</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          </Fragment>
                         );
                       })}
                     </div>
