@@ -183,6 +183,32 @@
 .mp-rows-row-lyrics .mp-row-state .mp-chip{padding:6px 11px;font-size:11px}
 .mp-rows-row-lyrics .mp-row-state .mp-chip svg{width:12px;height:12px}
 .mp-lyrics-inline-row{margin:8px 0 0}
+/* 2026-07-24 round 2: Lex from Brixton row layout - thumbnail is the play
+   button, scrub bar in the middle, Lyrics-only button on the right; locked
+   (unreleased/not-unlocked) tracks get a distinct grayed row + Unlock CTA. */
+.mp-row-play{grid-template-columns:44px 1fr auto}
+.mp-row-thumb{width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.mp-row-playbtn{background:var(--rx);border:none;cursor:pointer;color:#fff;transition:box-shadow .15s,transform .08s}
+.mp-row-playbtn:hover:not(:disabled){box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.mp-row-playbtn:active:not(:disabled){transform:scale(.94)}
+.mp-row-playbtn:disabled{opacity:.4;cursor:not-allowed}
+.mp-row-playbtn svg{width:16px;height:16px;fill:currentColor}
+.mp-row-mid{min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.mp-row-mid .mp-row-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-row-scrub{display:flex;align-items:center;gap:8px}
+.mp-row-scrub .mp-time{font-size:11px;color:rgba(26,26,26,.45);font-variant-numeric:tabular-nums;min-width:30px;text-align:center;font-weight:700}
+.mp-row-scrub .mp-bar{flex:1;height:5px;border-radius:999px;background:#ececf2;position:relative;cursor:pointer}
+.mp-row-scrub .mp-bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--rx)}
+.mp-row-scrub .mp-bar-knob{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;background:#fff;border:2px solid var(--rx);box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.mp-row-locked-cta{grid-template-columns:44px 1fr auto;opacity:.75;background:#fafafa;cursor:default}
+.mp-row-locked-cta:hover{border-color:var(--lr-border);box-shadow:none}
+.mp-row-thumb-locked{background:rgba(0,0,0,.06);color:rgba(26,26,26,.4)}
+.mp-row-locked-cta .mp-row-title{color:rgba(26,26,26,.65)}
+.mp-row-locked-cta .mp-row-sub{color:rgba(26,26,26,.4)}
+.mp-row-unlock{flex-shrink:0}
+@media(max-width:768px){
+  .mp-rows-row-lyrics .mp-row-scrub .mp-time{display:none}
+}
 @media(max-width:768px){
   .mp-rows-row-lyrics .mp-row{grid-template-columns:36px 1fr auto;gap:10px;padding:10px 12px}
   .mp-rows-row-lyrics .mp-row-state .mp-chip{padding:5px 9px;font-size:10px}
