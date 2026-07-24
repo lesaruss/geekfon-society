@@ -177,6 +177,17 @@
 .mp-badge-preview{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--rx-text,#9c1458);background:var(--rx-tint,rgba(233,30,140,.1));padding:4px 9px;border-radius:999px;white-space:nowrap}
 .mp-row-date{color:rgba(26,26,26,.4);font-size:12px;white-space:nowrap}
 .mp-btn-pre{border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;border:1px solid var(--lr-border);color:#1a1a1a;background:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
+/* 2026-07-24: per-row lyrics pilot (Lex from Brixton only) - scoped to
+   .mp-rows-row-lyrics so no other artist's catalog rows are affected. */
+.mp-rows-row-lyrics .mp-row-state{flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.mp-rows-row-lyrics .mp-row-state .mp-chip{padding:6px 11px;font-size:11px}
+.mp-rows-row-lyrics .mp-row-state .mp-chip svg{width:12px;height:12px}
+.mp-lyrics-inline-row{margin:8px 0 0}
+@media(max-width:768px){
+  .mp-rows-row-lyrics .mp-row{grid-template-columns:36px 1fr auto;gap:10px;padding:10px 12px}
+  .mp-rows-row-lyrics .mp-row-state .mp-chip{padding:5px 9px;font-size:10px}
+  .mp-rows-row-lyrics .mp-btn-pre{padding:6px 11px;font-size:11px}
+}
 .mp-btn-pre:hover:not(:disabled){border-color:var(--rx);color:var(--rx)}
 .mp-btn-pre.disabled,.mp-btn-pre:disabled{opacity:.4;cursor:not-allowed;color:rgba(26,26,26,.45)}
 .mp-btn-buy{border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;background:#1f8f50;color:#fff;border:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
