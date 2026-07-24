@@ -2,6 +2,19 @@ import ArtistPage from "@/components/ArtistPage";
 import { notFound } from "next/navigation";
 import type { ArtistContent } from "@/components/ArtistPage";
 
+// 2026-07-24: forces this route out of Next.js's Full Route Cache. Without
+// this, the custom domain (geekfon.ai) has been observed serving a stale
+// compiled HTML document - referencing an OLD hashed CSS/JS chunk from a
+// previous deployment - even when Vercel reports the newest deployment as
+// READY and correctly aliased, and even though that same deployment's own
+// *.vercel.app preview URL serves the current, correct chunk. This exact
+// failure mode hit this same route before (breadcrumb prop bug, 2026-07-12);
+// the underlying fetches already use { next: { revalidate: 0 } } to keep
+// Supabase data fresh, but that only opts individual fetches out of the
+// Data Cache, not the route's own Full Route Cache. force-dynamic disables
+// route-level caching entirely so every request is rendered fresh.
+export const dynamic = "force-dynamic";
+
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
 const ARTIST_CITY: Record<string, { desktop: string; mobile: string }> = {
