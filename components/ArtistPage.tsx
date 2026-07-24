@@ -1471,7 +1471,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                           return (
                             <div key={i} className="mp-row mp-row-locked-cta">
                               <div className="mp-row-thumb mp-row-thumb-locked" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={13} height={13}><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
                               </div>
                               <div className="mp-row-mid">
                                 <div className="mp-row-title">{t.n}</div>
