@@ -71,6 +71,64 @@ type Artist = {
   };
 };
 
+// Bug fix 2026-07-24: ArtistCard used to be declared *inside* RosterPage(),
+// so every time the 5.2s city-background interval called setCurrent() and
+// forced a re-render, RosterPage's function body re-ran and created a brand
+// new ArtistCard function reference. React treats a changed component type
+// as a different component and unmounts+remounts the whole subtree - so all
+// 12 artist cards (and every thumbnail <img>) were being torn down and
+// rebuilt in the DOM on every single background transition. Confirmed via a
+// MutationObserver on .r-grid: exactly 12 nodes removed + 12 added on every
+// interval tick. Hoisting ArtistCard to module scope gives it a stable
+// identity across renders, so it no longer remounts when unrelated state
+// (the background carousel's `current` index) changes. This, not the
+// compositor-layer fix applied earlier the same day, was the real cause of
+// the mobile thumbnail flicker.
+function ArtistCard({ a }: { a: Artist }) {
+  const accent = a.profile?.accent || "#E91E8C";
+  return (
+    <a
+      href={`/${a.slug}`}
+      className="r-card"
+      style={{ "--r-accent": accent } as React.CSSProperties}
+    >
+      <div className="r-card-img">
+        {a.profile?.heroUrl ? (
+          <img
+            src={a.profile.heroUrl}
+            alt={a.name}
+            loading="lazy"
+            decoding="async"
+            width={400}
+            height={400}
+            // Roxanne's portrait has the head right at the top edge of the
+            // source art. Shift the visible crop down for her only - other
+            // artists have natural headroom and don't need this. (Original
+            // reason was clearance under the NOW LIVE pill, which has since
+            // moved into the bottom info block - keeping the crop anyway
+            // since it's a framing improvement independent of the pill.)
+            // Doing this per-slug (not a shared CSS change) on purpose per
+            // Sean, to prove out the fix on one artist before any rollout.
+            style={a.slug === "roxanne" ? { objectPosition: "center 20%" } : undefined}
+          />
+        ) : (
+          <div className="r-card-fallback" style={{ backgroundColor: accent + "33" }}>
+            {a.profile?.initial || a.name.charAt(0)}
+          </div>
+        )}
+        <div className="r-card-grad" />
+      </div>
+      <div className="r-card-info">
+        <span className="r-now-live-badge">NOW LIVE</span>
+        <span className="r-card-name">{a.name}</span>
+        {a.profile?.tagline && (
+          <span className="r-card-tag">{a.profile.tagline}</span>
+        )}
+      </div>
+    </a>
+  );
+}
+
 export default function RosterPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [current, setCurrent] = useState(0);
@@ -146,51 +204,6 @@ export default function RosterPage() {
   }, []);
 
   const city = CITIES[current];
-
-  function ArtistCard({ a }: { a: Artist }) {
-    const accent = a.profile?.accent || "#E91E8C";
-    return (
-      <a
-        href={`/${a.slug}`}
-        className="r-card"
-        style={{ "--r-accent": accent } as React.CSSProperties}
-      >
-        <div className="r-card-img">
-          {a.profile?.heroUrl ? (
-            <img
-              src={a.profile.heroUrl}
-              alt={a.name}
-              loading="lazy"
-              decoding="async"
-              width={400}
-              height={400}
-              // Roxanne's portrait has the head right at the top edge of the
-              // source art. Shift the visible crop down for her only - other
-              // artists have natural headroom and don't need this. (Original
-              // reason was clearance under the NOW LIVE pill, which has since
-              // moved into the bottom info block - keeping the crop anyway
-              // since it's a framing improvement independent of the pill.)
-              // Doing this per-slug (not a shared CSS change) on purpose per
-              // Sean, to prove out the fix on one artist before any rollout.
-              style={a.slug === "roxanne" ? { objectPosition: "center 20%" } : undefined}
-            />
-          ) : (
-            <div className="r-card-fallback" style={{ backgroundColor: accent + "33" }}>
-              {a.profile?.initial || a.name.charAt(0)}
-            </div>
-          )}
-          <div className="r-card-grad" />
-        </div>
-        <div className="r-card-info">
-          <span className="r-now-live-badge">NOW LIVE</span>
-          <span className="r-card-name">{a.name}</span>
-          {a.profile?.tagline && (
-            <span className="r-card-tag">{a.profile.tagline}</span>
-          )}
-        </div>
-      </a>
-    );
-  }
 
   return (
     <>
