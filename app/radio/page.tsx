@@ -41,33 +41,21 @@ const RESYNC_DRIFT_TOLERANCE_SEC = 2;
 const RESYNC_INTERVAL_MS = 5000;
 
 export default function RadioPage() {
-  // Gate: must be a registered GeekFon member (any tier) to listen.
+  // 2026-07-26 per Sean: "let people be able to listen to the radio station
+  // without being logged in." This used to require a gfs_members row and
+  // redirect anyone without one to /passport?next=/radio - removed entirely.
+  // radio_tracks / radio_schedule_overrides both have public-read RLS
+  // policies and the audio lives in a public storage bucket (confirmed
+  // 2026-07-26), so there was never a data-layer reason for this gate - it
+  // was purely this page-level check. authChecked/isMember are kept (always
+  // true post-mount) rather than ripped out everywhere below, to keep this a
+  // minimal, low-risk diff on an otherwise-working page.
   const [authChecked, setAuthChecked] = useState(false);
   const [isMember, setIsMember] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        window.location.href = "/passport?next=/radio";
-        return;
-      }
-      const { data } = await supabase
-        .from("gfs_members")
-        .select("tier")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-      if (cancelled) return;
-      if (!data?.tier) {
-        window.location.href = "/passport?next=/radio";
-        return;
-      }
-      setIsMember(true);
-      setAuthChecked(true);
-    }
-    checkAuth();
-    return () => { cancelled = true; };
+    setIsMember(true);
+    setAuthChecked(true);
   }, []);
 
   const [playing, setPlaying] = useState(false);
