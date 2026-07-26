@@ -1120,7 +1120,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
 
           {/* Tab bar */}
           {(() => {
-            const canSeeBrief = isSuperAdmin || (!!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 3);
+            // Fixed 2026-07-26 per Sean: this bare `isSuperAdmin ||` bypassed the
+            // view-as simulator entirely - switching to "view as: public" still
+            // showed the Brief tab because Sean IS a super admin regardless of the
+            // simulated tier. Same class of bug as the Social-tab fix earlier today
+            // (commit 27e1b12) - the admin bypass must only apply in the real,
+            // non-simulated view.
+            const canSeeBrief = (isSuperAdmin && viewAs === "real") || (!!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 3);
             // Pulse is locked to Super Admin only for artists outside the original 4
             // (Roxanne, Lex from Brixton, Shamanic Resin, Riku) until their Pulse content
             // is actually populated - Sean, 2026-07-13. Not a tier perk, an account-only gate.
