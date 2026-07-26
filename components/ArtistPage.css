@@ -237,7 +237,12 @@
 .mp-row-locked-cta:hover{border-color:var(--lr-border);box-shadow:none}
 .mp-row-thumb-locked{background:rgba(0,0,0,.06);color:rgba(26,26,26,.4)}
 .mp-row-locked-cta .mp-row-title{color:rgba(26,26,26,.65)}
-.mp-row-locked-cta .mp-row-sub{color:rgba(26,26,26,.4)}
+/* 2026-07-26 per Sean: dropped the artist-name/"Register to preview" subtitle
+   text on locked rows entirely so they read as just the song title, matching
+   the playable rows above them - this decorative (non-scrubbable) bar takes
+   its place instead for visual consistency, dimmed and cursor:default since
+   there's no track loaded yet to actually seek. */
+.mp-row-locked-cta .mp-bar-inert{cursor:default;opacity:.55}
 .mp-row-unlock{flex-shrink:0;opacity:1}
 /* Heart/vote button - 2026-07-26, replaces the old header .pill-vote pill. */
 .mp-row-heart{flex-shrink:0;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;border:1px solid rgba(26,26,26,.12);color:rgba(26,26,26,.4);cursor:pointer;transition:color .15s,border-color .15s,transform .1s}
