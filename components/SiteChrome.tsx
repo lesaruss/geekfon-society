@@ -369,7 +369,17 @@ export default function SiteChrome({
 }
 
 const CHROME_CSS = `
-.gtop { position: sticky; top: 0; z-index: 40; height: calc(60px + env(safe-area-inset-top, 0px)); box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: env(safe-area-inset-top, 0px) 18px 0 18px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,.08); }
+/* Fixed 2026-07-26 per Sean (on his phone): position:sticky let the header
+   detach from the top edge during iOS rubber-band overscroll - pulling down
+   revealed a gray gap above it (the page background showing through, since
+   a sticky element only holds its position within normal document flow,
+   not the true viewport edge). Switched to position:fixed so the header is
+   pinned to the actual top of the viewport (below the safe-area/notch) and
+   never moves, drags, or gaps during overscroll. .gbody now carries the
+   padding-top .gtop used to reserve automatically via flow when it was
+   sticky, so content still starts right below the header. */
+.gtop { position: fixed; top: 0; left: 0; right: 0; z-index: 40; height: calc(60px + env(safe-area-inset-top, 0px)); box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: env(safe-area-inset-top, 0px) 18px 0 18px; background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,.08); }
+.gbody { padding-top: calc(60px + env(safe-area-inset-top, 0px)); }
 .gtop-right { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
 .gham { width: 40px; height: 40px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #fff; flex-shrink: 0; }
 .gham:hover { background: rgba(255,255,255,0.1); }
