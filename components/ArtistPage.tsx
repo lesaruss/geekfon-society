@@ -806,13 +806,29 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     if (!a || !key) return;
     setAudioDuration(prev => ({ ...prev, [key]: a.duration }));
   }
-  function seekTo(e: React.MouseEvent<HTMLDivElement>, url: string) {
+  function seekTo(e: React.MouseEvent<HTMLDivElement> | React.PointerEvent<HTMLDivElement>, url: string) {
     const a = audioRef.current;
     if (!a || currentUrlRef.current !== url) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const maxTime = a.duration || 0;
     a.currentTime = pct * maxTime;
+  }
+  // 2026-07-26 per Sean: "I should be able to move it back and forth" - the
+  // bar only supported a single tap-to-jump via onClick. Adding real
+  // pointer-drag scrubbing (Pointer Events, not native HTML5 drag - drag
+  // events don't fire reliably on touch, see feedback_native_dnd_fails_touch).
+  // pointerdown seeks immediately and captures the pointer; pointermove
+  // keeps seeking as long as the pointer is still down, covering both mouse
+  // drag and touch drag with one code path.
+  function handleScrubPointerDown(e: React.PointerEvent<HTMLDivElement>, url: string) {
+    if (currentUrlRef.current !== url) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    seekTo(e, url);
+  }
+  function handleScrubPointerMove(e: React.PointerEvent<HTMLDivElement>, url: string) {
+    if (e.buttons !== 1) return;
+    seekTo(e, url);
   }
 
   // Visibility helpers - rebuilt 2026-07-23 per Sean's pricing simplification.
@@ -941,7 +957,24 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   }
   function togglePlay(url: string, v?: string, trackName?: string) {
     const a = audioRef.current; if (!a) return;
-    if (playing === url) { a.pause(); setPlaying(null); setPlayingV(null); currentUrlRef.current = null; return; }
+    // Fixed 2026-07-26 per Sean: "when I pause, it's just pause where the
+    // song is - it should work like an actual player." Pausing used to also
+    // clear currentUrlRef, so pressing Play again fell into the "load a new
+    // track" branch below, which reassigns a.src and resets currentTime to
+    // 0 - the track always restarted instead of resuming. Now a pause only
+    // pauses; currentUrlRef (and the audio element's position) stay intact.
+    if (playing === url) { a.pause(); setPlaying(null); setPlayingV(null); return; }
+    if (currentUrlRef.current === url) {
+      // Resuming the same track after a pause - don't touch a.src, that
+      // would reload the media and reset currentTime to 0.
+      setPlaying(url);
+      setPlayingV(v || null);
+      a.play()
+        .then(() => { if (trackName) logPlay(trackName); })
+        .catch(() => { setPlaying(null); setPlayingV(null); });
+      return;
+    }
+    // Switching to a different track (or starting fresh) - load its source.
     currentUrlRef.current = url;
     a.src = url;
     setPlaying(url);
@@ -986,7 +1019,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   return (
 
       <div style={vars}>
-        <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
+        <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); currentUrlRef.current = null; }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
         <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
           {/* Black header - city bg is scoped inside here */}
@@ -1354,7 +1387,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 const scrubBar = (
                   <div className="mp-scrub">
                     <span className="mp-time">{fmtTime(npProgress)}</span>
-                    <div className="mp-bar" onClick={(e) => npUrl && seekTo(e, npUrl)}>
+                    <div
+                      className="mp-bar"
+                      onPointerDown={(e) => npUrl && handleScrubPointerDown(e, npUrl)}
+                      onPointerMove={(e) => npUrl && handleScrubPointerMove(e, npUrl)}
+                    >
                       <div className="mp-bar-fill" style={{ width: `${npPct}%` }} />
                       <div className="mp-bar-knob" style={{ left: `${npPct}%` }} />
                     </div>
@@ -1504,11 +1541,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         ? "You've unlocked every song by " + name + ", released or not."
                         : "Every song plays free once it's officially released. Unlock the Full Experience once for $11 to hear everything by " + name + " right now, including tracks that haven't dropped yet. Be sure to like your favorite songs to help " + name + " rise on the leaderboard."}
                     </p>
+                    {/* 2026-07-26 per Sean (mobile): removed the "Get Passport - Free"
+                        CTA here - no longer applicable. Message-only + Dismiss now. */}
                     {showVoteModal === "non-member" && (
                       <div className="vote-modal">
-                        <p>You need to be a member in order to like a song. Membership is free. Register today.</p>
+                        <p>You need to be a member in order to like a song. Membership is free.</p>
                         <div className="vote-modal-actions">
-                          <a href="/passport" className="vote-modal-cta">Get Passport - Free</a>
                           <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Dismiss</button>
                         </div>
                       </div>
@@ -1580,7 +1618,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 <div className="mp-row-title">{t.n}</div>
                                 <div className="mp-row-scrub">
                                   <span className="mp-time">{fmtTime(progress)}</span>
-                                  <div className="mp-bar" onClick={(e) => url && seekTo(e, url)}>
+                                  <div
+                                    className="mp-bar"
+                                    onPointerDown={(e) => url && handleScrubPointerDown(e, url)}
+                                    onPointerMove={(e) => url && handleScrubPointerMove(e, url)}
+                                  >
                                     <div className="mp-bar-fill" style={{ width: `${pct}%` }} />
                                     <div className="mp-bar-knob" style={{ left: `${pct}%` }} />
                                   </div>
@@ -1602,13 +1644,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               >
                                 <svg viewBox="0 0 24 24" fill={hasVotedToday ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                               </button>
+                              {/* 2026-07-26 per Sean: swapped the text "Lyrics" pill for a
+                                  circular icon button matching the heart, for a more
+                                  streamlined row. Icon is a sheet-of-paper/document mark
+                                  standing in for lyrics text; same toggle behavior. */}
                               <button
-                                className={"mp-chip" + (rowLyricsOpen ? " active" : "")}
+                                className={"mp-row-lyrics-btn" + (rowLyricsOpen ? " active" : "")}
                                 onClick={() => setRowLyricsOpenIdx(prev => prev === i ? null : i)}
                                 aria-label={rowLyricsOpen ? `Hide lyrics for ${t.n}` : `Show lyrics for ${t.n}`}
+                                title={rowLyricsOpen ? "Hide lyrics" : "Show lyrics"}
                               >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={14} height={14}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                                Lyrics
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={15} height={15}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
                               </button>
                             </div>
                             {rowLyricsOpen && (
