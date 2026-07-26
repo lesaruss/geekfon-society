@@ -137,16 +137,25 @@ export default function SiteChrome({
     if (saved && TIERS.includes(saved)) setViewAs(saved);
   }, []);
 
+  // 2026-07-26 fix: this used to special-case `t === auth.tier` (Sean's real
+  // underlying gfs_members.tier, which is literally "passport") to mean "no
+  // simulation needed, clear it out." That meant clicking the "Passport"
+  // option always collided with his own real tier and silently no-op'd the
+  // localStorage write + the "gfs-view-as" sync event that ArtistPage.tsx
+  // (and any other page) listens for - so simulating Passport never actually
+  // took effect (Plus tracks stayed uncapped) and never persisted across a
+  // refresh. Toggle logic now only compares against the CURRENT simulated
+  // viewAs value, never against auth.tier: click a tier to simulate it,
+  // click the same one again to toggle back to your real account.
   const handleViewAs = (t: Tier) => {
-    const final = t === auth.tier && viewAs === null ? null : t;
-    const newViewAs = final === auth.tier ? null : t;
-    setViewAs(newViewAs);
-    if (final === auth.tier) {
+    const next = viewAs === t ? null : t;
+    setViewAs(next);
+    if (next === null) {
       localStorage.removeItem("gfs-view-as");
       window.dispatchEvent(new CustomEvent("gfs-view-as", { detail: null }));
-    } else if (t !== auth.tier) {
-      localStorage.setItem("gfs-view-as", t);
-      window.dispatchEvent(new CustomEvent("gfs-view-as", { detail: t }));
+    } else {
+      localStorage.setItem("gfs-view-as", next);
+      window.dispatchEvent(new CustomEvent("gfs-view-as", { detail: next }));
     }
     setAdminOpen(false);
   };
@@ -334,11 +343,16 @@ export default function SiteChrome({
             </button>
             {adminOpen && (
               <div className="gdva-menu" role="listbox">
+                {/* 2026-07-26: was `effectiveTier === t`, which falls back to
+                    auth.tier (Sean's real DB tier, "passport") whenever viewAs
+                    is null - so "Passport" showed a checkmark by default even
+                    while in real Super Admin mode, before anything was ever
+                    clicked. Now only checks the actual simulated value. */}
                 {TIERS.map(t => (
-                  <button key={t} className={"gdva-option" + (effectiveTier === t ? " active" : "")} onClick={() => handleViewAs(t)} role="option" aria-selected={effectiveTier === t}>
+                  <button key={t} className={"gdva-option" + (viewAs === t ? " active" : "")} onClick={() => handleViewAs(t)} role="option" aria-selected={viewAs === t}>
                     <span className="gdva-dot" style={{ background: TIER_ACCENT[t] }} />
                     {TIER_LABEL[t]}
-                    {effectiveTier === t && <svg viewBox="0 0 24 24" className="gdva-check"><path d="M5 13l4 4L19 7" /></svg>}
+                    {viewAs === t && <svg viewBox="0 0 24 24" className="gdva-check"><path d="M5 13l4 4L19 7" /></svg>}
                   </button>
                 ))}
                 {viewAs !== null && (
