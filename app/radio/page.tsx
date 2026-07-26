@@ -352,7 +352,7 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 .rd-logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; flex-shrink: 0; }
 
 .rd-play-btn {
-  /* Sized to match the homepage hero circle (`.hero-circle-wrap`) more closely,
+  /* Sized to match the homepage hero circle (.hero-circle-wrap) more closely,
      per Sean 2026-07-26: "as big as what we have on the home page... same play
      button." Same min()-of-vw/vh formula as the homepage so it scales down
      safely on short viewports too, just tuned a bit smaller than the
