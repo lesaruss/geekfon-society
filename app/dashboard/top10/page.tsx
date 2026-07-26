@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useDashboard, ADMIN_EMAIL } from "../context";
 
 // Tracks every live roster artist (matches app/roster/page.tsx ARTIST_ORDER). Lord
 // Zorlot stays out - no songs yet, nothing to rank on. V stays out - administrative,
@@ -21,9 +23,54 @@ type RankedArtist = {
   imgUrl: string | null;
 };
 
+type Liker = { user_id: string; name: string | null };
+
+function initials(name: string | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export default function ArtistRankingsPage() {
+  const { userEmail } = useDashboard();
+  const router = useRouter();
   const [artists, setArtists] = useState<RankedArtist[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 2026-07-26 per Sean: "as an admin, I would like to see who's liking what."
+  // Real per-member vote data (gfs_artist_votes.user_id) - RLS already limits
+  // every other viewer to their own rows, so this is admin-only, same
+  // View-As-aware gate as Members/Release Schedule/Radio Schedule. The public
+  // rankings themselves (score/plays/votes totals) are unaffected either way -
+  // only the "who" layer is admin-only.
+  const [viewAs, setViewAs] = useState<string | null>(null);
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem("gfs-view-as") : null;
+    if (saved) setViewAs(saved);
+    const onViewAs = (e: Event) => setViewAs((e as CustomEvent).detail ?? null);
+    window.addEventListener("gfs-view-as", onViewAs);
+    return () => window.removeEventListener("gfs-view-as", onViewAs);
+  }, []);
+  const isAdmin = userEmail === ADMIN_EMAIL;
+  const canSeeLikers = isAdmin && viewAs === null;
+
+  const [likersMap, setLikersMap] = useState<Record<string, Liker[]>>({});
+  useEffect(() => {
+    if (!canSeeLikers) { setLikersMap({}); return; }
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: HeadersInit = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+        const res = await fetch("/api/admin/artist-likers", { headers });
+        if (res.ok) {
+          const json = await res.json();
+          setLikersMap(json.likers || {});
+        }
+      } catch (_) {}
+    })();
+  }, [canSeeLikers]);
 
   useEffect(() => {
     async function load() {
@@ -108,6 +155,7 @@ export default function ArtistRankingsPage() {
             const rankClass = i === 0 ? " rank-1" : i === 1 ? " rank-2" : i === 2 ? " rank-3" : "";
             const rankColor = i === 0 ? " gold" : i === 1 ? " silver" : i === 2 ? " bronze" : "";
             const artSlug = artist.slug === "riku" ? "riku" : artist.slug;
+            const artistLikers = likersMap[artist.slug] || [];
             return (
               <a key={artist.slug} href={`/${artSlug}`} className={"t10-row" + rankClass}>
                 <div className={"t10-rank" + rankColor}>{i + 1}</div>
@@ -136,6 +184,31 @@ export default function ArtistRankingsPage() {
                 <div className="t10-score-cell">
                   <div className={"t10-score" + rankColor}>{artist.score > 0 ? artist.score.toLocaleString() : "0"}</div>
                 </div>
+                {/* 2026-07-26 per Sean: admin-only "who's liking what" strip -
+                    not nested inside an <a> for public/passport viewers since
+                    it only ever renders when canSeeLikers (admin, not
+                    simulating). Buttons here stop propagation + preventDefault
+                    so clicking an avatar opens that member's profile instead
+                    of navigating to the artist page underneath. */}
+                {canSeeLikers && artistLikers.length > 0 && (
+                  <div className="t10-likers" style={{ gridColumn: "1 / -1" }}>
+                    <span className="t10-likers-label">Recent likes</span>
+                    <div className="t10-liker-stack">
+                      {artistLikers.slice(0, 6).map(l => (
+                        <button
+                          key={l.user_id}
+                          type="button"
+                          className="t10-liker-avatar"
+                          title={l.name || "Member"}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/dashboard/members/${l.user_id}`); }}
+                        >
+                          {initials(l.name)}
+                        </button>
+                      ))}
+                    </div>
+                    {artistLikers.length > 6 && <span className="t10-liker-more">+{artistLikers.length - 6}</span>}
+                  </div>
+                )}
               </a>
             );
           })}
@@ -193,6 +266,13 @@ const CSS = `
 .t10-score-cell{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
 .t10-score{font-size:16px;font-weight:900;color:rgba(255,255,255,.8);}
 .t10-score.gold{color:#F69820;}
+.t10-likers{display:flex;align-items:center;gap:10px;padding-top:12px;margin-top:6px;border-top:1px dashed rgba(255,255,255,.06);}
+.t10-likers-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.25);flex-shrink:0;}
+.t10-liker-stack{display:flex;align-items:center;}
+.t10-liker-avatar{width:26px;height:26px;border-radius:50%;background:#F69820;color:#000;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #171717;margin-left:-8px;cursor:pointer;font-family:inherit;padding:0;transition:transform .12s;}
+.t10-liker-avatar:first-child{margin-left:0;}
+.t10-liker-avatar:hover{transform:translateY(-3px);z-index:2;position:relative;}
+.t10-liker-more{font-size:10px;font-weight:800;color:rgba(255,255,255,.4);}
 .t10-trend{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:800;}
 .t10-trend-up{color:rgba(0,215,95,.8);}
 .t10-trend-down{color:rgba(255,100,100,.7);}
