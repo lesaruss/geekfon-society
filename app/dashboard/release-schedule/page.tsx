@@ -57,6 +57,8 @@ export default function ReleaseSchedulePage() {
   const [uploadStatus, setUploadStatus] = useState<Record<string, string>>({});
   const [collapsed, setCollapsed]       = useState<Set<string>>(new Set());
   const [schedulePreview, setSchedulePreview] = useState(false);
+  const [newArtistName, setNewArtistName] = useState("");
+  const [addingArtist, setAddingArtist]   = useState(false);
 
   // DnD state
   const dragArtist = useRef<string | null>(null);
@@ -131,6 +133,57 @@ export default function ReleaseSchedulePage() {
       })
     );
     setDirty((prev) => new Set(prev).add(slug));
+  }
+
+  // 2026-07-26 per Sean: "I need to know how do I add songs, and how do I add
+  // new artists too" - adds a blank editable row using the exact same inline
+  // fields every other track row already has (title/season/tier/date/audio/
+  // flags), so there's nothing new to learn. Nothing hits the DB until the
+  // normal Save Changes flow runs, same as editing any existing track.
+  function addTrack(slug: string) {
+    setArtists((prev) =>
+      prev.map((a) =>
+        a.slug !== slug ? a : {
+          ...a,
+          tracks: [...a.tracks, { n: "", m: "Season 1", v: "public" as Visibility, scheduledFor: undefined }],
+        }
+      )
+    );
+    setDirty((prev) => new Set(prev).add(slug));
+    setCollapsed((prev) => { const next = new Set(prev); next.delete(slug); return next; });
+  }
+
+  function slugify(s: string): string {
+    return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-+|-+$)/g, "");
+  }
+
+  // New artists DO need a real DB row created (unlike a new track, which just
+  // lives in an existing artist's tracks array) - POST to the same route,
+  // then drop the result straight into local state as an empty, expanded
+  // artist ready for "+ Add Track".
+  async function addArtist() {
+    const name = newArtistName.trim();
+    if (!name) return;
+    const slug = slugify(name);
+    if (!slug) { showToast("Enter a valid artist name"); return; }
+    if (artists.some((a) => a.slug === slug)) { showToast(`"${name}" already exists`); return; }
+    setAddingArtist(true);
+    const headers = { "Content-Type": "application/json", ...(await authHeaders()) };
+    const res = await fetch("/api/admin/release-schedule", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ slug, name }),
+    });
+    setAddingArtist(false);
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      showToast(j.error || "Failed to add artist");
+      return;
+    }
+    setArtists((prev) => [...prev, { slug, name, tracks: [] }]);
+    setCollapsed((prev) => { const next = new Set(prev); next.delete(slug); return next; });
+    setNewArtistName("");
+    showToast(`Added ${name} - now add their first track below`);
   }
 
   async function saveAll() {
@@ -319,6 +372,19 @@ export default function ReleaseSchedulePage() {
         {schedulePreview && (
           <div className="rs-preview-badge">Schedule preview - unsaved</div>
         )}
+        <div className="rs-add-artist">
+          <input
+            className="rs-input rs-add-artist-input"
+            placeholder="New artist name"
+            value={newArtistName}
+            onChange={(e) => setNewArtistName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") addArtist(); }}
+            disabled={addingArtist}
+          />
+          <button className="rs-add-artist-btn" onClick={addArtist} disabled={addingArtist || !newArtistName.trim()}>
+            {addingArtist ? "Adding..." : "+ Add Artist"}
+          </button>
+        </div>
       </div>
 
       {/* Artist groups */}
@@ -484,6 +550,13 @@ export default function ReleaseSchedulePage() {
                         </div>
                       );
                     })}
+                    <button
+                      className="rs-add-track-btn"
+                      onClick={() => addTrack(artist.slug)}
+                      disabled={readOnly}
+                    >
+                      + Add Track
+                    </button>
                   </div>
                 )}
               </div>
@@ -512,6 +585,14 @@ const RS_CSS = `
 .rs-select option { background: #1a1a1a; }
 .rs-collapse-all { background: none; border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.4); font-family: inherit; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 7px 12px; border-radius: 6px; cursor: pointer; }
 .rs-collapse-all:hover { color: rgba(255,255,255,.7); border-color: rgba(255,255,255,.2); }
+.rs-add-artist { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.rs-add-artist-input { width: 160px; }
+.rs-add-artist-btn { background: #F69820; color: #000; border: none; font-family: inherit; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; padding: 8px 14px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.rs-add-artist-btn:hover:not(:disabled) { background: #ffaf30; }
+.rs-add-artist-btn:disabled { opacity: .4; cursor: default; }
+.rs-add-track-btn { display: block; width: calc(100% - 24px); margin: 6px 12px 4px; background: none; border: 1px dashed rgba(255,255,255,.15); color: rgba(255,255,255,.35); font-family: inherit; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 8px; border-radius: 6px; cursor: pointer; }
+.rs-add-track-btn:hover:not(:disabled) { color: rgba(255,255,255,.7); border-color: rgba(255,255,255,.3); }
+.rs-add-track-btn:disabled { opacity: .3; cursor: default; }
 .rs-preview-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #AAFF00; padding: 5px 12px; border-radius: 20px; background: rgba(170,255,0,.08); border: 1px solid rgba(170,255,0,.2); }
 /* Artist list */
 .rs-artist-list { display: flex; flex-direction: column; gap: 10px; }
