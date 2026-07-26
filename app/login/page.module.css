@@ -1,16 +1,28 @@
 .container {
   position: fixed;
-  top: 0;
+  /* Fixed 2026-07-26 - same bug Sean flagged on app/register/page.module.css:
+     this started at top:0, spanning the full viewport including the space
+     SiteChrome's fixed header (.gtop, 60px + safe-area-inset-top, z-index:40)
+     physically occupies, so a vertically-centered card's top could land
+     above y=60 and render underneath the opaque header. Offsetting this
+     container's own top past the header fixes that here too. Also added the
+     same safe-center + overflow-y:auto pattern proactively (see the register
+     page's comment for the full explanation) - identical structural bug,
+     just not yet reported here since this form is short enough not to have
+     triggered the overflow-clipping half of it. */
+  top: calc(60px + env(safe-area-inset-top, 0px));
   left: 0;
   right: 0;
   bottom: 0;
   background-color: var(--auth-bg);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  align-items: safe center;
   justify-content: center;
   padding: 20px;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   z-index: 0;
+  overflow-y: auto;
 }
 
 .aurora {
