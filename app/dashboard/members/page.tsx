@@ -161,7 +161,10 @@ export default function MembersPage() {
             <thead><tr><th>Name</th><th>Email</th><th>Tier</th><th>Points</th><th>Joined</th><th>Last login</th></tr></thead>
             <tbody>
               {members.map(m => (
-                <tr key={m.id}>
+                // 2026-07-26 per Sean: clicking into a member should open their
+                // profile (purchase history, like history, general info) - same
+                // destination the new Rankings "who's liking what" avatars link to.
+                <tr key={m.id} className="mc-m-row" onClick={() => { window.location.href = `/dashboard/members/${m.user_id}`; }}>
                   <td className="mc-m-name">{m.name || "-"}</td>
                   <td className="mc-m-email">{m.email || "-"}</td>
                   <td><span className={"mc-m-tier t-" + (m.tier || "passport")}>{TIER_LABEL[m.tier || "passport"] || m.tier}</span></td>
@@ -203,6 +206,7 @@ const MC_CSS = `
 .mc-members-table td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
 .mc-members-table tr:last-child td{border-bottom:none;}
 .mc-members-table tr:hover td{background:rgba(255,255,255,.02);}
+.mc-m-row{cursor:pointer;}
 .mc-m-name{font-weight:700;color:#fff;}
 .mc-m-email{color:rgba(255,255,255,.5);font-size:11px;}
 .mc-m-tier{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:20px;background:rgba(246,152,32,.1);color:#F69820;}
