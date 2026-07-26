@@ -889,19 +889,47 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     return !!effectiveTier;
   }
 
+  // 2026-07-26 per Sean: a track's Song Manager Tier (public/preview="Passport"/
+  // members="Plus"/pro="Pro") now also gates playback AFTER release, not just
+  // before it. Pre-release, the gate stays exactly what it was (registered vs
+  // not). Once released, the track's tier rank is compared against the
+  // viewer's real tier rank for THIS artist (Public=0, registered/"Passport"=1,
+  // $11-unlocked/"Plus"=2 - unlockedArtist already bypasses everything below,
+  // separately, so it never reaches this math): exactly one rank below the
+  // track = 30s preview, two or more ranks below = fully locked, same as
+  // Sean's "one tier above gets a preview, two+ gets locked down" rule from
+  // the platform-logic pass earlier today. Confirmed against real data: e.g.
+  // Roxanne "Being You, Being Me" and Lex "The Flex" are both released tracks
+  // tagged "preview" (Passport) - a Public visitor should now see a preview,
+  // not a full free play.
+  function trackTierRank(v: string): number {
+    if (v === "pro") return 3;
+    if (v === "members") return 2;
+    if (v === "preview") return 1;
+    return 0; // "public" (or unset/unknown) - always free once released
+  }
+
   function isPreviewCappedTrack(t: Track): boolean {
     if (isSuperAdmin && viewAs === "real") return false;
     if (unlockedArtist) return false;
-    return isScheduledFuture(t) && isRegistered();
+    if (isScheduledFuture(t)) return isRegistered();
+    const diff = trackTierRank(t.v) - (isRegistered() ? 1 : 0);
+    return diff === 1;
   }
 
-  // An unreleased track a NOT-registered visitor can't even preview - they
-  // have to create a free account first. Once registered they fall through
-  // to isPreviewCappedTrack (30s preview) instead of this.
+  // Before release: an unreleased track a NOT-registered visitor can't even
+  // preview - they have to create a free account first. After release: the
+  // track's tier is 2+ ranks above the viewer's (e.g. a "Pro" track and the
+  // viewer is only Passport-registered, or anyone not registered at all) - no
+  // preview at all until they close that gap. Either way, the $11 unlock
+  // (unlockedArtist, checked above) always bypasses this - "unlock the full
+  // catalog forever" means forever, no tier is held back from a paying fan.
   function isRegisterLockedTrack(t: Track): boolean {
     if (isSuperAdmin && viewAs === "real") return false;
     if (unlockedArtist) return false;
-    return isScheduledFuture(t) && !isRegistered();
+    if (isScheduledFuture(t)) return !isRegistered();
+    const diff = trackTierRank(t.v) - (isRegistered() ? 1 : 0);
+    return diff >= 2;
   }
 
   // Nothing is ever hidden anymore - every song a fan can see builds the
@@ -1779,18 +1807,32 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   <span className="mp-time">--:--</span>
                                 </div>
                               </div>
-                              <a
-                                className="mp-btn-buy mp-row-unlock"
-                                href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
-                                aria-label={`Create a free account to preview ${t.n}${t.scheduledFor ? ", releases " + t.scheduledFor.split("T")[0] : ""}`}
-                              >
-                                {/* 2026-07-26 per Sean: "Register, register, register, register"
-                                    repeated down the list was redundant - show the release
-                                    date instead (still the same green pill, still takes them
-                                    to /register on click). Falls back to "Register" only if a
-                                    track has no scheduledFor date at all. */}
-                                {t.scheduledFor ? t.scheduledFor.split("T")[0] : "Register"}
-                              </a>
+                              {/* 2026-07-26 per Sean: "Register, register, register, register"
+                                  repeated down the list was redundant - show the release date
+                                  instead (still the same green pill, still takes them to
+                                  /register on click). Falls back to "Register" only if a track
+                                  has no scheduledFor date. A REGISTERED viewer can still land
+                                  here now (e.g. a "Pro"-tagged released track, 2+ tiers above a
+                                  Passport member) - registering again would do nothing, so that
+                                  case gets an unlock button instead of a register link. */}
+                              {isRegistered() ? (
+                                <button
+                                  className="mp-btn-buy mp-row-unlock"
+                                  onClick={handleUnlockArtist}
+                                  disabled={unlockLoading}
+                                  aria-label={`Unlock ${name}'s full catalog for $11 to hear ${t.n}`}
+                                >
+                                  {unlockLoading ? "..." : "Unlock - $11"}
+                                </button>
+                              ) : (
+                                <a
+                                  className="mp-btn-buy mp-row-unlock"
+                                  href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
+                                  aria-label={`Create a free account to preview ${t.n}${t.scheduledFor ? ", releases " + t.scheduledFor.split("T")[0] : ""}`}
+                                >
+                                  {t.scheduledFor ? t.scheduledFor.split("T")[0] : "Register"}
+                                </a>
+                              )}
                             </div>
                           );
                         }
