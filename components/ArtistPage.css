@@ -251,6 +251,11 @@
 .mp-row-heart.voted{color:var(--rx);border-color:var(--rx);background:var(--rx-tint)}
 .mp-row-heart.loading{opacity:.6}
 .mp-row-heart:disabled{cursor:default}
+/* 2026-07-26 (4th pass) per Sean: once today's artist vote is used, every
+   OTHER row's heart is now disabled (see votedTrackKey in ArtistPage.tsx) but
+   should read as "used up", not identical to a still-available heart - only
+   the one actually clicked stays fully visible via .voted above. */
+.mp-row-heart:disabled:not(.voted){opacity:.4}
 .mp-row-heart svg{width:16px;height:16px}
 /* 2026-07-26 per Sean: circular lyrics icon button, same shape/size as the
    heart, replacing the old text "Lyrics" pill for a more streamlined row. */
