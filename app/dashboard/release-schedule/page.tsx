@@ -95,7 +95,17 @@ export default function ReleaseSchedulePage() {
     authHeaders().then((headers) =>
       fetch("/api/admin/release-schedule", { headers })
         .then((r) => r.json())
-        .then((j) => { setArtists(j.artists || []); setDataLoading(false); })
+        .then((j) => {
+          const loaded = j.artists || [];
+          setArtists(loaded);
+          // Default every artist to collapsed on load per Sean 2026-07-26 ("everything
+          // should be automatically closed so I can get to them quicker") - previously
+          // `collapsed` started as an empty Set, which meant every artist rendered fully
+          // open (isOpen = !collapsed.has(slug)). rs-collapse-all / individual carets still
+          // work the same after this, this only changes the initial state.
+          setCollapsed(new Set(loaded.map((a: Artist) => a.slug)));
+          setDataLoading(false);
+        })
     );
   }, [loading, hasAccess]);
 
@@ -565,6 +575,26 @@ const RS_CSS = `
 .rs-gate-card p { font-size: 13px; color: rgba(255,255,255,.45); line-height: 1.6; margin: 0 0 20px; }
 .rs-gate-btn { display: inline-block; background: #E91E8C; color: #fff; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; padding: 12px 24px; border-radius: 100px; text-decoration: none; }
 .rs-gate-btn:hover { background: #c41874; }
+
+/* Mobile 2026-07-26 per Sean: on phone the fixed-width flex row (season/tier/date/
+   audio/flags columns) squeezed the track-title input down to almost nothing or
+   pushed it off-screen entirely - "I don't know which song it is because it doesn't
+   have the title... things are cut off." Header labels are dropped (each control is
+   self-labeling: S1/S2/S3, tier color+text, a date input, Audio/None text, P/F/R
+   checkboxes) and the title gets forced onto its own full-width line so it is always
+   readable, with the rest of the controls wrapping compactly below it. No DOM/JSX
+   changes, pure CSS reflow - drag-to-reorder still works. */
+@media (max-width: 640px) {
+  .rs-track-head { display: none; }
+  .rs-track-row { flex-wrap: wrap; row-gap: 8px; padding: 10px 12px; }
+  .rs-drag-handle { order: 1; }
+  .rs-num { order: 2; }
+  .rs-input.rs-th-grow { order: 3; flex-basis: 100%; width: 100%; margin: 2px 0 2px 0; }
+  .rs-sel { order: 4; }
+  .rs-date-cell { order: 5; }
+  .rs-audio-cell { order: 6; }
+  .rs-flags { order: 7; }
+}
 `;
 
 
