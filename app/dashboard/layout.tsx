@@ -17,9 +17,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     loading: true,
   });
 
+  // 2026-07-26 per Sean: "noticeable gap between the top navigation and the
+  // first thing that appears" on every /dashboard/* page. Root cause: this
+  // class name collided with SiteChrome's OWN internal ".gbody" wrapper div
+  // (which reserves padding-top: 60px to clear the fixed header - correct
+  // and necessary). Adding "gbody" to the real <body> tag too meant BOTH
+  // elements matched the same CSS selector, so the 60px header-reserve
+  // padding applied twice - once on <body>, once on SiteChrome's inner div -
+  // stacking to ~120px of dead space before any real content, on top of
+  // dl-main's own intentional 36px breathing room. Renamed to a dashboard-
+  // specific class so it only sets the dark background color it was always
+  // meant for, with zero effect on SiteChrome's header spacing.
   useEffect(() => {
-    document.body.classList.add("gbody");
-    return () => document.body.classList.remove("gbody");
+    document.body.classList.add("gfs-dash-bg");
+    return () => document.body.classList.remove("gfs-dash-bg");
   }, []);
 
   useEffect(() => {
@@ -160,8 +171,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 }
 
 const LAYOUT_CSS = `
-/* Dark bg */
-.gbody { background: #020c0a !important; color: #e8e8e8; min-height: 100vh; }
+/* Dark bg - scoped to <body>, deliberately NOT named "gbody" (see the
+   classList effect above - that name collides with SiteChrome's own
+   header-spacing wrapper and was doubling the top gap on every dashboard
+   page). */
+.gfs-dash-bg { background: #020c0a !important; color: #e8e8e8; min-height: 100vh; }
 
 /* Aurora */
 .dl-aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
