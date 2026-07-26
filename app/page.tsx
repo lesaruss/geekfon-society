@@ -4,6 +4,28 @@ import SiteChrome from "@/components/SiteChrome";
 import { supabase } from "@/lib/supabase";
 import { resolvePlayhead, RadioTrack as ScheduleTrack, ScheduleOverride } from "@/lib/radioSchedule";
 
+// Display names for radio_tracks.artist_slug (this table uses full-name slugs,
+// which don't always match gfs_artists.slug - e.g. "riku-hayasaka" vs "riku").
+// Duplicated from app/radio/page.tsx (same small lookup, same pattern already
+// used there) rather than shared, to keep this a minimal, low-risk addition.
+const ARTIST_NAMES: Record<string, string> = {
+  "lex-from-brixton": "Lex from Brixton",
+  "lickle-bro": "Lickle Bro",
+  "lickle-sis": "Lickle Sis",
+  "mad-tings": "Mad Tings",
+  "mr-russell": "Mr. Russell",
+  "nilo-wave": "Nilo Wave",
+  "riku-hayasaka": "Riku Hayasaka",
+  "roxanne": "Roxanne",
+  "rustblood-prophets": "Rustblood Prophets",
+  "shamanic-resin": "Shamanic Resin",
+  "straight-and-narrow": "Straight and Narrow",
+};
+
+function artistName(slug: string): string {
+  return ARTIST_NAMES[slug] || slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 // 2026-07-26 per Sean: "I just want people to hear the music at this point" -
 // the hero circle now doubles as a play button for GeekFon Radio (see
@@ -74,6 +96,9 @@ export default function HomePage() {
   // GeekFon Radio - inline play button on the hero circle, no account needed.
   const [radioPlaying, setRadioPlaying] = useState(false);
   const [radioLoading, setRadioLoading] = useState(false);
+  // 2026-07-26 per Sean: show what's playing (title + artist) inside the
+  // circle, below the button, once the radio is on.
+  const [radioNowPlaying, setRadioNowPlaying] = useState<{ title: string; artist: string } | null>(null);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
   const radioRotationRef = useRef<ScheduleTrack[]>([]);
   const radioOverridesRef = useRef<ScheduleOverride[]>([]);
@@ -200,9 +225,22 @@ export default function HomePage() {
     radioLoadedRef.current = true;
   }
 
+  // Fixed 2026-07-26 per Sean ("the song doesn't go to another song, it just
+  // stalls"): this function used to only swap `a.src`/`a.currentTime` when the
+  // resync poll (every 5s) noticed the resolved path had changed - it never
+  // called `.play()` again. A track ending fires the browser's native `ended`
+  // event, which pauses the element; with no `onended` handler here (unlike
+  // app/radio/page.tsx's `tuneToNow`, which already had one), the element just
+  // sat paused-and-loaded until the next poll tick, and even then nothing
+  // resumed playback. Now: an `onended` listener (attached once, in
+  // handleRadioToggle) calls this function immediately on end instead of
+  // waiting up to 5s for the next poll, and this function always resumes
+  // playback if the element is unexpectedly paused while the user has the
+  // radio on - both the "next song" case and the "browser stalled it" case.
   function syncRadioAudio(a: HTMLAudioElement) {
     const resolved = resolvePlayhead(Date.now(), radioRotationRef.current, radioOverridesRef.current);
     if (!resolved) return;
+    setRadioNowPlaying({ title: resolved.title, artist: artistName(resolved.artist) });
     if (radioCurrentPathRef.current !== resolved.path) {
       radioCurrentPathRef.current = resolved.path;
       a.src = RADIO_AUDIO_BASE + resolved.path;
@@ -210,6 +248,11 @@ export default function HomePage() {
     } else if (Math.abs(a.currentTime - resolved.offsetSeconds) > RADIO_RESYNC_DRIFT_TOLERANCE_SEC) {
       a.currentTime = resolved.offsetSeconds;
     }
+    // syncRadioAudio is only ever called while the user has pressed play (the
+    // initial call in handleRadioToggle, the resync interval it starts, or the
+    // onended handler below) - never during an intentional pause, since pause
+    // clears the resync interval. So it's always correct to resume here.
+    if (a.paused) a.play().catch(() => {});
   }
 
   async function handleRadioToggle() {
@@ -219,7 +262,12 @@ export default function HomePage() {
       if (radioResyncTimerRef.current) { clearInterval(radioResyncTimerRef.current); radioResyncTimerRef.current = null; }
       return;
     }
-    if (!radioAudioRef.current) radioAudioRef.current = new Audio();
+    if (!radioAudioRef.current) {
+      radioAudioRef.current = new Audio();
+      radioAudioRef.current.onended = () => {
+        if (radioAudioRef.current) syncRadioAudio(radioAudioRef.current);
+      };
+    }
     const a = radioAudioRef.current;
     setRadioLoading(true);
     try {
@@ -345,6 +393,15 @@ export default function HomePage() {
               <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4" /></svg>
             )}
           </button>
+
+          {/* 2026-07-26 per Sean: song title + artist, inside the circle, below
+              the button, once the radio is actually playing. */}
+          {radioPlaying && radioNowPlaying && (
+            <div className="hero-radio-now" aria-live="polite">
+              <div className="hero-radio-now-title">{radioNowPlaying.title}</div>
+              <div className="hero-radio-now-artist">{radioNowPlaying.artist}</div>
+            </div>
+          )}
         </div>
 
         <div className="cta-row">
@@ -422,6 +479,12 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
 @keyframes heroRadioSpin{to{transform:rotate(360deg);}}
 @media(prefers-reduced-motion:reduce){.hero-radio-spinner{animation:none;}.hero-radio-btn{animation:none!important;}}
 
+/* Now-playing text - 2026-07-26 per Sean: title + artist, inside the circle,
+   below the play button, only while actually playing. */
+.hero-radio-now{position:absolute;top:calc(50% + 46px);left:50%;transform:translateX(-50%);z-index:6;width:76%;text-align:center;pointer-events:none;}
+.hero-radio-now-title{font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hero-radio-now-artist{font-size:9px;font-weight:600;color:rgba(255,255,255,.68);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
 /* Society text: fixed size, overflow ellipsis so long words (Gesellschaft) don't break layout */
 .hero-tagline-inner{
   font-size:clamp(8px,1.2vw,11px);
@@ -465,5 +528,7 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
   .hero-circle-wrap{width:min(280px,70vw);height:min(280px,70vw);}
   .hero-radio-btn{width:58px;height:58px;}
   .hero-radio-btn svg{width:20px;height:20px;}
+  .hero-radio-now{top:calc(50% + 38px);width:82%;}
+  .hero-radio-now-title{font-size:10px;}
 }
 `;
