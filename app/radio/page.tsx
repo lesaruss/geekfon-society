@@ -282,9 +282,9 @@ export default function RadioPage() {
             <img src="/geekfon-logo.png" alt="" aria-hidden="true" className="rd-logo-img" />
             <div className="rd-play-icon">
               {playing ? (
-                <svg viewBox="0 0 24 24" fill="white" width="36" height="36"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                <svg viewBox="0 0 24 24" fill="white" width="44" height="44"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
               ) : (
-                <svg viewBox="0 0 24 24" fill="white" width="36" height="36"><polygon points="8 5 19 12 8 19"/></svg>
+                <svg viewBox="0 0 24 24" fill="white" width="44" height="44"><polygon points="8 5 19 12 8 19"/></svg>
               )}
             </div>
             {playing && <div className="rd-pulse-ring" />}
@@ -352,7 +352,14 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 .rd-logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; flex-shrink: 0; }
 
 .rd-play-btn {
-  position: relative; width: 190px; height: 190px; border-radius: 50%;
+  /* Sized to match the homepage hero circle (`.hero-circle-wrap`) more closely,
+     per Sean 2026-07-26: "as big as what we have on the home page... same play
+     button." Same min()-of-vw/vh formula as the homepage so it scales down
+     safely on short viewports too, just tuned a bit smaller than the
+     homepage's own 44vw/72vh since this page still has a separate now-playing
+     text block + progress bar below the circle that needs its own vertical
+     room (the homepage puts its text inside the circle instead). */
+  position: relative; width: min(360px, min(42vw, 60vh)); height: min(360px, min(42vw, 60vh)); border-radius: 50%;
   background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.12);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
@@ -362,7 +369,10 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 .rd-play-btn.playing { border-color: rgba(0,180,255,0.45); box-shadow: 0 0 50px rgba(0,180,255,0.22); }
 .rd-play-btn:focus-visible { outline: 2px solid #00B4FF; outline-offset: 4px; }
 
-.rd-logo-img { width: 130px; height: 130px; object-fit: contain; display: block; transition: opacity 0.25s; }
+/* Percentage-based (was a fixed 130px) so the logo keeps the same proportion
+   inside the circle automatically as the circle itself now scales with
+   viewport size, instead of needing its own separate breakpoint overrides. */
+.rd-logo-img { width: 68%; height: 68%; object-fit: contain; display: block; transition: opacity 0.25s; }
 .rd-play-btn:hover .rd-logo-img,
 .rd-play-btn.playing .rd-logo-img { opacity: 0.25; }
 
@@ -401,14 +411,16 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 .rd-hint { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.28); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; flex-shrink: 0; text-align: center; }
 
 @media(max-width:480px) {
-  .rd-play-btn { width: 150px; height: 150px; }
-  .rd-logo-img { width: 100px; height: 100px; }
+  /* Mirrors the homepage's mobile hero-circle-wrap (min(280px,70vw)) - logo
+     scales with it automatically since it's percentage-based now. */
+  .rd-play-btn { width: min(260px, 68vw); height: min(260px, 68vw); }
   .rd-np-title { font-size: 20px; }
 }
 
 @media(max-height:700px) {
+  /* Circle no longer needs its own override here - the 60vh term already
+     built into .rd-play-btn's width/height shrinks it on short viewports.
+     Just tighten the surrounding gap/padding like before. */
   .rd-main { gap: 16px; padding: 16px; }
-  .rd-play-btn { width: 130px; height: 130px; }
-  .rd-logo-img { width: 88px; height: 88px; }
 }
 `;
