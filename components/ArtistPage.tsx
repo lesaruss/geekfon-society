@@ -109,6 +109,12 @@ const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolea
 // until it's populated - Sean, 2026-07-13.
 const POPULATED_PULSE_ARTISTS = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
 
+// `locked` here means "not built yet" (disables the tab entirely, see the
+// PULSE_CHANNELS.map onClick below). Group Chat is both not-yet-shipped AND,
+// per Sean 2026-07-26, meant to require the same $11 artist unlock as Social
+// once it does ship - when Group Chat goes live, gate its content the same
+// way Social is gated below (unlockedArtist || isSuperAdmin) instead of just
+// removing `locked: true`.
 const PULSE_CHANNELS: { key: "news" | "social" | "groupchat"; label: string; locked?: boolean }[] = [
   { key: "news",      label: "News" },
   { key: "social",    label: "Social" },
@@ -589,6 +595,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [showVoteModal, setShowVoteModal] = useState<"non-member" | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Fixed 2026-07-26: onTimeUpdate/onLoadedMetadata used to gate on the
+  // `playing` React state, but `loadedmetadata` (and often the first
+  // `timeupdate`) fires before the setPlaying(url) triggered by togglePlay
+  // has actually re-rendered, so duration was silently never recorded and
+  // the scrub bar's fill stayed pinned at 0% forever (Sean: "the bar doesn't
+  // move, it's just frozen"). currentUrlRef is set synchronously the moment
+  // playback starts, so these handlers never race React's render cycle.
+  const currentUrlRef = useRef<string | null>(null);
 
   function handleAdClick(placementId?: string, campaignId?: string) {
     if (!placementId || !campaignId) return;
@@ -658,6 +672,28 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Reflect a completed $11 artist-unlock Checkout immediately, even for a
+  // guest with no account: the Stripe webhook durably grants the unlock
+  // server-side by email (see handleUnlockArtist), and this local marker
+  // gives instant visual feedback on return without forcing a login. Added
+  // 2026-07-26 as part of the same fix as handleUnlockArtist above.
+  useEffect(() => {
+    if (typeof window === "undefined" || !slug) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "success" && params.get("plan") === "artist-unlock") {
+      setUnlockedArtist(true);
+      setUnlockSuccess(true);
+      setTimeout(() => setUnlockSuccess(false), 4000);
+      try { localStorage.setItem(`gfs-unlocked-${slug}`, "1"); } catch { /* ignore */ }
+      params.delete("checkout");
+      params.delete("plan");
+      const q = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (q ? `?${q}` : ""));
+    } else {
+      try { if (localStorage.getItem(`gfs-unlocked-${slug}`) === "1") setUnlockedArtist(true); } catch { /* ignore */ }
+    }
+  }, [slug]);
 
   // Check if user has voted for this artist today
   useEffect(() => {
@@ -749,27 +785,30 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   }
   function onTimeUpdate() {
     const a = audioRef.current;
-    if (!a || !playing) return;
+    const key = currentUrlRef.current;
+    if (!a || !key) return;
     // Tier enforcement: trackLocked already prevents fully-locked tracks from playing.
     // One-tier-up preview tracks are allowed to play but get capped at PREVIEW_CAP_SECONDS.
     if (playingV === "capped" && a.currentTime >= PREVIEW_CAP_SECONDS) {
       a.pause();
       a.currentTime = 0;
-      setAudioProgress(prev => ({ ...prev, [playing]: 0 })); // reset visible scrub position, not just the audio element
+      setAudioProgress(prev => ({ ...prev, [key]: 0 })); // reset visible scrub position, not just the audio element
       setPlaying(null);
       setPlayingV(null);
+      currentUrlRef.current = null;
       return;
     }
-    setAudioProgress(prev => ({ ...prev, [playing]: a.currentTime }));
+    setAudioProgress(prev => ({ ...prev, [key]: a.currentTime }));
   }
   function onLoadedMetadata() {
     const a = audioRef.current;
-    if (!a || !playing) return;
-    setAudioDuration(prev => ({ ...prev, [playing]: a.duration }));
+    const key = currentUrlRef.current;
+    if (!a || !key) return;
+    setAudioDuration(prev => ({ ...prev, [key]: a.duration }));
   }
   function seekTo(e: React.MouseEvent<HTMLDivElement>, url: string) {
     const a = audioRef.current;
-    if (!a || playing !== url) return;
+    if (!a || currentUrlRef.current !== url) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const maxTime = a.duration || 0;
@@ -824,15 +863,18 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
 
   async function handleUnlockArtist() {
     if (unlockedArtist || unlockLoading) return;
-    if (!userId) {
-      const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
-      window.location.href = `/login?redirect=${encodeURIComponent(returnPath)}`;
-      return;
-    }
     setUnlockError(null);
     setUnlockLoading(true);
     try {
       if (isNative()) {
+        // Native purchases go through RevenueCat, which is tied to a signed-in
+        // account, so the native app still requires sign-in first.
+        if (!userId) {
+          const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
+          window.location.href = `/login?redirect=${encodeURIComponent(returnPath)}`;
+          setUnlockLoading(false);
+          return;
+        }
         const result = await purchaseArtistUnlock(slug || "");
         if (result.success) {
           setUnlockedArtist(true);
@@ -844,11 +886,19 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         setUnlockLoading(false);
         return;
       }
+      // Fixed 2026-07-26 per Sean (found live in incognito): clicking Unlock
+      // used to force a sign-in to membership before you could even pay,
+      // which made no sense - unlocking should go straight to the $11
+      // transaction. Stripe Checkout collects the buyer's email itself, so
+      // no account is required up front. The webhook
+      // (app/api/webhooks/stripe/route.ts) grants the unlock server-side by
+      // finding-or-creating a Supabase account for that email, so if the fan
+      // later logs in with the same email their unlock is already there.
       const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "artist-unlock", userId, artistSlug: slug, returnUrl: returnPath }),
+        body: JSON.stringify({ plan: "artist-unlock", userId: userId || null, artistSlug: slug, returnUrl: returnPath }),
       });
       const { url, error } = await res.json();
       if (url) {
@@ -891,11 +941,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   }
   function togglePlay(url: string, v?: string, trackName?: string) {
     const a = audioRef.current; if (!a) return;
-    if (playing === url) { a.pause(); setPlaying(null); setPlayingV(null); return; }
+    if (playing === url) { a.pause(); setPlaying(null); setPlayingV(null); currentUrlRef.current = null; return; }
+    currentUrlRef.current = url;
     a.src = url;
+    setPlaying(url);
+    setPlayingV(v || null);
     a.play()
-      .then(() => { setPlaying(url); setPlayingV(v || null); if (trackName) logPlay(trackName); })
-      .catch(() => { setPlaying(null); setPlayingV(null); });
+      .then(() => { if (trackName) logPlay(trackName); })
+      .catch(() => { setPlaying(null); setPlayingV(null); currentUrlRef.current = null; });
   }
 
   async function logPlay(trackName: string) {
@@ -995,29 +1048,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   const genreLabel = genrePill?.label || c.sonic?.primaryGenre;
                   const seasonLabel = seasonPill?.label || c.tracks?.[0]?.m || "Season 1";
                   return (
+                    // 2026-07-26 per Sean: the old "Vote" pill (membership-gated,
+                    // artist-level) is replaced by a heart button on each song row
+                    // in the Music tab below - liking a song IS the vote now.
                     <div className="pill-row">
-                      <button
-                        className={"pill-vote" + (hasVotedToday ? " voted" : "") + (voteLoading ? " loading" : "") + (voteSuccess ? " success" : "")}
-                        onClick={submitVote}
-                        disabled={voteLoading}
-                        aria-label={hasVotedToday ? "Already voted today" : "Vote for this artist"}
-                      >
-                        {voteSuccess ? "Voted!" : hasVotedToday ? "Voted" : "Vote"}
-                      </button>
                       {genreLabel && <span className={"pill" + (genrePill?.accent ? " accent" : "")}>{genreLabel}</span>}
                       <span className="pill">{seasonLabel}</span>
                     </div>
                   );
                 })()}
-                {showVoteModal === "non-member" && (
-                  <div className="vote-modal">
-                    <p>You need to be a member in order to vote. Membership is free. Register today.</p>
-                    <div className="vote-modal-actions">
-                      <a href="/passport" className="vote-modal-cta">Get Passport - Free</a>
-                      <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Dismiss</button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -1150,7 +1189,21 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     </div>
                   )}
 
-                  {pulseChannel === "social" && (
+                  {/* 2026-07-26 per Sean: Pulse (News) stays open to everyone, but
+                      Social and Group Chat are the paid-member benefit - gated on the
+                      same $11 artist unlock as the catalog, not a separate membership
+                      tier. Super admins keep full visibility for QA. */}
+                  {pulseChannel === "social" && !(unlockedArtist || isSuperAdmin) && (
+                    <div className="locked-panel">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                      <div className="lp-title">Social is part of the Full Experience</div>
+                      <p className="lp-sub">Unlock {name}&apos;s Full Experience for $11 to see posts and join the conversation.</p>
+                      <button className="mp-btn-buy" onClick={handleUnlockArtist} disabled={unlockLoading}>
+                        {unlockLoading ? "Redirecting..." : "Unlock - $11"}
+                      </button>
+                    </div>
+                  )}
+                  {pulseChannel === "social" && (unlockedArtist || isSuperAdmin) && (
                     !c.pulse || c.pulse.length === 0 ? (
                       <div className="pulse-empty"><p>Posts coming soon.</p></div>
                     ) : (
@@ -1449,8 +1502,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     <p className="mp-catalog-note">
                       {hasFullAccess
                         ? "You've unlocked every song by " + name + ", released or not."
-                        : "Every song plays free once it's officially released. Unlock the Full Experience once for $11 to hear everything by " + name + " right now, including tracks that haven't dropped yet."}
+                        : "Every song plays free once it's officially released. Unlock the Full Experience once for $11 to hear everything by " + name + " right now, including tracks that haven't dropped yet. Be sure to like your favorite songs to help " + name + " rise on the leaderboard."}
                     </p>
+                    {showVoteModal === "non-member" && (
+                      <div className="vote-modal">
+                        <p>You need to be a member in order to like a song. Membership is free. Register today.</p>
+                        <div className="vote-modal-actions">
+                          <a href="/passport" className="vote-modal-cta">Get Passport - Free</a>
+                          <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Dismiss</button>
+                        </div>
+                      </div>
+                    )}
                     {unlockError && <p className="pur-error">{unlockError}</p>}
 
                     <div className={"mp-rows" + (useRowLyrics ? " mp-rows-row-lyrics" : "")}>
@@ -1469,6 +1531,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         // for those rows anymore.
                         if (useRowLyrics && locked) {
                           return (
+                            // Fixed 2026-07-26 per Sean: this button read as disabled/grayed
+                            // even though it was always clickable - the whole row had a
+                            // blanket opacity applied to it in CSS. The row background still
+                            // reads as "not yet available" but the button itself now renders
+                            // at full strength, and the label is just "Unlock" (the price is
+                            // already stated in the full-catalog CTA and copy above).
                             <div key={i} className="mp-row mp-row-locked-cta">
                               <div className="mp-row-thumb mp-row-thumb-locked" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={13} height={13}><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
@@ -1483,7 +1551,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 disabled={unlockLoading}
                                 aria-label={`Unlock the full GeekFon Society experience for ${name}`}
                               >
-                                {unlockLoading ? "..." : "Unlock $11"}
+                                {unlockLoading ? "..." : "Unlock"}
                               </button>
                             </div>
                           );
@@ -1519,6 +1587,21 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   <span className="mp-time">{duration > 0 ? fmtTime(duration) : "--:--"}</span>
                                 </div>
                               </div>
+                              {/* 2026-07-26 per Sean: heart button replaces the old header
+                                  "Vote" pill - liking a song IS the vote for the artist now.
+                                  Reuses the existing gfs_artist_votes backend (submitVote),
+                                  so it's still one counted vote per artist per day; the heart
+                                  just shows filled once today's vote has landed, regardless of
+                                  which song's heart you clicked. */}
+                              <button
+                                className={"mp-row-heart" + (hasVotedToday ? " voted" : "") + (voteLoading ? " loading" : "")}
+                                onClick={submitVote}
+                                disabled={voteLoading}
+                                aria-label={hasVotedToday ? `Already voted for ${name} today` : `Like ${t.n} and vote for ${name}`}
+                                title={hasVotedToday ? "Voted today" : "Like this song - votes for " + name}
+                              >
+                                <svg viewBox="0 0 24 24" fill={hasVotedToday ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                              </button>
                               <button
                                 className={"mp-chip" + (rowLyricsOpen ? " active" : "")}
                                 onClick={() => setRowLyricsOpenIdx(prev => prev === i ? null : i)}
