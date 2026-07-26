@@ -83,7 +83,7 @@ export default function ArtistRankingsPage() {
       <div className="t10-head">
         <div className="t10-eyebrow">Season 1</div>
         <h1 className="t10-title">Artist Rankings</h1>
-        <p className="t10-sub">Rankings reset every Monday. Score = plays (40%) + page views (30%) + votes (30%).</p>
+        <p className="t10-sub">Score = plays + votes + $11 artist unlocks, weighted. Cumulative all-time, never resets.</p>
       </div>
 
       <div className="t10-season-bar">
@@ -141,7 +141,7 @@ export default function ArtistRankingsPage() {
           })}
 
           <div className="t10-footnote">
-            Score = weighted total of plays (40%), page views (30%), and votes (30%). Rankings reset every Monday at midnight.
+            Score = plays + votes + $11 artist unlocks (each unlock counts extra). Cumulative all-time - this never resets.
           </div>
         </div>
       )}
@@ -150,7 +150,7 @@ export default function ArtistRankingsPage() {
         <div className="t10-vote-inner">
           <div className="t10-vote-copy">
             <div className="t10-vote-title">Cast your vote</div>
-            <p className="t10-vote-sub">Passport members can vote once per week. Your vote counts toward the weekly score.</p>
+            <p className="t10-vote-sub">Passport members can vote once per day, per artist. Your vote adds to their all-time score.</p>
           </div>
           <a href="/roster" className="t10-vote-cta">Browse All Artists</a>
         </div>
