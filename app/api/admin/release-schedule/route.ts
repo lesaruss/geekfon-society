@@ -78,3 +78,43 @@ export async function PUT(req: Request) {
 
   return NextResponse.json({ ok: true });
 }
+
+
+export async function POST(req: Request) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
+  const { slug, name } = await req.json();
+  if (!slug || !name) {
+    return NextResponse.json({ error: "Missing slug or name" }, { status: 400 });
+  }
+  // Keep the slug format sane regardless of what the client sent - lowercase,
+  // hyphen-separated, no leading/trailing hyphens. Matches every existing
+  // gfs_artists.slug value (e.g. "lex-from-brixton").
+  const cleanSlug = String(slug).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-+|-+$)/g, "");
+  if (!cleanSlug) {
+    return NextResponse.json({ error: "Slug is empty after cleanup" }, { status: 400 });
+  }
+
+  const admin = createClient(SB_URL, SB_SVC, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data: existing } = await admin
+    .from("gfs_artists")
+    .select("slug")
+    .eq("slug", cleanSlug)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json({ error: `An artist with slug "${cleanSlug}" already exists` }, { status: 409 });
+  }
+
+  const { error } = await admin
+    .from("gfs_artists")
+    .insert({ slug: cleanSlug, name, profile: { name, tracks: [] } });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ ok: true, slug: cleanSlug });
+}
