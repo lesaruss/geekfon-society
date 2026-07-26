@@ -64,20 +64,9 @@ const FON_COLORS = [
   "#2ec4b6","#ff9f1c","#7fb069","#8e44ad","#c8922a",
 ];
 
-// "Society" in 5 languages: English, Japanese, Korean, German, Zulu
-const SOCIETY_LANGS = [
-  "Society",
-  "社会",
-  "사회",
-  "Gesellschaft",
-  "Umphakathi",
-];
-
 export default function HomePage() {
   const [current, setCurrent] = useState(0);
   const [fonIdx, setFonIdx] = useState(0);
-  const [societyIdx, setSocietyIdx] = useState(0);
-  const [societyVisible, setSocietyVisible] = useState(true);
   const currentRef = useRef(0);
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -95,18 +84,6 @@ export default function HomePage() {
   // FON color cycle
   useEffect(() => {
     const t = setInterval(() => setFonIdx((i) => (i + 1) % FON_COLORS.length), 1800);
-    return () => clearInterval(t);
-  }, []);
-
-  // Society language cycle with fade
-  useEffect(() => {
-    const t = setInterval(() => {
-      setSocietyVisible(false);
-      setTimeout(() => {
-        setSocietyIdx((i) => (i + 1) % SOCIETY_LANGS.length);
-        setSocietyVisible(true);
-      }, 350);
-    }, 3200);
     return () => clearInterval(t);
   }, []);
 
@@ -346,18 +323,14 @@ export default function HomePage() {
                 Fon
               </span>
             </div>
-            <div
-              className="hero-tagline-inner"
-              style={{
-                opacity: societyVisible ? 1 : 0,
-                transition: "opacity 0.35s ease",
-              }}
-            >
-              {SOCIETY_LANGS[societyIdx]}
-            </div>
+            <div className="hero-tagline-inner">Society</div>
           </div>
           <h1 className="sr-only">GeekFon Society</h1>
 
+          {/* 2026-07-26 per Sean: replaced the orange "GeekFon Radio" pill with
+              just a translucent play/pause triangle centered over the circle -
+              visible as an affordance without covering the artwork, with a
+              soft pulse to invite the click. Same handleRadioToggle wiring. */}
           <button
             className={"hero-radio-btn" + (radioPlaying ? " playing" : "")}
             onClick={handleRadioToggle}
@@ -371,7 +344,6 @@ export default function HomePage() {
             ) : (
               <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4" /></svg>
             )}
-            <span className="hero-radio-label">GeekFon Radio</span>
           </button>
         </div>
 
@@ -434,17 +406,21 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
 .hero-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:15%;}
 .hero-title{font-size:clamp(34px,9vw,56px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;line-height:1;text-align:center;white-space:nowrap;text-shadow:0 0 30px rgba(0,0,0,1),0 0 70px rgba(0,0,0,.9),0 2px 14px rgba(0,0,0,1);}
 
-/* GeekFon Radio play button - overlaps the bottom edge of the hero circle */
-.hero-radio-btn{position:absolute;left:50%;bottom:2%;transform:translateX(-50%);z-index:5;display:inline-flex;align-items:center;gap:7px;background:#F69820;color:#1a1a1a;border:none;border-radius:100px;padding:9px 18px 9px 12px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.4),0 0 0 3px #020c0a;transition:transform .15s,background .15s;pointer-events:all;}
-.hero-radio-btn:hover:not(:disabled){background:#e08818;transform:translateX(-50%) translateY(-1px);}
+/* GeekFon Radio play button - 2026-07-26 v2 per Sean: just a translucent
+   triangle centered over the circle/logo, not a solid pill. Glassy circular
+   backdrop so it reads as a button without hiding the artwork behind it, plus
+   a soft pulsing ring while idle to invite the click. */
+.hero-radio-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6;width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);cursor:pointer;transition:background .18s,border-color .18s,transform .15s;pointer-events:all;}
+.hero-radio-btn:hover:not(:disabled){background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.65);transform:translate(-50%,-50%) scale(1.06);}
 .hero-radio-btn:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
-.hero-radio-btn:disabled{opacity:.7;cursor:default;}
-.hero-radio-btn svg{width:13px;height:13px;fill:currentColor;flex-shrink:0;}
-.hero-radio-btn.playing{background:#1a1a1a;color:#F69820;box-shadow:0 4px 18px rgba(0,0,0,.4),0 0 0 3px #020c0a,0 0 0 1px #F69820;}
-.hero-radio-label{white-space:nowrap;}
-.hero-radio-spinner{width:13px;height:13px;border:2px solid rgba(26,26,26,.3);border-top-color:#1a1a1a;border-radius:50%;animation:heroRadioSpin .7s linear infinite;flex-shrink:0;}
+.hero-radio-btn:disabled{cursor:default;}
+.hero-radio-btn svg{width:24px;height:24px;fill:rgba(255,255,255,.94);filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));}
+.hero-radio-btn.playing{background:rgba(2,12,10,.32);}
+.hero-radio-btn:not(.playing):not(:disabled){animation:heroRadioPulse 2.6s ease-in-out infinite;}
+@keyframes heroRadioPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.28);}50%{box-shadow:0 0 0 12px rgba(255,255,255,0);}}
+.hero-radio-spinner{width:20px;height:20px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:heroRadioSpin .7s linear infinite;}
 @keyframes heroRadioSpin{to{transform:rotate(360deg);}}
-@media(prefers-reduced-motion:reduce){.hero-radio-spinner{animation:none;}}
+@media(prefers-reduced-motion:reduce){.hero-radio-spinner{animation:none;}.hero-radio-btn{animation:none!important;}}
 
 /* Society text: fixed size, overflow ellipsis so long words (Gesellschaft) don't break layout */
 .hero-tagline-inner{
@@ -487,6 +463,7 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
   .city-stage::before{height:30%;}
   .city-panel img{object-position:center center;}
   .hero-circle-wrap{width:min(280px,70vw);height:min(280px,70vw);}
-  .hero-radio-btn{padding:8px 14px 8px 10px;font-size:8px;bottom:0;}
+  .hero-radio-btn{width:58px;height:58px;}
+  .hero-radio-btn svg{width:20px;height:20px;}
 }
 `;
