@@ -102,6 +102,7 @@ const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolea
   { key: "music",    label: "Music" },
   { key: "pulse",    label: "Pulse" },
   { key: "social",   label: "Social" },
+  { key: "group",    label: "Group" },
   { key: "members",  label: "Members", needsMembers: true },
   { key: "brief",    label: "Brief", admin: true },
 ];
@@ -110,16 +111,15 @@ const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolea
 // until it's populated - Sean, 2026-07-13.
 const POPULATED_PULSE_ARTISTS = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
 
-// `locked` here means "not built yet" (disables the tab entirely, see the
-// PULSE_CHANNELS.map onClick below). Social moved out to its own top-level
-// tab 2026-07-26 (see TABS above + the `tab === "social"` section below) and
-// is no longer a Pulse channel. Group Chat is still not-yet-shipped; per
-// Sean 2026-07-26 it gates the same way Social now does - free registration
-// (isRegistered()), NOT the $11 artist unlock - once it ships.
-const PULSE_CHANNELS: { key: "news" | "groupchat"; label: string; locked?: boolean }[] = [
-  { key: "news",      label: "News" },
-  { key: "groupchat", label: "Group Chat", locked: true },
-];
+// Social moved out to its own top-level tab 2026-07-26 (see TABS above + the
+// `tab === "social"` section below) and is no longer a Pulse channel. Group
+// Chat pulled out the same way 2026-07-26 per Sean, into its own top-level
+// "Group" tab (label shortened from "Group Chat" - too long for the tab bar).
+// Pulse is now just the News feed directly, no channel-pill sub-nav since
+// there's only one channel left in it. Group gates the same way Social does -
+// free registration (isRegistered()), NOT the $11 artist unlock - the chat
+// feature itself isn't built yet, so registered visitors see a "coming soon"
+// panel there for now (see the `tab === "group"` section below).
 
 const PLAY = <svg viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4" /></svg>;
 const PAUSE = <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>;
@@ -572,7 +572,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
   const [pulseShown, setPulseShown] = useState(3);
-  const [pulseChannel, setPulseChannel] = useState<"news" | "groupchat">("news");
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
   const [lyricsLang, setLyricsLang] = useState<"original" | "en">("en");
@@ -858,9 +857,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // 2026-07-26 per Sean: split the old single "unlockedArtist" gate into two
   // tiers. Free registration (any gfs_members row - the same "member" concept
   // submitVote already required to like a song) now unlocks liking songs,
-  // previewing unreleased tracks, and the Social tab (+ Group Chat once it
-  // ships). The $11 per-artist unlock is reserved for hearing FULL unreleased
-  // songs past the preview cap - it no longer gates Social/Group Chat.
+  // previewing unreleased tracks, and the Social + Group tabs (Group Chat
+  // itself still isn't built - the tab shows a "coming soon" panel once
+  // registered - but the tab is reachable and gates the same way). The $11
+  // per-artist unlock is reserved for hearing FULL unreleased songs past the
+  // preview cap - it no longer gates Social/Group.
   function isRegistered(): boolean {
     if (isSuperAdmin && viewAs === "real") return true;
     return !!effectiveTier;
@@ -1135,7 +1136,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               (!t.admin || canSeeBrief) &&
               (!t.needsMembers || (c.members && c.members.length > 0)) &&
               (t.key !== "pulse" || canSeePulse) &&
-              (t.key !== "social" || canSeePulse)
+              (t.key !== "social" || canSeePulse) &&
+              (t.key !== "group" || canSeePulse)
             );
             return (
               <div className="tabbar" role="tablist">
@@ -1197,7 +1199,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   </a>
                 </div>
               ) : (
-              <>{/* Pulse tab - merged News + Social + Group Chat channels */}
+              <>{/* Pulse tab - News feed only now that Social and Group each have
+                  their own top-level tab (2026-07-26 per Sean). No channel-pill
+                  sub-nav needed for a single channel - this is just the content
+                  that used to sit under the "News" pill, moved up a level. */}
               {/* Defense in depth: also gate the actual content, not just the tab button,
                   since ?tab=pulse can set tab state directly from a deep link. */}
               {tab === "pulse" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
@@ -1207,59 +1212,33 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               )}
               {tab === "pulse" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
                 <section className="pulse-section">
-                  <div className="channel-row" role="tablist" aria-label="Pulse channel">
-                    {PULSE_CHANNELS.map(ch => (
-                      <button
-                        key={ch.key}
-                        className="channel-btn"
-                        aria-selected={pulseChannel === ch.key}
-                        disabled={ch.locked}
-                        title={ch.locked ? "Ships when Group Chat launches" : undefined}
-                        onClick={() => !ch.locked && setPulseChannel(ch.key)}
-                      >
-                        {ch.label}
-                        {ch.locked && <span className="channel-soon">Coming Soon</span>}
-                      </button>
+                  <div className="pulse-articles-grid">
+                    {pulseArticles.map((n, i) => (
+                      <div key={i} className="pulse-article-card">
+                        <a href={n.href || "#"} className="pf-article-img">
+                          {n.thumb
+                            ? <img src={n.thumb} alt={n.title || ""} />
+                            : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
+                          }
+                          {n.videoUrl && (
+                            <span className="article-play-badge" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            </span>
+                          )}
+                          {n.tag && <span className="article-tag">{n.tag}</span>}
+                        </a>
+                        <div className="pf-article-body">
+                          {n.date && <div className="pf-article-date">{n.date}</div>}
+                          {n.title && <a href={n.href || "#"} className="pf-article-title pf-article-title-link">{n.title}</a>}
+                          {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
+                          <a href={n.href || "#"} className="article-cta">
+                            Read more
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                          </a>
+                        </div>
+                      </div>
                     ))}
                   </div>
-
-                  {pulseChannel === "news" && (
-                    <div className="pulse-articles-grid">
-                      {pulseArticles.map((n, i) => (
-                        <div key={i} className="pulse-article-card">
-                          <a href={n.href || "#"} className="pf-article-img">
-                            {n.thumb
-                              ? <img src={n.thumb} alt={n.title || ""} />
-                              : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
-                            }
-                            {n.videoUrl && (
-                              <span className="article-play-badge" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                              </span>
-                            )}
-                            {n.tag && <span className="article-tag">{n.tag}</span>}
-                          </a>
-                          <div className="pf-article-body">
-                            {n.date && <div className="pf-article-date">{n.date}</div>}
-                            {n.title && <a href={n.href || "#"} className="pf-article-title pf-article-title-link">{n.title}</a>}
-                            {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
-                            <a href={n.href || "#"} className="article-cta">
-                              Read more
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                            </a>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {pulseChannel === "groupchat" && (
-                    <div className="locked-panel">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-                      <div className="lp-title">Group Chat is coming soon</div>
-                      <p className="lp-sub">Live chat with {name} and other members lands here once Group Chat ships across GeekFon Society - free to join once you have an account, just like Social.</p>
-                    </div>
-                  )}
                 </section>
               )}
 
@@ -1283,7 +1262,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       else that respects viewAs. */}
                   {!isRegistered() && (
                     <div className="locked-panel">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                      {/* Heart icon removed 2026-07-26 per Sean - title + copy + CTA is enough. */}
                       <div className="lp-title">Social is a free member benefit</div>
                       <p className="lp-sub">Create a free account to see {name}&apos;s posts and join the conversation.</p>
                       <a
@@ -1350,6 +1329,44 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         )}
                       </div>
                     )
+                  )}
+                </section>
+              )}
+
+              {/* 2026-07-26 per Sean: Group Chat pulled out of the Pulse channel-pill
+                  (where it was unreachable - `locked` disabled the pill entirely) into
+                  its own top-level tab, labeled "Group" (shorter than "Group Chat" for
+                  the tab bar). Gates identically to Social - free registration
+                  (isRegistered()), not the $11 artist unlock. The chat feature itself
+                  isn't built yet, so a registered visitor sees the same "coming soon"
+                  message that used to live in the disabled Pulse pill; an unregistered
+                  visitor sees the same register-gate pattern as Social (no icon, per
+                  the same 2026-07-26 cleanup). */}
+              {tab === "group" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+                <section className="pulse-section">
+                  <div className="pulse-empty"><p>Group for {c.name || "this artist"} is still being built. Check back soon.</p></div>
+                </section>
+              )}
+              {tab === "group" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+                <section className="pulse-section">
+                  {!isRegistered() && (
+                    <div className="locked-panel">
+                      <div className="lp-title">Group is a free member benefit</div>
+                      <p className="lp-sub">Create a free account to join the conversation with {name} and other members.</p>
+                      <a
+                        className="mp-btn-buy"
+                        href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
+                      >
+                        Sign Up Free
+                      </a>
+                    </div>
+                  )}
+                  {isRegistered() && (
+                    <div className="locked-panel">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                      <div className="lp-title">Group Chat is coming soon</div>
+                      <p className="lp-sub">Live chat with {name} and other members lands here once Group Chat ships across GeekFon Society - free to join, no unlock required.</p>
+                    </div>
                   )}
                 </section>
               )}
