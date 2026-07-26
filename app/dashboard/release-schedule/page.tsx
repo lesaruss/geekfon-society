@@ -695,21 +695,28 @@ const RS_CSS = `
    pushed it off-screen entirely - "I don't know which song it is because it doesn't
    have the title... things are cut off." Header labels are dropped (each control is
    self-labeling: S1/S2/S3, tier color+text, a date input, Audio/None text, P/F/R
-   checkboxes) and the title gets forced onto its own full-width line so it is always
-   readable, with the rest of the controls wrapping compactly below it. No DOM/JSX
-   changes, pure CSS reflow - drag-to-reorder still works. */
+   checkboxes).
+
+   2026-07-26 round 2 per Sean: "make the box for the title shorter so we can put the
+   up/down arrows with the number next to it, to the right" - collapses mobile from 4
+   rows to 3 by sharing the title's row instead of giving title a full-width row of its
+   own. Drag handle is hidden on mobile (native HTML5 drag never fired on touch anyway,
+   see reference_html5_dnd_no_touch_support - it was dead weight taking up space once
+   the arrows existed). Title now flexes/shrinks instead of forcing 100% width, with
+   the track number + up/down arrows sitting to its right on the same line. Row 2 is
+   season+tier+date, row 3 is audio+flags. */
 @media (max-width: 640px) {
   .rs-track-head { display: none; }
   .rs-track-row { flex-wrap: wrap; row-gap: 8px; padding: 10px 12px; }
-  .rs-drag-handle { order: 1; }
-  .rs-reorder { order: 2; flex-direction: row; gap: 6px; }
-  .rs-reorder-btn { width: 32px; height: 28px; }
-  .rs-num { order: 3; }
-  .rs-input.rs-th-grow { order: 4; flex-basis: 100%; width: 100%; margin: 2px 0 2px 0; }
-  .rs-sel { order: 5; }
-  .rs-date-cell { order: 6; }
-  .rs-audio-cell { order: 7; }
-  .rs-flags { order: 8; }
+  .rs-drag-handle { display: none; }
+  .rs-input.rs-th-grow { order: 1; flex: 1 1 auto; width: auto; min-width: 0; margin: 0; }
+  .rs-num { order: 2; width: auto; flex-shrink: 0; }
+  .rs-reorder { order: 3; flex-direction: row; gap: 4px; flex-shrink: 0; }
+  .rs-reorder-btn { width: 30px; height: 28px; }
+  .rs-sel { order: 4; }
+  .rs-date-cell { order: 5; }
+  .rs-audio-cell { order: 6; }
+  .rs-flags { order: 7; }
 }
 `;
 
