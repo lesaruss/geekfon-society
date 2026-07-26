@@ -107,8 +107,15 @@ const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolea
   { key: "brief",    label: "Brief", admin: true },
 ];
 
-// Artists with real Pulse content built out. Everyone else's Pulse is Super Admin-only
-// until it's populated - Sean, 2026-07-13.
+// Artists with real, artist-voiced Pulse/News content built out. Everyone else's
+// Pulse/Social/Group tabs show a "Coming Soon" placeholder instead of content
+// (see the `!POPULATED_PULSE_ARTISTS.includes` branches below) - but per Sean,
+// 2026-07-26 (second pass), the TABS THEMSELVES are no longer hidden for
+// non-populated artists. Previously this list also drove visibleTabs, which
+// meant every artist except these four only showed a bare "Music" tab - it
+// looked like a different, unfinished product next to Lex's page instead of
+// the same site with content still being written. Tab bar is now identical
+// across every artist; only the in-tab content differs.
 const POPULATED_PULSE_ARTISTS = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
 
 // Social moved out to its own top-level tab 2026-07-26 (see TABS above + the
@@ -1145,12 +1152,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             // (Roxanne, Lex from Brixton, Shamanic Resin, Riku) until their Pulse content
             // is actually populated - Sean, 2026-07-13. Not a tier perk, an account-only gate.
             const canSeePulse = isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "");
+            // 2026-07-26 (2nd pass) per Sean: the tab bar itself must be identical on
+            // every artist page, same as Lex's - canSeePulse still gates the CONTENT
+            // inside Pulse/Social/Group (real posts vs. "Coming Soon"), it just no
+            // longer removes the tab buttons themselves.
             const visibleTabs = TABS.filter(t =>
               (!t.admin || canSeeBrief) &&
-              (!t.needsMembers || (c.members && c.members.length > 0)) &&
-              (t.key !== "pulse" || canSeePulse) &&
-              (t.key !== "social" || canSeePulse) &&
-              (t.key !== "group" || canSeePulse)
+              (!t.needsMembers || (c.members && c.members.length > 0))
             );
             return (
               <div className="tabbar" role="tablist">
@@ -1220,7 +1228,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   since ?tab=pulse can set tab state directly from a deep link. */}
               {tab === "pulse" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
                 <section className="pulse-section">
-                  <div className="pulse-empty"><p>Pulse content for {c.name || "this artist"} is still being built. Check back soon.</p></div>
+                  <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Pulse content for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
               {tab === "pulse" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
@@ -1263,7 +1271,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   c.pulse content, just relocated. */}
               {tab === "social" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
                 <section className="pulse-section">
-                  <div className="pulse-empty"><p>Social for {c.name || "this artist"} is still being built. Check back soon.</p></div>
+                  <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Social for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
               {tab === "social" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
@@ -1357,7 +1365,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   the same 2026-07-26 cleanup). */}
               {tab === "group" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
                 <section className="pulse-section">
-                  <div className="pulse-empty"><p>Group for {c.name || "this artist"} is still being built. Check back soon.</p></div>
+                  <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Group for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
               {tab === "group" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
@@ -1523,14 +1531,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
 
                 // 2026-07-24: Sean's direction - the hero "now playing" card was too
                 // big and duplicated the play control (orb up top + a second Play
-                // button in the action row). Piloting a leaner layout on Lex from
-                // Brixton only: no hero section at all, play + lyrics controls live
-                // directly on each song row, and the currently-playing/selected song
-                // is communicated purely via the row highlight (.mp-row.current,
-                // which already existed). If this reads well, extend useRowLyrics to
-                // the rest of the roster - see ArtistCard/roster precedent for
-                // per-slug piloting in app/roster/page.tsx (Roxanne's image crop).
-                const useRowLyrics = slug === "lex-from-brixton";
+                // button in the action row). Piloted on Lex from Brixton only: no
+                // hero section at all, play + lyrics controls live directly on each
+                // song row, and the currently-playing/selected song is communicated
+                // purely via the row highlight (.mp-row.current, which already
+                // existed). 2026-07-26 (2nd pass) per Sean: the pilot read well,
+                // activated for every artist - this is now the standard Music-tab
+                // layout, not a Lex-only exception.
+                const useRowLyrics = true;
 
                 // 2026-07-24 round 3: super-admins viewing "as real" already bypass every
                 // preview cap (see isPreviewCappedTrack above), so the "Unlock Full
