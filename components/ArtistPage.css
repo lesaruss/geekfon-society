@@ -239,9 +239,19 @@
   .mp-rows-row-lyrics .mp-row-scrub .mp-time{display:none}
 }
 @media(max-width:768px){
-  .mp-rows-row-lyrics .mp-row{grid-template-columns:36px 1fr auto;gap:10px;padding:10px 12px}
+  /* Fixed 2026-07-26: this used to declare only 3 columns (36px 1fr auto),
+     a leftover from before the heart-vote + lyrics-icon columns shipped.
+     On mobile it outranked .mp-row-play's 4-column rule (higher specificity,
+     later in source), so the 4th grid item (Lyrics icon) had no column and
+     wrapped to a new row under the play button. Now matches all 4 columns
+     and trims gap/icon size so everything fits on one row on narrow phones. */
+  .mp-rows-row-lyrics .mp-row{grid-template-columns:36px 1fr auto auto;gap:8px;padding:10px 12px}
   .mp-rows-row-lyrics .mp-row-state .mp-chip{padding:5px 9px;font-size:10px}
   .mp-rows-row-lyrics .mp-btn-pre{padding:6px 11px;font-size:11px}
+  .mp-rows-row-lyrics .mp-row-heart,.mp-rows-row-lyrics .mp-row-lyrics-btn{width:28px;height:28px}
+  .mp-rows-row-lyrics .mp-row-heart svg{width:14px;height:14px}
+  .mp-rows-row-lyrics .mp-row-lyrics-btn svg{width:13px;height:13px}
+  .mp-rows-row-lyrics .mp-row-scrub .mp-bar{max-width:100%}
 }
 .mp-btn-pre:hover:not(:disabled){border-color:var(--rx);color:var(--rx)}
 .mp-btn-pre.disabled,.mp-btn-pre:disabled{opacity:.4;cursor:not-allowed;color:rgba(26,26,26,.45)}
