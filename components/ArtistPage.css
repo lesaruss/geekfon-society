@@ -556,6 +556,11 @@
     .pulse-load-btn { padding: 12px 32px; background: #1a1a1a; color: white; border: none; border-radius: 4px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; }
     .pulse-load-btn:hover { background: #333; }
     .pulse-empty { text-align: center; padding: 60px 20px; color: #999; }
+    /* 2026-07-26 per Sean: tab bar is now identical across every artist, so the
+       Coming Soon message inside Pulse/Social/Group for not-yet-populated
+       artists needs a clear heading of its own instead of reading as a single
+       flat sentence. */
+    .pulse-empty-title { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(26,26,26,.55); margin-bottom: 8px; }
 
 
 /* ===== City background CSS (scoped to .has-city-bg / .apg-* elements, only rendered when a city bg exists) ===== */
