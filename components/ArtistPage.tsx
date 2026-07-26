@@ -1058,6 +1058,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // ── Pulse feed ────────────────────────────────────────────────────────────────
   const msg = c.message || {};
   const hasMsg = !!(msg.ja || msg.en);
+  // 2026-07-26 (3rd pass) per Sean's report: hoisted to a single top-level const
+  // instead of being recomputed inline at six separate call sites (tab bar
+  // filter + the pulse/social/group content gates). The duplicated inline
+  // copies all read bare `isSuperAdmin`, ignoring the admin view-as simulator -
+  // only the tab-bar copy had been fixed to respect `viewAs`, so switching to
+  // "View as: Visitor" still showed the real-admin content path everywhere
+  // else. One shared value means there's only one place left to get this right.
+  const canSeePulse = (isSuperAdmin && viewAs === "real") || POPULATED_PULSE_ARTISTS.includes(slug || "");
   const publishedNews = (c.news || []).filter((n: News) => !n.draft);
   // 2026-07-26 (3rd pass) per Sean: this used to fall back to PLACEHOLDER_NEWS
   // (hardcoded, Roxanne-branded sample copy) whenever an artist had no real
@@ -1157,23 +1165,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             // (commit 27e1b12) - the admin bypass must only apply in the real,
             // non-simulated view.
             const canSeeBrief = (isSuperAdmin && viewAs === "real") || (!!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 3);
-            // Pulse is locked to Super Admin only for artists outside the original 4
-            // (Roxanne, Lex from Brixton, Shamanic Resin, Riku) until their Pulse content
-            // is actually populated - Sean, 2026-07-13. Not a tier perk, an account-only gate.
-            // 2026-07-26 (3rd pass) per Sean's report: bare isSuperAdmin here ignored the
-            // admin view-as simulator, same bug class already fixed for the Social gate
-            // today (commit 27e1b12). Result: switching to "View as: Visitor" still took
-            // the real-admin content path, which falls through to the hardcoded
-            // PLACEHOLDER_NEWS array below (literal Roxanne copy, "Roxanne Steps Into the
-            // Light") for any artist with no real news - that's what looked like "some
-            // artists have Roxanne's content." Gating on (isSuperAdmin && viewAs ===
-            // "real") instead means the simulator now actually shows what a real visitor
-            // sees: Coming Soon for unpopulated artists, not Roxanne's placeholder text.
-            const canSeePulse = (isSuperAdmin && viewAs === "real") || POPULATED_PULSE_ARTISTS.includes(slug || "");
-            // 2026-07-26 (2nd pass) per Sean: the tab bar itself must be identical on
-            // every artist page, same as Lex's - canSeePulse still gates the CONTENT
-            // inside Pulse/Social/Group (real posts vs. "Coming Soon"), it just no
-            // longer removes the tab buttons themselves.
+            // canSeePulse is now a single hoisted const above (top of component) instead
+            // of a locally re-declared one here - see that declaration for the full
+            // history. 2026-07-26 (2nd pass) per Sean: the tab bar itself must be
+            // identical on every artist page, same as Lex's - canSeePulse still gates
+            // the CONTENT inside Pulse/Social/Group (real posts vs. "Coming Soon"), it
+            // just no longer removes the tab buttons themselves.
             const visibleTabs = TABS.filter(t =>
               (!t.admin || canSeeBrief) &&
               (!t.needsMembers || (c.members && c.members.length > 0))
@@ -1244,12 +1241,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   that used to sit under the "News" pill, moved up a level. */}
               {/* Defense in depth: also gate the actual content, not just the tab button,
                   since ?tab=pulse can set tab state directly from a deep link. */}
-              {tab === "pulse" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+              {tab === "pulse" && !canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Pulse content for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
-              {tab === "pulse" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+              {tab === "pulse" && canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-articles-grid">
                     {pulseArticles.map((n, i) => (
@@ -1287,12 +1284,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   benefit now, the $11 unlock is reserved for full unreleased songs.
                   Same population gate as Pulse (canSeePulse) since it's the same
                   c.pulse content, just relocated. */}
-              {tab === "social" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+              {tab === "social" && !canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Social for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
-              {tab === "social" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+              {tab === "social" && canSeePulse && (
                 <section className="pulse-section">
                   {/* isRegistered() already bypasses for a REAL super admin (viewAs
                       "real"); deliberately NOT also checking bare isSuperAdmin here so
@@ -1381,12 +1378,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   message that used to live in the disabled Pulse pill; an unregistered
                   visitor sees the same register-gate pattern as Social (no icon, per
                   the same 2026-07-26 cleanup). */}
-              {tab === "group" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+              {tab === "group" && !canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Group for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
-              {tab === "group" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+              {tab === "group" && canSeePulse && (
                 <section className="pulse-section">
                   {!isRegistered() && (
                     <div className="locked-panel">
