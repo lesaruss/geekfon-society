@@ -205,6 +205,14 @@
 .mp-row-playbtn svg{width:13px;height:13px;fill:currentColor}
 .mp-row-mid{min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
 .mp-row-mid .mp-row-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 2026-07-26 per Sean: registered-but-not-unlocked tracks in the row-lyrics
+   (Lex) layout are now playable (30s capped preview) instead of the old
+   no-playback locked-cta row - this small tag next to the title marks that
+   state. Wrapped in its own flex row (not inside .mp-row-title itself) so
+   the title's ellipsis-truncation doesn't clip the tag on long track names. */
+.mp-row-title-line{display:flex;align-items:center;gap:6px;min-width:0}
+.mp-row-title-line .mp-row-title{min-width:0}
+.mp-row-preview-tag{flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--rx-text);background:var(--rx-tint);padding:2px 7px;border-radius:999px;white-space:nowrap}
 .mp-row-scrub{display:flex;align-items:center;gap:8px}
 .mp-row-scrub .mp-time{font-size:11px;color:rgba(26,26,26,.45);font-variant-numeric:tabular-nums;min-width:30px;text-align:center;font-weight:700}
 .mp-row-scrub .mp-bar{flex:1;max-width:78%;height:5px;border-radius:999px;background:#ececf2;position:relative;cursor:pointer;touch-action:none}
@@ -255,7 +263,7 @@
 }
 .mp-btn-pre:hover:not(:disabled){border-color:var(--rx);color:var(--rx)}
 .mp-btn-pre.disabled,.mp-btn-pre:disabled{opacity:.4;cursor:not-allowed;color:rgba(26,26,26,.45)}
-.mp-btn-buy{border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;background:#1f8f50;color:#fff;border:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
+.mp-btn-buy{display:inline-block;text-align:center;text-decoration:none;border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;background:#1f8f50;color:#fff;border:none;cursor:pointer;font-family:inherit;transition:.12s;white-space:nowrap}
 .mp-btn-buy:hover{background:#17763f}
 .mp-btn-owned{display:inline-flex;align-items:center;gap:5px;border-radius:999px;font-weight:800;font-size:12px;padding:7px 14px;background:var(--rx-tint);color:var(--rx-text);white-space:nowrap}
 @media(max-width:768px){
