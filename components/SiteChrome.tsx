@@ -1,3 +1,4 @@
+===== components/SiteChrome.tsx =====
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -19,7 +20,6 @@ const NAV_PASSPORT: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
   { label: "Roster",          href: "/roster" },
   { label: "Library",         href: "/dashboard/library" },
-  { label: "Leaderboard",     href: "/dashboard/leaderboard" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "GeekFon Radio",   href: "/radio" },
 ];
@@ -28,7 +28,6 @@ const NAV_PLUS: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
   { label: "Roster",          href: "/roster" },
   { label: "Library",         href: "/dashboard/library" },
-  { label: "Leaderboard",     href: "/dashboard/leaderboard" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Plus",            href: "/plus" },
   { label: "GeekFon Radio",   href: "/radio" },
@@ -38,7 +37,6 @@ const NAV_PRO: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
   { label: "Roster",          href: "/roster" },
   { label: "Library",         href: "/dashboard/library" },
-  { label: "Leaderboard",     href: "/dashboard/leaderboard" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Plus",            href: "/plus" },
   { label: "GeekFon Radio",   href: "/radio" },
@@ -56,7 +54,7 @@ function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, 
   // perk, not a role perk. isAdmin alone used to be enough (any super_admin/admin
   // role), which is broader than intended. See navForTier caller for the exact check.
   if (canSeeReleaseSchedule) {
-    base = [...base, { label: "Release Schedule", href: "/dashboard/release-schedule" }];
+    base = [...base, { label: "Song Manager", href: "/dashboard/release-schedule" }];
   }
   // Radio Schedule is the admin control panel for the GeekFon Radio rotation - same
   // account-only gate as Release Schedule (locked 2026-07-07), not a tier/role perk.
@@ -269,12 +267,6 @@ export default function SiteChrome({
 
         {/* Right side: always pinned to far right */}
         <div className="gtop-right">
-          {!auth.loading && isLoggedIn && auth.balance > 0 && (
-            <div className="gmember-balance">
-              <span className="gmember-balance-num">{auth.balance.toLocaleString()}</span>
-              <span className="gmember-balance-label">Points</span>
-            </div>
-          )}
           {!auth.loading && !isLoggedIn && (
             <div className="gauth">
               <a href="/login" className="glogin">Log in</a>
@@ -324,17 +316,11 @@ export default function SiteChrome({
                 {auth.isAdmin ? "Super Admin" : `${tierLabel} Member`}
               </div>
             </div>
-            {auth.balance > 0 && (
-              <div className="gdm-balance">
-                <div className="gdm-balance-num">{auth.balance.toLocaleString()}</div>
-                <div className="gdm-balance-label" style={{ color: tierAccent }}>Points</div>
-              </div>
-            )}
           </div>
         ) : (
           <div className="gdrawer-cta">
             <a href="/passport" className="gdrawer-cta-btn" onClick={() => setOpen(false)}>Get Your Passport</a>
-            <p className="gdrawer-cta-sub">Join GeekFon Society and unlock your dashboard, Points, and exclusive artist content.</p>
+            <p className="gdrawer-cta-sub">Join GeekFon Society and unlock your dashboard and exclusive artist content.</p>
             <a href="/login" className="gdrawer-login" onClick={() => setOpen(false)}>Already a member? Log in</a>
           </div>
         )}
@@ -466,5 +452,6 @@ const CHROME_CSS = `
 .gdva-reset { display: block; width: 100%; padding: 10px 14px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.3); background: none; border: none; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; text-align: center; }
 .gdva-reset:hover { color: rgba(255,255,255,.6); }
 `;
+
 
 
