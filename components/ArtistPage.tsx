@@ -597,6 +597,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [releaseBriefsLoading, setReleaseBriefsLoading] = useState(false);
   const [releaseBriefOpen, setReleaseBriefOpen] = useState<string | null>(null);
   const [hasVotedToday, setHasVotedToday] = useState(false);
+  // 2026-07-26 (4th pass) per Sean's bug report: hearting one song filled EVERY
+  // song's heart at once. The vote itself is genuinely artist-wide, once per
+  // day (gfs_artist_votes has no track column - see submitVote below), so
+  // hasVotedToday alone can't tell rows apart. This tracks which specific
+  // track's heart the user actually clicked, purely for the filled/"voted"
+  // visual - the underlying one-vote-per-artist-per-day limit is unchanged.
+  const [votedTrackKey, setVotedTrackKey] = useState<string | null>(null);
   const [voteLoading, setVoteLoading] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
   const [showVoteModal, setShowVoteModal] = useState<"non-member" | "preview" | null>(null);
@@ -1025,14 +1032,22 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     } catch { /* silent */ }
   }
 
-  async function submitVote() {
+  async function submitVote(trackKey?: string) {
     if (!effectiveTier) { setShowVoteModal("non-member"); return; }
     if (hasVotedToday || voteLoading) return;
     setVoteLoading(true);
     try {
       const sb = createClient(SUPA_URL, SUPA_ANON!);
       const { error } = await sb.from("gfs_artist_votes").insert({ artist_slug: slug, user_id: userId, vote_count: 1, lesars_spent: 0 });
-      if (!error) { setHasVotedToday(true); setVoteSuccess(true); setTimeout(() => setVoteSuccess(false), 3000); }
+      if (!error) {
+        setHasVotedToday(true);
+        // 2026-07-26 (4th pass): remember which row triggered the vote so only
+        // that heart fills in - the vote itself still counts once for the
+        // whole artist regardless of which song's heart sent it.
+        if (trackKey) setVotedTrackKey(trackKey);
+        setVoteSuccess(true);
+        setTimeout(() => setVoteSuccess(false), 3000);
+      }
     } catch { /* silent */ }
     setVoteLoading(false);
   }
@@ -1806,17 +1821,21 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               {/* 2026-07-26 per Sean: heart button replaces the old header
                                   "Vote" pill - liking a song IS the vote for the artist now.
                                   Reuses the existing gfs_artist_votes backend (submitVote),
-                                  so it's still one counted vote per artist per day; the heart
-                                  just shows filled once today's vote has landed, regardless of
-                                  which song's heart you clicked. */}
+                                  so it's still one counted vote per artist per day. Fixed
+                                  same day (4th pass) per Sean's bug report: hearting one song
+                                  used to fill in every other song's heart too, since they all
+                                  read the same artist-wide hasVotedToday flag. Now only the
+                                  specific row that was actually clicked (votedTrackKey === t.n)
+                                  shows filled; the rest go disabled-but-empty once today's
+                                  vote is used, instead of all appearing "liked". */}
                               <button
-                                className={"mp-row-heart" + (hasVotedToday ? " voted" : "") + (voteLoading ? " loading" : "")}
-                                onClick={submitVote}
-                                disabled={voteLoading}
-                                aria-label={hasVotedToday ? `Already voted for ${name} today` : `Like ${t.n} and vote for ${name}`}
-                                title={hasVotedToday ? "Voted today" : "Like this song - votes for " + name}
+                                className={"mp-row-heart" + (votedTrackKey === t.n ? " voted" : "") + (voteLoading ? " loading" : "")}
+                                onClick={() => submitVote(t.n)}
+                                disabled={voteLoading || hasVotedToday}
+                                aria-label={votedTrackKey === t.n ? `You voted for ${name} today with ${t.n}` : hasVotedToday ? `Already voted for ${name} today` : `Like ${t.n} and vote for ${name}`}
+                                title={votedTrackKey === t.n ? "Voted today" : hasVotedToday ? "Today's vote already used" : "Like this song - votes for " + name}
                               >
-                                <svg viewBox="0 0 24 24" fill={hasVotedToday ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                <svg viewBox="0 0 24 24" fill={votedTrackKey === t.n ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                               </button>
                               {/* 2026-07-26 per Sean: swapped the text "Lyrics" pill for a
                                   circular icon button matching the heart, for a more
