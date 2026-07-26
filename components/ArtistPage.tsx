@@ -1270,7 +1270,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               )}
               {tab === "social" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
                 <section className="pulse-section">
-                  {!(isRegistered() || isSuperAdmin) && (
+                  {/* isRegistered() already bypasses for a REAL super admin (viewAs
+                      "real"); deliberately NOT also checking bare isSuperAdmin here so
+                      the admin view-as simulator (viewAs="public") can actually preview
+                      what an unregistered visitor sees on this tab, same as everywhere
+                      else that respects viewAs. */}
+                  {!isRegistered() && (
                     <div className="locked-panel">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                       <div className="lp-title">Social is a free member benefit</div>
@@ -1283,7 +1288,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       </a>
                     </div>
                   )}
-                  {(isRegistered() || isSuperAdmin) && (
+                  {isRegistered() && (
                     !c.pulse || c.pulse.length === 0 ? (
                       <div className="pulse-empty"><p>Posts coming soon.</p></div>
                     ) : (
