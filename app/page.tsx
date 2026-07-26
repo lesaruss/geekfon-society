@@ -232,27 +232,52 @@ export default function HomePage() {
   // event, which pauses the element; with no `onended` handler here (unlike
   // app/radio/page.tsx's `tuneToNow`, which already had one), the element just
   // sat paused-and-loaded until the next poll tick, and even then nothing
-  // resumed playback. Now: an `onended` listener (attached once, in
-  // handleRadioToggle) calls this function immediately on end instead of
-  // waiting up to 5s for the next poll, and this function always resumes
-  // playback if the element is unexpectedly paused while the user has the
-  // radio on - both the "next song" case and the "browser stalled it" case.
+  // resumed playback.
+  //
+  // AMENDED same day per Sean's real-device report ("it stopped playing, and
+  // now it doesn't play at all"): the first version of this fix set
+  // `a.currentTime` immediately after `a.src` with no safety net - some
+  // browsers throw or silently ignore a seek issued before the element is
+  // seekable (readyState < HAVE_METADATA), especially right after a fresh
+  // `src` assignment. That threw synchronously inside the `onended` handler,
+  // which happens BEFORE the `.play()` resume call below it in source order -
+  // so the exception skipped the resume entirely on a track change, which is
+  // exactly when it matters most. Two fixes: (1) wrapped the seek in try/catch
+  // plus an `onloadedmetadata` safety net that re-applies the seek once the
+  // browser is actually ready, matching the pattern app/radio/page.tsx's
+  // `tuneToNow` already uses; (2) `.play()` now updates `radioPlaying` on
+  // both success and failure (previously only success updated state, from the
+  // one call in handleRadioToggle) - so if a resume genuinely can't recover,
+  // the button honestly reverts to "Play" instead of silently going quiet
+  // while still showing "playing", and the stale resync interval gets
+  // cleared instead of piling up on repeated failed attempts.
   function syncRadioAudio(a: HTMLAudioElement) {
     const resolved = resolvePlayhead(Date.now(), radioRotationRef.current, radioOverridesRef.current);
     if (!resolved) return;
     setRadioNowPlaying({ title: resolved.title, artist: artistName(resolved.artist) });
-    if (radioCurrentPathRef.current !== resolved.path) {
-      radioCurrentPathRef.current = resolved.path;
-      a.src = RADIO_AUDIO_BASE + resolved.path;
-      a.currentTime = resolved.offsetSeconds;
-    } else if (Math.abs(a.currentTime - resolved.offsetSeconds) > RADIO_RESYNC_DRIFT_TOLERANCE_SEC) {
-      a.currentTime = resolved.offsetSeconds;
+    try {
+      if (radioCurrentPathRef.current !== resolved.path) {
+        radioCurrentPathRef.current = resolved.path;
+        a.src = RADIO_AUDIO_BASE + resolved.path;
+        a.onloadedmetadata = () => { try { a.currentTime = resolved.offsetSeconds; } catch {} };
+        a.currentTime = resolved.offsetSeconds;
+      } else if (Math.abs(a.currentTime - resolved.offsetSeconds) > RADIO_RESYNC_DRIFT_TOLERANCE_SEC) {
+        a.currentTime = resolved.offsetSeconds;
+      }
+    } catch {
+      // Not fatal - onloadedmetadata (track change) or the next resync tick
+      // (drift correction) retries the seek. Must not block the resume below.
     }
     // syncRadioAudio is only ever called while the user has pressed play (the
     // initial call in handleRadioToggle, the resync interval it starts, or the
     // onended handler below) - never during an intentional pause, since pause
-    // clears the resync interval. So it's always correct to resume here.
-    if (a.paused) a.play().catch(() => {});
+    // clears the resync interval. So it's always correct to attempt a resume here.
+    if (a.paused) {
+      a.play().then(() => setRadioPlaying(true)).catch(() => {
+        setRadioPlaying(false);
+        if (radioResyncTimerRef.current) { clearInterval(radioResyncTimerRef.current); radioResyncTimerRef.current = null; }
+      });
+    }
   }
 
   async function handleRadioToggle() {
@@ -267,14 +292,20 @@ export default function HomePage() {
       radioAudioRef.current.onended = () => {
         if (radioAudioRef.current) syncRadioAudio(radioAudioRef.current);
       };
+      // A decode/network error on one track shouldn't wedge the player forever -
+      // clearing the tracked path makes the next sync tick treat it as a fresh
+      // track and retry the src assignment instead of doing nothing indefinitely.
+      radioAudioRef.current.onerror = () => { radioCurrentPathRef.current = null; };
     }
     const a = radioAudioRef.current;
     setRadioLoading(true);
     try {
       if (!radioLoadedRef.current) await loadRadioSchedule();
+      // syncRadioAudio now owns calling .play() and setting radioPlaying on both
+      // success and failure (see the AMENDED note above) - calling it here once
+      // is enough, a second explicit .play() call right after would just race it.
       syncRadioAudio(a);
-      await a.play();
-      setRadioPlaying(true);
+      if (radioResyncTimerRef.current) clearInterval(radioResyncTimerRef.current);
       radioResyncTimerRef.current = setInterval(() => {
         if (radioAudioRef.current) syncRadioAudio(radioAudioRef.current);
       }, RADIO_RESYNC_INTERVAL_MS);
