@@ -188,7 +188,12 @@
    (unreleased/not-unlocked) tracks get a distinct grayed row + Unlock CTA. */
 /* 2026-07-24 round 3: more breathing room between the play button, the
    title/scrub column, and the Lyrics button - Sean felt round 2 was cramped. */
-.mp-row-play{grid-template-columns:36px 1fr auto;column-gap:24px;padding:14px 18px}
+/* 2026-07-26 per Sean: added a heart-vote column, so the row is now
+   thumb | title+scrub | heart | Lyrics. The scrub bar itself is capped
+   narrower (see .mp-row-scrub .mp-bar max-width below) so it doesn't run the
+   full width of the middle column - that freed real estate is what the
+   heart button now sits in. */
+.mp-row-play{grid-template-columns:36px 1fr auto auto;column-gap:16px;padding:14px 18px}
 .mp-catalog-unlock-bottom{margin-top:14px;width:100%}
 .mp-row-thumb{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .mp-row-playbtn{background:var(--rx);border:none;cursor:pointer;color:#fff;transition:box-shadow .15s,transform .08s}
@@ -200,15 +205,28 @@
 .mp-row-mid .mp-row-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mp-row-scrub{display:flex;align-items:center;gap:8px}
 .mp-row-scrub .mp-time{font-size:11px;color:rgba(26,26,26,.45);font-variant-numeric:tabular-nums;min-width:30px;text-align:center;font-weight:700}
-.mp-row-scrub .mp-bar{flex:1;height:5px;border-radius:999px;background:#ececf2;position:relative;cursor:pointer}
+.mp-row-scrub .mp-bar{flex:1;max-width:78%;height:5px;border-radius:999px;background:#ececf2;position:relative;cursor:pointer}
 .mp-row-scrub .mp-bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--rx)}
 .mp-row-scrub .mp-bar-knob{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;background:#fff;border:2px solid var(--rx);box-shadow:0 1px 4px rgba(0,0,0,.18)}
-.mp-row-locked-cta{grid-template-columns:36px 1fr auto;column-gap:24px;padding:14px 18px;opacity:.75;background:#fafafa;cursor:default}
+/* Fixed 2026-07-26 per Sean: this row used to carry a blanket opacity:.75,
+   which visually grayed out the Unlock button along with everything else and
+   made it read as disabled even though it was always clickable. Dimming is
+   now applied only to the meta text/icon (title/sub/thumb below), never to
+   the CTA button itself. */
+.mp-row-locked-cta{grid-template-columns:36px 1fr auto;column-gap:24px;padding:14px 18px;background:#fafafa;cursor:default}
 .mp-row-locked-cta:hover{border-color:var(--lr-border);box-shadow:none}
 .mp-row-thumb-locked{background:rgba(0,0,0,.06);color:rgba(26,26,26,.4)}
 .mp-row-locked-cta .mp-row-title{color:rgba(26,26,26,.65)}
 .mp-row-locked-cta .mp-row-sub{color:rgba(26,26,26,.4)}
-.mp-row-unlock{flex-shrink:0}
+.mp-row-unlock{flex-shrink:0;opacity:1}
+/* Heart/vote button - 2026-07-26, replaces the old header .pill-vote pill. */
+.mp-row-heart{flex-shrink:0;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;border:1px solid rgba(26,26,26,.12);color:rgba(26,26,26,.4);cursor:pointer;transition:color .15s,border-color .15s,transform .1s}
+.mp-row-heart:hover:not(:disabled){color:var(--rx);border-color:var(--rx)}
+.mp-row-heart:active:not(:disabled){transform:scale(.92)}
+.mp-row-heart.voted{color:var(--rx);border-color:var(--rx);background:var(--rx-tint)}
+.mp-row-heart.loading{opacity:.6}
+.mp-row-heart:disabled{cursor:default}
+.mp-row-heart svg{width:16px;height:16px}
 @media(max-width:768px){
   .mp-rows-row-lyrics .mp-row-scrub .mp-time{display:none}
 }
@@ -342,6 +360,7 @@
 .locked-panel svg{width:32px;height:32px;stroke:var(--lr-text-30);margin-bottom:14px}
 .locked-panel .lp-title{font-size:15px;font-weight:800;color:var(--lr-text);margin-bottom:6px}
 .locked-panel .lp-sub{font-size:13px;line-height:1.6;max-width:360px;margin:0 auto}
+.locked-panel .mp-btn-buy{margin-top:16px}
 
 /* ---- Pulse Feed ---- */
 .pulse-feed{display:flex;flex-direction:column;gap:20px}
