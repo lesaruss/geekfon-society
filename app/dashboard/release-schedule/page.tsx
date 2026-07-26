@@ -1,4 +1,3 @@
-===== app/dashboard/release-schedule/page.tsx =====
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useDashboard } from "../context";
