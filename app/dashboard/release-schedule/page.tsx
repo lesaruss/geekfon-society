@@ -462,6 +462,35 @@ export default function ReleaseSchedulePage() {
                             </svg>
                           </span>
 
+                          {/* Up/down reorder - 2026-07-26 per Sean: HTML5 drag-and-drop
+                              (the handle above) doesn't fire on touch, so it's unusable on
+                              mobile. These buttons call the same reorderTrack() the drop
+                              handler already uses, just via tap instead of drag. */}
+                          <span className="rs-reorder">
+                            <button
+                              type="button"
+                              className="rs-reorder-btn"
+                              title="Move up"
+                              disabled={readOnly || idx === 0}
+                              onClick={(e) => { e.stopPropagation(); reorderTrack(artist.slug, idx, idx - 1); }}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="11" height="11">
+                                <path d="M18 15l-6-6-6 6" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              className="rs-reorder-btn"
+                              title="Move down"
+                              disabled={readOnly || idx === artist.tracks.length - 1}
+                              onClick={(e) => { e.stopPropagation(); reorderTrack(artist.slug, idx, idx + 1); }}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="11" height="11">
+                                <path d="M6 9l6 6 6-6" />
+                              </svg>
+                            </button>
+                          </span>
+
                           {/* # */}
                           <span className="rs-num">{idx + 1}</span>
 
@@ -621,6 +650,10 @@ const RS_CSS = `
 .rs-drag-target { background: rgba(246,152,32,.08) !important; border-bottom: 2px solid #F69820 !important; }
 .rs-drag-handle { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; color: rgba(255,255,255,.2); flex-shrink: 0; cursor: grab; }
 .rs-drag-handle:hover { color: rgba(255,255,255,.5); }
+.rs-reorder { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.rs-reorder-btn { display: flex; align-items: center; justify-content: center; width: 20px; height: 15px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 4px; color: rgba(255,255,255,.45); cursor: pointer; padding: 0; font-family: inherit; }
+.rs-reorder-btn:hover:not(:disabled) { background: rgba(255,255,255,.14); color: #fff; }
+.rs-reorder-btn:disabled { opacity: .2; cursor: default; }
 .rs-num { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); width: 28px; text-align: center; white-space: nowrap; flex-shrink: 0; }
 .rs-input { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); color: #fff; font-family: inherit; font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 6px; min-width: 0; box-sizing: border-box; }
 .rs-input.rs-th-grow { flex: 1; }
@@ -669,12 +702,14 @@ const RS_CSS = `
   .rs-track-head { display: none; }
   .rs-track-row { flex-wrap: wrap; row-gap: 8px; padding: 10px 12px; }
   .rs-drag-handle { order: 1; }
-  .rs-num { order: 2; }
-  .rs-input.rs-th-grow { order: 3; flex-basis: 100%; width: 100%; margin: 2px 0 2px 0; }
-  .rs-sel { order: 4; }
-  .rs-date-cell { order: 5; }
-  .rs-audio-cell { order: 6; }
-  .rs-flags { order: 7; }
+  .rs-reorder { order: 2; flex-direction: row; gap: 6px; }
+  .rs-reorder-btn { width: 32px; height: 28px; }
+  .rs-num { order: 3; }
+  .rs-input.rs-th-grow { order: 4; flex-basis: 100%; width: 100%; margin: 2px 0 2px 0; }
+  .rs-sel { order: 5; }
+  .rs-date-cell { order: 6; }
+  .rs-audio-cell { order: 7; }
+  .rs-flags { order: 8; }
 }
 `;
 
