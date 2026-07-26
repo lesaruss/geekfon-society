@@ -1,14 +1,25 @@
 .container {
   position: fixed;
-  top: 0;
+  /* Fixed 2026-07-26 per Sean (second report, desktop): this container
+     started at top:0, spanning the FULL viewport including the space
+     SiteChrome's fixed header (.gtop, 60px + safe-area-inset-top, z-index:40)
+     physically occupies. Centering the card across that full height meant
+     the vertically-centered card's top - including its rounded top corner -
+     could land above y=60 and render underneath the opaque header, hidden
+     from view. That's why the visible top edge looked flat/square ("Get
+     Started" appearing to start right at the top, no rounding) while the
+     bottom, never covered by anything, showed its rounded corner normally.
+     Offsetting this container's own top past the header means centering only
+     happens within the actual visible area below it. */
+  top: calc(60px + env(safe-area-inset-top, 0px));
   left: 0;
   right: 0;
   bottom: 0;
   background-color: var(--auth-bg);
   display: flex;
-  /* Fixed 2026-07-26 per Sean (mobile): align-items:center on a scrollable,
-     overflowing flex container clips whatever spills past the TOP of the
-     viewport - scrollTop can't go negative, so that portion was simply
+  /* Fixed 2026-07-26 per Sean (mobile, first report): align-items:center on a
+     scrollable, overflowing flex container clips whatever spills past the TOP
+     of the viewport - scrollTop can't go negative, so that portion was simply
      unreachable ("the top is cut off, I can't see it") on shorter phone
      screens where the form is taller than the viewport. `safe center`
      centers when everything fits but falls back to start-alignment instead
@@ -18,7 +29,7 @@
   align-items: flex-start;
   align-items: safe center;
   justify-content: center;
-  padding: max(20px, env(safe-area-inset-top, 20px)) 20px max(20px, env(safe-area-inset-bottom, 20px));
+  padding: 20px 20px max(20px, env(safe-area-inset-bottom, 20px));
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   z-index: 0;
   overflow-y: auto;
