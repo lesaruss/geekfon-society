@@ -1059,7 +1059,16 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const msg = c.message || {};
   const hasMsg = !!(msg.ja || msg.en);
   const publishedNews = (c.news || []).filter((n: News) => !n.draft);
-  const pulseArticles = publishedNews.length > 0 ? publishedNews : PLACEHOLDER_NEWS;
+  // 2026-07-26 (3rd pass) per Sean: this used to fall back to PLACEHOLDER_NEWS
+  // (hardcoded, Roxanne-branded sample copy) whenever an artist had no real
+  // news - meant as filler for early dev screenshots, but it meant any admin
+  // bypass or edge case with empty news showed Roxanne's actual article titles
+  // on someone else's page. The canSeePulse gate above already routes
+  // no-real-content artists to a proper "Coming Soon" section instead, so
+  // there's no longer a legitimate reason for this branch to ever need
+  // placeholder copy - an empty array here just renders nothing, never
+  // someone else's content.
+  const pulseArticles = publishedNews;
 
   return (
 
@@ -1151,7 +1160,16 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             // Pulse is locked to Super Admin only for artists outside the original 4
             // (Roxanne, Lex from Brixton, Shamanic Resin, Riku) until their Pulse content
             // is actually populated - Sean, 2026-07-13. Not a tier perk, an account-only gate.
-            const canSeePulse = isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "");
+            // 2026-07-26 (3rd pass) per Sean's report: bare isSuperAdmin here ignored the
+            // admin view-as simulator, same bug class already fixed for the Social gate
+            // today (commit 27e1b12). Result: switching to "View as: Visitor" still took
+            // the real-admin content path, which falls through to the hardcoded
+            // PLACEHOLDER_NEWS array below (literal Roxanne copy, "Roxanne Steps Into the
+            // Light") for any artist with no real news - that's what looked like "some
+            // artists have Roxanne's content." Gating on (isSuperAdmin && viewAs ===
+            // "real") instead means the simulator now actually shows what a real visitor
+            // sees: Coming Soon for unpopulated artists, not Roxanne's placeholder text.
+            const canSeePulse = (isSuperAdmin && viewAs === "real") || POPULATED_PULSE_ARTISTS.includes(slug || "");
             // 2026-07-26 (2nd pass) per Sean: the tab bar itself must be identical on
             // every artist page, same as Lex's - canSeePulse still gates the CONTENT
             // inside Pulse/Social/Group (real posts vs. "Coming Soon"), it just no
