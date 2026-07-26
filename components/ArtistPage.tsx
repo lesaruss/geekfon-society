@@ -1709,14 +1709,28 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         // songs. Once registered, the track falls through to the normal
                         // playable row below with a capped 30s preview instead.
                         if (useRowLyrics && isRegisterLockedTrack(t)) {
+                          // 2026-07-26 per Sean: dropped the artist name / "Register to
+                          // preview" subtitle line entirely - just the song title, matching
+                          // the playable row below it. Also added the same (inert) scrub bar
+                          // for visual consistency, since there's no audio loaded yet to show
+                          // real progress on - it's decorative here, not interactive.
                           return (
                             <div key={i} className="mp-row mp-row-locked-cta">
                               <div className="mp-row-thumb mp-row-thumb-locked" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={13} height={13}><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
                               </div>
                               <div className="mp-row-mid">
-                                <div className="mp-row-title">{t.n}</div>
-                                <div className="mp-row-sub">{name}{t.m ? ` - ${t.m}` : ""} &middot; {trackLockedLabel(t)}</div>
+                                <div className="mp-row-title-line">
+                                  <span className="mp-row-title">{t.n}</span>
+                                </div>
+                                <div className="mp-row-scrub" aria-hidden="true">
+                                  <span className="mp-time">--:--</span>
+                                  <div className="mp-bar mp-bar-inert">
+                                    <div className="mp-bar-fill" style={{ width: "0%" }} />
+                                    <div className="mp-bar-knob" style={{ left: "0%" }} />
+                                  </div>
+                                  <span className="mp-time">--:--</span>
+                                </div>
                               </div>
                               <a
                                 className="mp-btn-buy mp-row-unlock"
