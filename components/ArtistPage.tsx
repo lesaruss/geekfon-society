@@ -101,6 +101,7 @@ export type ArtistContent = {
 const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolean }[] = [
   { key: "music",    label: "Music" },
   { key: "pulse",    label: "Pulse" },
+  { key: "social",   label: "Social" },
   { key: "members",  label: "Members", needsMembers: true },
   { key: "brief",    label: "Brief", admin: true },
 ];
@@ -110,14 +111,13 @@ const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolea
 const POPULATED_PULSE_ARTISTS = ["roxanne", "lex-from-brixton", "shamanic-resin", "riku"];
 
 // `locked` here means "not built yet" (disables the tab entirely, see the
-// PULSE_CHANNELS.map onClick below). Group Chat is both not-yet-shipped AND,
-// per Sean 2026-07-26, meant to require the same $11 artist unlock as Social
-// once it does ship - when Group Chat goes live, gate its content the same
-// way Social is gated below (unlockedArtist || isSuperAdmin) instead of just
-// removing `locked: true`.
-const PULSE_CHANNELS: { key: "news" | "social" | "groupchat"; label: string; locked?: boolean }[] = [
+// PULSE_CHANNELS.map onClick below). Social moved out to its own top-level
+// tab 2026-07-26 (see TABS above + the `tab === "social"` section below) and
+// is no longer a Pulse channel. Group Chat is still not-yet-shipped; per
+// Sean 2026-07-26 it gates the same way Social now does - free registration
+// (isRegistered()), NOT the $11 artist unlock - once it ships.
+const PULSE_CHANNELS: { key: "news" | "groupchat"; label: string; locked?: boolean }[] = [
   { key: "news",      label: "News" },
-  { key: "social",    label: "Social" },
   { key: "groupchat", label: "Group Chat", locked: true },
 ];
 
@@ -572,7 +572,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
   const [pulseShown, setPulseShown] = useState(3);
-  const [pulseChannel, setPulseChannel] = useState<"news" | "social" | "groupchat">("news");
+  const [pulseChannel, setPulseChannel] = useState<"news" | "groupchat">("news");
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
   const [lyricsLang, setLyricsLang] = useState<"original" | "en">("en");
@@ -592,7 +592,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [hasVotedToday, setHasVotedToday] = useState(false);
   const [voteLoading, setVoteLoading] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
-  const [showVoteModal, setShowVoteModal] = useState<"non-member" | null>(null);
+  const [showVoteModal, setShowVoteModal] = useState<"non-member" | "preview" | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Fixed 2026-07-26: onTimeUpdate/onLoadedMetadata used to gate on the
@@ -855,19 +855,41 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // and the viewer hasn't paid to unlock this artist. Tracks with no
   // scheduledFor at all are treated as already released (most catalog
   // tracks predate this field being populated).
+  // 2026-07-26 per Sean: split the old single "unlockedArtist" gate into two
+  // tiers. Free registration (any gfs_members row - the same "member" concept
+  // submitVote already required to like a song) now unlocks liking songs,
+  // previewing unreleased tracks, and the Social tab (+ Group Chat once it
+  // ships). The $11 per-artist unlock is reserved for hearing FULL unreleased
+  // songs past the preview cap - it no longer gates Social/Group Chat.
+  function isRegistered(): boolean {
+    if (isSuperAdmin && viewAs === "real") return true;
+    return !!effectiveTier;
+  }
+
   function isPreviewCappedTrack(t: Track): boolean {
     if (isSuperAdmin && viewAs === "real") return false;
     if (unlockedArtist) return false;
-    return isScheduledFuture(t);
+    return isScheduledFuture(t) && isRegistered();
+  }
+
+  // An unreleased track a NOT-registered visitor can't even preview - they
+  // have to create a free account first. Once registered they fall through
+  // to isPreviewCappedTrack (30s preview) instead of this.
+  function isRegisterLockedTrack(t: Track): boolean {
+    if (isSuperAdmin && viewAs === "real") return false;
+    if (unlockedArtist) return false;
+    return isScheduledFuture(t) && !isRegistered();
   }
 
   // Nothing is ever hidden anymore - every song a fan can see builds the
-  // case for unlocking. "Locked" now only means "preview only, not full song".
+  // case for registering/unlocking. "Locked" now means either "register to
+  // preview" or "preview only, not full song".
   function trackLocked(t: Track): boolean {
-    return isPreviewCappedTrack(t);
+    return isPreviewCappedTrack(t) || isRegisterLockedTrack(t);
   }
 
   function trackBadge(t: Track): { label: string; cls: string } {
+    if (isRegisterLockedTrack(t)) return { label: "Register", cls: "vb-locked" };
     if (!isPreviewCappedTrack(t)) return { label: "Free", cls: "vb-public" };
     return { label: "Preview", cls: "vb-passport" };
   }
@@ -928,11 +950,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       setUnlockLoading(false);
     }
   }
-  function trackPlayLabel(isPlaying: boolean, isPreviewCapped = false): string {
+  function trackPlayLabel(isPlaying: boolean, t?: Track | null): string {
     if (isPlaying) return "Pause";
-    return isPreviewCapped ? "Preview" : "Play";
+    if (t && isRegisterLockedTrack(t)) return "Register";
+    return t && isPreviewCappedTrack(t) ? "Preview" : "Play";
   }
   function trackLockedLabel(t: Track): string {
+    if (isRegisterLockedTrack(t)) return "Register to preview";
     if (isScheduledFuture(t)) {
       const d = t.scheduledFor!.split("T")[0];
       const [, m, day] = d.split("-");
@@ -1104,7 +1128,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             const visibleTabs = TABS.filter(t =>
               (!t.admin || canSeeBrief) &&
               (!t.needsMembers || (c.members && c.members.length > 0)) &&
-              (t.key !== "pulse" || canSeePulse)
+              (t.key !== "pulse" || canSeePulse) &&
+              (t.key !== "social" || canSeePulse)
             );
             return (
               <div className="tabbar" role="tablist">
@@ -1222,21 +1247,43 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     </div>
                   )}
 
-                  {/* 2026-07-26 per Sean: Pulse (News) stays open to everyone, but
-                      Social and Group Chat are the paid-member benefit - gated on the
-                      same $11 artist unlock as the catalog, not a separate membership
-                      tier. Super admins keep full visibility for QA. */}
-                  {pulseChannel === "social" && !(unlockedArtist || isSuperAdmin) && (
+                  {pulseChannel === "groupchat" && (
                     <div className="locked-panel">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                      <div className="lp-title">Social is part of the Full Experience</div>
-                      <p className="lp-sub">Unlock {name}&apos;s Full Experience for $11 to see posts and join the conversation.</p>
-                      <button className="mp-btn-buy" onClick={handleUnlockArtist} disabled={unlockLoading}>
-                        {unlockLoading ? "Redirecting..." : "Unlock - $11"}
-                      </button>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                      <div className="lp-title">Group Chat is coming soon</div>
+                      <p className="lp-sub">Live chat with {name} and other members lands here once Group Chat ships across GeekFon Society - free to join once you have an account, just like Social.</p>
                     </div>
                   )}
-                  {pulseChannel === "social" && (unlockedArtist || isSuperAdmin) && (
+                </section>
+              )}
+
+              {/* 2026-07-26 per Sean: Social pulled out of Pulse into its own top-level
+                  tab, gated on free registration (isRegistered()) instead of the $11
+                  artist unlock - liking posts and reading them is a free-member
+                  benefit now, the $11 unlock is reserved for full unreleased songs.
+                  Same population gate as Pulse (canSeePulse) since it's the same
+                  c.pulse content, just relocated. */}
+              {tab === "social" && !(isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+                <section className="pulse-section">
+                  <div className="pulse-empty"><p>Social for {c.name || "this artist"} is still being built. Check back soon.</p></div>
+                </section>
+              )}
+              {tab === "social" && (isSuperAdmin || POPULATED_PULSE_ARTISTS.includes(slug || "")) && (
+                <section className="pulse-section">
+                  {!(isRegistered() || isSuperAdmin) && (
+                    <div className="locked-panel">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                      <div className="lp-title">Social is a free member benefit</div>
+                      <p className="lp-sub">Create a free account to see {name}&apos;s posts and join the conversation.</p>
+                      <a
+                        className="mp-btn-buy"
+                        href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
+                      >
+                        Sign Up Free
+                      </a>
+                    </div>
+                  )}
+                  {(isRegistered() || isSuperAdmin) && (
                     !c.pulse || c.pulse.length === 0 ? (
                       <div className="pulse-empty"><p>Posts coming soon.</p></div>
                     ) : (
@@ -1292,14 +1339,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         )}
                       </div>
                     )
-                  )}
-
-                  {pulseChannel === "groupchat" && (
-                    <div className="locked-panel">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-                      <div className="lp-title">Group Chat is coming soon</div>
-                      <p className="lp-sub">Live chat with {name} and other members lands here once Group Chat ships across GeekFon Society.</p>
-                    </div>
                   )}
                 </section>
               )}
@@ -1439,7 +1478,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   </div>
                 );
 
-                const npPlayLabel = npTrack ? trackPlayLabel(npPlaying, npPreviewCapped) : "Play";
+                const npPlayLabel = npTrack ? trackPlayLabel(npPlaying, npTrack) : "Play";
 
                 // 2026-07-24: Sean's direction - the hero "now playing" card was too
                 // big and duplicated the play control (orb up top + a second Play
@@ -1477,7 +1516,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             className="mp-orb"
                             aria-label={npPlaying ? "Pause" : "Play"}
                             disabled={!npUrl}
-                            onClick={() => { if (npUrl) togglePlay(npUrl, npTrack && isPreviewCappedTrack(npTrack) ? "capped" : undefined, npTrack?.n); }}
+                            onClick={() => {
+                              if (!npUrl) return;
+                              if (npTrack && isRegisterLockedTrack(npTrack)) { setShowVoteModal("preview"); return; }
+                              togglePlay(npUrl, npTrack && isPreviewCappedTrack(npTrack) ? "capped" : undefined, npTrack?.n);
+                            }}
                           >
                             {npPlaying ? PAUSE : PLAY}
                           </button>
@@ -1500,7 +1543,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               className={"mp-btn-pre" + (!npUrl ? " disabled" : "")}
                               disabled={!npUrl}
                               title={!npUrl ? "Audio coming soon" : undefined}
-                              onClick={() => { if (npUrl) togglePlay(npUrl, npTrack && isPreviewCappedTrack(npTrack) ? "capped" : undefined, npTrack?.n); }}
+                              onClick={() => {
+                                if (!npUrl) return;
+                                if (npTrack && isRegisterLockedTrack(npTrack)) { setShowVoteModal("preview"); return; }
+                                togglePlay(npUrl, npTrack && isPreviewCappedTrack(npTrack) ? "capped" : undefined, npTrack?.n);
+                              }}
                               aria-label={npPlayLabel}
                             >
                               {!npUrl ? "Soon" : npPlayLabel}
@@ -1541,12 +1588,28 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         ? "You've unlocked every song by " + name + ", released or not."
                         : "Every song plays free once it's officially released. Unlock the Full Experience once for $11 to hear everything by " + name + " right now, including tracks that haven't dropped yet. Be sure to like your favorite songs to help " + name + " rise on the leaderboard."}
                     </p>
-                    {/* 2026-07-26 per Sean (mobile): removed the "Get Passport - Free"
-                        CTA here - no longer applicable. Message-only + Dismiss now. */}
-                    {showVoteModal === "non-member" && (
+                    {/* 2026-07-26 round 2 removed the CTA here entirely per Sean (it was
+                        a stale "Get Passport - Free" link tied to the old subscription
+                        model). Round 3, same day: Sean's now formalized a free-registration
+                        tier that gates liking songs AND previewing unreleased tracks, and
+                        explicitly asked for this popup to let people register - so the CTA
+                        is back, now pointed at the real /register flow instead of the old
+                        Passport page. Copy differs by trigger: liking a song vs. trying to
+                        preview a locked track. */}
+                    {showVoteModal && (
                       <div className="vote-modal">
-                        <p>You need to be a member in order to like a song. Membership is free.</p>
+                        <p>
+                          {showVoteModal === "preview"
+                            ? "Create a free account to preview unreleased songs."
+                            : "You need to be a member in order to like a song. Membership is free."}
+                        </p>
                         <div className="vote-modal-actions">
+                          <a
+                            className="vote-modal-cta"
+                            href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
+                          >
+                            Sign Up Free
+                          </a>
                           <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Dismiss</button>
                         </div>
                       </div>
@@ -1563,18 +1626,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         // row broken into exactly three zones - the thumbnail IS the
                         // play/pause button, a real scrub bar sits in the middle instead of
                         // just title text, and Lyrics is the only button on the right (no
-                        // more separate Play button in that corner). Unreleased/not-yet-
-                        // unlocked tracks get a distinct grayed row with a single "Unlock"
-                        // CTA straight to the artist-unlock checkout - no preview playback
-                        // for those rows anymore.
-                        if (useRowLyrics && locked) {
+                        // more separate Play button in that corner).
+                        // 2026-07-26 per Sean: unreleased tracks a NOT-registered visitor
+                        // can't preview at all still get this grayed no-playback row, but
+                        // the CTA is now "Register" (free), not "Unlock" ($11) - previewing
+                        // is a free-registration benefit, the $11 unlock is only for full
+                        // songs. Once registered, the track falls through to the normal
+                        // playable row below with a capped 30s preview instead.
+                        if (useRowLyrics && isRegisterLockedTrack(t)) {
                           return (
-                            // Fixed 2026-07-26 per Sean: this button read as disabled/grayed
-                            // even though it was always clickable - the whole row had a
-                            // blanket opacity applied to it in CSS. The row background still
-                            // reads as "not yet available" but the button itself now renders
-                            // at full strength, and the label is just "Unlock" (the price is
-                            // already stated in the full-catalog CTA and copy above).
                             <div key={i} className="mp-row mp-row-locked-cta">
                               <div className="mp-row-thumb mp-row-thumb-locked" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={13} height={13}><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
@@ -1583,14 +1643,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 <div className="mp-row-title">{t.n}</div>
                                 <div className="mp-row-sub">{name}{t.m ? ` - ${t.m}` : ""} &middot; {trackLockedLabel(t)}</div>
                               </div>
-                              <button
+                              <a
                                 className="mp-btn-buy mp-row-unlock"
-                                onClick={handleUnlockArtist}
-                                disabled={unlockLoading}
-                                aria-label={`Unlock the full GeekFon Society experience for ${name}`}
+                                href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
+                                aria-label={`Create a free account to preview ${t.n}`}
                               >
-                                {unlockLoading ? "..." : "Unlock"}
-                              </button>
+                                Register
+                              </a>
                             </div>
                           );
                         }
@@ -1608,14 +1667,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               <button
                                 className="mp-row-thumb mp-row-playbtn"
                                 disabled={!url}
-                                title={!url ? "Audio coming soon" : undefined}
+                                title={!url ? "Audio coming soon" : (isPreviewCappedTrack(t) ? "30-second preview - unlock for the full song" : undefined)}
                                 aria-label={isPlayingThis ? `Pause ${t.n}` : `Play ${t.n}`}
-                                onClick={() => { if (url) { setCurrTrackIdx(i); togglePlay(url, undefined, t.n); } }}
+                                onClick={() => { if (url) { setCurrTrackIdx(i); togglePlay(url, isPreviewCappedTrack(t) ? "capped" : undefined, t.n); } }}
                               >
                                 {isPlayingThis ? PAUSE : PLAY}
                               </button>
                               <div className="mp-row-mid">
-                                <div className="mp-row-title">{t.n}</div>
+                                <div className="mp-row-title-line">
+                                  <span className="mp-row-title">{t.n}</span>
+                                  {isPreviewCappedTrack(t) && <span className="mp-row-preview-tag">PREVIEW</span>}
+                                </div>
                                 <div className="mp-row-scrub">
                                   <span className="mp-time">{fmtTime(progress)}</span>
                                   <div
@@ -1696,11 +1758,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         }
 
                         // Legacy row (every other artist, unchanged from before the pilot)
+                        const registerLocked = isRegisterLockedTrack(t);
                         return (
                           <div
                             key={i}
                             className={"mp-row" + (isCurr ? " current" : "") + (locked ? " locked" : "")}
-                            onClick={() => { setCurrTrackIdx(i); if (url) togglePlay(url, isPreviewCappedTrack(t) ? "capped" : undefined, t.n); }}
+                            onClick={() => {
+                              if (!url) return;
+                              setCurrTrackIdx(i);
+                              if (registerLocked) { setShowVoteModal("preview"); return; }
+                              togglePlay(url, isPreviewCappedTrack(t) ? "capped" : undefined, t.n);
+                            }}
                           >
                             <div className="mp-row-art">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" width={18} height={18}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
@@ -1711,15 +1779,21 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               {locked && <div className="mp-row-date">{trackLockedLabel(t)}</div>}
                             </div>
                             <div className="mp-row-state">
-                              {locked && <span className="mp-badge-lk">PREVIEW</span>}
+                              {locked && <span className="mp-badge-lk">{registerLocked ? "REGISTER" : "PREVIEW"}</span>}
                               <button
                                 className={"mp-btn-pre" + (!url ? " disabled" : "")}
                                 disabled={!url}
                                 title={!url ? "Audio coming soon" : undefined}
-                                onClick={(e) => { e.stopPropagation(); if (url) { setCurrTrackIdx(i); togglePlay(url, isPreviewCappedTrack(t) ? "capped" : undefined, t.n); } }}
-                                aria-label={trackPlayLabel(playing === url, isPreviewCappedTrack(t))}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!url) return;
+                                  setCurrTrackIdx(i);
+                                  if (registerLocked) { setShowVoteModal("preview"); return; }
+                                  togglePlay(url, isPreviewCappedTrack(t) ? "capped" : undefined, t.n);
+                                }}
+                                aria-label={trackPlayLabel(playing === url, t)}
                               >
-                                {!url ? "Soon" : trackPlayLabel(playing === url, isPreviewCappedTrack(t))}
+                                {!url ? "Soon" : trackPlayLabel(playing === url, t)}
                               </button>
                             </div>
                           </div>
