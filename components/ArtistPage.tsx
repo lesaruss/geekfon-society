@@ -827,12 +827,18 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     if (!a || !key) return;
     setAudioDuration(prev => ({ ...prev, [key]: a.duration }));
   }
-  function seekTo(e: React.MouseEvent<HTMLDivElement> | React.PointerEvent<HTMLDivElement>, url: string) {
+  // 2026-07-26: added an optional maxOverride so preview-capped tracks scrub
+  // relative to the visible 30s bar instead of the real full-song duration -
+  // without this, dragging to what looks like the end of the (now correctly
+  // shortened) bar would actually seek deep into the real track, which would
+  // then immediately snap back to 0 via the onTimeUpdate cap check. See the
+  // matching display fix on `duration` in the row-lyrics track list below.
+  function seekTo(e: React.MouseEvent<HTMLDivElement> | React.PointerEvent<HTMLDivElement>, url: string, maxOverride?: number) {
     const a = audioRef.current;
     if (!a || currentUrlRef.current !== url) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const maxTime = a.duration || 0;
+    const maxTime = maxOverride != null ? maxOverride : (a.duration || 0);
     a.currentTime = pct * maxTime;
   }
   // 2026-07-26 per Sean: "I should be able to move it back and forth" - the
@@ -842,14 +848,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // pointerdown seeks immediately and captures the pointer; pointermove
   // keeps seeking as long as the pointer is still down, covering both mouse
   // drag and touch drag with one code path.
-  function handleScrubPointerDown(e: React.PointerEvent<HTMLDivElement>, url: string) {
+  function handleScrubPointerDown(e: React.PointerEvent<HTMLDivElement>, url: string, maxOverride?: number) {
     if (currentUrlRef.current !== url) return;
     e.currentTarget.setPointerCapture(e.pointerId);
-    seekTo(e, url);
+    seekTo(e, url, maxOverride);
   }
-  function handleScrubPointerMove(e: React.PointerEvent<HTMLDivElement>, url: string) {
+  function handleScrubPointerMove(e: React.PointerEvent<HTMLDivElement>, url: string, maxOverride?: number) {
     if (e.buttons !== 1) return;
-    seekTo(e, url);
+    seekTo(e, url, maxOverride);
   }
 
   // Visibility helpers - rebuilt 2026-07-23 per Sean's pricing simplification.
@@ -1857,7 +1863,18 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                           const { hasTranslation: rowHasTranslation, text: rowLyricsText } = rowLyricsFor(t);
                           const isPlayingThis = !!url && playing === url;
                           const progress = url ? (audioProgress[url] || 0) : 0;
-                          const duration = url ? (audioDuration[url] || 0) : 0;
+                          const rawDuration = url ? (audioDuration[url] || 0) : 0;
+                          // 2026-07-26 per Sean: preview-capped tracks were showing the
+                          // real full-song duration (e.g. "3:42") and a progress bar
+                          // scaled to it, so the bar looked barely-started and the time
+                          // display looked normal right up to the moment playback cut
+                          // off at 30s - reads as a bug/broken player instead of an
+                          // intentional preview. Mirrors the same npMax capping already
+                          // used by the (currently inactive) hero player above.
+                          const rowPreviewCapped = isPreviewCappedTrack(t);
+                          const duration = rowPreviewCapped
+                            ? (rawDuration > 0 ? Math.min(rawDuration, PREVIEW_CAP_SECONDS) : PREVIEW_CAP_SECONDS)
+                            : rawDuration;
                           const pct = duration > 0 ? Math.min(100, (progress / duration) * 100) : 0;
                           return (
                             <Fragment key={i}>
@@ -1880,8 +1897,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   <span className="mp-time">{fmtTime(progress)}</span>
                                   <div
                                     className="mp-bar"
-                                    onPointerDown={(e) => url && handleScrubPointerDown(e, url)}
-                                    onPointerMove={(e) => url && handleScrubPointerMove(e, url)}
+                                    onPointerDown={(e) => url && handleScrubPointerDown(e, url, duration)}
+                                    onPointerMove={(e) => url && handleScrubPointerMove(e, url, duration)}
                                   >
                                     <div className="mp-bar-fill" style={{ width: `${pct}%` }} />
                                     <div className="mp-bar-knob" style={{ left: `${pct}%` }} />
