@@ -2,8 +2,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
-const STORAGE_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/artists";
-
 // Tracks every live roster artist (matches app/roster/page.tsx ARTIST_ORDER). Lord
 // Zorlot stays out - no songs yet, nothing to rank on. V stays out - administrative,
 // not a performer. Sean, 2026-07-13.
@@ -20,6 +18,7 @@ type RankedArtist = {
   plays: number;
   votes: number;
   score: number;
+  imgUrl: string | null;
 };
 
 export default function ArtistRankingsPage() {
@@ -28,12 +27,29 @@ export default function ArtistRankingsPage() {
 
   useEffect(() => {
     async function load() {
+      // Real profile images live on gfs_artists.profile (jsonb) - the rankings view
+      // doesn't carry image fields, and filenames/extensions vary per artist (some
+      // are .png, some have no profileUrl at all and only a heroUrl), so fetch the
+      // real per-artist image instead of guessing a path. Sean, 2026-07-26.
+      const imgQuery = supabase
+        .from("gfs_artists")
+        .select("slug, profile")
+        .in("slug", FEATURED_SLUGS);
+
       // Fetch live rankings from the view (plays + votes = real data)
-      const { data: rankings } = await supabase
-        .from("gfs_artist_rankings")
-        .select("slug, name, plays, votes, score")
-        .in("slug", FEATURED_SLUGS)
-        .order("score", { ascending: false });
+      const [{ data: rankings }, { data: profiles }] = await Promise.all([
+        supabase
+          .from("gfs_artist_rankings")
+          .select("slug, name, plays, votes, score")
+          .in("slug", FEATURED_SLUGS)
+          .order("score", { ascending: false }),
+        imgQuery,
+      ]);
+
+      const imgMap: Record<string, string | null> = {};
+      (profiles || []).forEach((p: { slug: string; profile: { profileUrl?: string; heroUrl?: string } | null }) => {
+        imgMap[p.slug] = p.profile?.profileUrl || p.profile?.heroUrl || null;
+      });
 
       if (rankings && rankings.length > 0) {
         const mapped: RankedArtist[] = rankings.map((r: { slug: string; name: string; plays: number; votes: number; score: number }) => ({
@@ -43,6 +59,7 @@ export default function ArtistRankingsPage() {
           plays: r.plays,
           votes: r.votes,
           score: r.score,
+          imgUrl: imgMap[r.slug] ?? null,
         }));
         setArtists(mapped);
       } else {
@@ -52,7 +69,7 @@ export default function ArtistRankingsPage() {
           .select("slug, name")
           .in("slug", FEATURED_SLUGS);
         if (data) {
-          setArtists(data.map(a => ({ slug: a.slug, name: a.name, genre: null, plays: 0, votes: 0, score: 0 })));
+          setArtists(data.map(a => ({ slug: a.slug, name: a.name, genre: null, plays: 0, votes: 0, score: 0, imgUrl: imgMap[a.slug] ?? null })));
         }
       }
       setLoading(false);
@@ -70,7 +87,7 @@ export default function ArtistRankingsPage() {
       </div>
 
       <div className="t10-season-bar">
-        <span className="t10-season-label">Updated Weekly</span>
+        <span className="t10-season-label">Updated Daily</span>
         <span className="t10-vote-note">Voting open to all Passport members</span>
       </div>
 
@@ -90,23 +107,24 @@ export default function ArtistRankingsPage() {
           {artists.map((artist, i) => {
             const rankClass = i === 0 ? " rank-1" : i === 1 ? " rank-2" : i === 2 ? " rank-3" : "";
             const rankColor = i === 0 ? " gold" : i === 1 ? " silver" : i === 2 ? " bronze" : "";
-            const imgSrc = `${STORAGE_BASE}/${artist.slug}/profile.jpg`;
             const artSlug = artist.slug === "riku" ? "riku" : artist.slug;
             return (
               <a key={artist.slug} href={`/${artSlug}`} className={"t10-row" + rankClass}>
                 <div className={"t10-rank" + rankColor}>{i + 1}</div>
                 <div className="t10-identity">
-                  <img
-                    className="t10-avatar"
-                    src={imgSrc}
-                    alt={artist.name}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                      const sib = e.currentTarget.nextSibling as HTMLElement;
-                      if (sib) sib.style.display = "flex";
-                    }}
-                  />
-                  <div className="t10-avatar-init" style={{display:"none"}}>{artist.name.charAt(0)}</div>
+                  {artist.imgUrl ? (
+                    <img
+                      className="t10-avatar"
+                      src={artist.imgUrl}
+                      alt={artist.name}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                        const sib = e.currentTarget.nextSibling as HTMLElement;
+                        if (sib) sib.style.display = "flex";
+                      }}
+                    />
+                  ) : null}
+                  <div className="t10-avatar-init" style={{display: artist.imgUrl ? "none" : "flex"}}>{artist.name.charAt(0)}</div>
                   <div className="t10-info">
                     <div className="t10-name">{artist.name}</div>
                     {artist.genre && <div className="t10-genre">{artist.genre}</div>}
@@ -142,11 +160,11 @@ export default function ArtistRankingsPage() {
 }
 
 const CSS = `
-.t10-head{padding:28px 0 24px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:24px;}
+.t10-head{padding:16px 0 14px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:16px;}
 .t10-eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.22em;color:#F69820;margin-bottom:8px;}
 .t10-title{font-size:clamp(28px,4vw,42px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;margin:0 0 10px;}
 .t10-sub{font-size:15px;color:rgba(255,255,255,.4);margin:0;line-height:1.6;}
-.t10-season-bar{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px 20px;margin-bottom:20px;}
+.t10-season-bar{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 18px;margin-bottom:14px;}
 .t10-season-label{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#F69820;}
 .t10-vote-note{font-size:11px;font-weight:700;color:rgba(255,255,255,.3);}
 /* Table */
@@ -191,6 +209,12 @@ const CSS = `
   .t10-header{grid-template-columns:40px 1fr 80px 70px;}
   .t10-row{grid-template-columns:40px 1fr 80px 70px;}
   .t10-col-plays,.t10-col-views,.t10-plays,.t10-views{display:none;}
+  /* Same absolute head/season-bar padding read as much heavier headroom on a
+     narrow screen than on desktop - tighten further here. Sean, 2026-07-26. */
+  .t10-head{padding:10px 0 10px;margin-bottom:12px;}
+  .t10-sub{font-size:13px;}
+  .t10-season-bar{padding:10px 14px;margin-bottom:12px;}
+  .t10-row{padding:14px 16px;}
 }
 /* Vote strip */
 .t10-vote-strip{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:24px 26px;}
