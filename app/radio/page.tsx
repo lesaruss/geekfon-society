@@ -396,8 +396,16 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 .rd-play-btn:hover .rd-logo-img,
 .rd-play-btn.playing .rd-logo-img { opacity: 0.25; }
 
-.rd-play-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.25s; }
-.rd-play-btn:hover .rd-play-icon,
+/* 2026-07-26 per Sean: the play icon used to be fully invisible until hover
+   (opacity:0) - "it doesn't make sense that you don't see it, you might not
+   know it's a play button without it." Now always visible at a dim/grayed
+   opacity by default so the button reads as clickable at a glance, brightens
+   slightly on hover as a preview, and goes fully bright ("full color") once
+   actually playing - same visual language as the hero button on the homepage
+   (icon always present, never a mystery circle) but with a clearer
+   dim-to-bright state change since this circle is the page's one focal action. */
+.rd-play-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0.4; transition: opacity 0.25s; }
+.rd-play-btn:hover .rd-play-icon { opacity: 0.7; }
 .rd-play-btn.playing .rd-play-icon { opacity: 1; }
 
 @keyframes rdPulse1 { 0% { transform: scale(1); opacity: 0.55; } 100% { transform: scale(1.65); opacity: 0; } }
