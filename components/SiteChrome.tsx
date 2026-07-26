@@ -6,9 +6,13 @@ import { ADMIN_EMAIL } from "@/app/dashboard/context";
 type Tier = "public" | "passport" | "plus" | "pro";
 type NavItem = { label: string; href: string };
 
+// GeekFon Radio added 2026-07-26 per Sean: the /radio page (and the homepage
+// hero-circle play button) no longer require an account, so the nav should
+// surface it to anonymous visitors too, not just logged-in tiers below.
 const NAV_PUBLIC: NavItem[] = [
-  { label: "Overview",   href: "/#overview" },
-  { label: "Roster",     href: "/roster" },
+  { label: "Overview",      href: "/#overview" },
+  { label: "Roster",        href: "/roster" },
+  { label: "GeekFon Radio", href: "/radio" },
 ];
 
 const NAV_PASSPORT: NavItem[] = [
