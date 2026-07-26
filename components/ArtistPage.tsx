@@ -889,6 +889,21 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     return !!effectiveTier;
   }
 
+  // 2026-07-26 per Sean, clarifying the real tier model (he said we'd gotten
+  // our wires crossed on this): Public < Passport < Plus < Pro. Passport is
+  // free registration - it gets a preview of things one tier above you, not
+  // full access. Plus is the $11 per-artist unlock - full access to THAT
+  // artist's entire catalog, no caps. Pro is invite-only (industry contacts,
+  // team, investors) and, per Sean, "not that big a difference between plus
+  // and pro" - for gating purposes Pro means the same full access as Plus.
+  // Before this fix, simulating Plus or Pro via View As Membership computed
+  // identically to Passport, because isPreviewCappedTrack/isRegisterLockedTrack
+  // only ever checked the boolean isRegistered() (true for all three tiers),
+  // never the actual simulated rank - so "viewing as Plus" never actually
+  // unlocked anything. This makes Plus/Pro simulation behave exactly like a
+  // real $11 unlock for the artist currently being viewed.
+  const simulatingFullAccess = isSuperAdmin && (viewAs === "plus" || viewAs === "pro");
+
   // 2026-07-26 per Sean: a track's Song Manager Tier (public/preview="Passport"/
   // members="Plus"/pro="Pro") now also gates playback AFTER release, not just
   // before it. Pre-release, the gate stays exactly what it was (registered vs
@@ -911,7 +926,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
 
   function isPreviewCappedTrack(t: Track): boolean {
     if (isSuperAdmin && viewAs === "real") return false;
-    if (unlockedArtist) return false;
+    if (unlockedArtist || simulatingFullAccess) return false;
     if (isScheduledFuture(t)) return isRegistered();
     const diff = trackTierRank(t.v) - (isRegistered() ? 1 : 0);
     return diff === 1;
@@ -926,7 +941,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // catalog forever" means forever, no tier is held back from a paying fan.
   function isRegisterLockedTrack(t: Track): boolean {
     if (isSuperAdmin && viewAs === "real") return false;
-    if (unlockedArtist) return false;
+    if (unlockedArtist || simulatingFullAccess) return false;
     if (isScheduledFuture(t)) return !isRegistered();
     const diff = trackTierRank(t.v) - (isRegistered() ? 1 : 0);
     return diff >= 2;
@@ -951,7 +966,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   }
 
   async function handleUnlockArtist() {
-    if (unlockedArtist || unlockLoading) return;
+    if (unlockedArtist || simulatingFullAccess || unlockLoading) return;
     setUnlockError(null);
     setUnlockLoading(true);
     try {
@@ -1613,7 +1628,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 // full access. hasFullAccess folds that bypass into the same check as an
                 // actual paid unlock, so the CTA only shows to people who'd actually benefit
                 // from clicking it.
-                const hasFullAccess = unlockedArtist || (isSuperAdmin && viewAs === "real");
+                const hasFullAccess = unlockedArtist || simulatingFullAccess || (isSuperAdmin && viewAs === "real");
 
                 function rowLyricsFor(t: Track) {
                   const hasTranslation = !!(t.lyricsEn && t.lyricsOriginalLang && t.lyricsOriginalLang !== "en");
@@ -2010,7 +2025,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   });
                 const seasons = Array.from(new Set(sorted.map(t => t.m || "Season 1")));
                 function renderRow(t: Track, i: number) {
-                  const isAvailable = unlockedArtist || !isScheduledFuture(t);
+                  const isAvailable = unlockedArtist || simulatingFullAccess || !isScheduledFuture(t);
                   const tier = scheduleTier(isAvailable);
                   const releasedLabel = t.scheduledFor ? `Released ${t.scheduledFor.split("T")[0]}` : "Available now";
                   const statusLabel = isAvailable ? releasedLabel : (t.scheduledFor ? t.scheduledFor.split("T")[0] : "Coming soon");
