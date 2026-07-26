@@ -596,14 +596,16 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [releaseBriefs, setReleaseBriefs] = useState<ReleaseBrief[]>([]);
   const [releaseBriefsLoading, setReleaseBriefsLoading] = useState(false);
   const [releaseBriefOpen, setReleaseBriefOpen] = useState<string | null>(null);
-  const [hasVotedToday, setHasVotedToday] = useState(false);
-  // 2026-07-26 (4th pass) per Sean's bug report: hearting one song filled EVERY
-  // song's heart at once. The vote itself is genuinely artist-wide, once per
-  // day (gfs_artist_votes has no track column - see submitVote below), so
-  // hasVotedToday alone can't tell rows apart. This tracks which specific
-  // track's heart the user actually clicked, purely for the filled/"voted"
-  // visual - the underlying one-vote-per-artist-per-day limit is unchanged.
-  const [votedTrackKey, setVotedTrackKey] = useState<string | null>(null);
+  // 2026-07-26 (5th pass) per Sean: hearts are now independent per-song likes,
+  // not one artist-wide vote/day - confirmed after the 4th-pass fix (which
+  // only made the correct heart fill in, but still let one like lock every
+  // other song for the day) turned out not to match what he wanted. Added a
+  // nullable track_name column to gfs_artist_votes (was artist_slug/user_id/
+  // day only), so each song can be liked once per day independently. This
+  // Set holds the track names (t.n) the user has already liked today for
+  // THIS artist - membership drives both the filled look and the disabled
+  // state per-row, nothing else locks.
+  const [votedTracksToday, setVotedTracksToday] = useState<Set<string>>(new Set());
   const [voteLoading, setVoteLoading] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
   const [showVoteModal, setShowVoteModal] = useState<"non-member" | "preview" | null>(null);
@@ -709,18 +711,23 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     }
   }, [slug]);
 
-  // Check if user has voted for this artist today
+  // 2026-07-26 (5th pass): fetch every track this user has already liked today
+  // for this artist (not just whether any vote exists) - each song's heart
+  // needs to know its OWN already-liked state independently.
   useEffect(() => {
     if (!userId || !slug || !SUPA_ANON) return;
     const sb = createClient(SUPA_URL, SUPA_ANON);
     const today = new Date().toISOString().slice(0, 10);
     sb.from("gfs_artist_votes")
-      .select("id")
+      .select("track_name")
       .eq("artist_slug", slug)
       .eq("user_id", userId)
       .gte("voted_at", today + "T00:00:00Z")
-      .maybeSingle()
-      .then(({ data }) => { if (data) setHasVotedToday(true); });
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setVotedTracksToday(new Set(data.map((r: { track_name: string | null }) => r.track_name).filter((n): n is string => !!n)));
+        }
+      });
   }, [userId, slug]);
 
   // Fetch gfs_artist_bible when Brief tab opens
@@ -1032,19 +1039,21 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     } catch { /* silent */ }
   }
 
-  async function submitVote(trackKey?: string) {
+  // 2026-07-26 (5th pass) per Sean: each song's heart is its own like now, not
+  // a single artist-wide daily vote - trackKey is required (a vote with no
+  // song attribution no longer makes sense). Still contributes to the same
+  // gfs_artist_rankings score (a plain SUM(vote_count) grouped by artist_slug,
+  // agnostic to track_name), so liking more songs in a day now genuinely adds
+  // more to the artist's total instead of being capped at one.
+  async function submitVote(trackKey: string) {
     if (!effectiveTier) { setShowVoteModal("non-member"); return; }
-    if (hasVotedToday || voteLoading) return;
+    if (!trackKey || votedTracksToday.has(trackKey) || voteLoading) return;
     setVoteLoading(true);
     try {
       const sb = createClient(SUPA_URL, SUPA_ANON!);
-      const { error } = await sb.from("gfs_artist_votes").insert({ artist_slug: slug, user_id: userId, vote_count: 1, lesars_spent: 0 });
+      const { error } = await sb.from("gfs_artist_votes").insert({ artist_slug: slug, user_id: userId, vote_count: 1, lesars_spent: 0, track_name: trackKey });
       if (!error) {
-        setHasVotedToday(true);
-        // 2026-07-26 (4th pass): remember which row triggered the vote so only
-        // that heart fills in - the vote itself still counts once for the
-        // whole artist regardless of which song's heart sent it.
-        if (trackKey) setVotedTrackKey(trackKey);
+        setVotedTracksToday(prev => new Set(prev).add(trackKey));
         setVoteSuccess(true);
         setTimeout(() => setVoteSuccess(false), 3000);
       }
@@ -1818,24 +1827,22 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   <span className="mp-time">{duration > 0 ? fmtTime(duration) : "--:--"}</span>
                                 </div>
                               </div>
-                              {/* 2026-07-26 per Sean: heart button replaces the old header
-                                  "Vote" pill - liking a song IS the vote for the artist now.
-                                  Reuses the existing gfs_artist_votes backend (submitVote),
-                                  so it's still one counted vote per artist per day. Fixed
-                                  same day (4th pass) per Sean's bug report: hearting one song
-                                  used to fill in every other song's heart too, since they all
-                                  read the same artist-wide hasVotedToday flag. Now only the
-                                  specific row that was actually clicked (votedTrackKey === t.n)
-                                  shows filled; the rest go disabled-but-empty once today's
-                                  vote is used, instead of all appearing "liked". */}
+                              {/* 2026-07-26 per Sean: heart button - liking a song IS a vote
+                                  for the artist (feeds gfs_artist_rankings). Went through two
+                                  fixes same day: (4th pass) stopped every heart filling in
+                                  together when only one was clicked; (5th pass, this one) Sean
+                                  confirmed he wants genuinely independent per-song likes, not
+                                  one shared artist-wide vote/day - so each row now only cares
+                                  whether ITS OWN track is in votedTracksToday, completely
+                                  independent of every other row. */}
                               <button
-                                className={"mp-row-heart" + (votedTrackKey === t.n ? " voted" : "") + (voteLoading ? " loading" : "")}
+                                className={"mp-row-heart" + (votedTracksToday.has(t.n) ? " voted" : "") + (voteLoading ? " loading" : "")}
                                 onClick={() => submitVote(t.n)}
-                                disabled={voteLoading || hasVotedToday}
-                                aria-label={votedTrackKey === t.n ? `You voted for ${name} today with ${t.n}` : hasVotedToday ? `Already voted for ${name} today` : `Like ${t.n} and vote for ${name}`}
-                                title={votedTrackKey === t.n ? "Voted today" : hasVotedToday ? "Today's vote already used" : "Like this song - votes for " + name}
+                                disabled={voteLoading || votedTracksToday.has(t.n)}
+                                aria-label={votedTracksToday.has(t.n) ? `You already liked ${t.n} today` : `Like ${t.n} and vote for ${name}`}
+                                title={votedTracksToday.has(t.n) ? "Liked today" : "Like this song - votes for " + name}
                               >
-                                <svg viewBox="0 0 24 24" fill={votedTrackKey === t.n ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                <svg viewBox="0 0 24 24" fill={votedTracksToday.has(t.n) ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                               </button>
                               {/* 2026-07-26 per Sean: swapped the text "Lyrics" pill for a
                                   circular icon button matching the heart, for a more
