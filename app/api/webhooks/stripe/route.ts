@@ -6,6 +6,27 @@ import { creditLesars } from "@/lib/ledger";
 
 export const config = { api: { bodyParser: false } };
 
+// Finds an existing Supabase auth user by email, or creates one if none
+// exists yet. Used only for guest (no prior account) artist-unlock
+// purchases - see the artist-unlock branch below. Uses the Auth Admin
+// listUsers/createUser API rather than querying auth.users directly, since
+// the auth schema isn't exposed over PostgREST. Scans the first page of
+// users, which is fine at GeekFon's current member volume; if the member
+// base grows past ~1000, this needs pagination or a dedicated email index.
+async function findOrCreateUserIdByEmail(supabase: ReturnType<typeof createClient>, email: string): Promise<string> {
+  const { data: list, error: listErr } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  if (listErr) throw listErr;
+  const existing = list?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+  if (existing) return existing.id;
+
+  const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+    email,
+    email_confirm: true,
+  });
+  if (createErr || !created?.user) throw createErr || new Error("createUser returned no user");
+  return created.user.id;
+}
+
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
   const supabase = createClient(
@@ -56,19 +77,52 @@ export async function POST(req: NextRequest) {
     // from the lesars>0 block above since this plan intentionally carries
     // 0 lesars - it is not a Points purchase, it just grants permanent
     // playback access to one artist's full catalog, released or not.
-    if (userId && plan === "artist-unlock" && session.metadata?.artist_slug) {
-      await supabase
-        .from("gfs_artist_unlocks")
-        .upsert(
-          {
-            user_id: userId,
-            artist_slug: session.metadata.artist_slug,
-            source: "stripe",
-            amount_cents: session.amount_total ?? 1100,
-            external_id: session.id,
-          },
-          { onConflict: "user_id,artist_slug" }
-        );
+    //
+    // Fixed 2026-07-26 per Sean: the unlock button used to force sign-in
+    // before checkout, purely so this webhook would have a userId to write.
+    // That's backwards - the fix is here, not a login wall on the button.
+    // Guests now check out with no account at all; Stripe Checkout always
+    // collects an email for one-time payments, so on a guest purchase we
+    // find-or-create a Supabase auth user for that email, give them a free
+    // gfs_members row, and grant the unlock against that user_id. If they
+    // ever log in with the same email (existing email-code login flow),
+    // their unlock is already there under the account matched by email.
+    if (plan === "artist-unlock" && session.metadata?.artist_slug) {
+      let unlockUserId = userId || null;
+
+      if (!unlockUserId) {
+        const guestEmail = session.customer_details?.email || (session as any).customer_email;
+        if (guestEmail) {
+          try {
+            unlockUserId = await findOrCreateUserIdByEmail(supabase, guestEmail);
+            await supabase
+              .from("gfs_members")
+              .upsert(
+                { user_id: unlockUserId, tier: "free", tier_source: "stripe" },
+                { onConflict: "user_id", ignoreDuplicates: true }
+              );
+          } catch (e) {
+            console.error("[webhook] guest artist-unlock provisioning failed", e);
+          }
+        } else {
+          console.error("[webhook] guest artist-unlock with no email on session", session.id);
+        }
+      }
+
+      if (unlockUserId) {
+        await supabase
+          .from("gfs_artist_unlocks")
+          .upsert(
+            {
+              user_id: unlockUserId,
+              artist_slug: session.metadata.artist_slug,
+              source: "stripe",
+              amount_cents: session.amount_total ?? 1100,
+              external_id: session.id,
+            },
+            { onConflict: "user_id,artist_slug" }
+          );
+      }
     }
   }
 
