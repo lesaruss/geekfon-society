@@ -289,7 +289,7 @@ function RegisterPageInner() {
                   aria-required="true"
                   aria-describedby="dobError"
                   aria-invalid={!!dobError}
-                  className={styles.inputField}
+                  className={`${styles.inputField} ${styles.dobField}`}
                   disabled={isLoading}
                 />
                 {dobError && (
