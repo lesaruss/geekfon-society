@@ -1,4 +1,3 @@
-===== components/SiteChrome.tsx =====
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
