@@ -124,6 +124,7 @@ const POPULATED_PULSE_ARTISTS = ["roxanne", "lex-from-brixton", "shamanic-resin"
 const PLAY = <svg viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4" /></svg>;
 const PAUSE = <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>;
 const LOCK = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>;
+const CHECK = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>;
 
 const PLACEHOLDER_NEWS: News[] = [
   {
@@ -1029,6 +1030,18 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     setVoteLoading(false);
   }
 
+  // 2026-07-26 per Sean: the heart-click/preview-lock register prompt used to
+  // render inline (a plain block between the catalog note and the track rows),
+  // which pushed the whole song list down and left a gap - not a real lightbox.
+  // Now a fixed-position overlay (see the "vote-modal-overlay" render below),
+  // so Escape and a backdrop click both close it same as any other modal.
+  useEffect(() => {
+    if (!showVoteModal) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setShowVoteModal(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showVoteModal]);
+
   const crumb = [
     { label: "GeekFon", href: "/" },
     { label: "Roster", href: "/roster" },
@@ -1623,22 +1636,56 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         explicitly asked for this popup to let people register - so the CTA
                         is back, now pointed at the real /register flow instead of the old
                         Passport page. Copy differs by trigger: liking a song vs. trying to
-                        preview a locked track. */}
+                        preview a locked track.
+                        2026-07-26 later same day, per Sean: this was still rendering inline
+                        (pushed the track list down, left a gap) instead of a real lightbox,
+                        and the "like a song" copy was a bare gate instead of a benefits pitch
+                        for free Passport membership. Now a fixed overlay + card, and the
+                        non-member case leads with what free registration actually unlocks. */}
                     {showVoteModal && (
-                      <div className="vote-modal">
-                        <p>
-                          {showVoteModal === "preview"
-                            ? "Create a free account to preview unreleased songs."
-                            : "You need to be a member in order to like a song. Membership is free."}
-                        </p>
-                        <div className="vote-modal-actions">
-                          <a
-                            className="vote-modal-cta"
-                            href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
+                      <div
+                        className="vote-modal-overlay"
+                        onClick={() => setShowVoteModal(null)}
+                      >
+                        <div
+                          className="vote-modal"
+                          role="dialog"
+                          aria-modal="true"
+                          aria-labelledby="vote-modal-title"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            className="vote-modal-close"
+                            onClick={() => setShowVoteModal(null)}
+                            aria-label="Close"
                           >
-                            Sign Up Free
-                          </a>
-                          <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Dismiss</button>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                          </button>
+                          {showVoteModal === "preview" ? (
+                            <>
+                              <div id="vote-modal-title" className="vote-modal-title-text">Create a free account</div>
+                              <p>Sign up free to preview {name}&apos;s unreleased songs before they officially drop.</p>
+                            </>
+                          ) : (
+                            <>
+                              <div id="vote-modal-title" className="vote-modal-title-text">Become a free Passport member</div>
+                              <p className="vote-modal-lead">Create a free account and unlock:</p>
+                              <ul className="vote-modal-benefits">
+                                <li>{CHECK}<span>Access to {name}&apos;s Social feed</span></li>
+                                <li>{CHECK}<span>Access to the Group conversation</span></li>
+                                <li>{CHECK}<span>Like songs to help {name} climb the leaderboard</span></li>
+                              </ul>
+                            </>
+                          )}
+                          <div className="vote-modal-actions">
+                            <a
+                              className="vote-modal-cta"
+                              href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
+                            >
+                              Sign Up Free
+                            </a>
+                            <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Dismiss</button>
+                          </div>
                         </div>
                       </div>
                     )}
