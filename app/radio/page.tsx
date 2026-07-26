@@ -162,13 +162,33 @@ export default function RadioPage() {
     return () => { if (cityTimerRef.current) clearInterval(cityTimerRef.current); };
   }, [goCity]);
 
+  // Fixed 2026-07-26 per Sean ("stuck on the Orlando background for the
+  // first couple rotations, then after one full round it starts to work"):
+  // this effect is supposed to park every panel except the first one
+  // off-screen right after mount. But its dependency array was `[]`, so React
+  // only ever ran it once - on the component's very FIRST render, which is
+  // the `if (!authChecked || !isMember) return null;` render below (leftover
+  // from the pre-2026-07-26 login gate; authChecked/isMember flip true a
+  // moment later via their own mount effect, but that's a SECOND render).
+  // On that first render nothing under SiteChrome exists yet, so
+  // cityPanelRefs.current was still empty and this ran as a total no-op -
+  // every panel kept `transform:none` (fully overlapping, all at the same
+  // spot) until goCity() happened to touch it directly during a real
+  // rotation. Since Orlando is last in CITIES/last in the DOM, it's the one
+  // that visually wins that overlap and appears "stuck" until the rotation
+  // reaches it for the first time (~one full lap), which is exactly the
+  // reported symptom. Adding authChecked/isMember as deps (same guard style
+  // already used by the schedule-loading effect above) makes this re-run
+  // once the real panels actually exist, so all 7 get positioned correctly
+  // from the start instead of only the ones goCity has already visited.
   useEffect(() => {
+    if (!authChecked || !isMember) return;
     cityPanelRefs.current.forEach((p, i) => {
       if (!p) return;
       p.style.transition = "none";
       p.style.transform = i === 0 ? "translateX(0)" : "translateX(100%)";
     });
-  }, []);
+  }, [authChecked, isMember]);
 
   // Load + seek to wherever the deterministic clock says this listener should
   // land right now, then keep playback locked to that same clock going
