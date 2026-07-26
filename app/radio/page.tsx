@@ -367,7 +367,17 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 .rd-city-dot { width: 5px; height: 5px; border-radius: 50%; transition: background-color 1s ease; }
 .rd-city-name { font-size: 9px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.5); }
 
-.rd-main { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 60px); overflow: hidden; gap: 24px; padding: 24px; box-sizing: border-box; }
+/* 2026-07-26 per Sean: "could be centered a little more, brought up a bit."
+   Mathematically this box already fills exactly the space below the fixed
+   header (height: calc(100vh - 60px), confirmed via computed layout - no
+   double-counted gap here like the /dashboard pages had). The play button
+   is the single largest, heaviest visual element, sitting ABOVE the now-
+   playing text + hint line below it - centering the whole stack puts the
+   circle's own optical weight slightly below true-center rather than at it,
+   a common effect with one big element over smaller ones. Asymmetric
+   padding (more on the bottom than the top) shifts the centered group up
+   within the box without touching the header-clearance math at all. */
+.rd-main { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 60px); overflow: hidden; gap: 24px; padding: 24px 24px calc(24px + 6vh) 24px; box-sizing: border-box; }
 
 .rd-logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; flex-shrink: 0; }
 
