@@ -79,7 +79,7 @@ type ReleaseBrief = {
 };
 
 export type ArtistContent = {
-  name?: string; accent?: string; accentText?: string; accentTint?: string;
+  name?: string; genre?: string; accent?: string; accentText?: string; accentTint?: string;
   heroUrl?: string; profileUrl?: string; initial?: string; tagline?: string;
   crumb?: { label: string; href?: string }[]; pills?: Pill[];
   message?: { ja?: string; en?: string; audio?: string; audioEn?: string; audioJa?: string };
@@ -1164,7 +1164,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   const rawPills = (c.pills || []).filter(p => p.label !== "Original");
                   const seasonPill = rawPills.find(p => /season/i.test(p.label));
                   const genrePill = rawPills.find(p => p !== seasonPill && !/^original(\s+artist)?$/i.test(p.label));
-                  const genreLabel = genrePill?.label || c.sonic?.primaryGenre;
+                  const genreLabel = genrePill?.label || c.sonic?.primaryGenre || c.genre;
                   const seasonLabel = seasonPill?.label || c.tracks?.[0]?.m || "Season 1";
                   return (
                     // 2026-07-26 per Sean: the old "Vote" pill (membership-gated,
