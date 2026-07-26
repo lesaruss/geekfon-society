@@ -1,8 +1,18 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import SiteChrome from "@/components/SiteChrome";
+import { supabase } from "@/lib/supabase";
+import { resolvePlayhead, RadioTrack as ScheduleTrack, ScheduleOverride } from "@/lib/radioSchedule";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
+// 2026-07-26 per Sean: "I just want people to hear the music at this point" -
+// the hero circle now doubles as a play button for GeekFon Radio (see
+// app/radio/page.tsx and lib/radioSchedule.ts for the full page/scheduler
+// this borrows from). No login required here, unlike the full /radio page
+// pre-2026-07-26 (that gate is also being removed in the same pass).
+const RADIO_AUDIO_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
+const RADIO_RESYNC_INTERVAL_MS = 5000;
+const RADIO_RESYNC_DRIFT_TOLERANCE_SEC = 2;
 
 const CITIES = [
   {
@@ -71,6 +81,16 @@ export default function HomePage() {
   const currentRef = useRef(0);
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // GeekFon Radio - inline play button on the hero circle, no account needed.
+  const [radioPlaying, setRadioPlaying] = useState(false);
+  const [radioLoading, setRadioLoading] = useState(false);
+  const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const radioRotationRef = useRef<ScheduleTrack[]>([]);
+  const radioOverridesRef = useRef<ScheduleOverride[]>([]);
+  const radioLoadedRef = useRef(false);
+  const radioCurrentPathRef = useRef<string | null>(null);
+  const radioResyncTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // FON color cycle
   useEffect(() => {
@@ -147,6 +167,105 @@ export default function HomePage() {
   }, []);
 
   const city = CITIES[current];
+
+  // GeekFon Radio - fetches the same rotation/overrides the full /radio page
+  // uses (public-readable tables + public storage bucket, confirmed 2026-07-26
+  // - no auth needed at the data layer, only the old page-level gate blocked
+  // it). Lazy-loaded on first click so anonymous homepage visitors who never
+  // touch the button don't pay for the extra Supabase calls.
+  async function loadRadioSchedule() {
+    const nowIso = new Date().toISOString();
+    const { data: trackRows } = await supabase
+      .from("radio_tracks")
+      .select("artist_slug, title, src_path, duration_seconds, release_date")
+      .eq("is_public", true)
+      .neq("src_path", "PENDING")
+      .lte("release_date", nowIso)
+      .order("radio_order", { ascending: true, nullsFirst: false })
+      .order("artist_slug", { ascending: true })
+      .order("sort_order", { ascending: true });
+
+    radioRotationRef.current = (trackRows || []).map((r: any) => ({
+      artist: r.artist_slug as string,
+      title: r.title as string,
+      path: r.src_path as string,
+      durationSeconds: (r.duration_seconds as number | null) || 180,
+    }));
+
+    const { data: overrideRows } = await supabase
+      .from("radio_schedule_overrides")
+      .select("kind, label, ad_src_path, starts_at, duration_seconds, cadence_seconds, track_id, radio_tracks(artist_slug, title, src_path)")
+      .eq("is_active", true);
+
+    radioOverridesRef.current = (overrideRows || []).flatMap((o: any): ScheduleOverride[] => {
+      if (o.kind === "pinned" && o.starts_at && o.radio_tracks) {
+        return [{
+          kind: "pinned",
+          path: o.radio_tracks.src_path,
+          title: o.radio_tracks.title,
+          artist: o.radio_tracks.artist_slug,
+          startsAtMs: new Date(o.starts_at).getTime(),
+          durationSeconds: o.duration_seconds || 180,
+          label: o.label || undefined,
+        }];
+      }
+      if (o.kind === "ad_cadence") {
+        return [{
+          kind: "ad_cadence",
+          adSrcPath: o.ad_src_path || null,
+          cadenceSeconds: o.cadence_seconds || 0,
+          durationSeconds: o.duration_seconds || 0,
+          label: o.label || undefined,
+        }];
+      }
+      return [];
+    });
+    radioLoadedRef.current = true;
+  }
+
+  function syncRadioAudio(a: HTMLAudioElement) {
+    const resolved = resolvePlayhead(Date.now(), radioRotationRef.current, radioOverridesRef.current);
+    if (!resolved) return;
+    if (radioCurrentPathRef.current !== resolved.path) {
+      radioCurrentPathRef.current = resolved.path;
+      a.src = RADIO_AUDIO_BASE + resolved.path;
+      a.currentTime = resolved.offsetSeconds;
+    } else if (Math.abs(a.currentTime - resolved.offsetSeconds) > RADIO_RESYNC_DRIFT_TOLERANCE_SEC) {
+      a.currentTime = resolved.offsetSeconds;
+    }
+  }
+
+  async function handleRadioToggle() {
+    if (radioPlaying) {
+      radioAudioRef.current?.pause();
+      setRadioPlaying(false);
+      if (radioResyncTimerRef.current) { clearInterval(radioResyncTimerRef.current); radioResyncTimerRef.current = null; }
+      return;
+    }
+    if (!radioAudioRef.current) radioAudioRef.current = new Audio();
+    const a = radioAudioRef.current;
+    setRadioLoading(true);
+    try {
+      if (!radioLoadedRef.current) await loadRadioSchedule();
+      syncRadioAudio(a);
+      await a.play();
+      setRadioPlaying(true);
+      radioResyncTimerRef.current = setInterval(() => {
+        if (radioAudioRef.current) syncRadioAudio(radioAudioRef.current);
+      }, RADIO_RESYNC_INTERVAL_MS);
+    } catch {
+      setRadioPlaying(false);
+    } finally {
+      setRadioLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      radioAudioRef.current?.pause();
+      if (radioResyncTimerRef.current) clearInterval(radioResyncTimerRef.current);
+    };
+  }, []);
 
   return (
     <SiteChrome>
@@ -238,11 +357,31 @@ export default function HomePage() {
             </div>
           </div>
           <h1 className="sr-only">GeekFon Society</h1>
+
+          <button
+            className={"hero-radio-btn" + (radioPlaying ? " playing" : "")}
+            onClick={handleRadioToggle}
+            disabled={radioLoading}
+            aria-label={radioPlaying ? "Pause GeekFon Radio" : "Play GeekFon Radio - no account needed"}
+          >
+            {radioLoading ? (
+              <span className="hero-radio-spinner" aria-hidden="true" />
+            ) : radioPlaying ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4" /></svg>
+            )}
+            <span className="hero-radio-label">GeekFon Radio</span>
+          </button>
         </div>
 
         <div className="cta-row">
-          <a href="/welcome" className="btn-p">Take the Tour</a>
-          <a href="/roster" className="btn-s">Meet the Artists</a>
+          {/* 2026-07-26 per Sean: dropped "Take the Tour" (/welcome) entirely -
+              it competed with the real path and diluted where people should
+              land first. "Meet the Artists" is now the sole CTA and takes the
+              orange primary treatment (.btn-p) that Take the Tour used to have,
+              so there's exactly one obvious next step: go see the artists. */}
+          <a href="/roster" className="btn-p">Meet the Artists</a>
         </div>
       </div>
     </>
@@ -295,6 +434,18 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
 .hero-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:15%;}
 .hero-title{font-size:clamp(34px,9vw,56px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;line-height:1;text-align:center;white-space:nowrap;text-shadow:0 0 30px rgba(0,0,0,1),0 0 70px rgba(0,0,0,.9),0 2px 14px rgba(0,0,0,1);}
 
+/* GeekFon Radio play button - overlaps the bottom edge of the hero circle */
+.hero-radio-btn{position:absolute;left:50%;bottom:2%;transform:translateX(-50%);z-index:5;display:inline-flex;align-items:center;gap:7px;background:#F69820;color:#1a1a1a;border:none;border-radius:100px;padding:9px 18px 9px 12px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.4),0 0 0 3px #020c0a;transition:transform .15s,background .15s;pointer-events:all;}
+.hero-radio-btn:hover:not(:disabled){background:#e08818;transform:translateX(-50%) translateY(-1px);}
+.hero-radio-btn:focus-visible{outline:3px solid #F69820;outline-offset:3px;}
+.hero-radio-btn:disabled{opacity:.7;cursor:default;}
+.hero-radio-btn svg{width:13px;height:13px;fill:currentColor;flex-shrink:0;}
+.hero-radio-btn.playing{background:#1a1a1a;color:#F69820;box-shadow:0 4px 18px rgba(0,0,0,.4),0 0 0 3px #020c0a,0 0 0 1px #F69820;}
+.hero-radio-label{white-space:nowrap;}
+.hero-radio-spinner{width:13px;height:13px;border:2px solid rgba(26,26,26,.3);border-top-color:#1a1a1a;border-radius:50%;animation:heroRadioSpin .7s linear infinite;flex-shrink:0;}
+@keyframes heroRadioSpin{to{transform:rotate(360deg);}}
+@media(prefers-reduced-motion:reduce){.hero-radio-spinner{animation:none;}}
+
 /* Society text: fixed size, overflow ellipsis so long words (Gesellschaft) don't break layout */
 .hero-tagline-inner{
   font-size:clamp(8px,1.2vw,11px);
@@ -336,5 +487,6 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
   .city-stage::before{height:30%;}
   .city-panel img{object-position:center center;}
   .hero-circle-wrap{width:min(280px,70vw);height:min(280px,70vw);}
+  .hero-radio-btn{padding:8px 14px 8px 10px;font-size:8px;bottom:0;}
 }
 `;
