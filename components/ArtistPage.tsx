@@ -1782,9 +1782,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               <a
                                 className="mp-btn-buy mp-row-unlock"
                                 href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
-                                aria-label={`Create a free account to preview ${t.n}`}
+                                aria-label={`Create a free account to preview ${t.n}${t.scheduledFor ? ", releases " + t.scheduledFor.split("T")[0] : ""}`}
                               >
-                                Register
+                                {/* 2026-07-26 per Sean: "Register, register, register, register"
+                                    repeated down the list was redundant - show the release
+                                    date instead (still the same green pill, still takes them
+                                    to /register on click). Falls back to "Register" only if a
+                                    track has no scheduledFor date at all. */}
+                                {t.scheduledFor ? t.scheduledFor.split("T")[0] : "Register"}
                               </a>
                             </div>
                           );
