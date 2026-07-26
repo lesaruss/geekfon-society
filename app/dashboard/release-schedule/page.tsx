@@ -1,3 +1,4 @@
+===== app/dashboard/release-schedule/page.tsx =====
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useDashboard } from "../context";
@@ -250,7 +251,7 @@ export default function ReleaseSchedulePage() {
             </svg>
           </div>
           <h2>Admin Only</h2>
-          <p>Release Schedule is restricted to the GeekFon Society admin account.</p>
+          <p>Song Manager is restricted to the GeekFon Society admin account.</p>
           <a href="/dashboard" className="rs-gate-btn">Back to Dashboard</a>
         </div>
       </div>
@@ -266,7 +267,7 @@ export default function ReleaseSchedulePage() {
       <div className="rs-header">
         <div>
           <div className="dp-eyebrow">Admin Tool</div>
-          <h1 className="rs-title">Release Manager</h1>
+          <h1 className="rs-title">Song Manager</h1>
         </div>
         <div className="rs-header-actions">
           {readOnly && (
@@ -566,4 +567,5 @@ const RS_CSS = `
 .rs-gate-btn { display: inline-block; background: #E91E8C; color: #fff; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; padding: 12px 24px; border-radius: 100px; text-decoration: none; }
 .rs-gate-btn:hover { background: #c41874; }
 `;
+
 
