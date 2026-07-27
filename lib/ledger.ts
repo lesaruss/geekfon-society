@@ -38,3 +38,55 @@ export async function creditLesars(
     reference_id: referenceId,
   });
 }
+
+// Added 2026-07-27 alongside the GeekFon Pro program (app/pro/page.tsx) and
+// app/api/referral/claim/route.ts. Before this, the referrals table's
+// total_earned_cents/pending_earned_cents columns existed and the dashboard
+// Affiliate portal (app/dashboard/page.tsx) already rendered them, but
+// nothing anywhere ever wrote to them - every affiliate's earnings always
+// showed $0.00 regardless of purchases. Called from both the Stripe webhook
+// (web) and the RevenueCat webhook (native) so a purchase credits the
+// referrer's commission the same way no matter which store it came through.
+//
+// Uses the placeholder rates already defined in app/api/invite/route.ts /
+// app/dashboard/context.tsx (promoter 10%, pro 25%) via the referral row's
+// own commission_rate column - no new rate is invented here. Read-then-write
+// rather than an atomic increment, which is fine at GeekFon's current
+// purchase volume but would need an RPC/transaction if that changes.
+export async function creditReferralCommission(
+  supabase: any,
+  purchasingUserId: string,
+  amountCents: number
+) {
+  if (!amountCents || amountCents <= 0) return;
+
+  const { data: member } = await supabase
+    .from("gfs_members")
+    .select("referred_by_ref_code")
+    .eq("user_id", purchasingUserId)
+    .maybeSingle();
+
+  const refCode = member?.referred_by_ref_code;
+  if (!refCode) return;
+
+  const { data: referral } = await supabase
+    .from("referrals")
+    .select("referrer_id, commission_rate, window_expires_at, total_earned_cents, pending_earned_cents")
+    .eq("ref_code", refCode)
+    .maybeSingle();
+
+  if (!referral || !referral.commission_rate) return;
+  if (referral.window_expires_at && new Date(referral.window_expires_at).getTime() < Date.now()) return;
+  if (referral.referrer_id === purchasingUserId) return; // guard against self-referral slipping through
+
+  const creditCents = Math.round(amountCents * referral.commission_rate);
+  if (creditCents <= 0) return;
+
+  await supabase
+    .from("referrals")
+    .update({
+      total_earned_cents: (referral.total_earned_cents || 0) + creditCents,
+      pending_earned_cents: (referral.pending_earned_cents || 0) + creditCents,
+    })
+    .eq("referrer_id", referral.referrer_id);
+}
