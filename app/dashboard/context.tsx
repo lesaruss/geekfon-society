@@ -5,6 +5,10 @@ import { createContext, useContext } from "react";
 export type GfsMember = {
   id: string; user_id: string; name: string | null; tier: string | null;
   passport_artists: string[] | null;
+  // 2026-07-27 per Sean: invite-only VIP flag for the Playlist feature - full
+  // catalog access, no payment involved, granted by admin only. See
+  // app/dashboard/library/page.tsx and app/api/admin/members/[id]/route.ts.
+  is_pro?: boolean;
 };
 export type MemberPoints = { available_points: number; total_points: number; spent_points: number };
 export type Purchase = { id: string; amount_cents: number; status: string; created_at: string };
@@ -51,3 +55,4 @@ export const TIER_LABEL: Record<string, string> = { passport: "Passport", promot
 export const TIER_RATE: Record<string, number> = { promoter: 0.10, pro: 0.25 };
 export const ADMIN_EMAIL = "contact@lesaruss.com";
 export const GOAL = 1_000_000;
+
