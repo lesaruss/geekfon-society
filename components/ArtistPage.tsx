@@ -32,6 +32,7 @@ type PulsePost = {
   trackName?: string; trackEra?: string; trackUrl?: string; trackVisibility?: string;
   tag?: string; title?: string; blurb?: string; href?: string; thumb?: string;
   likes?: number; comments?: number; shares?: number; videoUrl?: string;
+  pinned?: boolean;
 };
 
 type BibleModule = {
@@ -580,6 +581,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
   const [pulseShown, setPulseShown] = useState(3);
+  // 2026-07-27 per Sean/V: Instagram-style Social grid, piloted on Roxanne only
+  // (real c.pulse content already exists for her). Index into the filtered,
+  // thumbnail-resolved post list below, or null when the lightbox is closed.
+  const [socialLightboxIdx, setSocialLightboxIdx] = useState<number | null>(null);
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
   const [lyricsLang, setLyricsLang] = useState<"original" | "en">("en");
@@ -1430,7 +1435,94 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       </a>
                     </div>
                   )}
-                  {isRegistered() && (
+                  {/* 2026-07-27 per Sean/V: Instagram-style grid, piloted on
+                      Roxanne only since she already has real c.pulse content
+                      with resolvable thumbnails. Every card needs a thumbnail
+                      image to fill the frame, even when the underlying post
+                      is a video - a legacy text-only post with no media/thumb
+                      simply can't render here yet (see pulse-001/003/004,
+                      flagged to V rather than silently dropped). Other
+                      artists keep the original card-list layout below until
+                      this is confirmed and content exists for them too. */}
+                  {isRegistered() && slug === "roxanne" && (
+                    !c.pulse || c.pulse.length === 0 ? (
+                      <div className="pulse-empty"><p>Posts coming soon.</p></div>
+                    ) : (() => {
+                      const gridPosts = (c.pulse || [])
+                        .map((post, i) => {
+                          const rawThumb = post.thumb || (post.type === "photo" ? post.media : null);
+                          const thumbUrl = rawThumb ? (rawThumb.startsWith("http") ? rawThumb : MEDIA + rawThumb) : null;
+                          return { post, i, thumbUrl };
+                        })
+                        .filter((p): p is { post: PulsePost; i: number; thumbUrl: string } => !!p.thumbUrl)
+                        .sort((a, b) => (b.post.pinned ? 1 : 0) - (a.post.pinned ? 1 : 0));
+                      const activePost = socialLightboxIdx !== null ? (c.pulse || [])[socialLightboxIdx] : null;
+                      const rawActiveMedia = activePost ? (activePost.videoUrl || activePost.media || activePost.thumb) : null;
+                      const activeMediaUrl = rawActiveMedia ? (rawActiveMedia.startsWith("http") ? rawActiveMedia : MEDIA + rawActiveMedia) : null;
+                      return (
+                        <>
+                          <div className="sg-highlights">
+                            <div className="sg-highlight">
+                              <div className="sg-highlight-circle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></svg>
+                              </div>
+                              <span>Solo</span>
+                            </div>
+                            <div className="sg-highlight">
+                              <div className="sg-highlight-circle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M2.5 20c0-3.6 2.9-5.8 6.5-5.8s6.5 2.2 6.5 5.8" /><circle cx="17" cy="9" r="2.6" /><path d="M15.5 14.3c2.9.3 5 2.2 5 5.7" /></svg>
+                              </div>
+                              <span>Group</span>
+                            </div>
+                            <div className="sg-highlight sg-highlight-add">
+                              <div className="sg-highlight-circle sg-highlight-circle-dashed">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                              </div>
+                              <span>New</span>
+                            </div>
+                          </div>
+                          {gridPosts.length === 0 ? (
+                            <div className="pulse-empty"><p>Posts coming soon.</p></div>
+                          ) : (
+                            <div className="sg-grid">
+                              {gridPosts.map(({ post, i, thumbUrl }) => {
+                                const isVideo = post.type === "video";
+                                const caption = (post.text || post.caption || "").split("\n")[0].slice(0, 60);
+                                return (
+                                  <button key={post.id || i} type="button" className="sg-cell" onClick={() => setSocialLightboxIdx(i)} aria-label={caption || "View post"}>
+                                    <img src={thumbUrl} alt="" loading="lazy" decoding="async" />
+                                    {post.pinned && (
+                                      <span className="sg-pin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2l-1 1v6l3 3v2h-6v7l-1 2-1-2v-7H2v-2l3-3V3l-1-1h10z" /></svg></span>
+                                    )}
+                                    {isVideo && (
+                                      <span className="sg-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span>
+                                    )}
+                                    {caption && <span className="sg-caption">{caption}</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {activePost && (
+                            <div className="sg-lightbox" onClick={() => setSocialLightboxIdx(null)}>
+                              <div className="sg-lightbox-inner" onClick={(e) => e.stopPropagation()}>
+                                <button type="button" className="sg-lightbox-close" onClick={() => setSocialLightboxIdx(null)} aria-label="Close">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                                </button>
+                                {activePost.type === "video" && activeMediaUrl ? (
+                                  <video src={activeMediaUrl} poster={activePost.thumb} controls autoPlay playsInline className="sg-lightbox-video" />
+                                ) : activeMediaUrl ? (
+                                  <img src={activeMediaUrl} alt="" className="sg-lightbox-photo" />
+                                ) : null}
+                                {(activePost.text || activePost.caption) && <p className="sg-lightbox-caption">{activePost.text || activePost.caption}</p>}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()
+                  )}
+                  {isRegistered() && slug !== "roxanne" && (
                     !c.pulse || c.pulse.length === 0 ? (
                       <div className="pulse-empty"><p>Posts coming soon.</p></div>
                     ) : (
