@@ -25,9 +25,9 @@ const PERKS = [
   },
   {
     icon: "★",
-    short: "Plus",
-    title: "GeekFon Plus",
-    desc: "Invite-only, earned through member support. Plus unlocks street-team access and affiliate revenue opportunities.",
+    short: "Pro",
+    title: "GeekFon Pro",
+    desc: "Invite-only. Apply, get full catalog access, and earn commission on every member who joins through your personal link.",
     accent: "#AAFF00",
   },
   {
