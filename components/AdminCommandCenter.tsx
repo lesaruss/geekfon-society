@@ -30,6 +30,7 @@ type ArtistBrief = { artist_slug: string; title: string; status: string; updated
 type NowPlaying = { type: string; path: string; title: string; artist: string; offsetSeconds: number; durationSeconds: number } | null;
 type MemberRow = { user_id: string; name: string | null; tier: string | null; created_at: string; email?: string | null };
 type RankedArtist = { slug: string; name: string; plays: number; votes: number; score: number };
+type Ga4Snapshot = { sessions: number; users: number; pageviews: number; available: boolean };
 
 const ADMIN_EMAIL = "contact@lesaruss.com";
 
@@ -64,6 +65,7 @@ export default function AdminCommandCenter({ displayName }: { displayName: strin
   const [radioListeners, setRadioListeners] = useState<number>(0);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [topArtists, setTopArtists] = useState<RankedArtist[]>([]);
+  const [ga4, setGa4] = useState<Ga4Snapshot | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -85,6 +87,7 @@ export default function AdminCommandCenter({ displayName }: { displayName: strin
           setSongManager(json.songManager);
           setNowPlaying(json.nowPlaying);
           setRadioListeners(json.radioListeners ?? 0);
+          setGa4(json.ga4 ?? null);
         }
         if (membersRes.ok) {
           const json = await membersRes.json();
@@ -288,6 +291,37 @@ export default function AdminCommandCenter({ displayName }: { displayName: strin
             </div>
           )}
         </div>
+
+        {/* Website Traffic (real Google Analytics) */}
+        <div className="cc-widget">
+          <div className="cc-widget-head">
+            <h3 className="cc-widget-title">Website Traffic</h3>
+            <a href="https://analytics.google.com/analytics/web/#/p547243255/reports/intelligenthome" target="_blank" rel="noreferrer" className="cc-widget-link">Open GA4 &rarr;</a>
+          </div>
+          {loading ? (
+            <div className="cc-empty">Loading…</div>
+          ) : !ga4?.available ? (
+            <div className="cc-empty">GA4 not connected yet.</div>
+          ) : (
+            <>
+              <div className="cc-stats-mini">
+                <div className="cc-stat-mini">
+                  <div className="cc-stat-mini-num">{ga4.sessions}</div>
+                  <div className="cc-stat-mini-label">Sessions</div>
+                </div>
+                <div className="cc-stat-mini">
+                  <div className="cc-stat-mini-num">{ga4.users}</div>
+                  <div className="cc-stat-mini-label">Users</div>
+                </div>
+                <div className="cc-stat-mini">
+                  <div className="cc-stat-mini-num">{ga4.pageviews}</div>
+                  <div className="cc-stat-mini-label">Views</div>
+                </div>
+              </div>
+              <div className="cc-health-fail-date" style={{ marginTop: 10 }}>Last 30 days &middot; geekfon.ai</div>
+            </>
+          )}
+        </div>
       </div>
     </>
   );
@@ -351,3 +385,4 @@ a.cc-row:hover{background:rgba(255,255,255,.03);}
 .cc-stat-mini-num{font-size:28px;font-weight:900;color:#fff;line-height:1;}
 .cc-stat-mini-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.35);margin-top:4px;}
 `;
+
