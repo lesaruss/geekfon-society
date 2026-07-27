@@ -27,12 +27,14 @@ async function requireAdmin(req: Request, admin: ReturnType<typeof createClient>
 // Passport member before they can apply, so there is always an account to
 // upgrade here, unlike app/api/invite/route.ts which can invite a brand new
 // email. Reject: just marks the application so it drops off the pending list.
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const admin = createClient(SB_URL, SB_SVC, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
   const denied = await requireAdmin(req, admin);
   if (denied) return denied;
+
+  const { id } = await params;
 
   const { action } = await req.json();
   if (action !== "accept" && action !== "reject") {
@@ -42,13 +44,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const { data: application } = await admin
     .from("gfs_plus_applications")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
 
   if (!application) return NextResponse.json({ error: "Application not found" }, { status: 404 });
 
   if (action === "reject") {
-    await admin.from("gfs_plus_applications").update({ status: "rejected" }).eq("id", params.id);
+    await admin.from("gfs_plus_applications").update({ status: "rejected" }).eq("id", id);
     return NextResponse.json({ success: true });
   }
 
@@ -88,7 +90,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     { onConflict: "referrer_id" }
   );
 
-  await admin.from("gfs_plus_applications").update({ status: "accepted" }).eq("id", params.id);
+  await admin.from("gfs_plus_applications").update({ status: "accepted" }).eq("id", id);
 
   return NextResponse.json({ success: true, user_id: userId, ref_code: refCode });
 }
