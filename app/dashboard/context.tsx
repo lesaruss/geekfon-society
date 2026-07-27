@@ -13,6 +13,12 @@ export type Referral = {
   window_expires_at: string | null; total_earned_cents: number; pending_earned_cents: number;
 };
 
+// Tier here is the product-facing membership tier used by View As and
+// ArtistPage's simulation logic (public/passport/plus/pro) - distinct from the
+// legacy gfs_members.tier DB vocabulary (passport/promoter/pro) still used by
+// the affiliate program below. See components/SiteChrome.tsx for the same type.
+export type Tier = "public" | "passport" | "plus" | "pro";
+
 export type DashboardCtx = {
   userId: string | null;
   userEmail: string | null;
@@ -22,11 +28,20 @@ export type DashboardCtx = {
   referral: Referral | null;
   memberCount: number;
   loading: boolean;
+  // 2026-07-27 per Sean: the dashboard home page always rendered the real
+  // gfs_members.tier ("passport" for his own account) with zero admin
+  // awareness, and never read the "gfs-view-as" simulation SiteChrome already
+  // supports elsewhere. isAdmin + viewAs let /dashboard/page.tsx branch to a
+  // real Admin Command Center when not simulating, and correctly reflect the
+  // simulated tier's experience when it is.
+  isAdmin: boolean;
+  viewAs: Tier | null;
 };
 
 export const DashboardContext = createContext<DashboardCtx>({
   userId: null, userEmail: null, member: null, points: null,
   purchases: [], referral: null, memberCount: 0, loading: true,
+  isAdmin: false, viewAs: null,
 });
 
 export function useDashboard() { return useContext(DashboardContext); }
