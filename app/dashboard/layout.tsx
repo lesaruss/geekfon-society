@@ -46,6 +46,29 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return () => document.body.classList.remove("gfs-dash-bg");
   }, []);
 
+  // Claims a pending referral code (dropped by app/join/page.tsx into
+  // localStorage) onto this signed-in member's own row, once, first-touch.
+  // See app/api/referral/claim/route.ts - this is what makes "geekfon.ai/
+  // join?ref=CODE" links (shown in the Affiliate portal below) actually
+  // attribute a new signup back to the referrer, instead of silently doing
+  // nothing after the link finally started resolving to a real page.
+  async function claimPendingReferral(accessToken: string) {
+    try {
+      const code = localStorage.getItem("gfs_ref_code");
+      if (!code) return;
+      await fetch("/api/referral/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ ref_code: code }),
+      });
+    } catch {
+      // Best-effort - a failed claim just means this signup isn't attributed.
+    } finally {
+      localStorage.removeItem("gfs_ref_code");
+      localStorage.removeItem("gfs_ref_code_at");
+    }
+  }
+
   useEffect(() => {
     async function load() {
       const {
@@ -56,6 +79,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         return;
       }
       const u = session.user;
+      if (session.access_token) claimPendingReferral(session.access_token);
       const [memberRes, pointsRes, purchasesRes, referralRes, countRes] =
         await Promise.all([
           supabase.from("gfs_members").select("*").eq("user_id", u.id).maybeSingle(),
