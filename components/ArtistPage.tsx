@@ -1919,17 +1919,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 >
                                   {unlockLoading ? "..." : "Unlock - $11"}
                                 </button>
-                              ) : slug === "vuka" && t.scheduledFor ? (
+                              ) : t.scheduledFor ? (
                                 // 2026-07-27 per Sean's Fieldy note: the raw scheduled date
                                 // ("2026-08-15") rendered as the whole label on a bold green
                                 // CTA pill read as meaningless - just a date, no signal of why
-                                // it's locked. His own fix, applied here first on Vuka before
-                                // any wider rollout: deprioritize the date and pair it with a
-                                // lock symbol so it reads as "this is premium, unlocks on this
-                                // date" instead of a bare timestamp. Still the same /register
-                                // link and behavior, just de-emphasized (quiet style, not the
-                                // bold mp-btn-buy treatment) since it's informational first,
-                                // CTA second.
+                                // it's locked. His own fix: deprioritize the date and pair it
+                                // with a lock symbol so it reads as "this is premium, unlocks
+                                // on this date" instead of a bare timestamp. Still the same
+                                // /register link and behavior, just de-emphasized (quiet style,
+                                // not the bold mp-btn-buy treatment) since it's informational
+                                // first, CTA second. Piloted on Vuka only 2026-07-27, confirmed
+                                // good, rolled out to the full roster same day.
                                 <a
                                   className="mp-row-unlock-quiet"
                                   href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
@@ -2007,18 +2007,18 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   one shared artist-wide vote/day - so each row now only cares
                                   whether ITS OWN track is in votedTracksToday, completely
                                   independent of every other row. */}
-                              {/* 2026-07-27 per Sean, Vuka pilot only for now (rolls out to the
-                                  full roster once confirmed): hearts on a preview no longer make
-                                  sense as "real" engagement, and the old disabled-once-voted heart
-                                  had no way to undo a mistaken like. So previews/locked tracks get
-                                  a lock icon instead of a heart - clicking it opens whichever popup
+                              {/* 2026-07-27 per Sean: hearts on a preview no longer make sense
+                                  as "real" engagement, and the old disabled-once-voted heart had
+                                  no way to undo a mistaken like. So previews/locked tracks get a
+                                  lock icon instead of a heart - clicking it opens whichever popup
                                   is actually next for this viewer (Passport if not registered yet,
                                   Plus if registered but this song needs the paid unlock). Only
                                   full-access tracks (!rowPreviewCapped - registerLocked tracks never
                                   reach this row at all, they're the locked-cta branch above) keep a
                                   real heart, and that heart now toggles vote/unvote instead of
-                                  locking after one click. */}
-                              {slug === "vuka" && rowPreviewCapped ? (
+                                  locking after one click. Piloted on Vuka only, confirmed good,
+                                  rolled out to the full roster same day. */}
+                              {rowPreviewCapped ? (
                                 <button
                                   className="mp-row-lock"
                                   onClick={() => setShowVoteModal(isRegistered() ? "plus" : "non-member")}
@@ -2137,15 +2137,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         "Vuka"): two paths should sit next to each other above the fold
                         of the catalog - free Passport signup and the $11 paid unlock -
                         instead of only ever showing the paid CTA. Piloted on Vuka only
-                        (slug === "vuka") per Sean's explicit ask before any wider
-                        rollout, same pattern as the earlier Lex from Brixton pilot.
+                        first, confirmed good, rolled out to the full roster same day.
                         Only shown to a visitor who hasn't registered yet - a Passport
-                        member already has the free tier, so only Unlock applies to
-                        them. Reuses the existing benefits modal (setShowVoteModal
+                        member already has the free tier, so only Plus applies to them.
+                        Reuses the existing benefits modal (setShowVoteModal
                         ("non-member")) instead of building new copy or linking out to
                         the separate /passport tour page, whose Plus-tier slide is
                         stale post the 2026-07-23 pricing simplification. */}
-                    {useRowLyrics && slug === "vuka" && !hasFullAccess && !isRegistered() && (
+                    {useRowLyrics && !hasFullAccess && !isRegistered() && (
                       <button
                         className="mp-btn-buy mp-btn-buy-passport mp-catalog-unlock-bottom"
                         onClick={() => setShowVoteModal("non-member")}
@@ -2156,30 +2155,20 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     {/* 2026-07-27 round 2 per Sean: renamed to "Plus - $11" to match
                         "Passport - Free" - the tier is called Plus everywhere in the
                         code (Passport < Plus < Pro) but was never actually said to a
-                        visitor. Vuka only for now, same pilot scope as everything
-                        else on this page today: clicking used to jump straight to
-                        Stripe, now opens a benefits pitch first (mirrors the Passport
-                        modal) with a real confirm step before checkout. Per Sean's
-                        explicit scoping answer, the small per-track "Unlock - $11"
-                        row buttons elsewhere are UNCHANGED - still instant checkout,
-                        no popup - this only touches the main bottom CTA. */}
+                        visitor. Clicking used to jump straight to Stripe, now opens a
+                        benefits pitch first (mirrors the Passport modal) with a real
+                        confirm step before checkout. Per Sean's explicit scoping
+                        answer, the small per-track "Unlock - $11" row buttons
+                        elsewhere are UNCHANGED - still instant checkout, no popup -
+                        this only touches the main bottom CTA. Piloted on Vuka only
+                        first, confirmed good, rolled out to the full roster same day. */}
                     {useRowLyrics && !hasFullAccess && (
-                      slug === "vuka" ? (
-                        <button
-                          className="mp-btn-buy mp-catalog-unlock-bottom"
-                          onClick={() => setShowVoteModal("plus")}
-                        >
-                          Plus - $11
-                        </button>
-                      ) : (
-                        <button
-                          className="mp-btn-buy mp-catalog-unlock-bottom"
-                          onClick={handleUnlockArtist}
-                          disabled={unlockLoading}
-                        >
-                          {unlockLoading ? "Redirecting..." : "Unlock Full Experience - $11"}
-                        </button>
-                      )
+                      <button
+                        className="mp-btn-buy mp-catalog-unlock-bottom"
+                        onClick={() => setShowVoteModal("plus")}
+                      >
+                        Plus - $11
+                      </button>
                     )}
                   </section>
                 );
