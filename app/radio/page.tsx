@@ -75,6 +75,28 @@ export default function RadioPage() {
   const overridesRef = useRef<ScheduleOverride[]>([]);
   const currentPathRef = useRef<string | null>(null);
 
+  // 2026-07-27 per Sean: "can we tell how many people are actively listening to
+  // GeekFon Radio, even if they're not logged in?" No login required to listen
+  // (2026-07-26), so this is an anonymous per-tab heartbeat keyed off a random
+  // session id, not a user_id - a listener who pauses or closes the tab just
+  // stops pinging and ages out of the "active" window server-side.
+  const radioSessionIdRef = useRef<string>(
+    typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+  );
+  useEffect(() => {
+    if (!playing) return;
+    const ping = () => {
+      fetch("/api/radio/ping", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: radioSessionIdRef.current }),
+      }).catch(() => {});
+    };
+    ping();
+    const interval = setInterval(ping, 20000);
+    return () => clearInterval(interval);
+  }, [playing]);
+
   useEffect(() => {
     if (!authChecked || !isMember) return;
     let cancelled = false;
