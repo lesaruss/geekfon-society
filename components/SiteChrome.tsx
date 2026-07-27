@@ -43,7 +43,7 @@ const NAV_PRO: NavItem[] = [
 
 
 
-function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, canSeeRadioSchedule = false, canSeeMembers = false): NavItem[] {
+function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, canSeeRadioSchedule = false, canSeeMembers = false, canSeeOutreach = false): NavItem[] {
   let base: NavItem[];
   if (tier === "plus")          base = NAV_PLUS;
   else if (tier === "pro")      base = NAV_PRO;
@@ -64,6 +64,12 @@ function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = false, 
   // not a tier/role perk. Standalone page pulled out of the dashboard 2026-07-13.
   if (canSeeMembers) {
     base = [...base, { label: "Members", href: "/dashboard/members" }];
+  }
+  // Outreach List - segmented/exportable member list for marketing (feeds
+  // Resend/Beehiiv, doesn't send anything itself). Same account-only admin
+  // gate, added 2026-07-26 per Sean.
+  if (canSeeOutreach) {
+    base = [...base, { label: "Outreach List", href: "/dashboard/outreach" }];
   }
   return base;
 }
@@ -240,7 +246,8 @@ export default function SiteChrome({
   const canSeeReleaseSchedule = auth.email === ADMIN_EMAIL && !viewAs;
   const canSeeRadioSchedule = auth.email === ADMIN_EMAIL && !viewAs;
   const canSeeMembers = auth.email === ADMIN_EMAIL && !viewAs;
-  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule, canSeeRadioSchedule, canSeeMembers);
+  const canSeeOutreach = auth.email === ADMIN_EMAIL && !viewAs;
+  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule, canSeeRadioSchedule, canSeeMembers, canSeeOutreach);
   const isLoggedIn = effectiveTier !== "public" && !auth.loading;
   const tierAccent = TIER_ACCENT[effectiveTier];
   const tierLabel  = TIER_LABEL[effectiveTier];
