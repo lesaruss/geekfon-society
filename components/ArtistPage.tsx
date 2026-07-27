@@ -1132,6 +1132,32 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     setVoteLoading(false);
   }
 
+  // 2026-07-27 per Sean: hearts used to be one-way (disabled once voted, no
+  // way to undo a mistaken like) - this is the other half of the toggle,
+  // wired from the same heart button below. Deletes today's vote row for
+  // this specific track/artist/user rather than touching any other day's
+  // history. Required a new DELETE RLS policy on gfs_artist_votes ("Members
+  // can remove own vote", auth.uid() = user_id) - only INSERT/SELECT existed
+  // before this, so an unvote would have silently failed under RLS.
+  async function removeVote(trackKey: string) {
+    if (!userId || !trackKey || voteLoading) return;
+    setVoteLoading(true);
+    try {
+      const sb = createClient(SUPA_URL, SUPA_ANON!);
+      const today = new Date().toISOString().slice(0, 10);
+      const { error } = await sb.from("gfs_artist_votes")
+        .delete()
+        .eq("artist_slug", slug)
+        .eq("user_id", userId)
+        .eq("track_name", trackKey)
+        .gte("voted_at", today + "T00:00:00Z");
+      if (!error) {
+        setVotedTracksToday(prev => { const next = new Set(prev); next.delete(trackKey); return next; });
+      }
+    } catch { /* silent */ }
+    setVoteLoading(false);
+  }
+
   // 2026-07-26 per Sean: the heart-click/preview-lock register prompt used to
   // render inline (a plain block between the catalog note and the track rows),
   // which pushed the whole song list down and left a gap - not a real lightbox.
@@ -1981,15 +2007,37 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   one shared artist-wide vote/day - so each row now only cares
                                   whether ITS OWN track is in votedTracksToday, completely
                                   independent of every other row. */}
-                              <button
-                                className={"mp-row-heart" + (votedTracksToday.has(t.n) ? " voted" : "") + (voteLoading ? " loading" : "")}
-                                onClick={() => submitVote(t.n)}
-                                disabled={voteLoading || votedTracksToday.has(t.n)}
-                                aria-label={votedTracksToday.has(t.n) ? `You already liked ${t.n} today` : `Like ${t.n} and vote for ${name}`}
-                                title={votedTracksToday.has(t.n) ? "Liked today" : "Like this song - votes for " + name}
-                              >
-                                <svg viewBox="0 0 24 24" fill={votedTracksToday.has(t.n) ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                              </button>
+                              {/* 2026-07-27 per Sean, Vuka pilot only for now (rolls out to the
+                                  full roster once confirmed): hearts on a preview no longer make
+                                  sense as "real" engagement, and the old disabled-once-voted heart
+                                  had no way to undo a mistaken like. So previews/locked tracks get
+                                  a lock icon instead of a heart - clicking it opens whichever popup
+                                  is actually next for this viewer (Passport if not registered yet,
+                                  Plus if registered but this song needs the paid unlock). Only
+                                  full-access tracks (!rowPreviewCapped - registerLocked tracks never
+                                  reach this row at all, they're the locked-cta branch above) keep a
+                                  real heart, and that heart now toggles vote/unvote instead of
+                                  locking after one click. */}
+                              {slug === "vuka" && rowPreviewCapped ? (
+                                <button
+                                  className="mp-row-lock"
+                                  onClick={() => setShowVoteModal(isRegistered() ? "plus" : "non-member")}
+                                  aria-label={isRegistered() ? `Unlock ${name}'s full catalog to like ${t.n}` : `Sign up free to like ${t.n}`}
+                                  title={isRegistered() ? "Unlock Plus to like this song" : "Sign up free to like this song"}
+                                >
+                                  {LOCK}
+                                </button>
+                              ) : (
+                                <button
+                                  className={"mp-row-heart" + (votedTracksToday.has(t.n) ? " voted" : "") + (voteLoading ? " loading" : "")}
+                                  onClick={() => votedTracksToday.has(t.n) ? removeVote(t.n) : submitVote(t.n)}
+                                  disabled={voteLoading}
+                                  aria-label={votedTracksToday.has(t.n) ? `Remove your like from ${t.n}` : `Like ${t.n} and vote for ${name}`}
+                                  title={votedTracksToday.has(t.n) ? "Liked - click to remove" : "Like this song - votes for " + name}
+                                >
+                                  <svg viewBox="0 0 24 24" fill={votedTracksToday.has(t.n) ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                </button>
+                              )}
                               {/* 2026-07-26 per Sean: swapped the text "Lyrics" pill for a
                                   circular icon button matching the heart, for a more
                                   streamlined row. Icon is a sheet-of-paper/document mark
