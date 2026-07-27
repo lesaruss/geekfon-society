@@ -29,6 +29,21 @@ function fmtDateTime(iso: string): string {
   return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
+function Pager({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="mdp-pager">
+      <button type="button" className="mdp-pager-btn" disabled={page <= 1} onClick={() => onChange(page - 1)}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M15 18l-6-6 6-6" /></svg>
+      </button>
+      <span className="mdp-pager-label">Page {page} of {totalPages}</span>
+      <button type="button" className="mdp-pager-btn" disabled={page >= totalPages} onClick={() => onChange(page + 1)}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M9 18l6-6-6-6" /></svg>
+      </button>
+    </div>
+  );
+}
+
 export default function MemberDetailPage() {
   const { userEmail, loading } = useDashboard();
   const params = useParams<{ id: string }>();
@@ -57,11 +72,21 @@ export default function MemberDetailPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // 2026-07-26 per Sean: Like History and Recent Listens paginate 10-at-a-time
+  // instead of a long scrolling list - reset to page 1 whenever a fresh
+  // member's data loads so switching profiles doesn't leave you stranded on
+  // page 4 of someone else's history.
+  const PAGE_SIZE = 10;
+  const [votesPage, setVotesPage] = useState(1);
+  const [playsPage, setPlaysPage] = useState(1);
+
   useEffect(() => {
     if (loading || !hasAccess || !id) { setDataLoading(false); return; }
     (async () => {
       setDataLoading(true);
       setError("");
+      setVotesPage(1);
+      setPlaysPage(1);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         const headers: HeadersInit = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
@@ -79,6 +104,11 @@ export default function MemberDetailPage() {
       setDataLoading(false);
     })();
   }, [loading, hasAccess, id]);
+
+  const votesTotalPages = Math.max(1, Math.ceil(votes.length / PAGE_SIZE));
+  const votesPageItems = votes.slice((votesPage - 1) * PAGE_SIZE, votesPage * PAGE_SIZE);
+  const playsTotalPages = Math.max(1, Math.ceil(plays.length / PAGE_SIZE));
+  const playsPageItems = plays.slice((playsPage - 1) * PAGE_SIZE, playsPage * PAGE_SIZE);
 
   if (loading) return <div className="mdp-center"><div className="mdp-spinner" /></div>;
 
@@ -134,69 +164,86 @@ export default function MemberDetailPage() {
             <div className="mdp-stat"><div className="mdp-stat-num">{plays.length}</div><div className="mdp-stat-label">Recent Plays</div></div>
           </div>
 
-          <div className="mdp-section">
-            <h3 className="mdp-section-title">Purchase History</h3>
-            {unlocks.length === 0 && purchases.length === 0 ? (
-              <div className="mdp-empty-inline">No purchases yet.</div>
-            ) : (
-              <div className="mdp-list">
-                {unlocks.map(u => (
-                  <div key={u.id} className="mdp-row">
-                    <div className="mdp-row-main">
-                      <span className="mdp-row-title">{u.artist_slug} - Full Unlock</span>
-                      <span className="mdp-row-sub">{u.source}{u.amount_cents ? ` – $${(u.amount_cents / 100).toFixed(2)}` : ""}</span>
+          {/* 2026-07-26 per Sean: Purchase History, Like History, and Recent
+              Listens now live as three side-by-side widgets instead of
+              stacked full-width sections. Like History and Recent Listens
+              paginate 10-at-a-time (see Pager below) instead of a long
+              scrolling list - Purchase History isn't paginated since $11
+              unlocks are inherently rare, but it lives in the same grid for
+              visual consistency. */}
+          <div className="mdp-widgets">
+            <div className="mdp-widget">
+              <h3 className="mdp-widget-title">Purchase History</h3>
+              {unlocks.length === 0 && purchases.length === 0 ? (
+                <div className="mdp-empty-inline">No purchases yet.</div>
+              ) : (
+                <div className="mdp-list">
+                  {unlocks.map(u => (
+                    <div key={u.id} className="mdp-row">
+                      <div className="mdp-row-main">
+                        <span className="mdp-row-title">{u.artist_slug} - Full Unlock</span>
+                        <span className="mdp-row-sub">{u.source}{u.amount_cents ? ` – $${(u.amount_cents / 100).toFixed(2)}` : ""}</span>
+                      </div>
+                      <span className="mdp-row-date">{fmtDateTime(u.created_at)}</span>
                     </div>
-                    <span className="mdp-row-date">{fmtDateTime(u.created_at)}</span>
-                  </div>
-                ))}
-                {purchases.map(p => (
-                  <div key={p.id} className="mdp-row">
-                    <div className="mdp-row-main">
-                      <span className="mdp-row-title">{p.track_name}</span>
-                      <span className="mdp-row-sub">Legacy Points purchase – {p.lesars_spent} pts</span>
+                  ))}
+                  {purchases.map(p => (
+                    <div key={p.id} className="mdp-row">
+                      <div className="mdp-row-main">
+                        <span className="mdp-row-title">{p.track_name}</span>
+                        <span className="mdp-row-sub">Legacy Points purchase – {p.lesars_spent} pts</span>
+                      </div>
+                      <span className="mdp-row-date">{fmtDateTime(p.purchased_at)}</span>
                     </div>
-                    <span className="mdp-row-date">{fmtDateTime(p.purchased_at)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="mdp-section">
-            <h3 className="mdp-section-title">Like History</h3>
-            {votes.length === 0 ? (
-              <div className="mdp-empty-inline">No likes yet.</div>
-            ) : (
-              <div className="mdp-list">
-                {votes.map(v => (
-                  <div key={v.id} className="mdp-row">
-                    <div className="mdp-row-main">
-                      <span className="mdp-row-title">{v.track_name || "(artist-level like)"}</span>
-                      <span className="mdp-row-sub">{v.artist_slug}</span>
-                    </div>
-                    <span className="mdp-row-date">{fmtDateTime(v.voted_at)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {plays.length > 0 && (
-            <div className="mdp-section">
-              <h3 className="mdp-section-title">Recent Listens</h3>
-              <div className="mdp-list">
-                {plays.slice(0, 20).map(p => (
-                  <div key={p.id} className="mdp-row">
-                    <div className="mdp-row-main">
-                      <span className="mdp-row-title">{p.track_name}</span>
-                      <span className="mdp-row-sub">{p.artist_slug}</span>
-                    </div>
-                    <span className="mdp-row-date">{fmtDateTime(p.played_at)}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+
+            <div className="mdp-widget">
+              <h3 className="mdp-widget-title">Like History</h3>
+              {votes.length === 0 ? (
+                <div className="mdp-empty-inline">No likes yet.</div>
+              ) : (
+                <>
+                  <div className="mdp-list">
+                    {votesPageItems.map(v => (
+                      <div key={v.id} className="mdp-row">
+                        <div className="mdp-row-main">
+                          <span className="mdp-row-title">{v.track_name || "(artist-level like)"}</span>
+                          <span className="mdp-row-sub">{v.artist_slug}</span>
+                        </div>
+                        <span className="mdp-row-date">{fmtDateTime(v.voted_at)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Pager page={votesPage} totalPages={votesTotalPages} onChange={setVotesPage} />
+                </>
+              )}
+            </div>
+
+            <div className="mdp-widget">
+              <h3 className="mdp-widget-title">Recent Listens</h3>
+              {plays.length === 0 ? (
+                <div className="mdp-empty-inline">No listens yet.</div>
+              ) : (
+                <>
+                  <div className="mdp-list">
+                    {playsPageItems.map(p => (
+                      <div key={p.id} className="mdp-row">
+                        <div className="mdp-row-main">
+                          <span className="mdp-row-title">{p.track_name}</span>
+                          <span className="mdp-row-sub">{p.artist_slug}</span>
+                        </div>
+                        <span className="mdp-row-date">{fmtDateTime(p.played_at)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Pager page={playsPage} totalPages={playsTotalPages} onChange={setPlaysPage} />
+                </>
+              )}
+            </div>
+          </div>
         </>
       )}
     </>
@@ -218,9 +265,18 @@ const MDP_CSS = `
 .mdp-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;text-align:center;}
 .mdp-stat-num{font-size:26px;font-weight:900;color:#fff;}
 .mdp-stat-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.3);margin-top:4px;}
-.mdp-section{margin-bottom:20px;}
-.mdp-section-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.4);margin:0 0 10px;}
+.mdp-widgets{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;align-items:start;}
+.mdp-widget{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;min-width:0;}
+.mdp-widget-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.4);margin:0 0 10px;}
+@media(max-width:900px){.mdp-widgets{grid-template-columns:1fr;}}
+.mdp-pager{display:flex;align-items:center;justify-content:center;gap:12px;padding-top:12px;margin-top:4px;}
+.mdp-pager-btn{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;padding:0;transition:background .12s;}
+.mdp-pager-btn:hover:not(:disabled){background:rgba(255,255,255,.12);}
+.mdp-pager-btn:disabled{opacity:.3;cursor:default;}
+.mdp-pager-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);white-space:nowrap;}
 .mdp-list{border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;}
+.mdp-widget .mdp-list{border:none;border-radius:0;}
+.mdp-widget .mdp-row{padding:10px 0;}
 .mdp-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);}
 .mdp-row:last-child{border-bottom:none;}
 .mdp-row-main{display:flex;flex-direction:column;gap:3px;min-width:0;}
