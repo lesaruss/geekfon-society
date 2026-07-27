@@ -247,10 +247,12 @@
 /* 2026-07-27 per Sean's Fieldy note, Vuka pilot only: the bare scheduled date
    used to be the entire label on this pill, styled as a bold green CTA - read
    as meaningless. Deprioritized to quiet inline text + a lock icon so it
-   reads as "premium, unlocks on this date" rather than a random timestamp;
-   still links to /register, just no longer competing visually with the real
-   Unlock/Passport CTAs. */
-.mp-row-unlock-quiet{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;color:rgba(26,26,26,.45);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;transition:color .12s}
+   reads as "premium, unlocks on this date" rather than a random timestamp.
+   Changed 2026-07-27 per Sean's follow-up from a <a href="/register"> to a
+   <button onClick> that opens the Passport-Free benefits dialog instead of
+   navigating straight to registration - added the plain-button resets
+   (background/border/padding/font/cursor) a real <a> never needed. */
+.mp-row-unlock-quiet{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;color:rgba(26,26,26,.45);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;transition:color .12s;background:none;border:none;padding:0;margin:0;cursor:pointer;font-family:inherit}
 .mp-row-unlock-quiet:hover{color:rgba(26,26,26,.75)}
 .mp-row-unlock-quiet svg{width:13px;height:13px;flex-shrink:0}
 .mp-row-unlock-date{font-variant-numeric:tabular-nums}
