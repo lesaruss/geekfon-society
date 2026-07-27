@@ -75,7 +75,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   // reflect that reality (every artist in the roster) rather than showing 0
   // just because he's never needed to pay for one.
   const isSuperAdminMember = email === ADMIN_EMAIL;
-  const artistsAccess = isSuperAdminMember
+  // 2026-07-27 per Sean: "Pro" members (gfs_members.is_pro, invite-only VIP,
+  // no payment - see the Playlist feature) get the same full-roster access
+  // reflected here as the real super admin bypass above, for the same
+  // reason - their real access isn't gated by any unlock row at all.
+  const isProMember = memberRow.is_pro === true;
+  const artistsAccess = isSuperAdminMember || isProMember
     ? (allArtists || []).map((a: { slug: string }) => a.slug)
     : Array.from(new Set((unlocks || []).map((u: { artist_slug: string }) => u.artist_slug)));
 
@@ -90,3 +95,41 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     plays: plays || [],
   });
 }
+
+// 2026-07-27 per Sean: admin-only toggle for the invite-only Pro VIP flag -
+// no Stripe/RevenueCat involved, this is a direct grant. Same requireAdmin
+// gate as GET above.
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
+  const { id } = await params;
+  if (!id) return NextResponse.json({ error: "Missing member id" }, { status: 400 });
+
+  let body: { is_pro?: boolean };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  if (typeof body.is_pro !== "boolean") {
+    return NextResponse.json({ error: "is_pro must be a boolean" }, { status: 400 });
+  }
+
+  const admin = createClient(SB_URL, SB_SVC, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data, error } = await admin
+    .from("gfs_members")
+    .update({ is_pro: body.is_pro })
+    .eq("user_id", id)
+    .select("user_id, is_pro")
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: "Member not found" }, { status: 404 });
+
+  return NextResponse.json({ ok: true, is_pro: data.is_pro });
+}
+
