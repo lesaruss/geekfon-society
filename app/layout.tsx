@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import RegisterSW from "../components/RegisterSW";
 import RevenueCatBootstrap from "../components/RevenueCatBootstrap";
@@ -33,6 +34,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body suppressHydrationWarning>
+        {/* 2026-07-27: GA4 property "geekfon.ai" (G-5YTJ0CZLJY) created per Sean's
+            request to see real Google Analytics for GeekFon - see command-center
+            route for the Data API pull that surfaces this in the dashboard. */}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-5YTJ0CZLJY" strategy="afterInteractive" />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-5YTJ0CZLJY');`}
+        </Script>
         <RegisterSW />
         <RevenueCatBootstrap />
         {children}
