@@ -126,6 +126,10 @@ export default function LibraryPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [order, setOrder] = useState<number[]>([]);
   const [pos, setPos] = useState(0);
+  // Tracked by id, not index - reordering the queue (drag/arrows) changes
+  // which index a track sits at without touching what's actually loaded in
+  // the <audio> element, so "now playing" must follow the track, not a slot.
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [shuffleOn, setShuffleOn] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -148,14 +152,18 @@ export default function LibraryPage() {
     setPlaying(false);
     setProgress(0);
     setDuration(0);
+    setCurrentTrackId(null);
   }, [playlistTracks.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const currentTrack = playlistTracks[order[pos]] || null;
+  // Looked up by id so the label/highlight always matches what's actually
+  // loaded in the audio element, regardless of how the queue got reordered.
+  const currentTrack = currentTrackId ? playlistTracks.find(t => t.id === currentTrackId) ?? null : null;
 
   const playAt = useCallback((newPos: number) => {
     const track = playlistTracks[order[newPos]];
     if (!track) return;
     setPos(newPos);
+    setCurrentTrackId(track.id);
     if (!audioRef.current) audioRef.current = new Audio();
     const a = audioRef.current;
     a.pause();
@@ -182,17 +190,28 @@ export default function LibraryPage() {
     const p = order.indexOf(trackIdx);
     if (p >= 0) playAt(p);
   }
-  // Shuffle never interrupts what's currently playing - it keeps the current
-  // track pinned at the front of the queue and only reorders (or restores
-  // sequential order for) everything else.
+  // Shuffle never interrupts what's currently playing - turning it ON keeps
+  // the current track pinned at the front and only shuffles everything else.
+  // Turning it OFF restores true sequential (== drag-reorderable) order -
+  // `order` must be a plain identity array whenever shuffle is off, since
+  // reorderQueue below indexes straight into playlistRows by queue position;
+  // any other arrangement here would make drag/arrow reordering move the
+  // wrong rows. Playback itself is untouched either way - only which slot
+  // the currently-playing track's id resolves to changes.
   function toggleShuffle() {
     setShuffleOn(v => {
       const next = !v;
-      const currentIdx = order[pos];
-      const rest = playlistTracks.map((_, i) => i).filter(i => i !== currentIdx);
-      const arranged = next ? shuffleArr(rest) : rest.slice().sort((a, b) => a - b);
-      setOrder(currentIdx !== undefined ? [currentIdx, ...arranged] : arranged);
-      setPos(0);
+      if (next) {
+        const currentIdx = order[pos];
+        const rest = playlistTracks.map((_, i) => i).filter(i => i !== currentIdx);
+        setOrder(currentIdx !== undefined ? [currentIdx, ...shuffleArr(rest)] : shuffleArr(rest));
+        setPos(0);
+      } else {
+        const seq = playlistTracks.map((_, i) => i);
+        setOrder(seq);
+        const idx = currentTrackId ? playlistTracks.findIndex(t => t.id === currentTrackId) : -1;
+        setPos(idx >= 0 ? idx : 0);
+      }
       return next;
     });
   }
@@ -254,6 +273,14 @@ export default function LibraryPage() {
       next.splice(toIdx, 0, moved);
       const withPositions = next.map((r, i) => ({ ...r, position: i }));
       persistPositions(withPositions);
+      // `order` is identity whenever reordering is allowed (see toggleShuffle),
+      // so pos === index into this array - resync it to wherever the actually-
+      // playing track landed, otherwise "now playing" would silently point at
+      // whatever track happens to occupy the OLD position instead.
+      if (currentTrackId) {
+        const newIdx = withPositions.findIndex(r => r.track_id === currentTrackId);
+        if (newIdx >= 0) setPos(newIdx);
+      }
       return withPositions;
     });
   }
