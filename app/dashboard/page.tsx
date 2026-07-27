@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useDashboard } from "./context";
 import { supabase } from "@/lib/supabase";
+import AdminCommandCenter from "@/components/AdminCommandCenter";
 
 // Passport plan picker + Points top-up (both retired 2026-07-23, see components/ArtistPage.tsx
 // for the replacement model: free membership + one-time $11 per-artist unlock) removed from
@@ -15,7 +16,7 @@ const ADMIN_EMAIL = "contact@lesaruss.com";
 const GOAL = 1_000_000;
 
 export default function DashboardOverview() {
-  const { userId, userEmail, member, purchases, referral, memberCount } = useDashboard();
+  const { userId, userEmail, member, purchases, referral, memberCount, isAdmin, viewAs } = useDashboard();
 
   const [copied, setCopied] = useState(false);
 
@@ -45,11 +46,29 @@ export default function DashboardOverview() {
   const displayName = member?.name || userEmail || "Member";
   const tier       = member?.tier || "passport";
   const tierLabel  = TIER_LABEL[tier] || tier;
-  const isAdmin    = userEmail === ADMIN_EMAIL;
   const isAffiliate = tier === "promoter" || tier === "pro";
   const commissionPct = TIER_RATE[tier] ? (TIER_RATE[tier] * 100).toFixed(0) : null;
   const progressPct   = Math.min((memberCount / GOAL) * 100, 100);
   const passportArtists = member?.passport_artists || [];
+
+  // 2026-07-27 per Sean: this page always showed the real DB tier ("Passport" -
+  // his own account's real gfs_members.tier) with zero admin awareness, and the
+  // "View as membership" simulator elsewhere in the app had no effect on this
+  // specific page at all. Real Super Admin (not simulating) now gets the new
+  // Admin Command Center instead of the member-facing page below. While
+  // simulating a tier via View As, this page reflects THAT tier's label
+  // instead of the real DB tier - and hides real account data (affiliate
+  // earnings/referral link, purchase history) that shouldn't leak into a
+  // "what does this tier look like" preview.
+  const simulating = isAdmin && !!viewAs;
+  const isRealAdminView = isAdmin && !viewAs;
+
+  if (isRealAdminView) {
+    return <AdminCommandCenter displayName={displayName} />;
+  }
+
+  const SIM_TIER_LABEL: Record<string, string> = { public: "Public", passport: "Passport", plus: "Plus", pro: "Pro" };
+  const displayTierLabel = simulating ? (SIM_TIER_LABEL[viewAs as string] || (viewAs as string)) : tierLabel;
 
   function copyLink() {
     if (!referral?.ref_code) return;
@@ -77,7 +96,7 @@ export default function DashboardOverview() {
       <div className="do-stats-row">
         <div className="do-stat-card do-stat-passport">
           <div className="do-stat-label">Status</div>
-          <div className="do-stat-val do-val-orange">{tierLabel.toUpperCase()}</div>
+          <div className="do-stat-val do-val-orange">{displayTierLabel.toUpperCase()}</div>
           <div className="do-stat-sub">Active</div>
         </div>
         <div className="do-stat-card">
@@ -156,8 +175,8 @@ export default function DashboardOverview() {
         </div>
       )}
 
-      {/* Affiliate portal */}
-      {isAffiliate && (
+      {/* Affiliate portal - real account data, hidden while simulating a tier */}
+      {isAffiliate && !simulating && (
         <div className="do-affiliate">
           <div className="do-aff-top">
             <div>
@@ -203,43 +222,40 @@ export default function DashboardOverview() {
         </div>
       )}
 
-      {/* Purchase history - historical record only; Points packs are retired, nothing new lands here */}
-      <div className="do-section" style={{marginTop:32}}>
-        <div className="do-section-row">
-          <div className="do-section-title">Purchase History</div>
-        </div>
-        {purchases.length === 0 ? (
-          <div className="dp-empty">
-            <p>No purchases yet.</p>
-            <a href="/roster" className="dp-btn-outline">Browse Artists</a>
-          </div>
-        ) : (
-          <div className="do-purchases">
-            {purchases.map(p => (
-              <div key={p.id} className="do-purchase-row">
-                <div>
-                  <div className="do-purchase-name">Passport Purchase</div>
-                  <div className="do-purchase-date">{new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
-                </div>
-                <div style={{textAlign:"right"}}>
-                  <div className="do-purchase-amount">${(p.amount_cents / 100).toFixed(2)}</div>
-                  <div className={"do-purchase-status s-" + p.status}>{p.status}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Admin console - moved to its own page 2026-07-13, superadmin only (see /dashboard/members) */}
-      {isAdmin && (
-        <div className="do-section do-admin" style={{marginTop:32}}>
+      {/* Purchase history - real account data, hidden while simulating a tier */}
+      {!simulating && (
+        <div className="do-section" style={{marginTop:32}}>
           <div className="do-section-row">
-            <div className="do-section-title" style={{color:"rgba(255,255,255,.8)"}}>Members Console</div>
-            <a className="do-invite-trigger" href="/dashboard/members">Manage Members</a>
+            <div className="do-section-title">Purchase History</div>
           </div>
+          {purchases.length === 0 ? (
+            <div className="dp-empty">
+              <p>No purchases yet.</p>
+              <a href="/roster" className="dp-btn-outline">Browse Artists</a>
+            </div>
+          ) : (
+            <div className="do-purchases">
+              {purchases.map(p => (
+                <div key={p.id} className="do-purchase-row">
+                  <div>
+                    <div className="do-purchase-name">Passport Purchase</div>
+                    <div className="do-purchase-date">{new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div className="do-purchase-amount">${(p.amount_cents / 100).toFixed(2)}</div>
+                    <div className={"do-purchase-status s-" + p.status}>{p.status}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
+
+      {/* Admin console (Members Console link) removed 2026-07-27 - real Super
+          Admin now lands on AdminCommandCenter above instead of ever reaching
+          this branch, so it was dead code (this page only renders for a real
+          regular member, or an admin simulating a tier via View As). */}
 
     </>
   );
