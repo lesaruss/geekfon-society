@@ -267,6 +267,13 @@
    the one actually clicked stays fully visible via .voted above. */
 .mp-row-heart:disabled:not(.voted){opacity:.4}
 .mp-row-heart svg{width:16px;height:16px}
+/* 2026-07-27 per Sean: previews/locked tracks no longer get a heart at all -
+   this takes its place, same circular shape/size so the row layout doesn't
+   shift when a track crosses from locked to full access. Opens the Passport
+   or Plus popup depending on what the viewer actually needs next. */
+.mp-row-lock{flex-shrink:0;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;border:1px solid rgba(26,26,26,.12);color:rgba(26,26,26,.4);cursor:pointer;transition:color .15s,border-color .15s}
+.mp-row-lock:hover{color:var(--rx);border-color:var(--rx)}
+.mp-row-lock svg{width:16px;height:16px}
 /* 2026-07-26 per Sean: circular lyrics icon button, same shape/size as the
    heart, replacing the old text "Lyrics" pill for a more streamlined row. */
 .mp-row-lyrics-btn{flex-shrink:0;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:none;border:1px solid rgba(26,26,26,.12);color:rgba(26,26,26,.4);cursor:pointer;transition:color .15s,border-color .15s,background .15s,transform .1s}
@@ -286,9 +293,10 @@
   .mp-rows-row-lyrics .mp-row{grid-template-columns:36px 1fr auto auto;gap:8px;padding:10px 12px}
   .mp-rows-row-lyrics .mp-row-state .mp-chip{padding:5px 9px;font-size:10px}
   .mp-rows-row-lyrics .mp-btn-pre{padding:6px 11px;font-size:11px}
-  .mp-rows-row-lyrics .mp-row-heart,.mp-rows-row-lyrics .mp-row-lyrics-btn{width:28px;height:28px}
+  .mp-rows-row-lyrics .mp-row-heart,.mp-rows-row-lyrics .mp-row-lyrics-btn,.mp-rows-row-lyrics .mp-row-lock{width:28px;height:28px}
   .mp-rows-row-lyrics .mp-row-heart svg{width:14px;height:14px}
   .mp-rows-row-lyrics .mp-row-lyrics-btn svg{width:13px;height:13px}
+  .mp-rows-row-lyrics .mp-row-lock svg{width:14px;height:14px}
   .mp-rows-row-lyrics .mp-row-scrub .mp-bar{max-width:100%}
 }
 .mp-btn-pre:hover:not(:disabled){border-color:var(--rx);color:var(--rx)}
