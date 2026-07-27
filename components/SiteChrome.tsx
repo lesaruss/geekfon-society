@@ -18,7 +18,7 @@ const NAV_PUBLIC: NavItem[] = [
 const NAV_PASSPORT: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
   { label: "Roster",          href: "/roster" },
-  { label: "Library",         href: "/dashboard/library" },
+  { label: "Playlist",        href: "/dashboard/library" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "GeekFon Radio",   href: "/radio" },
 ];
@@ -26,7 +26,7 @@ const NAV_PASSPORT: NavItem[] = [
 const NAV_PLUS: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
   { label: "Roster",          href: "/roster" },
-  { label: "Library",         href: "/dashboard/library" },
+  { label: "Playlist",        href: "/dashboard/library" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Plus",            href: "/plus" },
   { label: "GeekFon Radio",   href: "/radio" },
@@ -35,7 +35,7 @@ const NAV_PLUS: NavItem[] = [
 const NAV_PRO: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
   { label: "Roster",          href: "/roster" },
-  { label: "Library",         href: "/dashboard/library" },
+  { label: "Playlist",        href: "/dashboard/library" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Plus",            href: "/plus" },
   { label: "GeekFon Radio",   href: "/radio" },
@@ -472,6 +472,7 @@ const CHROME_CSS = `
 .gdva-reset { display: block; width: 100%; padding: 10px 14px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.3); background: none; border: none; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; text-align: center; }
 .gdva-reset:hover { color: rgba(255,255,255,.6); }
 `;
+
 
 
 
