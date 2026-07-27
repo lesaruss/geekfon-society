@@ -11,7 +11,10 @@ const ADMIN_EMAIL = "contact@lesaruss.com";
 // nothing connected an application to actually granting tier/catalog access
 // or creating a referral code. See [id]/route.ts for the accept/reject
 // action that closes that gap.
-async function requireAdmin(req: Request, admin: ReturnType<typeof createClient>): Promise<NextResponse | null> {
+async function requireAdmin(req: Request): Promise<NextResponse | null> {
+  const admin = createClient(SB_URL, SB_SVC, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,11 +26,12 @@ async function requireAdmin(req: Request, admin: ReturnType<typeof createClient>
 }
 
 export async function GET(req: Request) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
   const admin = createClient(SB_URL, SB_SVC, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const denied = await requireAdmin(req, admin);
-  if (denied) return denied;
 
   const { data, error } = await admin
     .from("gfs_plus_applications")
