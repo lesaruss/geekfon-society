@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 type MemberDetail = {
   id: string; user_id: string; name: string | null; email: string | null;
   tier: string | null; created_at: string; last_sign_in: string | null;
-  is_minor?: boolean;
+  is_minor?: boolean; is_pro?: boolean;
 };
 type Vote = { id: string; artist_slug: string; track_name: string | null; voted_at: string };
 type Play = { id: string; artist_slug: string; track_name: string; played_at: string };
@@ -68,6 +68,7 @@ export default function MemberDetailPage() {
   const [plays, setPlays] = useState<Play[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState("");
+  const [proBusy, setProBusy] = useState(false);
 
   // 2026-07-26 per Sean: Artist Access, Like History, and Recent Listens all
   // paginate 10-at-a-time instead of a long scrolling list - reset to page 1
@@ -78,30 +79,58 @@ export default function MemberDetailPage() {
   const [votesPage, setVotesPage] = useState(1);
   const [playsPage, setPlaysPage] = useState(1);
 
+  async function authHeaders(): Promise<HeadersInit> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+  }
+
+  async function loadDetail() {
+    if (!id) return;
+    setDataLoading(true);
+    setError("");
+    try {
+      const headers = await authHeaders();
+      const res = await fetch(`/api/admin/members/${id}`, { headers });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error || "Failed to load member"); setDataLoading(false); return; }
+      setDetail(json.member);
+      setArtistsAccess(json.artistsAccess || []);
+      setVotes(json.votes || []);
+      setPlays(json.plays || []);
+    } catch (_) {
+      setError("Network error");
+    }
+    setDataLoading(false);
+  }
+
   useEffect(() => {
     if (loading || !hasAccess || !id) { setDataLoading(false); return; }
-    (async () => {
-      setDataLoading(true);
-      setError("");
-      setArtistsPage(1);
-      setVotesPage(1);
-      setPlaysPage(1);
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const headers: HeadersInit = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
-        const res = await fetch(`/api/admin/members/${id}`, { headers });
-        const json = await res.json();
-        if (!res.ok) { setError(json.error || "Failed to load member"); setDataLoading(false); return; }
-        setDetail(json.member);
-        setArtistsAccess(json.artistsAccess || []);
-        setVotes(json.votes || []);
-        setPlays(json.plays || []);
-      } catch (_) {
-        setError("Network error");
-      }
-      setDataLoading(false);
-    })();
+    setArtistsPage(1);
+    setVotesPage(1);
+    setPlaysPage(1);
+    loadDetail();
   }, [loading, hasAccess, id]);
+
+  // 2026-07-27 per Sean: Pro is an invite-only VIP flag (no payment) granted
+  // directly by admin - not a Stripe/RevenueCat tier change, so it's its own
+  // small PATCH to gfs_members.is_pro rather than reusing the tier machinery.
+  // Reloads the full detail afterward (not just a local flag flip) so Artist
+  // Access immediately reflects the real full-roster bypass the API now
+  // applies once is_pro is true, instead of showing the stale unlock list.
+  async function togglePro() {
+    if (!detail) return;
+    setProBusy(true);
+    try {
+      const headers = { "Content-Type": "application/json", ...(await authHeaders()) };
+      const res = await fetch(`/api/admin/members/${id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ is_pro: !detail.is_pro }),
+      });
+      if (res.ok) await loadDetail();
+    } catch (_) {}
+    setProBusy(false);
+  }
 
   const artistsTotalPages = Math.max(1, Math.ceil(artistsAccess.length / PAGE_SIZE));
   const artistsPageItems = artistsAccess.slice((artistsPage - 1) * PAGE_SIZE, artistsPage * PAGE_SIZE);
@@ -152,10 +181,19 @@ export default function MemberDetailPage() {
               <div className="mdp-email">{detail.email || "-"}</div>
               <div className="mdp-badges">
                 <span className={"mdp-tier t-" + (detail.tier || "passport")}>{TIER_LABEL[detail.tier || "passport"] || detail.tier}</span>
+                {detail.is_pro && <span className="mdp-pro">PRO</span>}
                 <span className="mdp-meta">Joined {fmtDate(detail.created_at)}</span>
                 <span className="mdp-meta">Last active {detail.last_sign_in ? fmtDate(detail.last_sign_in) : "Never"}</span>
               </div>
             </div>
+            <button
+              type="button"
+              className={"mdp-pro-btn" + (detail.is_pro ? " is-active" : "")}
+              onClick={togglePro}
+              disabled={proBusy}
+            >
+              {proBusy ? "Saving..." : detail.is_pro ? "Revoke Pro Access" : "Grant Pro Access"}
+            </button>
           </div>
 
           <div className="mdp-stats">
@@ -243,7 +281,13 @@ export default function MemberDetailPage() {
 const MDP_CSS = `
 .mdp-back{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);text-decoration:none;margin-bottom:18px;}
 .mdp-back:hover{color:#F69820;}
-.mdp-header{display:flex;align-items:center;gap:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:22px;margin-bottom:16px;flex-wrap:wrap;}
+.mdp-header{display:flex;align-items:center;gap:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:22px;margin-bottom:16px;flex-wrap:wrap;justify-content:space-between;}
+.mdp-pro{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:20px;background:rgba(233,30,140,.14);color:#E91E8C;}
+.mdp-pro-btn{margin-left:auto;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;padding:10px 20px;border-radius:100px;border:1px solid rgba(233,30,140,.4);background:transparent;color:#E91E8C;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;white-space:nowrap;}
+.mdp-pro-btn:hover:not(:disabled){background:rgba(233,30,140,.12);}
+.mdp-pro-btn.is-active{background:#E91E8C;color:#fff;border-color:#E91E8C;}
+.mdp-pro-btn.is-active:hover:not(:disabled){background:#c41874;}
+.mdp-pro-btn:disabled{opacity:.6;cursor:default;}
 .mdp-avatar{width:64px;height:64px;border-radius:50%;background:#F69820;color:#000;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;flex-shrink:0;}
 .mdp-headinfo{display:flex;flex-direction:column;gap:6px;min-width:0;}
 .mdp-name{font-size:20px;font-weight:900;color:#fff;}
@@ -288,3 +332,4 @@ const MDP_CSS = `
 .mdp-gate-btn{display:inline-block;background:#E91E8C;color:#fff;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:12px 24px;border-radius:100px;text-decoration:none;}
 .mdp-gate-btn:hover{background:#c41874;}
 `;
+
