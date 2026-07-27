@@ -15,7 +15,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     referral: null,
     memberCount: 0,
     loading: true,
+    isAdmin: false,
+    viewAs: null,
   });
+
+  // 2026-07-27 per Sean: home page never knew about View As at all - always
+  // showed the real member.tier regardless of admin/simulation state. Same
+  // "gfs-view-as" localStorage key + custom event SiteChrome already uses.
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem("gfs-view-as") : null;
+    if (saved) setCtx((c) => ({ ...c, viewAs: saved as DashboardCtx["viewAs"] }));
+    const onViewAs = (e: Event) => setCtx((c) => ({ ...c, viewAs: (e as CustomEvent).detail ?? null }));
+    window.addEventListener("gfs-view-as", onViewAs);
+    return () => window.removeEventListener("gfs-view-as", onViewAs);
+  }, []);
 
   // 2026-07-26 per Sean: "noticeable gap between the top navigation and the
   // first thing that appears" on every /dashboard/* page. Root cause: this
@@ -60,7 +73,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           supabase.from("referrals").select("*").eq("referrer_id", u.id).maybeSingle(),
           supabase.from("gfs_members").select("*", { count: "exact", head: true }),
         ]);
-      setCtx({
+      setCtx((c) => ({
+        ...c,
         userId: u.id,
         userEmail: u.email || null,
         member: memberRes.data ?? null,
@@ -68,8 +82,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         purchases: purchasesRes.data ?? [],
         referral: referralRes.data ?? null,
         memberCount: countRes.count ?? 0,
+        isAdmin: (u.email || null) === ADMIN_EMAIL,
         loading: false,
-      });
+      }));
     }
     load();
   }, []);
