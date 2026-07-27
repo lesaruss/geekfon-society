@@ -178,7 +178,7 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
   const opts = { headers, next: { revalidate: 0 } } as RequestInit & { next: { revalidate: number } };
 
   // Fetch profile, audits, and active ads in parallel
-  const [profileRes, auditsRes, adsRes] = await Promise.all([
+  const [profileRes, auditsRes, adsRes, pulseRes] = await Promise.all([
     fetch(
       `${url}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(slug)}&select=name,profile&limit=1`,
       opts
@@ -191,6 +191,16 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
       `${url}/functions/v1/ad-resolve?brand_slug=geekfon-society&page_slug=${encodeURIComponent('/[artist]')}`,
       opts
     ),
+    // Pulse Studios live-pipe test (2026-07-27, agent_tasks a0dbc7f9): read this
+    // artist's News/Pulse articles from the shared cross-brand content store
+    // (public.briefings, type=content_pulse_article) instead of the local
+    // profile.news jsonb. GeekFon is the first real consumer of the shared
+    // Pulse pipeline. Falls back to profile.news below if this returns
+    // nothing, so an empty/errored fetch never breaks the page.
+    fetch(
+      `${url}/rest/v1/briefings?type=eq.content_pulse_article&brand_slug=eq.geekfon-society&metadata->>original_artist_slug=eq.${encodeURIComponent(slug)}&select=title,content,metadata,created_at&order=created_at.desc`,
+      opts
+    ),
   ]);
 
   if (!profileRes.ok) return null;
@@ -200,6 +210,27 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
   const row = rows[0];
   const profile: ArtistContent = { ...(row.profile || {}) };
   if (!profile.name) profile.name = row.name;
+
+  // Pulse Studios live-pipe test: override profile.news with the shared-store
+  // version when present, so GeekFon's Pulse tab is proven to pull from the
+  // central content engine (briefings) instead of the old per-artist jsonb
+  // copy. If the shared store has nothing yet for this artist, profile.news
+  // stays as whatever was already in gfs_artists.profile - untouched fallback.
+  if (pulseRes && pulseRes.ok) {
+    const pulseRows: { title: string; content: string; metadata: Record<string, string> }[] = await pulseRes.json();
+    if (pulseRows.length > 0) {
+      profile.news = pulseRows.map(r => ({
+        slug: r.metadata?.original_slug,
+        tag: r.metadata?.publication_tag,
+        date: r.metadata?.display_date,
+        title: r.title,
+        blurb: r.metadata?.blurb,
+        href: r.metadata?.href,
+        thumb: r.metadata?.thumb,
+        content: r.content,
+      }));
+    }
+  }
 
   // Merge ANR data
   if (auditsRes.ok) {
