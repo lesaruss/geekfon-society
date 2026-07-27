@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
-import { creditLesars } from "@/lib/ledger";
+import { creditLesars, creditReferralCommission } from "@/lib/ledger";
 
 export const config = { api: { bodyParser: false } };
 
@@ -71,6 +71,10 @@ export async function POST(req: NextRequest) {
           .update({ tier: "all-access", tier_source: "stripe" })
           .eq("user_id", userId);
       }
+
+      // Affiliate commission (added 2026-07-27, see lib/ledger.ts) - no-ops
+      // silently if this purchaser wasn't referred by anyone.
+      await creditReferralCommission(supabase, userId, session.amount_total ?? 0);
     }
 
     // Per-artist "Full Experience" unlock (added 2026-07-23). Separate branch
@@ -122,6 +126,10 @@ export async function POST(req: NextRequest) {
             },
             { onConflict: "user_id,artist_slug" }
           );
+
+        // Affiliate commission (added 2026-07-27, see lib/ledger.ts) - covers
+        // the guest-checkout path too, since unlockUserId is set either way.
+        await creditReferralCommission(supabase, unlockUserId, session.amount_total ?? 1100);
       }
     }
   }
