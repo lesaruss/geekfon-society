@@ -9,6 +9,7 @@ const TIER_DEFAULT_POINTS: Record<string, number> = { passport: 100, promoter: 1
 type AdminMember = {
   id: string; user_id: string; name: string | null; email: string | null;
   tier: string | null; available_points: number; created_at: string; last_sign_in: string | null;
+  is_pro?: boolean;
 };
 
 export default function MembersPage() {
@@ -167,7 +168,10 @@ export default function MembersPage() {
                 <tr key={m.id} className="mc-m-row" onClick={() => { window.location.href = `/dashboard/members/${m.user_id}`; }}>
                   <td className="mc-m-name">{m.name || "-"}</td>
                   <td className="mc-m-email">{m.email || "-"}</td>
-                  <td><span className={"mc-m-tier t-" + (m.tier || "passport")}>{TIER_LABEL[m.tier || "passport"] || m.tier}</span></td>
+                  <td>
+                    <span className={"mc-m-tier t-" + (m.tier || "passport")}>{TIER_LABEL[m.tier || "passport"] || m.tier}</span>
+                    {m.is_pro && <span className="mc-m-pro">PRO</span>}
+                  </td>
                   <td className="mc-m-points">{(m.available_points || 0).toLocaleString()}</td>
                   <td className="mc-m-date">{m.created_at ? new Date(m.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "-"}</td>
                   <td className="mc-m-date">{m.last_sign_in ? new Date(m.last_sign_in).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "Never"}</td>
@@ -210,6 +214,7 @@ const MC_CSS = `
 .mc-m-name{font-weight:700;color:#fff;}
 .mc-m-email{color:rgba(255,255,255,.5);font-size:11px;}
 .mc-m-tier{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:20px;background:rgba(246,152,32,.1);color:#F69820;}
+.mc-m-pro{margin-left:6px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:20px;background:rgba(233,30,140,.14);color:#E91E8C;}
 .mc-m-points{font-weight:800;color:rgba(0,215,95,.8);}
 .mc-m-date{font-size:10px;color:rgba(255,255,255,.3);white-space:nowrap;}
 .mc-empty{padding:60px 0;text-align:center;color:rgba(255,255,255,.35);font-size:13px;}
@@ -225,3 +230,4 @@ const MC_CSS = `
 .mc-gate-btn { display: inline-block; background: #E91E8C; color: #fff; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; padding: 12px 24px; border-radius: 100px; text-decoration: none; }
 .mc-gate-btn:hover { background: #c41874; }
 `;
+
