@@ -608,7 +608,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [votedTracksToday, setVotedTracksToday] = useState<Set<string>>(new Set());
   const [voteLoading, setVoteLoading] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
-  const [showVoteModal, setShowVoteModal] = useState<"non-member" | "preview" | null>(null);
+  // 2026-07-27 per Sean: added "plus" alongside the existing "non-member"
+  // (Passport benefits) and "preview" (register-to-preview) modal states -
+  // same overlay/card, a third content branch, opened from the renamed
+  // "Plus - $11" bottom CTA instead of jumping straight to Stripe checkout.
+  const [showVoteModal, setShowVoteModal] = useState<"non-member" | "preview" | "plus" | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const bbTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Fixed 2026-07-26: onTimeUpdate/onLoadedMetadata used to gate on the
@@ -710,6 +714,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       try { if (localStorage.getItem(`gfs-unlocked-${slug}`) === "1") setUnlockedArtist(true); } catch { /* ignore */ }
     }
   }, [slug]);
+
+  // 2026-07-27 per Sean: the new "plus" benefits modal's confirm button calls
+  // handleUnlockArtist directly (see mp-catalog-unlock-bottom below) instead
+  // of linking out like the Passport modal does. On web that redirects the
+  // whole page to Stripe, so the modal moots itself - but on native,
+  // purchaseArtistUnlock completes in-app and just flips unlockSuccess, which
+  // would otherwise leave this modal sitting open on top of the success
+  // toast. Closing it here on any unlockSuccess covers both paths safely.
+  useEffect(() => {
+    if (unlockSuccess) setShowVoteModal(null);
+  }, [unlockSuccess]);
 
   // 2026-07-26 (5th pass): fetch every track this user has already liked today
   // for this artist (not just whether any vote exists) - each song's heart
@@ -1769,6 +1784,22 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               <div id="vote-modal-title" className="vote-modal-title-text">Create a free account</div>
                               <p>Sign up free to preview {name}&apos;s unreleased songs before they officially drop.</p>
                             </>
+                          ) : showVoteModal === "plus" ? (
+                            // 2026-07-27 round 2 per Sean: mirrors the Passport benefits
+                            // card below, but for the $11 paid tier - opened from the
+                            // renamed "Plus - $11" bottom CTA instead of the old
+                            // straight-to-Stripe click. Benefits list confirmed with
+                            // Sean: full catalog incl. unreleased, Playlist access
+                            // (added 2026-07-27 earlier today), one-time payment.
+                            <>
+                              <div id="vote-modal-title" className="vote-modal-title-text">Unlock Plus</div>
+                              <p className="vote-modal-lead">$11 once, {name}&apos;s full experience, forever:</p>
+                              <ul className="vote-modal-benefits">
+                                <li>{CHECK}<span>Every {name} song, released or not - no preview cap</span></li>
+                                <li>{CHECK}<span>Add every {name} track to your Playlist</span></li>
+                                <li>{CHECK}<span>One-time payment - $11 once, yours forever, no subscription</span></li>
+                              </ul>
+                            </>
                           ) : (
                             <>
                               <div id="vote-modal-title" className="vote-modal-title-text">Become a free Passport member</div>
@@ -1781,12 +1812,22 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             </>
                           )}
                           <div className="vote-modal-actions">
-                            <a
-                              className="vote-modal-cta"
-                              href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
-                            >
-                              Sign Up Free
-                            </a>
+                            {showVoteModal === "plus" ? (
+                              <button
+                                className="vote-modal-cta"
+                                onClick={handleUnlockArtist}
+                                disabled={unlockLoading}
+                              >
+                                {unlockLoading ? "Redirecting..." : "Yes, Unlock for $11"}
+                              </button>
+                            ) : (
+                              <a
+                                className="vote-modal-cta"
+                                href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
+                              >
+                                Sign Up Free
+                              </a>
+                            )}
                             <button className="vote-modal-dismiss" onClick={() => setShowVoteModal(null)}>Dismiss</button>
                           </div>
                         </div>
@@ -2064,14 +2105,33 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         Passport - Free
                       </button>
                     )}
+                    {/* 2026-07-27 round 2 per Sean: renamed to "Plus - $11" to match
+                        "Passport - Free" - the tier is called Plus everywhere in the
+                        code (Passport < Plus < Pro) but was never actually said to a
+                        visitor. Vuka only for now, same pilot scope as everything
+                        else on this page today: clicking used to jump straight to
+                        Stripe, now opens a benefits pitch first (mirrors the Passport
+                        modal) with a real confirm step before checkout. Per Sean's
+                        explicit scoping answer, the small per-track "Unlock - $11"
+                        row buttons elsewhere are UNCHANGED - still instant checkout,
+                        no popup - this only touches the main bottom CTA. */}
                     {useRowLyrics && !hasFullAccess && (
-                      <button
-                        className="mp-btn-buy mp-catalog-unlock-bottom"
-                        onClick={handleUnlockArtist}
-                        disabled={unlockLoading}
-                      >
-                        {unlockLoading ? "Redirecting..." : "Unlock Full Experience - $11"}
-                      </button>
+                      slug === "vuka" ? (
+                        <button
+                          className="mp-btn-buy mp-catalog-unlock-bottom"
+                          onClick={() => setShowVoteModal("plus")}
+                        >
+                          Plus - $11
+                        </button>
+                      ) : (
+                        <button
+                          className="mp-btn-buy mp-catalog-unlock-bottom"
+                          onClick={handleUnlockArtist}
+                          disabled={unlockLoading}
+                        >
+                          {unlockLoading ? "Redirecting..." : "Unlock Full Experience - $11"}
+                        </button>
+                      )
                     )}
                   </section>
                 );
