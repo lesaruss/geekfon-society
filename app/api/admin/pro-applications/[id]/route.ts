@@ -10,7 +10,10 @@ const ADMIN_EMAIL = "contact@lesaruss.com";
 // (all three) if Sean sets a real rate later.
 const PRO_COMMISSION_RATE = 0.25;
 
-async function requireAdmin(req: Request, admin: ReturnType<typeof createClient>): Promise<NextResponse | null> {
+async function requireAdmin(req: Request): Promise<NextResponse | null> {
+  const admin = createClient(SB_URL, SB_SVC, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,11 +31,12 @@ async function requireAdmin(req: Request, admin: ReturnType<typeof createClient>
 // upgrade here, unlike app/api/invite/route.ts which can invite a brand new
 // email. Reject: just marks the application so it drops off the pending list.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
   const admin = createClient(SB_URL, SB_SVC, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const denied = await requireAdmin(req, admin);
-  if (denied) return denied;
 
   const { id } = await params;
 
