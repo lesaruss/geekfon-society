@@ -9,9 +9,7 @@ type MemberDetail = {
   tier: string | null; created_at: string; last_sign_in: string | null;
   is_minor?: boolean;
 };
-type Unlock = { id: string; artist_slug: string; amount_cents: number | null; source: string; created_at: string };
 type Vote = { id: string; artist_slug: string; track_name: string | null; voted_at: string };
-type LegacyPurchase = { id: string; track_name: string; lesars_spent: number; purchased_at: string };
 type Play = { id: string; artist_slug: string; track_name: string; played_at: string };
 
 function initials(name: string | null): string {
@@ -65,18 +63,18 @@ export default function MemberDetailPage() {
   const hasAccess = isAdmin && !simulating;
 
   const [detail, setDetail] = useState<MemberDetail | null>(null);
-  const [unlocks, setUnlocks] = useState<Unlock[]>([]);
+  const [artistsAccess, setArtistsAccess] = useState<string[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
-  const [purchases, setPurchases] = useState<LegacyPurchase[]>([]);
   const [plays, setPlays] = useState<Play[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 2026-07-26 per Sean: Like History and Recent Listens paginate 10-at-a-time
-  // instead of a long scrolling list - reset to page 1 whenever a fresh
-  // member's data loads so switching profiles doesn't leave you stranded on
-  // page 4 of someone else's history.
+  // 2026-07-26 per Sean: Artist Access, Like History, and Recent Listens all
+  // paginate 10-at-a-time instead of a long scrolling list - reset to page 1
+  // whenever a fresh member's data loads so switching profiles doesn't leave
+  // you stranded on page 4 of someone else's history.
   const PAGE_SIZE = 10;
+  const [artistsPage, setArtistsPage] = useState(1);
   const [votesPage, setVotesPage] = useState(1);
   const [playsPage, setPlaysPage] = useState(1);
 
@@ -85,6 +83,7 @@ export default function MemberDetailPage() {
     (async () => {
       setDataLoading(true);
       setError("");
+      setArtistsPage(1);
       setVotesPage(1);
       setPlaysPage(1);
       try {
@@ -94,9 +93,8 @@ export default function MemberDetailPage() {
         const json = await res.json();
         if (!res.ok) { setError(json.error || "Failed to load member"); setDataLoading(false); return; }
         setDetail(json.member);
-        setUnlocks(json.unlocks || []);
+        setArtistsAccess(json.artistsAccess || []);
         setVotes(json.votes || []);
-        setPurchases(json.purchases || []);
         setPlays(json.plays || []);
       } catch (_) {
         setError("Network error");
@@ -105,6 +103,8 @@ export default function MemberDetailPage() {
     })();
   }, [loading, hasAccess, id]);
 
+  const artistsTotalPages = Math.max(1, Math.ceil(artistsAccess.length / PAGE_SIZE));
+  const artistsPageItems = artistsAccess.slice((artistsPage - 1) * PAGE_SIZE, artistsPage * PAGE_SIZE);
   const votesTotalPages = Math.max(1, Math.ceil(votes.length / PAGE_SIZE));
   const votesPageItems = votes.slice((votesPage - 1) * PAGE_SIZE, votesPage * PAGE_SIZE);
   const playsTotalPages = Math.max(1, Math.ceil(plays.length / PAGE_SIZE));
@@ -159,44 +159,34 @@ export default function MemberDetailPage() {
           </div>
 
           <div className="mdp-stats">
-            <div className="mdp-stat"><div className="mdp-stat-num">{unlocks.length}</div><div className="mdp-stat-label">Artist Unlocks</div></div>
+            <div className="mdp-stat"><div className="mdp-stat-num">{artistsAccess.length}</div><div className="mdp-stat-label">Artist Access</div></div>
             <div className="mdp-stat"><div className="mdp-stat-num">{votes.length}</div><div className="mdp-stat-label">Song Likes</div></div>
             <div className="mdp-stat"><div className="mdp-stat-num">{plays.length}</div><div className="mdp-stat-label">Recent Plays</div></div>
           </div>
 
-          {/* 2026-07-26 per Sean: Purchase History, Like History, and Recent
-              Listens now live as three side-by-side widgets instead of
-              stacked full-width sections. Like History and Recent Listens
-              paginate 10-at-a-time (see Pager below) instead of a long
-              scrolling list - Purchase History isn't paginated since $11
-              unlocks are inherently rare, but it lives in the same grid for
-              visual consistency. */}
+          {/* 2026-07-26 per Sean: retired the itemized Purchase History widget
+              (legacy Points-model purchases don't mean anything anymore) in
+              favor of a plain Artist Access list - which artists this member
+              can hear in full. Super admin sees every artist in the roster
+              (matches the real ArtistPage bypass), everyone else sees their
+              real $11-unlocked artists. All three widgets paginate
+              10-at-a-time instead of a long scrolling list. */}
           <div className="mdp-widgets">
             <div className="mdp-widget">
-              <h3 className="mdp-widget-title">Purchase History</h3>
-              {unlocks.length === 0 && purchases.length === 0 ? (
-                <div className="mdp-empty-inline">No purchases yet.</div>
+              <h3 className="mdp-widget-title">Artist Access</h3>
+              {artistsAccess.length === 0 ? (
+                <div className="mdp-empty-inline">No artist access yet.</div>
               ) : (
-                <div className="mdp-list">
-                  {unlocks.map(u => (
-                    <div key={u.id} className="mdp-row">
-                      <div className="mdp-row-main">
-                        <span className="mdp-row-title">{u.artist_slug} - Full Unlock</span>
-                        <span className="mdp-row-sub">{u.source}{u.amount_cents ? ` – $${(u.amount_cents / 100).toFixed(2)}` : ""}</span>
+                <>
+                  <div className="mdp-list">
+                    {artistsPageItems.map(slug => (
+                      <div key={slug} className="mdp-row mdp-row-simple">
+                        <span className="mdp-row-title">{slug}</span>
                       </div>
-                      <span className="mdp-row-date">{fmtDateTime(u.created_at)}</span>
-                    </div>
-                  ))}
-                  {purchases.map(p => (
-                    <div key={p.id} className="mdp-row">
-                      <div className="mdp-row-main">
-                        <span className="mdp-row-title">{p.track_name}</span>
-                        <span className="mdp-row-sub">Legacy Points purchase – {p.lesars_spent} pts</span>
-                      </div>
-                      <span className="mdp-row-date">{fmtDateTime(p.purchased_at)}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  <Pager page={artistsPage} totalPages={artistsTotalPages} onChange={setArtistsPage} />
+                </>
               )}
             </div>
 
@@ -283,6 +273,7 @@ const MDP_CSS = `
 .mdp-row-title{font-size:13px;font-weight:700;color:#fff;}
 .mdp-row-sub{font-size:11px;color:rgba(255,255,255,.35);text-transform:capitalize;}
 .mdp-row-date{font-size:10px;color:rgba(255,255,255,.3);white-space:nowrap;flex-shrink:0;}
+.mdp-row-simple .mdp-row-title{text-transform:capitalize;}
 .mdp-empty-inline{padding:20px;text-align:center;color:rgba(255,255,255,.3);font-size:12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;}
 .mdp-empty{padding:60px 0;text-align:center;color:rgba(255,255,255,.35);font-size:13px;}
 .mdp-center{display:flex;align-items:center;justify-content:center;}
