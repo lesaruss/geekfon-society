@@ -1027,13 +1027,20 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     if (t && isRegisterLockedTrack(t)) return "Register";
     return t && isPreviewCappedTrack(t) ? "Preview" : "Play";
   }
+  // Added 2026-07-27 per Sean's Fieldy note: a bare date with no context read as
+  // meaningless when it was the whole label on the locked-track CTA pill. Shared
+  // by trackLockedLabel below and the Vuka-only lock+date pill in the
+  // registerLocked/not-yet-registered row (mp-row-locked-cta).
+  function formatShortDate(dateStr: string): string {
+    const d = dateStr.split("T")[0];
+    const [, m, day] = d.split("-");
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${months[+m - 1]} ${+day}`;
+  }
   function trackLockedLabel(t: Track): string {
     if (isRegisterLockedTrack(t)) return "Register to preview";
     if (isScheduledFuture(t)) {
-      const d = t.scheduledFor!.split("T")[0];
-      const [, m, day] = d.split("-");
-      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      return `Full song ${months[+m - 1]} ${+day}`;
+      return `Full song ${formatShortDate(t.scheduledFor!)}`;
     }
     return "Preview";
   }
@@ -1845,6 +1852,25 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 >
                                   {unlockLoading ? "..." : "Unlock - $11"}
                                 </button>
+                              ) : slug === "vuka" && t.scheduledFor ? (
+                                // 2026-07-27 per Sean's Fieldy note: the raw scheduled date
+                                // ("2026-08-15") rendered as the whole label on a bold green
+                                // CTA pill read as meaningless - just a date, no signal of why
+                                // it's locked. His own fix, applied here first on Vuka before
+                                // any wider rollout: deprioritize the date and pair it with a
+                                // lock symbol so it reads as "this is premium, unlocks on this
+                                // date" instead of a bare timestamp. Still the same /register
+                                // link and behavior, just de-emphasized (quiet style, not the
+                                // bold mp-btn-buy treatment) since it's informational first,
+                                // CTA second.
+                                <a
+                                  className="mp-row-unlock-quiet"
+                                  href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
+                                  aria-label={`Create a free account to preview ${t.n}, releases ${t.scheduledFor.split("T")[0]}`}
+                                >
+                                  <span className="mp-row-unlock-date">{formatShortDate(t.scheduledFor)}</span>
+                                  {LOCK}
+                                </a>
                               ) : (
                                 <a
                                   className="mp-btn-buy mp-row-unlock"
@@ -2017,6 +2043,27 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         );
                       })}
                     </div>
+                    {/* 2026-07-27 per Sean's Fieldy note (Refining VUCA Plus UX and
+                        Passport Benefits - "VUCA" transcribed his pronunciation of
+                        "Vuka"): two paths should sit next to each other above the fold
+                        of the catalog - free Passport signup and the $11 paid unlock -
+                        instead of only ever showing the paid CTA. Piloted on Vuka only
+                        (slug === "vuka") per Sean's explicit ask before any wider
+                        rollout, same pattern as the earlier Lex from Brixton pilot.
+                        Only shown to a visitor who hasn't registered yet - a Passport
+                        member already has the free tier, so only Unlock applies to
+                        them. Reuses the existing benefits modal (setShowVoteModal
+                        ("non-member")) instead of building new copy or linking out to
+                        the separate /passport tour page, whose Plus-tier slide is
+                        stale post the 2026-07-23 pricing simplification. */}
+                    {useRowLyrics && slug === "vuka" && !hasFullAccess && !isRegistered() && (
+                      <button
+                        className="mp-btn-buy mp-btn-buy-passport mp-catalog-unlock-bottom"
+                        onClick={() => setShowVoteModal("non-member")}
+                      >
+                        Passport - Free
+                      </button>
+                    )}
                     {useRowLyrics && !hasFullAccess && (
                       <button
                         className="mp-btn-buy mp-catalog-unlock-bottom"
