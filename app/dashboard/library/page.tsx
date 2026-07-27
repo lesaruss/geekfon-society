@@ -259,9 +259,17 @@ export default function LibraryPage() {
   const dragIdx = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
+  // Writes every row's position unconditionally - a prior version compared
+  // each row's just-assigned `position` field against its own array index
+  // (which is always true by construction, since the caller sets it that way
+  // right before calling this), so the "skip unchanged" check silently never
+  // fired an update at all. Caught live: dragging/arrow-reordering updated
+  // the screen but reloading the page always snapped back to the original
+  // order. Playlists are small (a handful of tracks), so there's no real
+  // cost to just always writing - correctness over a micro-optimization.
   async function persistPositions(rows: PlaylistRow[]) {
     await Promise.all(
-      rows.map((r, i) => (r.position === i ? null : supabase.from("gfs_playlist_tracks").update({ position: i }).eq("id", r.id)))
+      rows.map(r => supabase.from("gfs_playlist_tracks").update({ position: r.position }).eq("id", r.id))
     );
   }
   function reorderQueue(fromIdx: number, toIdx: number) {
