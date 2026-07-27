@@ -197,8 +197,11 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
     // profile.news jsonb. GeekFon is the first real consumer of the shared
     // Pulse pipeline. Falls back to profile.news below if this returns
     // nothing, so an empty/errored fetch never breaks the page.
+    // Reads the narrow anon-safe view (RLS on the base briefings table is
+    // service_role-only; never widened it to fix this, see
+    // memory/project_wcm_cert_status_public_view_pattern).
     fetch(
-      `${url}/rest/v1/briefings?type=eq.content_pulse_article&brand_slug=eq.geekfon-society&metadata->>original_artist_slug=eq.${encodeURIComponent(slug)}&select=title,content,metadata,created_at&order=created_at.desc`,
+      `${url}/rest/v1/pulse_content_public?brand_slug=eq.geekfon-society&metadata->>original_artist_slug=eq.${encodeURIComponent(slug)}&select=title,content,metadata,created_at&order=created_at.desc`,
       opts
     ),
   ]);
