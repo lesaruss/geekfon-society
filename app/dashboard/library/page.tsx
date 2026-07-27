@@ -125,7 +125,19 @@ export default function LibraryPage() {
     const seq = playlistTracks.map((_, i) => i);
     setOrder(shuffleOn ? shuffleArr(seq) : seq);
     setPos(0);
+    // 2026-07-27: without this, removing (or adding) a track while something
+    // is playing left the actual <audio> element running the OLD track in
+    // the background while the UI silently pointed at a different track's
+    // (wrong) title/duration - found live while verifying "remove the
+    // currently-playing track." Hard-stop and clear on any playlist change
+    // so the two can never drift out of sync; simple and safe over clever.
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
     setPlaying(false);
+    setProgress(0);
+    setDuration(0);
   }, [playlistTracks.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentTrack = playlistTracks[order[pos]] || null;
