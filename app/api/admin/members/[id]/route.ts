@@ -45,30 +45,48 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     { data: userData },
     { data: unlocks },
     { data: votes },
-    { data: purchases },
     { data: plays },
+    { data: allArtists },
   ] = await Promise.all([
     admin.from("gfs_members").select("*").eq("user_id", id).maybeSingle(),
     admin.auth.admin.getUserById(id),
     admin.from("gfs_artist_unlocks").select("*").eq("user_id", id).order("created_at", { ascending: false }),
     admin.from("gfs_artist_votes").select("*").eq("user_id", id).order("voted_at", { ascending: false }),
-    admin.from("gfs_track_purchases").select("*").eq("user_id", id).order("purchased_at", { ascending: false }),
     admin.from("gfs_track_plays").select("*").eq("user_id", id).order("played_at", { ascending: false }).limit(100),
+    admin.from("gfs_artists").select("slug").order("name", { ascending: true }),
   ]);
 
   if (!memberRow) {
     return NextResponse.json({ error: "Member not found" }, { status: 404 });
   }
 
+  const email = userData?.user?.email ?? null;
+
+  // 2026-07-26 per Sean: retired the itemized "Purchase History" widget
+  // (legacy Points-model purchases no longer mean anything - that mechanic is
+  // fully retired, see [[project_geekfon_monetization_pivot_2026_07_23]] and
+  // [[project_geekfon_song_manager_rename_points_retirement_2026_07_26]]) in
+  // favor of a plain "Artist Access" list: which artists this member can
+  // currently hear in full. For a real member that's just their distinct $11
+  // unlocks (gfs_artist_unlocks). For the super-admin account specifically,
+  // access isn't gated by any unlock row at all - ArtistPage's own
+  // `isSuperAdmin && viewAs === "real"` bypass already gives Sean full access
+  // to every artist regardless of gfs_artist_unlocks, so his profile should
+  // reflect that reality (every artist in the roster) rather than showing 0
+  // just because he's never needed to pay for one.
+  const isSuperAdminMember = email === ADMIN_EMAIL;
+  const artistsAccess = isSuperAdminMember
+    ? (allArtists || []).map((a: { slug: string }) => a.slug)
+    : Array.from(new Set((unlocks || []).map((u: { artist_slug: string }) => u.artist_slug)));
+
   return NextResponse.json({
     member: {
       ...memberRow,
-      email: userData?.user?.email ?? null,
+      email,
       last_sign_in: userData?.user?.last_sign_in_at ?? null,
     },
-    unlocks: unlocks || [],
+    artistsAccess,
     votes: votes || [],
-    purchases: purchases || [],
     plays: plays || [],
   });
 }
