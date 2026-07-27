@@ -1925,19 +1925,25 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 // CTA pill read as meaningless - just a date, no signal of why
                                 // it's locked. His own fix: deprioritize the date and pair it
                                 // with a lock symbol so it reads as "this is premium, unlocks
-                                // on this date" instead of a bare timestamp. Still the same
-                                // /register link and behavior, just de-emphasized (quiet style,
-                                // not the bold mp-btn-buy treatment) since it's informational
-                                // first, CTA second. Piloted on Vuka only 2026-07-27, confirmed
-                                // good, rolled out to the full roster same day.
-                                <a
+                                // on this date" instead of a bare timestamp. Piloted on Vuka
+                                // only 2026-07-27, confirmed good, rolled out to the full
+                                // roster same day.
+                                //
+                                // Fixed same day per Sean's follow-up: this used to be a plain
+                                // <a href="/register..."> that navigated straight to the
+                                // register page. Sean caught that on a second look at Vuka -
+                                // it should open the Passport-Free benefits dialog first (same
+                                // "non-member" vote modal every other lock icon on this page
+                                // already opens), not jump the visitor straight to a form.
+                                <button
+                                  type="button"
                                   className="mp-row-unlock-quiet"
-                                  href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
-                                  aria-label={`Create a free account to preview ${t.n}, releases ${t.scheduledFor.split("T")[0]}`}
+                                  onClick={() => setShowVoteModal("non-member")}
+                                  aria-label={`See Passport benefits to preview ${t.n}, releases ${t.scheduledFor.split("T")[0]}`}
                                 >
                                   <span className="mp-row-unlock-date">{formatShortDate(t.scheduledFor)}</span>
                                   {LOCK}
-                                </a>
+                                </button>
                               ) : (
                                 <a
                                   className="mp-btn-buy mp-row-unlock"
