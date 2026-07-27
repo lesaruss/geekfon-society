@@ -61,6 +61,7 @@ export default function AdminCommandCenter({ displayName }: { displayName: strin
   const [briefs, setBriefs] = useState<ArtistBrief[]>([]);
   const [songManager, setSongManager] = useState<{ artistCount: number; trackCount: number } | null>(null);
   const [nowPlaying, setNowPlaying] = useState<NowPlaying>(null);
+  const [radioListeners, setRadioListeners] = useState<number>(0);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [topArtists, setTopArtists] = useState<RankedArtist[]>([]);
 
@@ -83,6 +84,7 @@ export default function AdminCommandCenter({ displayName }: { displayName: strin
           setBriefs(json.artistBriefs || []);
           setSongManager(json.songManager);
           setNowPlaying(json.nowPlaying);
+          setRadioListeners(json.radioListeners ?? 0);
         }
         if (membersRes.ok) {
           const json = await membersRes.json();
@@ -213,6 +215,7 @@ export default function AdminCommandCenter({ displayName }: { displayName: strin
               <div className="cc-radio-live"><span className="cc-radio-dot" />Live now</div>
               <div className="cc-radio-title">{nowPlaying.title}</div>
               <div className="cc-radio-artist">{nowPlaying.artist}</div>
+              <div className="cc-radio-listeners">{radioListeners} {radioListeners === 1 ? "person" : "people"} listening now</div>
               <a href="/radio" className="cc-widget-link" style={{ marginTop: 10, display: "inline-block" }}>Open Radio &rarr;</a>
             </>
           )}
@@ -342,6 +345,7 @@ a.cc-row:hover{background:rgba(255,255,255,.03);}
 @keyframes ccPulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 .cc-radio-title{font-size:16px;font-weight:900;color:#fff;letter-spacing:-.01em;}
 .cc-radio-artist{font-size:12px;font-weight:600;color:rgba(255,255,255,.5);margin-top:2px;}
+.cc-radio-listeners{font-size:11px;font-weight:700;color:rgba(0,215,95,.75);margin-top:10px;}
 
 .cc-stats-mini{display:flex;gap:24px;margin:auto 0;}
 .cc-stat-mini-num{font-size:28px;font-weight:900;color:#fff;line-height:1;}
