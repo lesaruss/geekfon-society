@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 const AUDIO_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
 
 type Track = { id: string; artist_slug: string; title: string; src_path: string; duration_seconds: number | null };
-type PlaylistRow = { id: string; track_id: string; added_at: string };
+type PlaylistRow = { id: string; track_id: string; added_at: string; position: number };
 
 // Display names for radio_tracks.artist_slug (same map used by app/radio/page.tsx
 // and the command-center route - this table's slugs don't always match
@@ -98,9 +98,9 @@ export default function LibraryPage() {
         supabase.from("gfs_artist_unlocks").select("artist_slug").eq("user_id", userId),
         supabase
           .from("gfs_playlist_tracks")
-          .select("id, track_id, added_at")
+          .select("id, track_id, added_at, position")
           .eq("user_id", userId)
-          .order("added_at", { ascending: true }),
+          .order("position", { ascending: true }),
       ]);
       setCatalog(tracks || []);
       setUnlockedSlugs(new Set((unlocks || []).map((u: { artist_slug: string }) => u.artist_slug)));
@@ -205,11 +205,19 @@ export default function LibraryPage() {
     if (!userId) return;
     setBusyTrackId(trackId);
     setActionError("");
-    const { error } = await supabase.from("gfs_playlist_tracks").insert({ user_id: userId, track_id: trackId });
+    const nextPosition = playlistRows.length ? Math.max(...playlistRows.map(r => r.position)) + 1 : 0;
+    // .select().single() to get the REAL db-generated id back - reorder
+    // persistence below updates rows by id, and a locally-faked id would
+    // silently fail to save (update-by-nonexistent-id just matches nothing).
+    const { data, error } = await supabase
+      .from("gfs_playlist_tracks")
+      .insert({ user_id: userId, track_id: trackId, position: nextPosition })
+      .select("id, track_id, added_at, position")
+      .single();
     if (error) {
       setActionError("Couldn't add that song - " + error.message);
-    } else {
-      setPlaylistRows(rows => [...rows, { id: `${trackId}-local`, track_id: trackId, added_at: new Date().toISOString() }]);
+    } else if (data) {
+      setPlaylistRows(rows => [...rows, data]);
     }
     setBusyTrackId(null);
   }
@@ -219,6 +227,35 @@ export default function LibraryPage() {
     await supabase.from("gfs_playlist_tracks").delete().eq("user_id", userId).eq("track_id", trackId);
     setPlaylistRows(rows => rows.filter(r => r.track_id !== trackId));
     setBusyTrackId(null);
+  }
+
+  // 2026-07-27 per Sean: shuffle isn't always what someone wants - they might
+  // have arranged their playlist in a specific order on purpose, so manual
+  // reordering needs to be a real, persisted option. Drag handle for desktop
+  // mouse + up/down arrow buttons for everyone (native HTML5 drag-and-drop
+  // does not fire on touch at all - see [[reference_html5_dnd_no_touch_support_2026_07_26]],
+  // same fix pattern already used for Song Manager's track reorder). Disabled
+  // while shuffle is on, since a manual order and a randomized one are two
+  // different modes, not something to combine.
+  const dragIdx = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  async function persistPositions(rows: PlaylistRow[]) {
+    await Promise.all(
+      rows.map((r, i) => (r.position === i ? null : supabase.from("gfs_playlist_tracks").update({ position: i }).eq("id", r.id)))
+    );
+  }
+  function reorderQueue(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx || shuffleOn) return;
+    setPlaylistRows(rows => {
+      const next = rows.slice();
+      const [moved] = next.splice(fromIdx, 1);
+      if (!moved) return rows;
+      next.splice(toIdx, 0, moved);
+      const withPositions = next.map((r, i) => ({ ...r, position: i }));
+      persistPositions(withPositions);
+      return withPositions;
+    });
   }
 
   const isSearching = search.trim().length > 0;
@@ -333,6 +370,9 @@ export default function LibraryPage() {
       {actionError && <div className="pl-error">{actionError}</div>}
 
       <h2 className="pl-section-title">My Playlist</h2>
+      {!dataLoading && playlistTracks.length > 1 && shuffleOn && (
+        <div className="pl-reorder-hint">Turn off shuffle to drag and reorder your playlist manually.</div>
+      )}
       {dataLoading ? (
         <div className="lib-loading">Loading your playlist...</div>
       ) : playlistTracks.length === 0 ? (
@@ -359,8 +399,54 @@ export default function LibraryPage() {
             const t = playlistTracks[trackIdx];
             if (!t) return null;
             const isCurrent = currentTrack?.id === t.id;
+            // Reordering only operates while shuffle is off, where `order` is
+            // guaranteed sequential (order[i] === i) - i doubles safely here
+            // as both the rendered position and the real playlistRows index.
+            const canReorder = !shuffleOn;
+            const isDragTarget = canReorder && dragOverIdx === i;
             return (
-              <div key={t.id} className={"pl-queue-row" + (isCurrent ? " is-current" : "")}>
+              <div
+                key={t.id}
+                className={"pl-queue-row" + (isCurrent ? " is-current" : "") + (isDragTarget ? " is-drag-target" : "")}
+                draggable={canReorder}
+                onDragStart={canReorder ? () => { dragIdx.current = i; } : undefined}
+                onDragOver={canReorder ? (e) => { e.preventDefault(); setDragOverIdx(i); } : undefined}
+                onDragLeave={canReorder ? () => setDragOverIdx(null) : undefined}
+                onDrop={canReorder ? (e) => {
+                  e.preventDefault();
+                  setDragOverIdx(null);
+                  if (dragIdx.current !== null) reorderQueue(dragIdx.current, i);
+                  dragIdx.current = null;
+                } : undefined}
+                onDragEnd={canReorder ? () => { setDragOverIdx(null); dragIdx.current = null; } : undefined}
+              >
+                <span className="pl-drag-handle" title={canReorder ? "Drag to reorder" : "Turn off shuffle to reorder"}>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13">
+                    <circle cx="8" cy="6" r="1.5" /><circle cx="16" cy="6" r="1.5" />
+                    <circle cx="8" cy="12" r="1.5" /><circle cx="16" cy="12" r="1.5" />
+                    <circle cx="8" cy="18" r="1.5" /><circle cx="16" cy="18" r="1.5" />
+                  </svg>
+                </span>
+                <span className="pl-reorder">
+                  <button
+                    type="button"
+                    className="pl-reorder-btn"
+                    title="Move up"
+                    disabled={!canReorder || i === 0}
+                    onClick={e => { e.stopPropagation(); reorderQueue(i, i - 1); }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><path d="M18 15l-6-6-6 6" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="pl-reorder-btn"
+                    title="Move down"
+                    disabled={!canReorder || i === order.length - 1}
+                    onClick={e => { e.stopPropagation(); reorderQueue(i, i + 1); }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><path d="M6 9l6 6 6-6" /></svg>
+                  </button>
+                </span>
                 <button type="button" className="pl-queue-playdot" onClick={() => playTrackByIndex(trackIdx)} aria-label={`Play ${t.title}`}>
                   {isCurrent && playing ? (
                     <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
@@ -514,12 +600,20 @@ const CSS = `
 .pl-error{font-size:12px;font-weight:600;color:rgba(255,120,120,.9);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:16px;}
 
 .pl-section-title{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.6);margin:0 0 12px;}
+.pl-reorder-hint{font-size:11px;font-weight:600;color:rgba(255,255,255,.3);margin:-4px 0 12px;}
 
 /* Queue (My Playlist) */
 .pl-queue{border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:32px;}
-.pl-queue-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.05);}
+.pl-queue-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.05);}
 .pl-queue-row:last-child{border-bottom:none;}
 .pl-queue-row.is-current{background:rgba(246,152,32,.06);}
+.pl-queue-row.is-drag-target{background:rgba(246,152,32,.1) !important;border-bottom:2px solid #F69820 !important;}
+.pl-drag-handle{display:flex;align-items:center;justify-content:center;width:20px;height:20px;color:rgba(255,255,255,.2);flex-shrink:0;cursor:grab;}
+.pl-drag-handle:hover{color:rgba(255,255,255,.5);}
+.pl-reorder{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.pl-reorder-btn{display:flex;align-items:center;justify-content:center;width:18px;height:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:rgba(255,255,255,.45);cursor:pointer;padding:0;font-family:inherit;}
+.pl-reorder-btn:hover:not(:disabled){background:rgba(255,255,255,.14);color:#fff;}
+.pl-reorder-btn:disabled{opacity:.2;cursor:default;}
 .pl-queue-playdot{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
 .pl-queue-row.is-current .pl-queue-playdot{background:rgba(246,152,32,.18);border-color:rgba(246,152,32,.4);color:#F69820;}
 .pl-queue-info{flex:1;min-width:0;}
@@ -568,6 +662,11 @@ const CSS = `
 .pl-add-btn:hover:not(:disabled){background:#F69820;}
 .pl-add-btn:disabled{opacity:.6;cursor:default;}
 .pl-add-btn.is-added{background:rgba(0,215,95,.14);color:rgba(0,215,95,.9);}
+
+/* Native HTML5 drag-and-drop never fires on touch - hide the handle on
+   narrow/touch-sized viewports and rely on the up/down arrows there instead,
+   same convention as Song Manager's track reorder. */
+@media(max-width:600px){.pl-drag-handle{display:none;}}
 
 .pl-pagination{display:flex;align-items:center;justify-content:center;gap:14px;padding-top:16px;}
 .pl-page-btn{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background .12s;}
