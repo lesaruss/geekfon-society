@@ -71,6 +71,16 @@ export default function LibraryPage() {
   const [busyTrackId, setBusyTrackId] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
 
+  // 2026-07-27 per Sean: the old "Add Songs" section dumped every artist's
+  // full tracklist in one long scroll - too intense, especially for artists
+  // you don't have access to yet. Replaced with artist pills (alphabetical,
+  // locked ones marked) - pick one to fill in just their songs below,
+  // paginated. Typing in search takes over from the pill (and clears it);
+  // picking a pill clears any active search.
+  const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
+  const [pageSize, setPageSize] = useState(25);
+  const [page, setPage] = useState(1);
+
   useEffect(() => {
     if (ctxLoading || !userId) { setDataLoading(false); return; }
     (async () => {
@@ -211,20 +221,47 @@ export default function LibraryPage() {
     setBusyTrackId(null);
   }
 
-  const filteredCatalog = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return catalog;
-    return catalog.filter(t => t.title.toLowerCase().includes(q) || artistName(t.artist_slug).toLowerCase().includes(q));
-  }, [catalog, search]);
+  const isSearching = search.trim().length > 0;
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, Track[]>();
-    for (const t of filteredCatalog) {
-      if (!map.has(t.artist_slug)) map.set(t.artist_slug, []);
-      map.get(t.artist_slug)!.push(t);
-    }
-    return Array.from(map.entries()).sort((a, b) => artistName(a[0]).localeCompare(artistName(b[0])));
-  }, [filteredCatalog]);
+  // One pill per artist in the catalog, alphabetical, each flagging whether
+  // this member can actually access it yet - so it's obvious at a glance
+  // which artists still need a $11 unlock before scrolling through nothing.
+  const artistList = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const t of catalog) counts.set(t.artist_slug, (counts.get(t.artist_slug) || 0) + 1);
+    return Array.from(counts.entries())
+      .map(([slug, count]) => ({ slug, count, accessible: canAccess(slug) }))
+      .sort((a, b) => artistName(a.slug).localeCompare(artistName(b.slug)));
+  }, [catalog, hasFullCatalogAccess, unlockedSlugs]);
+
+  const searchResults = useMemo(() => {
+    if (!isSearching) return [];
+    const q = search.trim().toLowerCase();
+    return catalog
+      .filter(t => t.title.toLowerCase().includes(q) || artistName(t.artist_slug).toLowerCase().includes(q))
+      .sort((a, b) => artistName(a.artist_slug).localeCompare(artistName(b.artist_slug)) || a.title.localeCompare(b.title));
+  }, [catalog, search, isSearching]);
+
+  const artistResults = useMemo(() => {
+    if (isSearching || !selectedArtist) return [];
+    return catalog.filter(t => t.artist_slug === selectedArtist);
+  }, [catalog, selectedArtist, isSearching]);
+
+  const activeResults = isSearching ? searchResults : artistResults;
+
+  useEffect(() => { setPage(1); }, [selectedArtist, search, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(activeResults.length / pageSize));
+  const pageItems = activeResults.slice((page - 1) * pageSize, page * pageSize);
+
+  function selectArtist(slug: string) {
+    setSearch("");
+    setSelectedArtist(prev => (prev === slug ? null : slug));
+  }
+  function onSearchChange(v: string) {
+    setSearch(v);
+    if (v.trim()) setSelectedArtist(null);
+  }
 
   const pct = duration > 0 ? (progress / duration) * 100 : 0;
 
@@ -346,55 +383,95 @@ export default function LibraryPage() {
 
       <div className="pl-add-head">
         <h2 className="pl-section-title">Add Songs</h2>
-        <input
-          type="text"
-          className="pl-search"
-          placeholder="Search songs or artists..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <div className="pl-add-controls">
+          <input
+            type="text"
+            className="pl-search"
+            placeholder="Search songs or artists..."
+            value={search}
+            onChange={e => onSearchChange(e.target.value)}
+          />
+          <select className="pl-pagesize" value={pageSize} onChange={e => setPageSize(Number(e.target.value))} aria-label="Songs per page">
+            <option value={10}>10 / page</option>
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+          </select>
+        </div>
       </div>
 
-      {dataLoading ? null : grouped.length === 0 ? (
-        <div className="lib-empty-inline">No songs match your search.</div>
+      {!isSearching && (
+        <div className="pl-pills">
+          {artistList.map(a => (
+            <button
+              key={a.slug}
+              type="button"
+              className={"pl-pill" + (selectedArtist === a.slug ? " is-active" : "") + (!a.accessible ? " is-locked" : "")}
+              onClick={() => selectArtist(a.slug)}
+              aria-pressed={selectedArtist === a.slug}
+            >
+              {!a.accessible && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="10" height="10"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+              )}
+              {artistName(a.slug)}
+              <span className="pl-pill-count">{a.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {dataLoading ? null : !isSearching && !selectedArtist ? (
+        <div className="lib-empty-inline">Pick an artist above, or search, to see their songs.</div>
+      ) : activeResults.length === 0 ? (
+        <div className="lib-empty-inline">No songs found.</div>
       ) : (
-        <div className="pl-catalog">
-          {grouped.map(([slug, tracks]) => {
-            const accessible = canAccess(slug);
-            return (
-              <div key={slug} className="pl-artist-group">
-                <div className="pl-artist-group-head">
-                  <span className="pl-artist-group-name">{artistName(slug)}</span>
-                  {!accessible && (
-                    <a href={`/${toArtistSlug(slug)}?tab=music`} className="pl-unlock-cta">Unlock for $11</a>
+        <>
+          {!isSearching && selectedArtist && (
+            <div className="pl-selected-head">
+              <span className="pl-artist-group-name">{artistName(selectedArtist)}</span>
+              {!canAccess(selectedArtist) && (
+                <a href={`/${toArtistSlug(selectedArtist)}?tab=music`} className="pl-unlock-cta">Unlock for $11</a>
+              )}
+            </div>
+          )}
+          <div className="pl-catalog">
+            {pageItems.map(t => {
+              const accessible = canAccess(t.artist_slug);
+              const inPlaylist = playlistTrackIds.has(t.id);
+              return (
+                <div key={t.id} className="pl-catalog-row">
+                  <div className="pl-catalog-info">
+                    <div className="pl-catalog-title">{t.title}</div>
+                    {isSearching && <div className="pl-catalog-artist">{artistName(t.artist_slug)}</div>}
+                  </div>
+                  {!accessible ? (
+                    <span className="pl-locked-tag">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                      Locked
+                    </span>
+                  ) : inPlaylist ? (
+                    <button type="button" className="pl-add-btn is-added" disabled>Added</button>
+                  ) : (
+                    <button type="button" className="pl-add-btn" disabled={busyTrackId === t.id} onClick={() => addTrack(t.id)}>
+                      {busyTrackId === t.id ? "Adding..." : "+ Add"}
+                    </button>
                   )}
                 </div>
-                {tracks.map(t => {
-                  const inPlaylist = playlistTrackIds.has(t.id);
-                  return (
-                    <div key={t.id} className="pl-catalog-row">
-                      <div className="pl-catalog-info">
-                        <div className="pl-catalog-title">{t.title}</div>
-                      </div>
-                      {!accessible ? (
-                        <span className="pl-locked-tag">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                          Locked
-                        </span>
-                      ) : inPlaylist ? (
-                        <button type="button" className="pl-add-btn is-added" disabled>Added</button>
-                      ) : (
-                        <button type="button" className="pl-add-btn" disabled={busyTrackId === t.id} onClick={() => addTrack(t.id)}>
-                          {busyTrackId === t.id ? "Adding..." : "+ Add"}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+          {totalPages > 1 && (
+            <div className="pl-pagination">
+              <button type="button" className="pl-page-btn" disabled={page <= 1} onClick={() => setPage(p => p - 1)} aria-label="Previous page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
+              <span className="pl-page-label">Page {page} of {totalPages}</span>
+              <button type="button" className="pl-page-btn" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} aria-label="Next page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M9 18l6-6-6-6" /></svg>
+              </button>
+            </div>
+          )}
+        </>
       )}
     </>
   );
@@ -454,24 +531,47 @@ const CSS = `
 .pl-queue-remove:disabled{opacity:.4;cursor:default;}
 
 /* Add Songs */
-.pl-add-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
-.pl-search{flex-shrink:0;width:100%;max-width:260px;padding:9px 14px;border:1px solid rgba(255,255,255,.1);border-radius:100px;font-family:inherit;font-size:12px;font-weight:600;background:rgba(255,255,255,.05);color:#fff;box-sizing:border-box;}
+.pl-add-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+.pl-add-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.pl-search{flex-shrink:0;width:220px;max-width:100%;padding:9px 14px;border:1px solid rgba(255,255,255,.1);border-radius:100px;font-family:inherit;font-size:12px;font-weight:600;background:rgba(255,255,255,.05);color:#fff;box-sizing:border-box;}
 .pl-search::placeholder{color:rgba(255,255,255,.3);}
 .pl-search:focus{outline:none;border-color:#F69820;}
-.pl-catalog{display:flex;flex-direction:column;gap:18px;}
-.pl-artist-group{border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;}
-.pl-artist-group-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06);}
+.pl-pagesize{flex-shrink:0;padding:9px 12px;border:1px solid rgba(255,255,255,.1);border-radius:100px;font-family:inherit;font-size:11px;font-weight:700;background:rgba(255,255,255,.05);color:#fff;cursor:pointer;}
+.pl-pagesize:focus{outline:none;border-color:#F69820;}
+.pl-pagesize option{background:#1a1a1a;color:#fff;}
+
+/* Artist pills - pick one to fill in their songs below, instead of one huge
+   scroll of every artist's whole catalog at once. */
+.pl-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+.pl-pill{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.55);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:8px 14px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;font-family:inherit;}
+.pl-pill:hover{color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.2);}
+.pl-pill.is-active{background:#F69820;border-color:#F69820;color:#000;}
+.pl-pill.is-active .pl-pill-count{color:rgba(0,0,0,.5);}
+.pl-pill.is-locked{color:rgba(255,255,255,.3);}
+.pl-pill.is-locked svg{flex-shrink:0;}
+.pl-pill-count{font-size:9px;font-weight:700;color:rgba(255,255,255,.3);}
+
+.pl-selected-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px;margin-bottom:10px;}
 .pl-artist-group-name{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#fff;}
 .pl-unlock-cta{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#000;background:#F69820;padding:5px 12px;border-radius:100px;text-decoration:none;white-space:nowrap;transition:background .15s;}
 .pl-unlock-cta:hover{background:#ffaf30;}
+
+.pl-catalog{border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;}
 .pl-catalog-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.04);}
 .pl-catalog-row:last-child{border-bottom:none;}
 .pl-catalog-info{min-width:0;}
 .pl-catalog-title{font-size:12.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pl-catalog-artist{font-size:10.5px;color:rgba(255,255,255,.35);margin-top:2px;}
 .pl-locked-tag{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);flex-shrink:0;}
 .pl-locked-tag svg{width:13px;height:13px;}
 .pl-add-btn{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#000;background:#fff;border:none;padding:6px 14px;border-radius:100px;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:background .15s;}
 .pl-add-btn:hover:not(:disabled){background:#F69820;}
 .pl-add-btn:disabled{opacity:.6;cursor:default;}
 .pl-add-btn.is-added{background:rgba(0,215,95,.14);color:rgba(0,215,95,.9);}
+
+.pl-pagination{display:flex;align-items:center;justify-content:center;gap:14px;padding-top:16px;}
+.pl-page-btn{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background .12s;}
+.pl-page-btn:hover:not(:disabled){background:rgba(255,255,255,.12);}
+.pl-page-btn:disabled{opacity:.3;cursor:default;}
+.pl-page-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);white-space:nowrap;}
 `;
