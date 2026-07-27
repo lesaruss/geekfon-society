@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { resolvePlayhead, RadioTrack as ScheduleTrack, ScheduleOverride } from "@/lib/radioSchedule";
+import { getGoogleAccessToken } from "@/lib/google-auth";
 
 const SB_URL = "https://fwbhwfxpncrsfhttimna.supabase.co";
 const SB_SVC = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDY2MDEzOSwiZXhwIjoyMDkwMjM2MTM5fQ.Ux3OKsH_ESG8bm2ZiFHtVUb8DPsjuAn8XRYjMVjcmjI";
@@ -49,6 +50,49 @@ function artistName(slug: string): string {
   return ARTIST_NAMES[slug] || slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 }
 
+// 2026-07-27 per Sean: "I wanna see actual Google Analytics for geekfon.ai."
+// GA4 property "geekfon.ai" was just created (Property ID 547243255, gtag
+// installed in app/layout.tsx same day) and the shared LESARUSS
+// lesaruss-analytics-reader service account was granted Viewer access to it.
+// Same getGoogleAccessToken()/GA4 Data API pattern lesaruss-ai's
+// app/api/directory/analytics/sync/[id]/route.ts uses for GA4 connections.
+type GA4Snapshot = { sessions: number; users: number; pageviews: number; available: boolean };
+const GA4_PROPERTY_ID = process.env.GA4_PROPERTY_ID_GEEKFON;
+
+async function fetchGA4(): Promise<GA4Snapshot> {
+  const empty: GA4Snapshot = { sessions: 0, users: 0, pageviews: 0, available: false };
+  if (!GA4_PROPERTY_ID) return empty;
+  try {
+    const token = await getGoogleAccessToken("https://www.googleapis.com/auth/analytics.readonly");
+    if (!token) return empty;
+    const end = new Date().toISOString().split("T")[0];
+    const start = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+    const res = await fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${GA4_PROPERTY_ID}:runReport`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dateRanges: [{ startDate: start, endDate: end }],
+        metrics: [{ name: "sessions" }, { name: "totalUsers" }, { name: "screenPageViews" }],
+      }),
+    });
+    if (!res.ok) return empty;
+    const data = await res.json();
+    const vals = data.rows?.[0]?.metricValues as { value: string }[] | undefined;
+    // No rows back just means the property is live but has recorded zero
+    // traffic in the window yet (brand new property) - distinct from a
+    // credential/access failure, which returns `empty` (available: false).
+    if (!vals) return { sessions: 0, users: 0, pageviews: 0, available: true };
+    return {
+      sessions: parseInt(vals[0]?.value ?? "0", 10),
+      users: parseInt(vals[1]?.value ?? "0", 10),
+      pageviews: parseInt(vals[2]?.value ?? "0", 10),
+      available: true,
+    };
+  } catch {
+    return empty;
+  }
+}
+
 export async function GET(req: Request) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
@@ -71,6 +115,7 @@ export async function GET(req: Request) {
     { data: artists },
     { data: tracks },
     { data: overrideRows },
+    ga4,
   ] = await Promise.all([
     admin.from("gfs_members").select("*", { count: "exact", head: true }),
     admin.from("gfs_artist_unlocks").select("amount_cents"),
@@ -83,6 +128,7 @@ export async function GET(req: Request) {
     admin.from("gfs_artists").select("slug, name, profile"),
     admin.from("radio_tracks").select("artist_slug, title, src_path, duration_seconds, release_date, radio_order, sort_order").eq("is_public", true).neq("src_path", "PENDING").lte("release_date", nowIso).order("radio_order", { ascending: true, nullsFirst: false }).order("artist_slug", { ascending: true }).order("sort_order", { ascending: true }),
     admin.from("radio_schedule_overrides").select("kind, label, ad_src_path, starts_at, duration_seconds, cadence_seconds, track_id, radio_tracks(artist_slug, title, src_path)").eq("is_active", true),
+    fetchGA4(),
   ]);
 
   // Live radio listeners: anonymous heartbeat rows (see app/api/radio/ping/route.ts),
@@ -160,5 +206,7 @@ export async function GET(req: Request) {
     songManager: { artistCount, trackCount },
     nowPlaying,
     radioListeners: radioListeners ?? 0,
+    ga4,
   });
 }
+
