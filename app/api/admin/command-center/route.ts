@@ -85,6 +85,16 @@ export async function GET(req: Request) {
     admin.from("radio_schedule_overrides").select("kind, label, ad_src_path, starts_at, duration_seconds, cadence_seconds, track_id, radio_tracks(artist_slug, title, src_path)").eq("is_active", true),
   ]);
 
+  // Live radio listeners: anonymous heartbeat rows (see app/api/radio/ping/route.ts),
+  // "active" = pinged in the last 45s (heartbeat interval is 20s, so 2 missed
+  // beats before we drop someone). Opportunistic cleanup of stale rows here
+  // rather than a separate cron - this route is polled often enough on its own.
+  await admin.from("radio_presence").delete().lt("last_ping_at", new Date(Date.now() - 86400000).toISOString());
+  const { count: radioListeners } = await admin
+    .from("radio_presence")
+    .select("*", { count: "exact", head: true })
+    .gte("last_ping_at", new Date(Date.now() - 45000).toISOString());
+
   const unlockRevenueCents = (unlocks || []).reduce((s, u) => s + (u.amount_cents || 0), 0);
 
   // Artist Briefs (A&R): dedupe to the latest brief per artist, since an artist can
@@ -149,5 +159,6 @@ export async function GET(req: Request) {
     artistBriefs,
     songManager: { artistCount, trackCount },
     nowPlaying,
+    radioListeners: radioListeners ?? 0,
   });
 }
