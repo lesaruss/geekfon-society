@@ -56,7 +56,20 @@ function initialColor(seed: string): string {
 type Liker = { userId: string; name: string | null };
 type Comment = { id: string; name: string; body: string | null; audioUrl: string | null; createdAt: string };
 
-export function PostCard({ post, artistSlug, name, avatarUrl }: { post: SocialFeedPost; artistSlug: string; name: string; avatarUrl?: string | null }) {
+// Minimal shape of the Web Speech API's SpeechRecognition - not in TS DOM
+// lib by default, and vendor-prefixed on non-Chromium browsers.
+type SpeechRecognitionLike = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((e: any) => void) | null;
+  onerror: ((e: any) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1 }: { post: SocialFeedPost; artistSlug: string; name: string; avatarUrl?: string | null; tierRank?: number }) {
   const [count, setCount] = useState<number>(0);
   const [likedByMe, setLikedByMe] = useState(false);
   const [likers, setLikers] = useState<Liker[]>([]);
@@ -67,10 +80,20 @@ export function PostCard({ post, artistSlug, name, avatarUrl }: { post: SocialFe
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [dictating, setDictating] = useState(false);
+  const [micMenuOpen, setMicMenuOpen] = useState(false);
   const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const dictationBaseRef = useRef("");
+  // Per V, 2026-07-28: dictation (speech-to-text into the comment box) is
+  // available to every commenting member, including Passport (the free
+  // registration tier). Actual voice-note recording (an audio attachment) is
+  // reserved for Plus/Pro (tierRank >= 2) - Passport members only ever see
+  // dictation, no menu needed since there's nothing to choose between.
+  const canRecordVoiceNote = tierRank >= 2;
 
   async function authHeader(): Promise<Record<string, string>> {
     const { data: { session } } = await supabase.auth.getSession();
@@ -163,6 +186,57 @@ export function PostCard({ post, artistSlug, name, avatarUrl }: { post: SocialFe
   function discardVoice() {
     setVoiceBlob(null);
     setVoiceUrl(null);
+  }
+
+  function startDictation() {
+    const SpeechRecognitionCtor: (new () => SpeechRecognitionLike) | undefined =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) {
+      alert("Dictation isn't supported in this browser yet. Try typing, or use Chrome/Safari.");
+      return;
+    }
+    dictationBaseRef.current = draft ? draft.trim() + " " : "";
+    const recognition = new SpeechRecognitionCtor();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.onresult = (e: any) => {
+      let finalText = "";
+      let interimText = "";
+      for (let i = 0; i < e.results.length; i++) {
+        const transcript = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += transcript + " ";
+        else interimText += transcript;
+      }
+      dictationBaseRef.current = dictationBaseRef.current
+        ? dictationBaseRef.current.split("…")[0]
+        : "";
+      setDraft((dictationBaseRef.current + finalText).trimStart() + (interimText ? "…" + interimText : ""));
+      if (finalText) dictationBaseRef.current = (dictationBaseRef.current + finalText).trimStart();
+    };
+    recognition.onerror = () => {
+      setDictating(false);
+    };
+    recognition.onend = () => {
+      setDictating(false);
+      // Strip any trailing interim marker left over if onend fires before a
+      // final result comes back (user stopped mid-word).
+      setDraft((d) => d.split("…")[0]);
+    };
+    recognitionRef.current = recognition;
+    recognition.start();
+    setDictating(true);
+  }
+
+  function stopDictation() {
+    recognitionRef.current?.stop();
+  }
+
+  function handleMicClick() {
+    if (recording) { stopRecording(); return; }
+    if (dictating) { stopDictation(); return; }
+    if (canRecordVoiceNote) { setMicMenuOpen((v) => !v); return; }
+    startDictation();
   }
 
   async function postComment() {
@@ -274,19 +348,38 @@ export function PostCard({ post, artistSlug, name, avatarUrl }: { post: SocialFe
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
             />
-            <button
-              type="button"
-              className={`sf-mic-btn${recording ? " sf-recording" : ""}`}
-              onClick={recording ? stopRecording : startRecording}
-              aria-label="Record a voice comment"
-              title="Record a voice comment"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-            </button>
+            <div className="sf-mic-wrap">
+              <button
+                type="button"
+                className={`sf-mic-btn${recording || dictating ? " sf-recording" : ""}`}
+                onClick={handleMicClick}
+                aria-label={canRecordVoiceNote ? "Dictate or record a voice comment" : "Dictate this comment"}
+                title={canRecordVoiceNote ? "Dictate or record a voice comment" : "Dictate this comment"}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+              </button>
+              {/* Plus/Pro only: same mic icon, two distinct functions - typed
+                  dictation into the box above, or an attached voice-note
+                  recording (like Passport never sees this choice, they only
+                  ever get dictation, so there's nothing to pick between). */}
+              {micMenuOpen && (
+                <div className="sf-mic-menu">
+                  <button type="button" onClick={() => { setMicMenuOpen(false); startDictation(); }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h10M4 18h7" /></svg>
+                    Dictate
+                  </button>
+                  <button type="button" onClick={() => { setMicMenuOpen(false); startRecording(); }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /></svg>
+                    Record voice note
+                  </button>
+                </div>
+              )}
+            </div>
             <button type="button" className="sf-comment-send" disabled={posting || (!draft.trim() && !voiceBlob)} onClick={postComment}>
               Post
             </button>
           </div>
+          {dictating && <div className="sf-rec-hint">Listening... tap the mic again to stop.</div>}
           {recording && <div className="sf-rec-hint">Recording... tap the mic again to stop.</div>}
           {voiceUrl && !recording && (
             <div className="sf-voice-note">
@@ -302,14 +395,14 @@ export function PostCard({ post, artistSlug, name, avatarUrl }: { post: SocialFe
   );
 }
 
-export default function SocialFeed({ artistSlug, name, avatarUrl, posts }: { artistSlug: string; name: string; avatarUrl?: string | null; posts: SocialFeedPost[] }) {
+export default function SocialFeed({ artistSlug, name, avatarUrl, posts, tierRank }: { artistSlug: string; name: string; avatarUrl?: string | null; posts: SocialFeedPost[]; tierRank?: number }) {
   if (!posts.length) {
     return <div className="pulse-empty"><p>Posts coming soon.</p></div>;
   }
   return (
     <div className="sf-feed">
       {posts.map((p) => (
-        <PostCard key={p.id} post={p} artistSlug={artistSlug} name={name} avatarUrl={avatarUrl} />
+        <PostCard key={p.id} post={p} artistSlug={artistSlug} name={name} avatarUrl={avatarUrl} tierRank={tierRank} />
       ))}
     </div>
   );
