@@ -1,251 +1,309 @@
-// Shared core logic for the on-demand Brand/Client audit feature.
-//
-// Runs a real Lighthouse pass (via Google PageSpeed Insights) against a
-// brand's live domain and logs the result to brand_audit_reports. Used by
-// both /api/brand-audit/run (single brand) and /api/brand-audit/run-all
-// (whole universe).
-//
-// Deliberately does NOT include any review/approval workflow (no WCM-style
-// submit/admin-review/pass/send-back) — V confirmed 2026-07-25 that's out
-// of scope for now, this is display + a Run Audit trigger only.
+"use client";
 
-import { serviceClient } from './supabase'
-import { findBrandByBriefsSlug } from './brands'
-import { runAxeScan } from './axe-scan'
-import { runWaveScan } from './wave-scan'
-import { runConnectionsCheck } from './connections-scan'
+// GeekFon Social feed-card component - approved sample, 2026-07-28 (Roxanne
+// pilot). Replaces the old .sg-grid Instagram-thumbnail-grid for artists
+// migrated to this format: media first, then avatar+name header, caption,
+// liked-by avatar-circle stack, and a Like/Comment row. Comments can be
+// typed or a recorded voice note (per V: make voice-comment the standard
+// pattern everywhere, not just here). Backed by the real
+// gfs_pulse_likes / gfs_pulse_comments tables via /api/social/like and
+// /api/social/comments - see project_geekfon_social_feed_card_sample memory
+// for the full build note.
 
-const GOOD_THRESHOLD = 0.9 // Lighthouse's own "green" cutoff (90/100)
+import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
-export type AuditRunResult = {
-  brandSlug: string
-  ok: boolean
-  domain?: string
-  performancePct?: number
-  accessibilityPct?: number
-  adaScore?: number
-  waveScore?: number
-  error?: string
+export type SocialFeedPost = {
+  id: string;
+  text?: string;
+  type?: string;
+  mediaUrl: string | null;
+  thumb?: string | null;
+  pinned?: boolean;
+  timestamp?: string;
+};
+
+function stripSignOff(text: string | undefined, name: string): string {
+  if (!text) return "";
+  const lines = text.split("\n");
+  while (lines.length && lines[lines.length - 1].trim() === "") lines.pop();
+  if (lines.length && lines[lines.length - 1].trim().toLowerCase() === name.trim().toLowerCase()) {
+    lines.pop();
+    while (lines.length && lines[lines.length - 1].trim() === "") lines.pop();
+  }
+  return lines.join("\n");
 }
 
-async function getPageSpeedKey(): Promise<string | null> {
-  const db = serviceClient()
-  if (!db) return null
-  const { data } = await db
-    .from('lesaruss_secrets')
-    .select('value')
-    .eq('key', 'GOOGLE_PAGESPEED_API_KEY')
-    .single()
-  return data?.value ?? null
+function formatDate(ts?: string): string {
+  if (!ts) return "Recent";
+  return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-// Resolves a brand's live domain from the sites registry. Returns null if
-// the brand has no site row, or the site isn't status='live' yet (no point
-// auditing a page that isn't really up).
-async function getLiveDomain(briefsSlug: string): Promise<string | null> {
-  const db = serviceClient()
-  if (!db) return null
-  const { data } = await db
-    .from('sites')
-    .select('domain, status')
-    .eq('brand_slug', briefsSlug)
-    .eq('status', 'live')
-    .not('domain', 'is', null)
-    .limit(1)
-    .maybeSingle()
-  return data?.domain ?? null
+function initialColor(seed: string): string {
+  const palette = ["#E91E8C", "#4338ca", "#2e7d32", "#b45309", "#0891b2"];
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return palette[h % palette.length];
 }
 
-export async function runBrandAudit(briefsSlug: string): Promise<AuditRunResult> {
-  const brand = findBrandByBriefsSlug(briefsSlug)
-  if (!brand) {
-    return { brandSlug: briefsSlug, ok: false, error: 'Unknown brand slug' }
+type Liker = { userId: string; name: string | null };
+type Comment = { id: string; name: string; body: string | null; audioUrl: string | null; createdAt: string };
+
+function PostCard({ post, artistSlug, name, avatarUrl }: { post: SocialFeedPost; artistSlug: string; name: string; avatarUrl?: string | null }) {
+  const [count, setCount] = useState<number>(0);
+  const [likedByMe, setLikedByMe] = useState(false);
+  const [likers, setLikers] = useState<Liker[]>([]);
+  const [likeBusy, setLikeBusy] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
+  const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  async function authHeader(): Promise<Record<string, string>> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
   }
 
-  const domain = await getLiveDomain(briefsSlug)
-  if (!domain) {
-    return { brandSlug: briefsSlug, ok: false, error: 'No live site on file for this brand yet' }
+  async function loadLikes() {
+    try {
+      const res = await fetch(`/api/social/like?artistSlug=${encodeURIComponent(artistSlug)}&postId=${encodeURIComponent(post.id)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setCount(data.count || 0);
+      setLikedByMe(!!data.likedByMe);
+      setLikers(data.likers || []);
+    } catch { /* non-fatal, counts stay at 0 */ }
   }
 
-  const key = await getPageSpeedKey()
-  if (!key) {
-    return { brandSlug: briefsSlug, ok: false, domain, error: 'GOOGLE_PAGESPEED_API_KEY missing from lesaruss_secrets' }
-  }
+  useEffect(() => { loadLikes(); }, [post.id]);
 
-  const db = serviceClient()
-  if (!db) {
-    return { brandSlug: briefsSlug, ok: false, domain, error: 'Database unavailable' }
-  }
-
-  const psiUrl =
-    `https://www.googleapis.com/pagespeedonline/v5/runPagespeed` +
-    `?url=${encodeURIComponent(`https://${domain}`)}` +
-    `&category=performance&category=accessibility&strategy=mobile&key=${key}`
-
-  let perf: number | null = null
-  let a11y: number | null = null
-  let finalUrl: string | null = null
-  let psiError: string | null = null
-
-  try {
-    const resp = await fetch(psiUrl, { signal: AbortSignal.timeout(110_000) })
-    const json = await resp.json()
-    if (!resp.ok) {
-      psiError = json?.error?.message ?? `PageSpeed Insights returned HTTP ${resp.status}`
-    } else {
-      const cats = json?.lighthouseResult?.categories
-      perf = cats?.performance?.score ?? null
-      a11y = cats?.accessibility?.score ?? null
-      finalUrl = json?.lighthouseResult?.finalUrl ?? null
+  async function toggleLike() {
+    if (likeBusy) return;
+    setLikeBusy(true);
+    const headers = await authHeader();
+    if (!headers.Authorization) { setLikeBusy(false); return; }
+    try {
+      const res = await fetch("/api/social/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ artistSlug, postId: post.id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLikedByMe(!!data.liked);
+        setCount(data.count || 0);
+        loadLikes();
+      }
+    } finally {
+      setLikeBusy(false);
     }
-  } catch (err) {
-    psiError = err instanceof Error ? err.message : String(err)
   }
 
-  const functional = psiError === null
-  const performancePass = perf != null ? perf >= GOOD_THRESHOLD : null
-  const accessibilityPass = a11y != null ? a11y >= GOOD_THRESHOLD : null
-
-  const perfPct = perf != null ? Math.round(perf * 100) : null
-  const a11yPct = a11y != null ? Math.round(a11y * 100) : null
-
-  // Gold-standard ADA pass — real axe-core scan in a real headless browser,
-  // plus a real WAVE (WebAIM) scan, run alongside Lighthouse (V's directive
-  // 2026-07-25: axe-core + WAVE are both "worth the extra work" because ADA
-  // Unlocked sells this as a service line). WAVE_API_KEY was already
-  // provisioned and proven live the same day under a separate initiative
-  // (audit_reports/"Business Audit Standard") that this session wasn't aware
-  // of until V corrected the record 2026-07-27 — known fork, flagged, V's
-  // call was to let both systems run for now rather than block on it.
-  //
-  // Connections check (GitHub/Vercel/SSL) added 2026-07-27, same directive:
-  // triggered by discovering Blink had no GitHub repo. Runs alongside the
-  // other two rather than gating them — a missing repo shouldn't block the
-  // web-quality scores from being recorded.
-  const [axe, wave, connections] = await Promise.all([
-    runAxeScan(`https://${domain}`),
-    runWaveScan(`https://${domain}`),
-    runConnectionsCheck(brand, domain),
-  ])
-
-  const summary = functional
-    ? `Automated Lighthouse pass (mobile) on ${domain}: Performance ${perfPct}/100, Accessibility ${a11yPct}/100.` +
-      (axe.ok
-        ? ` ADA (axe-core): ${axe.adaScore}/100, ${axe.violations.length} violation(s).`
-        : ` ADA scan failed: ${axe.error}.`) +
-      (wave.ok
-        ? ` WAVE: ${wave.waveScore ?? '—'}/100, ${wave.violations.length} item(s).`
-        : ` WAVE scan failed: ${wave.error}.`) +
-      ` Connections: GitHub ${connections.githubStatus}${connections.vercelGitLinked === false ? ', Vercel not git-linked' : ''}${connections.sslOk === false ? ', SSL/HTTPS unreachable' : ''}.` +
-      (finalUrl && finalUrl !== `https://${domain}/` ? ` (redirected to ${finalUrl})` : '')
-    : `Automated Lighthouse pass on ${domain} FAILED: ${psiError}`
-
-  const issuesFound: string[] = []
-  if (functional) {
-    if (perfPct != null && perfPct < 90) issuesFound.push(`Performance ${perfPct}/100 — below the 90 "good" threshold`)
-    if (a11yPct != null && a11yPct < 90) issuesFound.push(`Accessibility ${a11yPct}/100 — below the 90 "good" threshold`)
-  } else {
-    issuesFound.push(`Lighthouse could not complete a run: ${psiError}`)
-  }
-  if (axe.ok) {
-    for (const v of axe.violations) {
-      issuesFound.push(`[axe-core, ${v.impact ?? 'unknown'}] ${v.help} (${v.nodes} element(s)) — ${v.id}`)
+  async function loadComments() {
+    setCommentsLoading(true);
+    try {
+      const res = await fetch(`/api/social/comments?artistSlug=${encodeURIComponent(artistSlug)}&postId=${encodeURIComponent(post.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data.comments || []);
+      }
+    } finally {
+      setCommentsLoading(false);
     }
-  } else {
-    issuesFound.push(`axe-core ADA scan could not complete: ${axe.error}`)
   }
-  if (wave.ok) {
-    for (const v of wave.violations) {
-      issuesFound.push(`[WAVE, ${v.category}] ${v.description} (${v.count}x) — ${v.id}`)
+
+  function toggleCommentPanel() {
+    const next = !commentsOpen;
+    setCommentsOpen(next);
+    if (next && comments.length === 0) loadComments();
+  }
+
+  async function startRecording() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert("Voice comments need microphone access, which isn't available here.");
+      return;
     }
-  } else {
-    issuesFound.push(`WAVE ADA scan could not complete: ${wave.error}`)
-  }
-  if (connections.githubStatus === 'missing') {
-    issuesFound.push('No GitHub repo found for this property — deploys are not version-controlled.')
-  } else if (connections.githubStatus === 'repo_only') {
-    issuesFound.push(`GitHub repo exists (${connections.githubRepo}) but Vercel is not deploying from it — still a raw/manual deploy path.`)
-  }
-  if (connections.vercelGitLinked === false && connections.githubStatus === 'linked') {
-    issuesFound.push('Vercel project is not linked to the GitHub repo.')
-  }
-  if (connections.sslOk === false) {
-    issuesFound.push(`HTTPS/SSL check failed for ${domain} — site may be unreachable or the certificate is invalid.`)
-  }
-  if (connections.error) {
-    issuesFound.push(`Connections check had an error, treat status as best-effort: ${connections.error}`)
-  }
-
-  const nextSteps: string[] = functional
-    ? (issuesFound.length > 0
-        ? ['Pull the full Lighthouse opportunities/diagnostics detail for the flagged category(ies)']
-        : [])
-    : ['Manually load the site and check for slow/hanging resources', 'Re-run once resolved']
-  if (axe.ok && axe.violations.length > 0) {
-    nextSteps.push('Work through the itemized axe-core ADA violations on the profile page, worst impact first')
-  }
-  if (wave.ok && wave.violations.length > 0) {
-    nextSteps.push('Cross-check WAVE items against axe-core — overlap confirms real issues, WAVE-only items are worth a manual look')
-  }
-  if (connections.githubStatus === 'missing' || connections.githubStatus === 'repo_only') {
-    nextSteps.push('Get this property onto a real GitHub-linked Vercel deploy before the next incident, not after')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      chunksRef.current = [];
+      const rec = new MediaRecorder(stream);
+      rec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      rec.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        setVoiceBlob(blob);
+        setVoiceUrl(URL.createObjectURL(blob));
+        setRecording(false);
+      };
+      rec.start();
+      recorderRef.current = rec;
+      setRecording(true);
+    } catch {
+      alert("Microphone access was blocked or unavailable.");
+    }
   }
 
-  await db.from('brand_audit_reports').insert({
-    brand_slug: briefsSlug,
-    audited_at: new Date().toISOString(),
-    functional,
-    visual: null,
-    performance: performancePass,
-    accessibility: accessibilityPass,
-    standards: null,
-    summary,
-    issues_found: issuesFound,
-    next_steps: nextSteps,
-    created_by: 'hq-run-audit-button',
-    performance_pct: perfPct,
-    accessibility_pct: a11yPct,
-    ada_score: axe.ok ? axe.adaScore : null,
-    ada_violations: axe.ok ? axe.violations : null,
-    ada_violations_critical: axe.counts.critical,
-    ada_violations_serious: axe.counts.serious,
-    ada_violations_moderate: axe.counts.moderate,
-    ada_violations_minor: axe.counts.minor,
-    wave_score: wave.ok ? wave.waveScore : null,
-    wave_violations: wave.ok ? wave.violations : null,
-    github_status: connections.githubStatus,
-    github_repo: connections.githubRepo,
-    github_url: connections.githubUrl,
-    vercel_project: connections.vercelProject,
-    vercel_git_linked: connections.vercelGitLinked,
-    domain_ssl_ok: connections.sslOk,
-  })
-
-  return {
-    brandSlug: briefsSlug,
-    ok: functional,
-    domain,
-    performancePct: perfPct ?? undefined,
-    accessibilityPct: a11yPct ?? undefined,
-    adaScore: axe.ok && axe.adaScore != null ? axe.adaScore : undefined,
-    waveScore: wave.ok && wave.waveScore != null ? wave.waveScore : undefined,
-    error: psiError ?? undefined,
+  function stopRecording() {
+    recorderRef.current?.stop();
   }
+
+  function discardVoice() {
+    setVoiceBlob(null);
+    setVoiceUrl(null);
+  }
+
+  async function postComment() {
+    if (posting || (!draft.trim() && !voiceBlob)) return;
+    setPosting(true);
+    const headers = await authHeader();
+    if (!headers.Authorization) { setPosting(false); return; }
+    try {
+      const form = new FormData();
+      form.set("artistSlug", artistSlug);
+      form.set("postId", post.id);
+      if (draft.trim()) form.set("body", draft.trim());
+      if (voiceBlob) form.set("audio", voiceBlob, "comment.webm");
+      const res = await fetch("/api/social/comments", { method: "POST", headers, body: form });
+      if (res.ok) {
+        const data = await res.json();
+        setComments((prev) => [...prev, data.comment]);
+        setDraft("");
+        discardVoice();
+      }
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  const caption = stripSignOff(post.text, name);
+  const others = likers.filter((l) => l.name).slice(0, 3).map((l) => l.name).join(", ");
+
+  return (
+    <article className="sf-post">
+      {post.mediaUrl && (
+        <div className="sf-media">
+          {post.type === "video" ? (
+            <video src={post.mediaUrl} poster={post.thumb || undefined} controls playsInline preload="metadata" />
+          ) : (
+            <img src={post.mediaUrl} alt="" />
+          )}
+        </div>
+      )}
+
+      <div className="sf-header">
+        {avatarUrl ? (
+          <img className="sf-avatar" src={avatarUrl} alt={name} loading="lazy" decoding="async" />
+        ) : (
+          <div className="sf-avatar-init" style={{ background: initialColor(name) }}>{name.charAt(0)}</div>
+        )}
+        <div className="sf-who">
+          <div className="sf-name">{name}</div>
+          <div className="sf-time">{formatDate(post.timestamp)}</div>
+        </div>
+        {post.pinned && <div className="sf-pin">Pinned</div>}
+      </div>
+
+      {caption && <p className="sf-text">{caption}</p>}
+
+      {count > 0 && (
+        <div className="sf-liked-row">
+          <div className="sf-liker-stack">
+            {likers.slice(0, 3).map((l, i) => (
+              <div key={l.userId} className="sf-liker-circle" style={{ background: initialColor(l.name || l.userId), zIndex: 3 - i }}>
+                {(l.name || "?").charAt(0).toUpperCase()}
+              </div>
+            ))}
+          </div>
+          <div className="sf-liked-text">
+            {likedByMe ? (
+              <>Liked by <strong>you</strong>{others ? `, ${others}` : ""}{count > (others ? 4 : 1) ? ` and ${count - (others ? 4 : 1)} others` : ""}</>
+            ) : (
+              <>{others ? <>Liked by {others}{count > 3 ? ` and ${count - 3} others` : ""}</> : <>{count} {count === 1 ? "like" : "likes"}</>}</>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="sf-interact-row">
+        <button type="button" className={`sf-interact-btn${likedByMe ? " sf-like-active" : ""}`} onClick={toggleLike} disabled={likeBusy}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
+          {likedByMe ? "Liked" : "Like"}
+        </button>
+        <button type="button" className="sf-interact-btn" onClick={toggleCommentPanel}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" /></svg>
+          Comment
+        </button>
+      </div>
+
+      {commentsOpen && (
+        <div className="sf-comment-box">
+          {commentsLoading && <p className="sf-comment-loading">Loading comments...</p>}
+          {!commentsLoading && comments.length > 0 && (
+            <div className="sf-comment-list">
+              {comments.map((c) => (
+                <div key={c.id} className="sf-comment-row-item">
+                  <div className="sf-avatar-init sf-comment-avatar" style={{ background: initialColor(c.name) }}>{c.name.charAt(0)}</div>
+                  <div className="sf-comment-body">
+                    <span className="sf-comment-name">{c.name}</span>
+                    {c.body && <span className="sf-comment-text">{c.body}</span>}
+                    {c.audioUrl && <audio className="sf-comment-audio" controls src={c.audioUrl} />}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="sf-comment-row">
+            <input
+              className="sf-comment-input"
+              type="text"
+              placeholder="Add a comment..."
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+            />
+            <button
+              type="button"
+              className={`sf-mic-btn${recording ? " sf-recording" : ""}`}
+              onClick={recording ? stopRecording : startRecording}
+              aria-label="Record a voice comment"
+              title="Record a voice comment"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+            </button>
+            <button type="button" className="sf-comment-send" disabled={posting || (!draft.trim() && !voiceBlob)} onClick={postComment}>
+              Post
+            </button>
+          </div>
+          {recording && <div className="sf-rec-hint">Recording... tap the mic again to stop.</div>}
+          {voiceUrl && !recording && (
+            <div className="sf-voice-note">
+              <audio controls src={voiceUrl} />
+              <button type="button" className="sf-voice-discard" title="Discard" onClick={discardVoice}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </article>
+  );
 }
 
-// All brands that currently have a live site on file — the target list for
-// "run for the whole universe."
-export async function getLiveBrandSlugs(): Promise<string[]> {
-  const db = serviceClient()
-  if (!db) return []
-  const { data } = await db
-    .from('sites')
-    .select('brand_slug')
-    .eq('status', 'live')
-    .not('brand_slug', 'is', null)
-  const slugs = new Set((data ?? []).map((r) => r.brand_slug as string))
-  // Only ones we actually track as a brand/client tile.
-  return [...slugs].filter((s) => findBrandByBriefsSlug(s))
+export default function SocialFeed({ artistSlug, name, avatarUrl, posts }: { artistSlug: string; name: string; avatarUrl?: string | null; posts: SocialFeedPost[] }) {
+  if (!posts.length) {
+    return <div className="pulse-empty"><p>Posts coming soon.</p></div>;
+  }
+  return (
+    <div className="sf-feed">
+      {posts.map((p) => (
+        <PostCard key={p.id} post={p} artistSlug={artistSlug} name={name} avatarUrl={avatarUrl} />
+      ))}
+    </div>
+  );
 }
-
-// force-redeploy: ensure Connections wiring (2026-07-27) actually reaches production HEAD, not a superseded intermediate build
