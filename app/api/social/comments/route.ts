@@ -10,6 +10,10 @@ import { NextResponse } from "next/server";
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fwbhwfxpncrsfhttimna.supabase.co";
 const SB_SVC = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const MAX_AUDIO_BYTES = 8 * 1024 * 1024; // 8MB - a few minutes of webm/opus voice, generous for a comment
+// Same admin account used by every other admin-gated route in this repo
+// (/api/admin/pulse-feature, /api/admin/artist-likers) - lets admin delete
+// any comment, not just their own.
+const ADMIN_EMAIL = "contact@lesaruss.com";
 
 function admin() {
   return createClient(SB_URL, SB_SVC, { auth: { autoRefreshToken: false, persistSession: false } });
@@ -52,6 +56,7 @@ export async function GET(req: Request) {
 
   const shaped = (comments || []).map((c) => ({
     id: c.id,
+    userId: c.user_id,
     name: nameMap[c.user_id] || "Member",
     body: c.body,
     audioUrl: c.audio_url,
@@ -126,10 +131,55 @@ export async function POST(req: Request) {
   return NextResponse.json({
     comment: {
       id: created.id,
+      userId: caller.id,
       name: member?.name || "You",
       body: hasText ? (bodyText as string).trim().slice(0, 2000) : null,
       audioUrl,
       createdAt: created.created_at,
     },
   });
+}
+
+// Delete a comment. Per Sean/V 2026-07-28: a member can delete their own
+// comment, and admin can delete any comment. Same admin-bypass shape as the
+// rest of this repo's admin routes - service role already sees every row,
+// this just adds the ownership-or-admin check before allowing the delete.
+export async function DELETE(req: Request) {
+  const caller = await getCaller(req);
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+
+  const sb = admin();
+  const { data: comment, error: fetchErr } = await sb
+    .from("gfs_pulse_comments")
+    .select("id, user_id, audio_url")
+    .eq("id", id)
+    .maybeSingle();
+  if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+  if (!comment) return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+
+  const isOwner = comment.user_id === caller.id;
+  const isAdmin = caller.email === ADMIN_EMAIL;
+  if (!isOwner && !isAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { error: deleteErr } = await sb.from("gfs_pulse_comments").delete().eq("id", id);
+  if (deleteErr) return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+
+  // Best-effort cleanup of the underlying audio file - not fatal if it fails
+  // or if there was never a file (typed comments have no audio_url).
+  if (comment.audio_url) {
+    const marker = "/public/voice-messages/";
+    const idx = comment.audio_url.indexOf(marker);
+    if (idx !== -1) {
+      const path = comment.audio_url.slice(idx + marker.length);
+      await sb.storage.from("voice-messages").remove([path]).catch(() => {});
+    }
+  }
+
+  return NextResponse.json({ ok: true });
 }
