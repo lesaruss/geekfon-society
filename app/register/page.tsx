@@ -58,12 +58,15 @@ function RegisterPageInner() {
   }, [router]);
 
   const calculateAge = (dateString: string) => {
+    // dateString is our own YYYY-MM-DD (see buildDateOfBirth). Parse the integers directly
+    // rather than through `new Date(dateString)`, which parses as UTC and can shift the
+    // date by a day against local `today` depending on timezone offset.
+    const [by, bm, bd] = dateString.split('-').map(Number);
     const today = new Date();
-    const birthDate = new Date(dateString);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
+    let age = today.getFullYear() - by;
+    const monthDiff = (today.getMonth() + 1) - bm;
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < bd)) {
       age--;
     }
 
@@ -82,7 +85,7 @@ function RegisterPageInner() {
     if (m < 1 || m > 12 || d < 1 || d > 31 || String(year).length !== 4) return '';
     const iso = `${y.toString().padStart(4, '0')}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
     const parsed = new Date(iso);
-    if (isNaN(parsed.getTime()) || parsed.getMonth() + 1 !== m || parsed.getDate() !== d) return '';
+    if (isNaN(parsed.getTime()) || parsed.getUTCMonth() + 1 !== m || parsed.getUTCDate() !== d) return '';
     return iso;
   };
 
