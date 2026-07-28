@@ -268,6 +268,15 @@
 .sg-lightbox-video{width:100%;max-height:80vh;display:block;background:#000}
 .sg-lightbox-photo{width:100%;max-height:80vh;object-fit:contain;display:block;background:#000}
 .sg-lightbox-caption{margin:0;padding:14px 18px;font-size:14px;line-height:1.5;color:#fff;background:#111;white-space:pre-wrap}
+/* 2026-07-28: lightbox variant that wraps the real interactive PostCard
+   (components/SocialFeed.tsx) instead of the old bare video/photo+caption.
+   PostCard brings its own white .sf-post background/border/radius, so this
+   just needs to be a transparent, scrollable, max-height frame - not the
+   black box the old media-only lightbox used. */
+.sg-lightbox-card{background:transparent;border-radius:14px;max-width:480px;max-height:88vh;overflow-y:auto}
+.sg-lightbox-card .sf-post{border:none;border-radius:14px}
+.sg-lightbox-card .sf-media{border-radius:14px 14px 0 0}
+.sg-lightbox-card .sg-lightbox-close{background:rgba(0,0,0,.55)}
 .mp-row-locked-cta:hover{border-color:var(--lr-border);box-shadow:none}
 .mp-row-thumb-locked{background:rgba(0,0,0,.06);color:rgba(26,26,26,.4)}
 .mp-row-locked-cta .mp-row-title{color:rgba(26,26,26,.65)}
