@@ -1572,7 +1572,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                       pinned: activePost.pinned,
                                       timestamp: activePost.timestamp,
                                     }}
-                                    artistSlug={slug}
+                                    artistSlug={slug ?? ""}
                                     name={c.name || name || "This artist"}
                                     avatarUrl={c.profileUrl || c.heroUrl || null}
                                     tierRank={isSuperAdmin ? 3 : (effectiveTier ? (TIER_RANK[effectiveTier] || 1) : 0)}
