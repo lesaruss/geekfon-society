@@ -133,6 +133,35 @@ const CSS = `
 .pp-tier-btn.secondary { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Mobile: tighten vertical spacing across all 3 slides so each step fits one screen, no scroll */
+@media (max-width: 640px) {
+  .pp-slide-outer { padding: 76px 20px 108px; }
+  .pp-hero-price { margin-bottom: 14px; }
+  .pp-hero-title { font-size: clamp(34px, 9vw, 56px); margin: 0 0 12px; }
+  .pp-hero-sub { font-size: 14px; margin: 0 0 22px; }
+  .pp-perks-label { margin-bottom: 10px; }
+  .pp-perks-heading { font-size: clamp(22px, 6vw, 30px); margin: 0 0 18px; }
+  .pp-perk-tabs { margin-bottom: 16px; gap: 6px; }
+  .pp-perk-tab { padding: 8px 14px; font-size: 11px; }
+  .pp-perk-detail { padding: 26px 20px; min-height: 160px; }
+  .pp-perk-detail-icon { font-size: 30px; margin-bottom: 10px; }
+  .pp-perk-detail-title { font-size: clamp(18px, 5vw, 22px); margin: 0 0 8px; }
+  .pp-perk-detail-desc { font-size: 14px; line-height: 1.5; }
+  .pp-pricing-label { margin-bottom: 10px; }
+  .pp-pricing-heading { font-size: clamp(22px, 6vw, 28px); margin: 0 0 8px; }
+  .pp-pricing-sub { font-size: 13px; margin: 0 auto 20px; }
+  .pp-tier { padding: 22px 20px 18px; }
+  .pp-tier-name { margin-bottom: 10px; }
+  .pp-tier-price { font-size: clamp(30px, 9vw, 40px); }
+  .pp-tier-period { margin-bottom: 14px; }
+  .pp-tier-items { gap: 8px; margin: 0 0 16px; }
+  .pp-tier-items li { font-size: 12.5px; line-height: 1.4; }
+  .pp-tier-btn { padding: 12px; font-size: 12px; }
+  .pp-bottom-bar { padding: 14px 16px 18px !important; }
+  .pp-nav-btn { padding: 10px 18px !important; font-size: 0.8rem !important; }
+}
+
 `;
 
 // ── Narration button (ported from the /welcome tour shell) ───────────────────
@@ -371,11 +400,12 @@ export default function PassportPage() {
         </div>
 
         {/* Bottom bar: Back / narration + progress dots / Next - matches the /welcome tour shell */}
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", padding: "20px 28px 28px", background: "linear-gradient(to top, rgba(7,7,18,0.95) 0%, transparent 100%)", zIndex: 20 }}>
+        <div className="pp-bottom-bar" style={{ position: "fixed", bottom: 0, left: 0, right: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", padding: "20px 28px 28px", background: "linear-gradient(to top, rgba(7,7,18,0.95) 0%, transparent 100%)", zIndex: 20 }}>
           <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
             {slideIdx > 0 && (
               <button
                 onClick={handleBack}
+                className="pp-nav-btn"
                 style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "100px", padding: "12px 24px", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.06em" }}
               >
                 Back
@@ -392,6 +422,7 @@ export default function PassportPage() {
             {slideIdx < TOTAL_SLIDES - 1 && (
               <button
                 onClick={handleNext}
+                className="pp-nav-btn"
                 style={{ background: ACCENT, border: "none", borderRadius: "100px", padding: "12px 32px", color: "white", fontSize: "0.9rem", fontWeight: 800, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.03)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
