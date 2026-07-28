@@ -151,14 +151,14 @@ const CSS = `
   .pp-perk-detail-desc { font-size: 14px; line-height: 1.5; }
   .pp-pricing-label { margin-bottom: 10px; }
   .pp-pricing-heading { font-size: clamp(22px, 6vw, 28px); margin: 0 0 8px; }
-  .pp-pricing-sub { font-size: 13px; margin: 0 auto 20px; }
-  .pp-tier { padding: 22px 20px 18px; }
-  .pp-tier-name { margin-bottom: 10px; }
+  .pp-pricing-sub { font-size: 13px; margin: 0 auto 12px; }
+  .pp-tier { padding: 18px 18px 14px; }
+  .pp-tier-name { margin-bottom: 6px; }
   .pp-tier-price { font-size: clamp(30px, 9vw, 40px); }
-  .pp-tier-period { margin-bottom: 14px; }
-  .pp-tier-items { gap: 8px; margin: 0 0 16px; }
+  .pp-tier-period { margin-bottom: 10px; }
+  .pp-tier-items { gap: 6px; margin: 0 0 12px; }
   .pp-tier-items li { font-size: 12.5px; line-height: 1.4; }
-  .pp-tier-btn { padding: 12px; font-size: 12px; }
+  .pp-tier-btn { padding: 10px; font-size: 12px; }
   .pp-bottom-bar { padding: 14px 16px 18px !important; }
   .pp-nav-btn { padding: 10px 18px !important; font-size: 0.8rem !important; }
 }
