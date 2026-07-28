@@ -667,10 +667,14 @@
 .sf-comment-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
 .sf-comment-row-item{display:flex;gap:10px;align-items:flex-start}
 .sf-comment-avatar{width:28px;height:28px;font-size:12px;flex-shrink:0}
-.sf-comment-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sf-comment-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
 .sf-comment-name{font-size:12.5px;font-weight:800;color:var(--lr-text)}
 .sf-comment-text{font-size:13.5px;line-height:1.5;color:var(--lr-text-75)}
 .sf-comment-audio{height:32px;max-width:220px}
+.sf-comment-delete{width:26px;height:26px;border-radius:50%;border:none;background:none;color:var(--lr-text-30);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-left:auto}
+.sf-comment-delete:hover:not(:disabled){color:var(--rx-text);background:var(--rx-tint)}
+.sf-comment-delete:disabled{opacity:.4;cursor:default}
+.sf-comment-delete svg{width:14px;height:14px}
 .sf-comment-row{display:flex;gap:8px;align-items:center}
 .sf-comment-input{flex:1;font-family:inherit;font-size:13.5px;padding:10px 14px;border-radius:100px;border:1px solid var(--lr-border);background:var(--lr-bg);color:var(--lr-text)}
 .sf-comment-input::placeholder{color:var(--lr-text-30)}
