@@ -12,7 +12,9 @@ import styles from "../register/page.module.css";
 export default function CompleteProfilePage() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [dobMonth, setDobMonth] = useState("");
+  const [dobDay, setDobDay] = useState("");
+  const [dobYear, setDobYear] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [fullNameError, setFullNameError] = useState("");
   const [dobError, setDobError] = useState("");
@@ -34,13 +36,32 @@ export default function CompleteProfilePage() {
     });
   }, [router]);
 
+  // Same fix as app/register/page.tsx: parse the y/m/d integers directly rather than
+  // through `new Date(dateString)`, which parses as UTC and can shift a day against
+  // local `today` depending on timezone offset (caused false "invalid date" rejections).
   const calculateAge = (dateString: string) => {
+    const [by, bm, bd] = dateString.split("-").map(Number);
     const today = new Date();
-    const birthDate = new Date(dateString);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
+    let age = today.getFullYear() - by;
+    const monthDiff = (today.getMonth() + 1) - bm;
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < bd)) age--;
     return age;
+  };
+
+  // Builds YYYY-MM-DD from the three neutral numeric fields, or "" if incomplete/invalid.
+  // No defaults, no pre-filled values - plain digit entry only, per the FTC's 2025 COPPA
+  // guidance on neutral age screens (also matches app/register/page.tsx).
+  const buildDateOfBirth = (month: string, day: string, year: string): string => {
+    if (!month || !day || !year) return "";
+    const m = parseInt(month, 10);
+    const d = parseInt(day, 10);
+    const y = parseInt(year, 10);
+    if (!m || !d || !y) return "";
+    if (m < 1 || m > 12 || d < 1 || d > 31 || String(year).length !== 4) return "";
+    const iso = `${y.toString().padStart(4, "0")}-${m.toString().padStart(2, "0")}-${d.toString().padStart(2, "0")}`;
+    const parsed = new Date(iso);
+    if (isNaN(parsed.getTime()) || parsed.getUTCMonth() + 1 !== m || parsed.getUTCDate() !== d) return "";
+    return iso;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,8 +76,12 @@ export default function CompleteProfilePage() {
       setFullNameError("Full name must be at least 2 characters");
       isValid = false;
     }
-    if (!dateOfBirth) {
+    const dateOfBirth = buildDateOfBirth(dobMonth, dobDay, dobYear);
+    if (!dobMonth || !dobDay || !dobYear) {
       setDobError("Date of birth is required");
+      isValid = false;
+    } else if (!dateOfBirth) {
+      setDobError("Enter a valid date");
       isValid = false;
     } else if (calculateAge(dateOfBirth) < 13) {
       setDobError("You must be at least 13 years old");
@@ -79,11 +104,11 @@ export default function CompleteProfilePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token || ""}`,
         },
-        body: JSON.stringify({ fullName: fullName.trim(), dateOfBirth, acceptTerms }),
+        body: JSON.stringify({ fullName: fullName.trim(), dateOfBirth: buildDateOfBirth(dobMonth, dobDay, dobYear), acceptTerms }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save your profile");
-      router.push("/welcome");
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save your profile");
     } finally {
@@ -140,20 +165,64 @@ export default function CompleteProfilePage() {
               </div>
 
               <div className={styles.inputGroup}>
-                <label htmlFor="dob" className={styles.inputLabel}>
+                <label htmlFor="dobMonth" className={styles.inputLabel}>
                   Date of Birth
                 </label>
-                <input
-                  id="dob"
-                  type="date"
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  required
-                  aria-required="true"
-                  aria-invalid={!!dobError}
-                  className={styles.inputField}
-                  disabled={isLoading}
-                />
+                <p className={styles.dobHint} id="dobHint">
+                  We ask this to confirm eligibility to join.
+                </p>
+                <div className={styles.dobRow} role="group" aria-labelledby="dobMonth-label" aria-describedby="dobHint">
+                  <input
+                    id="dobMonth"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
+                    placeholder="MM"
+                    aria-label="Birth month"
+                    value={dobMonth}
+                    onChange={(e) => setDobMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    required
+                    aria-required="true"
+                    aria-invalid={!!dobError}
+                    className={`${styles.inputField} ${styles.dobInput} ${styles.dobInputShort}`}
+                    disabled={isLoading}
+                  />
+                  <span className={styles.dobSeparator} aria-hidden="true">/</span>
+                  <input
+                    id="dobDay"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
+                    placeholder="DD"
+                    aria-label="Birth day"
+                    value={dobDay}
+                    onChange={(e) => setDobDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    required
+                    aria-required="true"
+                    aria-invalid={!!dobError}
+                    className={`${styles.inputField} ${styles.dobInput} ${styles.dobInputShort}`}
+                    disabled={isLoading}
+                  />
+                  <span className={styles.dobSeparator} aria-hidden="true">/</span>
+                  <input
+                    id="dobYear"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    placeholder="YYYY"
+                    aria-label="Birth year"
+                    value={dobYear}
+                    onChange={(e) => setDobYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    required
+                    aria-required="true"
+                    aria-invalid={!!dobError}
+                    className={`${styles.inputField} ${styles.dobInput} ${styles.dobInputLong}`}
+                    disabled={isLoading}
+                  />
+                </div>
                 {dobError && (
                   <div className={styles.errorMessage} role="alert">
                     {dobError}
