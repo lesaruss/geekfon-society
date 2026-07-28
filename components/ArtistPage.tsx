@@ -33,6 +33,7 @@ type PulsePost = {
   tag?: string; title?: string; blurb?: string; href?: string; thumb?: string;
   likes?: number; comments?: number; shares?: number; videoUrl?: string;
   pinned?: boolean;
+  featured?: boolean;
 };
 
 type BibleModule = {
@@ -99,13 +100,18 @@ export type ArtistContent = {
   members?: { name: string; initial?: string; color?: string; img?: string; role?: string; position?: string; hook?: string; traits?: string[]; quote?: string; detail?: string }[];
 };
 
+// 2026-07-27 per Sean/V: Brief removed from the profile nav entirely (moving
+// to a new home elsewhere - not this component's concern). The underlying
+// `tab === "brief"` render block further down is left in place, unreachable,
+// until V decides where it relocates to - deleting the whole read-only
+// release-brief admin view outright felt premature for a nav-only ask.
+// Group renamed to Chat per the same conversation.
 const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolean }[] = [
   { key: "music",    label: "Music" },
   { key: "pulse",    label: "Pulse" },
   { key: "social",   label: "Social" },
-  { key: "group",    label: "Group" },
+  { key: "chat",     label: "Chat" },
   { key: "members",  label: "Members", needsMembers: true },
-  { key: "brief",    label: "Brief", admin: true },
 ];
 
 // Artists with real, artist-voiced Pulse/News content built out. Everyone else's
@@ -585,6 +591,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // (real c.pulse content already exists for her). Index into the filtered,
   // thumbnail-resolved post list below, or null when the lightbox is closed.
   const [socialLightboxIdx, setSocialLightboxIdx] = useState<number | null>(null);
+  const [socialPage, setSocialPage] = useState(0);
+  const [socialFeatureBusyId, setSocialFeatureBusyId] = useState<string | null>(null);
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
   const [lyricsLang, setLyricsLang] = useState<"original" | "en">("en");
@@ -905,7 +913,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // 2026-07-26 per Sean: split the old single "unlockedArtist" gate into two
   // tiers. Free registration (any gfs_members row - the same "member" concept
   // submitVote already required to like a song) now unlocks liking songs,
-  // previewing unreleased tracks, and the Social + Group tabs (Group Chat
+  // previewing unreleased tracks, and the Social + Chat tabs (Chat
   // itself still isn't built - the tab shows a "coming soon" panel once
   // registered - but the tab is reachable and gates the same way). The $11
   // per-artist unlock is reserved for hearing FULL unreleased songs past the
@@ -1459,49 +1467,82 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       const activePost = socialLightboxIdx !== null ? (c.pulse || [])[socialLightboxIdx] : null;
                       const rawActiveMedia = activePost ? (activePost.videoUrl || activePost.media || activePost.thumb) : null;
                       const activeMediaUrl = rawActiveMedia ? (rawActiveMedia.startsWith("http") ? rawActiveMedia : MEDIA + rawActiveMedia) : null;
+                      // 9-per-page (3x3), matching the Instagram-style grid V described.
+                      const PAGE_SIZE = 9;
+                      const pageCount = Math.max(1, Math.ceil(gridPosts.length / PAGE_SIZE));
+                      const clampedPage = Math.min(socialPage, pageCount - 1);
+                      const pagePosts = gridPosts.slice(clampedPage * PAGE_SIZE, clampedPage * PAGE_SIZE + PAGE_SIZE);
+                      const toggleFeatured = async (postId: string | undefined, next: boolean) => {
+                        if (!postId || !slug || !SUPA_ANON) return;
+                        setSocialFeatureBusyId(postId);
+                        try {
+                          const sbLocal = createClient(SUPA_URL, SUPA_ANON);
+                          const { data: { session } } = await sbLocal.auth.getSession();
+                          if (!session) return;
+                          await fetch("/api/admin/pulse-feature", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                            body: JSON.stringify({ slug, postId, featured: next }),
+                          });
+                        } finally {
+                          setSocialFeatureBusyId(null);
+                        }
+                      };
                       return (
                         <>
-                          <div className="sg-highlights">
-                            <div className="sg-highlight">
-                              <div className="sg-highlight-circle">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></svg>
-                              </div>
-                              <span>Solo</span>
-                            </div>
-                            <div className="sg-highlight">
-                              <div className="sg-highlight-circle">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M2.5 20c0-3.6 2.9-5.8 6.5-5.8s6.5 2.2 6.5 5.8" /><circle cx="17" cy="9" r="2.6" /><path d="M15.5 14.3c2.9.3 5 2.2 5 5.7" /></svg>
-                              </div>
-                              <span>Group</span>
-                            </div>
-                            <div className="sg-highlight sg-highlight-add">
-                              <div className="sg-highlight-circle sg-highlight-circle-dashed">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-                              </div>
-                              <span>New</span>
-                            </div>
-                          </div>
                           {gridPosts.length === 0 ? (
                             <div className="pulse-empty"><p>Posts coming soon.</p></div>
                           ) : (
-                            <div className="sg-grid">
-                              {gridPosts.map(({ post, i, thumbUrl }) => {
-                                const isVideo = post.type === "video";
-                                const caption = (post.text || post.caption || "").split("\n")[0].slice(0, 60);
-                                return (
-                                  <button key={post.id || i} type="button" className="sg-cell" onClick={() => setSocialLightboxIdx(i)} aria-label={caption || "View post"}>
-                                    <img src={thumbUrl} alt="" loading="lazy" decoding="async" />
-                                    {post.pinned && (
-                                      <span className="sg-pin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2l-1 1v6l3 3v2h-6v7l-1 2-1-2v-7H2v-2l3-3V3l-1-1h10z" /></svg></span>
-                                    )}
-                                    {isVideo && (
-                                      <span className="sg-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span>
-                                    )}
-                                    {caption && <span className="sg-caption">{caption}</span>}
-                                  </button>
-                                );
-                              })}
-                            </div>
+                            <>
+                              <div className="sg-grid">
+                                {pagePosts.map(({ post, i, thumbUrl }) => {
+                                  const isVideo = post.type === "video";
+                                  const caption = (post.text || post.caption || "").split("\n")[0].slice(0, 60);
+                                  return (
+                                    <div key={post.id || i} className="sg-cell">
+                                      <button type="button" className="sg-cell-btn" onClick={() => setSocialLightboxIdx(i)} aria-label={caption || "View post"}>
+                                        <img src={thumbUrl} alt="" loading="lazy" decoding="async" />
+                                        {post.pinned && (
+                                          <span className="sg-pin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2l-1 1v6l3 3v2h-6v7l-1 2-1-2v-7H2v-2l3-3V3l-1-1h10z" /></svg></span>
+                                        )}
+                                        {isVideo && (
+                                          <span className="sg-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span>
+                                        )}
+                                        {caption && <span className="sg-caption">{caption}</span>}
+                                      </button>
+                                      {isSuperAdmin && (
+                                        <button
+                                          type="button"
+                                          className={`sg-feature-star${post.featured ? " sg-feature-star-active" : ""}`}
+                                          onClick={() => toggleFeatured(post.id, !post.featured)}
+                                          disabled={socialFeatureBusyId === post.id}
+                                          aria-label={post.featured ? "Remove from featured" : "Mark as featured"}
+                                          aria-pressed={!!post.featured}
+                                        >
+                                          <svg viewBox="0 0 24 24" fill={post.featured ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round"><path d="M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 16.9 6.4 20l1.3-6.2-4.7-4.3 6.3-.7z" /></svg>
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {pageCount > 1 && (
+                                <div className="sg-pagination">
+                                  {Array.from({ length: pageCount }).map((_, p) => (
+                                    <button
+                                      key={p}
+                                      type="button"
+                                      className={`sg-page-btn${p === clampedPage ? " sg-page-btn-active" : ""}`}
+                                      onClick={() => setSocialPage(p)}
+                                      aria-label={`Page ${p + 1}`}
+                                      aria-current={p === clampedPage}
+                                    >
+                                      {p + 1}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </>
                           )}
                           {activePost && (
                             <div className="sg-lightbox" onClick={() => setSocialLightboxIdx(null)}>
@@ -1582,25 +1623,25 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 </section>
               )}
 
-              {/* 2026-07-26 per Sean: Group Chat pulled out of the Pulse channel-pill
+              {/* 2026-07-26 per Sean: Chat pulled out of the Pulse channel-pill
                   (where it was unreachable - `locked` disabled the pill entirely) into
-                  its own top-level tab, labeled "Group" (shorter than "Group Chat" for
-                  the tab bar). Gates identically to Social - free registration
+                  its own top-level tab. Renamed from "Group"/"Group Chat" to "Chat"
+                  2026-07-27 per Sean/V. Gates identically to Social - free registration
                   (isRegistered()), not the $11 artist unlock. The chat feature itself
                   isn't built yet, so a registered visitor sees the same "coming soon"
                   message that used to live in the disabled Pulse pill; an unregistered
                   visitor sees the same register-gate pattern as Social (no icon, per
                   the same 2026-07-26 cleanup). */}
-              {tab === "group" && !canSeePulse && (
+              {tab === "chat" && !canSeePulse && (
                 <section className="pulse-section">
-                  <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Group for {c.name || "this artist"} is on the way. Check back soon.</p></div>
+                  <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Chat for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
-              {tab === "group" && canSeePulse && (
+              {tab === "chat" && canSeePulse && (
                 <section className="pulse-section">
                   {!isRegistered() && (
                     <div className="locked-panel">
-                      <div className="lp-title">Group is a free member benefit</div>
+                      <div className="lp-title">Chat is a free member benefit</div>
                       <p className="lp-sub">Create a free account to join the conversation with {name} and other members.</p>
                       <a
                         className="mp-btn-buy"
@@ -1613,8 +1654,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   {isRegistered() && (
                     <div className="locked-panel">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-                      <div className="lp-title">Group Chat is coming soon</div>
-                      <p className="lp-sub">Live chat with {name} and other members lands here once Group Chat ships across GeekFon Society - free to join, no unlock required.</p>
+                      <div className="lp-title">Chat is coming soon</div>
+                      <p className="lp-sub">Live chat with {name} and other members lands here once Chat ships across GeekFon Society - free to join, no unlock required.</p>
                     </div>
                   )}
                 </section>
