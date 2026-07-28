@@ -136,7 +136,7 @@ const CSS = `
 
 /* Mobile: tighten vertical spacing across all 3 slides so each step fits one screen, no scroll */
 @media (max-width: 640px) {
-  .pp-slide-outer { padding: 76px 20px 108px; }
+  .pp-slide-outer { padding: 76px 20px 108px; min-height: calc(100vh - 60px - env(safe-area-inset-top, 0px)); }
   .pp-hero-price { margin-bottom: 14px; }
   .pp-hero-title { font-size: clamp(34px, 9vw, 56px); margin: 0 0 12px; }
   .pp-hero-sub { font-size: 14px; margin: 0 0 22px; }
