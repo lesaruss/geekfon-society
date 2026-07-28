@@ -54,7 +54,7 @@ function initialColor(seed: string): string {
 }
 
 type Liker = { userId: string; name: string | null };
-type Comment = { id: string; name: string; body: string | null; audioUrl: string | null; createdAt: string };
+type Comment = { id: string; userId: string; name: string; body: string | null; audioUrl: string | null; createdAt: string };
 
 // Minimal shape of the Web Speech API's SpeechRecognition - not in TS DOM
 // lib by default, and vendor-prefixed on non-Chromium browsers.
@@ -69,7 +69,7 @@ type SpeechRecognitionLike = {
   stop: () => void;
 };
 
-export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1 }: { post: SocialFeedPost; artistSlug: string; name: string; avatarUrl?: string | null; tierRank?: number }) {
+export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAdmin = false }: { post: SocialFeedPost; artistSlug: string; name: string; avatarUrl?: string | null; tierRank?: number; isAdmin?: boolean }) {
   const [count, setCount] = useState<number>(0);
   const [likedByMe, setLikedByMe] = useState(false);
   const [likers, setLikers] = useState<Liker[]>([]);
@@ -77,6 +77,8 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1 }: { 
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -87,7 +89,12 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1 }: { 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  // dictationBaseRef: whatever was already typed/dictated before this
+  // dictation session started (locked once, at start). finalTranscriptRef:
+  // only the NEW final speech segments heard during this session, appended
+  // incrementally as they arrive - never recomputed from scratch.
   const dictationBaseRef = useRef("");
+  const finalTranscriptRef = useRef("");
   // Per V, 2026-07-28: dictation (speech-to-text into the comment box) is
   // available to every commenting member, including Passport (the free
   // registration tier). Actual voice-note recording (an audio attachment) is
@@ -112,6 +119,9 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1 }: { 
   }
 
   useEffect(() => { loadLikes(); }, [post.id]);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id || null));
+  }, []);
 
   async function toggleLike() {
     if (likeBusy) return;
@@ -145,6 +155,19 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1 }: { 
       }
     } finally {
       setCommentsLoading(false);
+    }
+  }
+
+  async function deleteComment(id: string) {
+    if (deletingId) return;
+    setDeletingId(id);
+    const headers = await authHeader();
+    if (!headers.Authorization) { setDeletingId(null); return; }
+    try {
+      const res = await fetch(`/api/social/comments?id=${encodeURIComponent(id)}`, { method: "DELETE", headers });
+      if (res.ok) setComments((prev) => prev.filter((c) => c.id !== id));
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -196,32 +219,36 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1 }: { 
       return;
     }
     dictationBaseRef.current = draft ? draft.trim() + " " : "";
+    finalTranscriptRef.current = "";
     const recognition = new SpeechRecognitionCtor();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
     recognition.onresult = (e: any) => {
-      let finalText = "";
+      // BUG FIXED 2026-07-28 (reported live: dictation duplicated the
+      // message multiple times on post): the previous version re-scanned
+      // e.results from index 0 on every event, which in continuous mode
+      // keeps ALL prior results in the array - re-adding text that had
+      // already been committed to dictationBaseRef, compounding on every
+      // new phrase. Fix: only walk NEW results starting at e.resultIndex,
+      // and accumulate final text into its own ref that's never recomputed
+      // from scratch.
       let interimText = "";
-      for (let i = 0; i < e.results.length; i++) {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
         const transcript = e.results[i][0].transcript;
-        if (e.results[i].isFinal) finalText += transcript + " ";
+        if (e.results[i].isFinal) finalTranscriptRef.current += transcript + " ";
         else interimText += transcript;
       }
-      dictationBaseRef.current = dictationBaseRef.current
-        ? dictationBaseRef.current.split("…")[0]
-        : "";
-      setDraft((dictationBaseRef.current + finalText).trimStart() + (interimText ? "…" + interimText : ""));
-      if (finalText) dictationBaseRef.current = (dictationBaseRef.current + finalText).trimStart();
+      setDraft((dictationBaseRef.current + finalTranscriptRef.current).trimStart() + (interimText ? "…" + interimText : ""));
     };
     recognition.onerror = () => {
       setDictating(false);
     };
     recognition.onend = () => {
       setDictating(false);
-      // Strip any trailing interim marker left over if onend fires before a
-      // final result comes back (user stopped mid-word).
-      setDraft((d) => d.split("…")[0]);
+      // Land on the clean committed text - drop any trailing interim marker
+      // left over if onend fires before a final result comes back.
+      setDraft((dictationBaseRef.current + finalTranscriptRef.current).trimStart());
     };
     recognitionRef.current = recognition;
     recognition.start();
@@ -335,6 +362,20 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1 }: { 
                     {c.body && <span className="sf-comment-text">{c.body}</span>}
                     {c.audioUrl && <audio className="sf-comment-audio" controls src={c.audioUrl} />}
                   </div>
+                  {/* Per Sean/V 2026-07-28: a member can delete their own
+                      comment; admin can delete any comment. */}
+                  {(isAdmin || c.userId === currentUserId) && (
+                    <button
+                      type="button"
+                      className="sf-comment-delete"
+                      onClick={() => deleteComment(c.id)}
+                      disabled={deletingId === c.id}
+                      aria-label="Delete comment"
+                      title="Delete comment"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z" /></svg>
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
