@@ -1200,7 +1200,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // only the tab-bar copy had been fixed to respect `viewAs`, so switching to
   // "View as: Visitor" still showed the real-admin content path everywhere
   // else. One shared value means there's only one place left to get this right.
-  const canSeePulse = (isSuperAdmin && viewAs === "real") || POPULATED_PULSE_ARTISTS.includes(slug || "");
+  const canSeePulse = (isSuperAdmin && viewAs === "real") || (Array.isArray(c.pulse) && c.pulse.length > 0);
   const publishedNews = (c.news || []).filter((n: News) => !n.draft);
   // 2026-07-26 (3rd pass) per Sean: this used to fall back to PLACEHOLDER_NEWS
   // (hardcoded, Roxanne-branded sample copy) whenever an artist had no real
@@ -1460,7 +1460,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       backed by gfs_pulse_likes / gfs_pulse_comments) inside
                       this same lightbox instead of the old bare video/photo
                       + plain caption. See components/SocialFeed.tsx. */}
-                  {isRegistered() && slug === "roxanne" && (
+                  {isRegistered() && (
                     !c.pulse || c.pulse.length === 0 ? (
                       <div className="pulse-empty"><p>Posts coming soon.</p></div>
                     ) : (() => {
@@ -1573,7 +1573,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                       timestamp: activePost.timestamp,
                                     }}
                                     artistSlug={slug}
-                                    name={c.name || "Roxanne"}
+                                    name={c.name || name || "This artist"}
                                     avatarUrl={c.profileUrl || c.heroUrl || null}
                                     tierRank={isSuperAdmin ? 3 : (effectiveTier ? (TIER_RANK[effectiveTier] || 1) : 0)}
                                     isAdmin={isSuperAdmin}
@@ -1586,7 +1586,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       );
                     })()
                   )}
-                  {isRegistered() && slug !== "roxanne" && (
+                  {false && isRegistered() && (
                     !c.pulse || c.pulse.length === 0 ? (
                       <div className="pulse-empty"><p>Posts coming soon.</p></div>
                     ) : (
