@@ -195,14 +195,46 @@
   font-weight: 600;
 }
 
-/* Fixed 2026-07-26 per Sean: the native date picker (mm/dd/yyyy + calendar
-   icon) was rendering at the full card width like every other text field,
-   which looked oversized and spilled/clipped in some browsers' native date
-   UI. Sized to about half the card instead, with a min-width so it never
-   gets too cramped to show the full mm/dd/yyyy on a narrow viewport. */
-.dobField {
-  width: 50%;
-  min-width: 170px;
+/* Replaced 2026-07-28 per V: native <input type=date> gave no context for
+   why DOB was being asked and rendered inconsistently across mobile browsers
+   (the 2026-07-26 width fix above was patching that symptom, not the cause).
+   Ran BOSS: FTC's 2025 COPPA guidance requires a neutral age screen (plain
+   date-of-birth entry, no checkbox, no defaults, no incentivizing copy) -
+   so real DOB collection stays, but as three plain numeric fields, which
+   UX research also shows is faster/more error-proof on mobile than a native
+   calendar widget or a dropdown. */
+.dobHint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--auth-muted);
+  line-height: 1.5;
+  margin: -2px 0 2px;
+}
+
+.dobRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dobInput {
+  text-align: center;
+  padding: 14px 8px;
+}
+
+.dobInputShort {
+  width: 56px;
+  flex: 0 0 56px;
+}
+
+.dobInputLong {
+  width: 88px;
+  flex: 0 0 88px;
+}
+
+.dobSeparator {
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 600;
 }
 
 .checkboxGroup {
