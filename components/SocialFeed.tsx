@@ -1,14 +1,17 @@
 "use client";
 
-// GeekFon Social feed-card component - approved sample, 2026-07-28 (Roxanne
-// pilot). Replaces the old .sg-grid Instagram-thumbnail-grid for artists
-// migrated to this format: media first, then avatar+name header, caption,
-// liked-by avatar-circle stack, and a Like/Comment row. Comments can be
-// typed or a recorded voice note (per V: make voice-comment the standard
-// pattern everywhere, not just here). Backed by the real
-// gfs_pulse_likes / gfs_pulse_comments tables via /api/social/like and
-// /api/social/comments - see project_geekfon_social_feed_card_sample memory
-// for the full build note.
+// GeekFon Social feed-card - approved sample, 2026-07-28 (Roxanne pilot).
+// CORRECTED same day per V: this does NOT replace the .sg-grid thumbnail
+// grid as the main Social view. The grid stays exactly as it was; PostCard
+// below is rendered INSIDE the existing lightbox when a grid cell is
+// clicked, so the interactive card (avatar+name header, caption, liked-by
+// stack, Like/Comment row, typed-or-voice comment composer) is what you see
+// after opening a post, not instead of the grid. See ArtistPage.tsx's
+// sg-lightbox block. Comments can be typed or a recorded voice note (per V:
+// make voice-comment the standard pattern everywhere, not just here).
+// Backed by the real gfs_pulse_likes / gfs_pulse_comments tables via
+// /api/social/like and /api/social/comments - see
+// project_geekfon_social_feed_card_sample memory for the full build note.
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -53,7 +56,7 @@ function initialColor(seed: string): string {
 type Liker = { userId: string; name: string | null };
 type Comment = { id: string; name: string; body: string | null; audioUrl: string | null; createdAt: string };
 
-function PostCard({ post, artistSlug, name, avatarUrl }: { post: SocialFeedPost; artistSlug: string; name: string; avatarUrl?: string | null }) {
+export function PostCard({ post, artistSlug, name, avatarUrl }: { post: SocialFeedPost; artistSlug: string; name: string; avatarUrl?: string | null }) {
   const [count, setCount] = useState<number>(0);
   const [likedByMe, setLikedByMe] = useState(false);
   const [likers, setLikers] = useState<Liker[]>([]);
