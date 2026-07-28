@@ -15,7 +15,9 @@ function RegisterPageInner() {
 
   const [state, setState] = useState<State>('form');
   const [fullName, setFullName] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobDay, setDobDay] = useState('');
+  const [dobYear, setDobYear] = useState('');
   const [email, setEmail] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [code, setCode] = useState('');
@@ -68,6 +70,22 @@ function RegisterPageInner() {
     return age;
   };
 
+  // Builds YYYY-MM-DD from the three neutral numeric fields, or '' if incomplete/invalid.
+  // No defaults, no pre-filled values, no descending year list - plain digit entry only,
+  // per the FTC's 2025 COPPA guidance on neutral age screens.
+  const buildDateOfBirth = (month: string, day: string, year: string): string => {
+    if (!month || !day || !year) return '';
+    const m = parseInt(month, 10);
+    const d = parseInt(day, 10);
+    const y = parseInt(year, 10);
+    if (!m || !d || !y) return '';
+    if (m < 1 || m > 12 || d < 1 || d > 31 || String(year).length !== 4) return '';
+    const iso = `${y.toString().padStart(4, '0')}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+    const parsed = new Date(iso);
+    if (isNaN(parsed.getTime()) || parsed.getMonth() + 1 !== m || parsed.getDate() !== d) return '';
+    return iso;
+  };
+
   const validateForm = (): boolean => {
     let isValid = true;
 
@@ -84,8 +102,12 @@ function RegisterPageInner() {
       isValid = false;
     }
 
-    if (!dateOfBirth) {
+    const dateOfBirth = buildDateOfBirth(dobMonth, dobDay, dobYear);
+    if (!dobMonth || !dobDay || !dobYear) {
       setDobError('Date of birth is required');
+      isValid = false;
+    } else if (!dateOfBirth) {
+      setDobError('Enter a valid date');
       isValid = false;
     } else if (calculateAge(dateOfBirth) < 13) {
       setDobError('You must be at least 13 years old');
@@ -125,7 +147,7 @@ function RegisterPageInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fullName: fullName.trim(),
-          dateOfBirth,
+          dateOfBirth: buildDateOfBirth(dobMonth, dobDay, dobYear),
           email,
           tier,
           acceptTerms,
@@ -277,21 +299,65 @@ function RegisterPageInner() {
               </div>
 
               <div className={styles.inputGroup}>
-                <label htmlFor="dob" className={styles.inputLabel}>
+                <label htmlFor="dobMonth" className={styles.inputLabel}>
                   Date of Birth
                 </label>
-                <input
-                  id="dob"
-                  type="date"
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  required
-                  aria-required="true"
-                  aria-describedby="dobError"
-                  aria-invalid={!!dobError}
-                  className={`${styles.inputField} ${styles.dobField}`}
-                  disabled={isLoading}
-                />
+                <p className={styles.dobHint} id="dobHint">
+                  We ask this to confirm eligibility to join.
+                </p>
+                <div className={styles.dobRow} role="group" aria-labelledby="dobMonth-label" aria-describedby="dobHint dobError">
+                  <input
+                    id="dobMonth"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
+                    placeholder="MM"
+                    aria-label="Birth month"
+                    value={dobMonth}
+                    onChange={(e) => setDobMonth(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    required
+                    aria-required="true"
+                    aria-invalid={!!dobError}
+                    className={`${styles.inputField} ${styles.dobInput} ${styles.dobInputShort}`}
+                    disabled={isLoading}
+                  />
+                  <span className={styles.dobSeparator} aria-hidden="true">/</span>
+                  <input
+                    id="dobDay"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
+                    placeholder="DD"
+                    aria-label="Birth day"
+                    value={dobDay}
+                    onChange={(e) => setDobDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    required
+                    aria-required="true"
+                    aria-invalid={!!dobError}
+                    className={`${styles.inputField} ${styles.dobInput} ${styles.dobInputShort}`}
+                    disabled={isLoading}
+                  />
+                  <span className={styles.dobSeparator} aria-hidden="true">/</span>
+                  <input
+                    id="dobYear"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    placeholder="YYYY"
+                    aria-label="Birth year"
+                    value={dobYear}
+                    onChange={(e) => setDobYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    required
+                    aria-required="true"
+                    aria-describedby="dobError"
+                    aria-invalid={!!dobError}
+                    className={`${styles.inputField} ${styles.dobInput} ${styles.dobInputLong}`}
+                    disabled={isLoading}
+                  />
+                </div>
                 {dobError && (
                   <div id="dobError" className={styles.errorMessage} role="alert">
                     {dobError}
