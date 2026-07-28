@@ -36,7 +36,11 @@ function stripSignOff(text: string | undefined, name: string): string {
 
 function formatDate(ts?: string): string {
   if (!ts) return "Recent";
-  return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  // timeZone pinned to UTC so this renders identically on the server and in
+  // the client's local browser timezone - without it, a post near midnight
+  // could format to a different calendar day on each side and trip a React
+  // hydration mismatch (seen live as minified error #418 on first ship).
+  return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 }
 
 function initialColor(seed: string): string {
