@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, Fragment } from "react";
 import type { SyntheticEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { isNative, purchaseArtistUnlock } from "@/lib/revenuecat";
+import SocialFeed from "@/components/SocialFeed";
 import "./ArtistPage.css";
 
 const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
@@ -587,12 +588,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
   const [pulseShown, setPulseShown] = useState(3);
-  // 2026-07-27 per Sean/V: Instagram-style Social grid, piloted on Roxanne only
-  // (real c.pulse content already exists for her). Index into the filtered,
-  // thumbnail-resolved post list below, or null when the lightbox is closed.
-  const [socialLightboxIdx, setSocialLightboxIdx] = useState<number | null>(null);
-  const [socialPage, setSocialPage] = useState(0);
-  const [socialFeatureBusyId, setSocialFeatureBusyId] = useState<string | null>(null);
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
   const [lyricsLang, setLyricsLang] = useState<"original" | "en">("en");
@@ -1443,125 +1438,42 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                       </a>
                     </div>
                   )}
-                  {/* 2026-07-27 per Sean/V: Instagram-style grid, piloted on
-                      Roxanne only since she already has real c.pulse content
-                      with resolvable thumbnails. Every card needs a thumbnail
-                      image to fill the frame, even when the underlying post
-                      is a video - a legacy text-only post with no media/thumb
-                      simply can't render here yet (see pulse-001/003/004,
-                      flagged to V rather than silently dropped). Other
-                      artists keep the original card-list layout below until
-                      this is confirmed and content exists for them too. */}
+                  {/* 2026-07-28 per Sean/V: Instagram-feed-style post cards
+                      (media first, then header/caption/liked-by/like+comment),
+                      replacing the 2026-07-27 thumbnail-grid pilot on Roxanne
+                      per V's approved sample. Real likes/comments (typed or
+                      voice) via gfs_pulse_likes / gfs_pulse_comments - see
+                      components/SocialFeed.tsx. Note to V/Sean: this drops
+                      the producer-only "featured" star that the grid had
+                      (admin-only curation toggle) - not carried over yet,
+                      flagging rather than silently losing it. Other artists
+                      keep the original card-list layout below until this is
+                      confirmed and content exists for them too. */}
                   {isRegistered() && slug === "roxanne" && (
-                    !c.pulse || c.pulse.length === 0 ? (
-                      <div className="pulse-empty"><p>Posts coming soon.</p></div>
-                    ) : (() => {
-                      const gridPosts = (c.pulse || [])
-                        .map((post, i) => {
-                          const rawThumb = post.thumb || (post.type === "photo" ? post.media : null);
-                          const thumbUrl = rawThumb ? (rawThumb.startsWith("http") ? rawThumb : MEDIA + rawThumb) : null;
-                          return { post, i, thumbUrl };
+                    <SocialFeed
+                      artistSlug={slug}
+                      name={c.name || "Roxanne"}
+                      avatarUrl={c.profileUrl || c.heroUrl || null}
+                      posts={(c.pulse || [])
+                        .map((post) => {
+                          const isVideo = post.type === "video";
+                          const rawMedia = isVideo ? (post.videoUrl || post.thumb) : (post.thumb || post.media);
+                          const mediaUrl = rawMedia ? (rawMedia.startsWith("http") ? rawMedia : MEDIA + rawMedia) : null;
+                          const rawThumb = post.thumb;
+                          const thumbUrl = rawThumb ? (rawThumb.startsWith("http") ? rawThumb : MEDIA + rawThumb) : undefined;
+                          return {
+                            id: post.id || "",
+                            text: post.text || post.caption,
+                            type: post.type,
+                            mediaUrl,
+                            thumb: thumbUrl,
+                            pinned: post.pinned,
+                            timestamp: post.timestamp,
+                          };
                         })
-                        .filter((p): p is { post: PulsePost; i: number; thumbUrl: string } => !!p.thumbUrl)
-                        .sort((a, b) => (b.post.pinned ? 1 : 0) - (a.post.pinned ? 1 : 0));
-                      const activePost = socialLightboxIdx !== null ? (c.pulse || [])[socialLightboxIdx] : null;
-                      const rawActiveMedia = activePost ? (activePost.videoUrl || activePost.media || activePost.thumb) : null;
-                      const activeMediaUrl = rawActiveMedia ? (rawActiveMedia.startsWith("http") ? rawActiveMedia : MEDIA + rawActiveMedia) : null;
-                      // 9-per-page (3x3), matching the Instagram-style grid V described.
-                      const PAGE_SIZE = 9;
-                      const pageCount = Math.max(1, Math.ceil(gridPosts.length / PAGE_SIZE));
-                      const clampedPage = Math.min(socialPage, pageCount - 1);
-                      const pagePosts = gridPosts.slice(clampedPage * PAGE_SIZE, clampedPage * PAGE_SIZE + PAGE_SIZE);
-                      const toggleFeatured = async (postId: string | undefined, next: boolean) => {
-                        if (!postId || !slug || !SUPA_ANON) return;
-                        setSocialFeatureBusyId(postId);
-                        try {
-                          const sbLocal = createClient(SUPA_URL, SUPA_ANON);
-                          const { data: { session } } = await sbLocal.auth.getSession();
-                          if (!session) return;
-                          await fetch("/api/admin/pulse-feature", {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-                            body: JSON.stringify({ slug, postId, featured: next }),
-                          });
-                        } finally {
-                          setSocialFeatureBusyId(null);
-                        }
-                      };
-                      return (
-                        <>
-                          {gridPosts.length === 0 ? (
-                            <div className="pulse-empty"><p>Posts coming soon.</p></div>
-                          ) : (
-                            <>
-                              <div className="sg-grid">
-                                {pagePosts.map(({ post, i, thumbUrl }) => {
-                                  const isVideo = post.type === "video";
-                                  const caption = (post.text || post.caption || "").split("\n")[0].slice(0, 60);
-                                  return (
-                                    <div key={post.id || i} className="sg-cell">
-                                      <button type="button" className="sg-cell-btn" onClick={() => setSocialLightboxIdx(i)} aria-label={caption || "View post"}>
-                                        <img src={thumbUrl} alt="" loading="lazy" decoding="async" />
-                                        {post.pinned && (
-                                          <span className="sg-pin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2l-1 1v6l3 3v2h-6v7l-1 2-1-2v-7H2v-2l3-3V3l-1-1h10z" /></svg></span>
-                                        )}
-                                        {isVideo && (
-                                          <span className="sg-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span>
-                                        )}
-                                        {caption && <span className="sg-caption">{caption}</span>}
-                                      </button>
-                                      {isSuperAdmin && (
-                                        <button
-                                          type="button"
-                                          className={`sg-feature-star${post.featured ? " sg-feature-star-active" : ""}`}
-                                          onClick={() => toggleFeatured(post.id, !post.featured)}
-                                          disabled={socialFeatureBusyId === post.id}
-                                          aria-label={post.featured ? "Remove from featured" : "Mark as featured"}
-                                          aria-pressed={!!post.featured}
-                                        >
-                                          <svg viewBox="0 0 24 24" fill={post.featured ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round"><path d="M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 16.9 6.4 20l1.3-6.2-4.7-4.3 6.3-.7z" /></svg>
-                                        </button>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              {pageCount > 1 && (
-                                <div className="sg-pagination">
-                                  {Array.from({ length: pageCount }).map((_, p) => (
-                                    <button
-                                      key={p}
-                                      type="button"
-                                      className={`sg-page-btn${p === clampedPage ? " sg-page-btn-active" : ""}`}
-                                      onClick={() => setSocialPage(p)}
-                                      aria-label={`Page ${p + 1}`}
-                                      aria-current={p === clampedPage}
-                                    >
-                                      {p + 1}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </>
-                          )}
-                          {activePost && (
-                            <div className="sg-lightbox" onClick={() => setSocialLightboxIdx(null)}>
-                              <div className="sg-lightbox-inner" onClick={(e) => e.stopPropagation()}>
-                                <button type="button" className="sg-lightbox-close" onClick={() => setSocialLightboxIdx(null)} aria-label="Close">
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-                                </button>
-                                {activePost.type === "video" && activeMediaUrl ? (
-                                  <video src={activeMediaUrl} poster={activePost.thumb} controls autoPlay playsInline className="sg-lightbox-video" />
-                                ) : activeMediaUrl ? (
-                                  <img src={activeMediaUrl} alt="" className="sg-lightbox-photo" />
-                                ) : null}
-                                {(activePost.text || activePost.caption) && <p className="sg-lightbox-caption">{activePost.text || activePost.caption}</p>}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()
+                        .filter((p) => !!p.id && !!p.mediaUrl)
+                        .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))}
+                    />
                   )}
                   {isRegistered() && slug !== "roxanne" && (
                     !c.pulse || c.pulse.length === 0 ? (
