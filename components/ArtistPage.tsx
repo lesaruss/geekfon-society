@@ -1576,6 +1576,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                     name={c.name || "Roxanne"}
                                     avatarUrl={c.profileUrl || c.heroUrl || null}
                                     tierRank={isSuperAdmin ? 3 : (effectiveTier ? (TIER_RANK[effectiveTier] || 1) : 0)}
+                                    isAdmin={isSuperAdmin}
                                   />
                                 </div>
                               </div>
