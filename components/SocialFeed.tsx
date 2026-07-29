@@ -391,43 +391,45 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
           )}
 
           <div className="sf-comment-row">
-            <input
+            <textarea
               className="sf-comment-input"
-              type="text"
+              rows={3}
               placeholder="Add a comment..."
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
             />
-            <div className="sf-mic-wrap">
-              <button
-                type="button"
-                className={`sf-mic-btn${recording || dictating ? " sf-recording" : ""}`}
-                onClick={handleMicClick}
-                aria-label={canRecordVoiceNote ? "Dictate or record a voice comment" : "Dictate this comment"}
-                title={canRecordVoiceNote ? "Dictate or record a voice comment" : "Dictate this comment"}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+            <div className="sf-comment-actions-row">
+              <div className="sf-mic-wrap">
+                <button
+                  type="button"
+                  className={`sf-mic-btn${recording || dictating ? " sf-recording" : ""}`}
+                  onClick={handleMicClick}
+                  aria-label={canRecordVoiceNote ? "Dictate or record a voice comment" : "Dictate this comment"}
+                  title={canRecordVoiceNote ? "Dictate or record a voice comment" : "Dictate this comment"}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+                </button>
+                {/* Plus/Pro only: same mic icon, two distinct functions - typed
+                    dictation into the box above, or an attached voice-note
+                    recording (like Passport never sees this choice, they only
+                    ever get dictation, so there's nothing to pick between). */}
+                {micMenuOpen && (
+                  <div className="sf-mic-menu">
+                    <button type="button" onClick={() => { setMicMenuOpen(false); startDictation(); }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h10M4 18h7" /></svg>
+                      Dictate
+                    </button>
+                    <button type="button" onClick={() => { setMicMenuOpen(false); startRecording(); }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /></svg>
+                      Record voice note
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button type="button" className="sf-comment-send" disabled={posting || (!draft.trim() && !voiceBlob)} onClick={postComment}>
+                Post
               </button>
-              {/* Plus/Pro only: same mic icon, two distinct functions - typed
-                  dictation into the box above, or an attached voice-note
-                  recording (like Passport never sees this choice, they only
-                  ever get dictation, so there's nothing to pick between). */}
-              {micMenuOpen && (
-                <div className="sf-mic-menu">
-                  <button type="button" onClick={() => { setMicMenuOpen(false); startDictation(); }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h10M4 18h7" /></svg>
-                    Dictate
-                  </button>
-                  <button type="button" onClick={() => { setMicMenuOpen(false); startRecording(); }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /></svg>
-                    Record voice note
-                  </button>
-                </div>
-              )}
             </div>
-            <button type="button" className="sf-comment-send" disabled={posting || (!draft.trim() && !voiceBlob)} onClick={postComment}>
-              Post
-            </button>
           </div>
           {dictating && <div className="sf-rec-hint">Listening... tap the mic again to stop.</div>}
           {recording && <div className="sf-rec-hint">Recording... tap the mic again to stop.</div>}
