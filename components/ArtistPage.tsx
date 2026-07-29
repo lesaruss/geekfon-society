@@ -1313,7 +1313,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             return (
               <div className="tabbar" role="tablist">
                 {visibleTabs.map(t => (
-                  <button key={t.key} className="tab" aria-selected={tab === t.key} onClick={() => {
+                  <button key={t.key} className="tab" role="tab" aria-selected={tab === t.key} onClick={() => {
                     if (activeArticle) {
                       const artistSlug = slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "");
                       window.location.href = `/${artistSlug}?tab=${t.key}`;
@@ -2073,7 +2073,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   type="button"
                                   className="mp-row-unlock-quiet"
                                   onClick={() => setShowVoteModal("non-member")}
-                                  aria-label={`See Passport benefits to preview ${t.n}, releases ${t.scheduledFor.split("T")[0]}`}
+                                  aria-label={`${formatShortDate(t.scheduledFor)} - see Passport benefits to preview ${t.n}, releases ${t.scheduledFor.split("T")[0]}`}
                                 >
                                   <span className="mp-row-unlock-date">{formatShortDate(t.scheduledFor)}</span>
                                   {LOCK}
