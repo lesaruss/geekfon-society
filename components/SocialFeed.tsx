@@ -216,11 +216,26 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       chunksRef.current = [];
-      const rec = new MediaRecorder(stream);
+      // BUG FIXED 2026-07-29 (reported live: recording produced a file that
+      // played back as "error"): this used to hardcode the Blob's type to
+      // "audio/webm" no matter what the browser actually recorded. Chrome/
+      // Firefox do encode webm/opus by default, but Safari's MediaRecorder
+      // defaults to mp4/aac - the resulting file was real audio, just
+      // mislabeled, so every player (inline preview and the uploaded file)
+      // failed to decode it. Fix: ask the browser what it actually supports,
+      // pass that into the MediaRecorder constructor, and read back
+      // rec.mimeType (the source of truth for what it will really produce)
+      // to label the Blob correctly.
+      const mimeCandidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac", "audio/ogg;codecs=opus"];
+      const supportedMime = typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function"
+        ? mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m))
+        : undefined;
+      const rec = supportedMime ? new MediaRecorder(stream, { mimeType: supportedMime }) : new MediaRecorder(stream);
+      const actualMime = rec.mimeType || supportedMime || "audio/webm";
       rec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       rec.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: actualMime });
         setVoiceBlob(blob);
         setVoiceUrl(URL.createObjectURL(blob));
         setRecording(false);
@@ -307,7 +322,10 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
       form.set("artistSlug", artistSlug);
       form.set("postId", post.id);
       if (draft.trim()) form.set("body", draft.trim());
-      if (voiceBlob) form.set("audio", voiceBlob, "comment.webm");
+      if (voiceBlob) {
+        const ext = voiceBlob.type.includes("mp4") ? "m4a" : voiceBlob.type.includes("wav") ? "wav" : voiceBlob.type.includes("ogg") ? "ogg" : "webm";
+        form.set("audio", voiceBlob, `comment.${ext}`);
+      }
       const res = await fetch("/api/social/comments", { method: "POST", headers, body: form });
       if (res.ok) {
         const data = await res.json();
