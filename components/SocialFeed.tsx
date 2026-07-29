@@ -15,6 +15,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import fixWebmDuration from "fix-webm-duration";
 
 export type SocialFeedPost = {
   id: string;
@@ -159,6 +160,7 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordStartRef = useRef<number>(0);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   // dictationBaseRef: whatever was already typed/dictated before this
   // dictation session started (locked once, at start). finalTranscriptRef:
@@ -305,11 +307,37 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
       rec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       rec.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chunksRef.current, { type: actualMime });
-        setVoiceBlob(blob);
-        setVoiceUrl(URL.createObjectURL(blob));
-        setRecording(false);
+        const rawBlob = new Blob(chunksRef.current, { type: actualMime });
+        const elapsedMs = Date.now() - recordStartRef.current;
+        // BUG FIXED 2026-07-29 (reported live: recorded fine, posted fine,
+        // but playback showed 0:00 and looked dead - confirmed via direct
+        // inspection this was a REAL, complete recording, not silence or a
+        // corrupt upload). Root cause: Chrome's MediaRecorder writes webm
+        // files with no Duration written into the container's EBML header
+        // at all (not just wrong - genuinely absent). Without it, Chrome's
+        // <audio> element can get stuck at readyState 0 forever trying to
+        // probe for it, over network OR blob: URLs alike. fix-webm-duration
+        // patches the real recorded duration directly into the container
+        // bytes before we ever set voiceBlob/voiceUrl or upload, so every
+        // downstream player (preview, posted comment, any future listener)
+        // just works with no special-case playback code needed.
+        if (actualMime.includes("webm")) {
+          fixWebmDuration(rawBlob, elapsedMs).then((fixedBlob: Blob) => {
+            setVoiceBlob(fixedBlob);
+            setVoiceUrl(URL.createObjectURL(fixedBlob));
+            setRecording(false);
+          }).catch(() => {
+            setVoiceBlob(rawBlob);
+            setVoiceUrl(URL.createObjectURL(rawBlob));
+            setRecording(false);
+          });
+        } else {
+          setVoiceBlob(rawBlob);
+          setVoiceUrl(URL.createObjectURL(rawBlob));
+          setRecording(false);
+        }
       };
+      recordStartRef.current = Date.now();
       rec.start();
       recorderRef.current = rec;
       setRecording(true);
