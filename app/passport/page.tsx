@@ -328,7 +328,7 @@ export default function PassportPage() {
                   Your membership into the GeekFon universe. Stream every release for free, forever,
                   and unlock any artist&apos;s full catalog for $11 whenever you&apos;re ready.
                 </p>
-                <button className="pp-hero-cta" onClick={handleNext} aria-label="Get your GeekFon Passport">
+                <button className="pp-hero-cta" onClick={handleNext}>
                   Get Your Passport
                 </button>
               </div>
