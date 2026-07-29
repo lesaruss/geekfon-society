@@ -1,6 +1,12 @@
+import Head from "next/head";
+
 export default function PrivacyPolicy() {
   return (
     <>
+      <Head>
+        <title>Privacy Policy - GeekFon Society</title>
+        <meta name="description" content="GeekFon Society privacy policy." />
+      </Head>
       <style>{`
         html, body {
           background-color: rgb(2, 12, 10) !important;
