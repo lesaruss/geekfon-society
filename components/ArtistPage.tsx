@@ -591,6 +591,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // (real c.pulse content already exists for her). Index into the filtered,
   // thumbnail-resolved post list below, or null when the lightbox is closed.
   const [socialLightboxIdx, setSocialLightboxIdx] = useState<number | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
   const [socialPage, setSocialPage] = useState(0);
   const [socialFeatureBusyId, setSocialFeatureBusyId] = useState<string | null>(null);
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
