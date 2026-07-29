@@ -316,7 +316,7 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
     if (posting || (!draft.trim() && !voiceBlob)) return;
     setPosting(true);
     const headers = await authHeader();
-    if (!headers.Authorization) { setPosting(false); return; }
+    if (!headers.Authorization) { setPosting(false); alert("You need to be signed in to comment."); return; }
     try {
       const form = new FormData();
       form.set("artistSlug", artistSlug);
@@ -332,7 +332,17 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
         setComments((prev) => [...prev, data.comment]);
         setDraft("");
         discardVoice();
+      } else {
+        // BUG FIXED 2026-07-29 (reported live: "clicked Post, nothing
+        // happens"): a non-ok response used to fall through with zero
+        // feedback - the request could 500 and the member would have no
+        // idea their comment never posted. Surface whatever the API says
+        // went wrong.
+        const data = await res.json().catch(() => null);
+        alert(data?.error || "Couldn't post that comment. Try again in a moment.");
       }
+    } catch {
+      alert("Couldn't reach the server. Check your connection and try again.");
     } finally {
       setPosting(false);
     }
