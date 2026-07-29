@@ -100,11 +100,19 @@ export async function POST(req: Request) {
 
   if (hasAudio) {
     const file = audio as File;
-    const ext = file.type.includes("mp4") ? "m4a" : file.type.includes("wav") ? "wav" : "webm";
+    const ext = file.type.includes("mp4") ? "m4a" : file.type.includes("wav") ? "wav" : file.type.includes("ogg") ? "ogg" : "webm";
     const path = `gfs-pulse/${artistSlug}/${postId}/${caller.id}-${Date.now()}.${ext}`;
     const buf = Buffer.from(await file.arrayBuffer());
+    // BUG FIXED 2026-07-29: the voice-messages bucket's allowed_mime_types
+    // only lists bare types (audio/webm, audio/ogg, audio/mp4, audio/mpeg,
+    // audio/wav) - no codec-qualified variants. MediaRecorder now correctly
+    // reports its real mimeType (e.g. "audio/webm;codecs=opus"), which was
+    // passed straight through as contentType and got rejected by Storage
+    // with a 415, surfacing as a silent 500 to the client. Strip any
+    // ";codecs=..." suffix before handing it to Storage.
+    const contentType = (file.type || "audio/webm").split(";")[0].trim() || "audio/webm";
     const { error: uploadErr } = await sb.storage.from("voice-messages").upload(path, buf, {
-      contentType: file.type || "audio/webm",
+      contentType,
       upsert: false,
     });
     if (uploadErr) return NextResponse.json({ error: uploadErr.message }, { status: 500 });
