@@ -697,6 +697,11 @@
 .sf-comment-input::placeholder{color:var(--lr-text-30)}
 .sf-comment-actions-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .sf-comment-send{font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--rx-text);background:#fff;border:1.5px solid var(--rx);border-radius:100px;padding:10px 24px;cursor:pointer;flex-shrink:0;transition:background .12s,color .12s}
+.sf-comment-send{display:inline-flex;align-items:center;gap:7px}
+.sf-comment-send-busy{opacity:.85}
+.sf-comment-send-spinner{width:14px;height:14px;animation:sfSpin .8s linear infinite}
+@keyframes sfSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
 .sf-comment-send:hover:not(:disabled){background:var(--rx);color:#fff}
 .sf-comment-send:disabled{color:var(--lr-text-30);border-color:var(--lr-border);cursor:not-allowed}
 .sf-mic-wrap{position:relative;flex-shrink:0}
