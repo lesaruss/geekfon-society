@@ -54,6 +54,42 @@ function initialColor(seed: string): string {
   return palette[h % palette.length];
 }
 
+// Chrome's MediaRecorder writes webm/opus files with no real duration in
+// the container header - <audio> reports Infinity/NaN/0 and looks dead
+// even when the recording is complete and fine (confirmed live 2026-07-29:
+// a posted voice comment played back showing 0:00, but the underlying file
+// was a real 7.5s recording when inspected directly). Forcing a seek past
+// the end makes the browser walk the file and compute the real duration;
+// snapping back to 0 afterward leaves a normal, seekable player. Applies
+// to both the pre-post preview and every posted voice comment.
+function FixedDurationAudio({ src, className }: { src: string; className?: string }) {
+  const ref = useRef<HTMLAudioElement | null>(null);
+
+  function handleLoadedMetadata() {
+    const audio = ref.current;
+    if (!audio) return;
+    if (audio.duration === Infinity || Number.isNaN(audio.duration) || audio.duration === 0) {
+      const onTimeUpdate = () => {
+        audio.currentTime = 0;
+        audio.removeEventListener("timeupdate", onTimeUpdate);
+      };
+      audio.addEventListener("timeupdate", onTimeUpdate);
+      audio.currentTime = 1e101;
+    }
+  }
+
+  return (
+    <audio
+      ref={ref}
+      className={className}
+      controls
+      preload="metadata"
+      src={src}
+      onLoadedMetadata={handleLoadedMetadata}
+    />
+  );
+}
+
 type Liker = { userId: string; name: string | null };
 type Comment = { id: string; userId: string; name: string; body: string | null; audioUrl: string | null; createdAt: string };
 
@@ -397,7 +433,7 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
                   <div className="sf-comment-body">
                     <span className="sf-comment-name">{c.name}</span>
                     {c.body && <span className="sf-comment-text">{c.body}</span>}
-                    {c.audioUrl && <audio className="sf-comment-audio" controls src={c.audioUrl} />}
+                    {c.audioUrl && <FixedDurationAudio className="sf-comment-audio" src={c.audioUrl} />}
                   </div>
                   {/* Per Sean/V 2026-07-28: a member can delete their own
                       comment; admin can delete any comment. */}
@@ -454,8 +490,15 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
                   </div>
                 )}
               </div>
-              <button type="button" className="sf-comment-send" disabled={posting || (!draft.trim() && !voiceBlob)} onClick={postComment}>
-                Post
+              <button type="button" className={`sf-comment-send${posting ? " sf-comment-send-busy" : ""}`} disabled={posting || (!draft.trim() && !voiceBlob)} onClick={postComment}>
+                {posting ? (
+                  <>
+                    <svg className="sf-comment-send-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="9" strokeDasharray="40" strokeDashoffset="20" /></svg>
+                    Posting...
+                  </>
+                ) : (
+                  "Post"
+                )}
               </button>
             </div>
           </div>
@@ -463,7 +506,7 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
           {recording && <div className="sf-rec-hint">Recording... tap the mic again to stop.</div>}
           {voiceUrl && !recording && (
             <div className="sf-voice-note">
-              <audio controls src={voiceUrl} />
+              <FixedDurationAudio src={voiceUrl} />
               <button type="button" className="sf-voice-discard" title="Discard" onClick={discardVoice}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 6l12 12M18 6L6 18" /></svg>
               </button>
