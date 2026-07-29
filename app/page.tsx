@@ -546,9 +546,10 @@ html,body{height:100%;overflow:hidden;font-family:'Montserrat',sans-serif;backgr
 .city-name-text{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);}
 
 /* Progress dots */
-.progress-dots{position:fixed;bottom:5.2vh;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:6px;align-items:center;}
-.pdot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.18);border:none;cursor:pointer;padding:0;transition:all .4s ease;}
-.pdot.on{width:18px;border-radius:2px;background:rgba(255,255,255,.5);}
+.progress-dots{position:fixed;bottom:5.2vh;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:2px;align-items:center;}
+.pdot{width:24px;height:24px;min-width:24px;background:none;border:none;cursor:pointer;padding:0;position:relative;display:inline-flex;align-items:center;justify-content:center;transition:all .4s ease;}
+.pdot::after{content:"";width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.18);transition:all .4s ease;}
+.pdot.on::after{width:18px;border-radius:2px;background:rgba(255,255,255,.5);}
 .pdot:focus-visible{outline:2px solid #F69820;outline-offset:2px;}
 
 /* Mobile */
