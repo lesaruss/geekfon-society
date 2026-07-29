@@ -351,56 +351,15 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
               )}
             </>
           )}
-        </div>
-      )}
-
-      <div className="sf-header">
-        {avatarUrl ? (
-          <img className="sf-avatar" src={avatarUrl} alt={name} loading="lazy" decoding="async" />
-        ) : (
-          <div className="sf-avatar-init" style={{ background: initialColor(name) }}>{name.charAt(0)}</div>
-        )}
-        <div className="sf-who">
-          <div className="sf-name">{name}</div>
-          <div className="sf-time">{formatDate(post.timestamp)}</div>
-        </div>
-        {post.pinned && <div className="sf-pin">Pinned</div>}
-      </div>
-
-      {caption && <p className="sf-text">{caption}</p>}
-
-      {count > 0 && (
-        <div className="sf-liked-row">
-          <div className="sf-liker-stack">
-            {likers.slice(0, 3).map((l, i) => (
-              <div key={l.userId} className="sf-liker-circle" style={{ background: initialColor(l.name || l.userId), zIndex: 3 - i }}>
-                {(l.name || "?").charAt(0).toUpperCase()}
+          {commentsOpen && (
+            <div className="sf-comment-overlay">
+              <div className="sf-comment-overlay-header">
+                <span className="sf-comment-overlay-title">Comments</span>
+                <button type="button" className="sf-comment-overlay-close" onClick={toggleCommentPanel} aria-label="Close comments" title="Close comments">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                </button>
               </div>
-            ))}
-          </div>
-          <div className="sf-liked-text">
-            {likedByMe ? (
-              <>Liked by <strong>you</strong>{others ? `, ${others}` : ""}{count > (others ? 4 : 1) ? ` and ${count - (others ? 4 : 1)} others` : ""}</>
-            ) : (
-              <>{others ? <>Liked by {others}{count > 3 ? ` and ${count - 3} others` : ""}</> : <>{count} {count === 1 ? "like" : "likes"}</>}</>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="sf-interact-row">
-        <button type="button" className={`sf-interact-btn${likedByMe ? " sf-like-active" : ""}`} onClick={toggleLike} disabled={likeBusy}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
-          {likedByMe ? "Liked" : "Like"}
-        </button>
-        <button type="button" className="sf-interact-btn" onClick={toggleCommentPanel}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" /></svg>
-          Comment
-        </button>
-      </div>
-
-      {commentsOpen && (
-        <div className="sf-comment-box">
+              <div className="sf-comment-overlay-body">
           {commentsLoading && <p className="sf-comment-loading">Loading comments...</p>}
           {!commentsLoading && comments.length > 0 && (
             <div className="sf-comment-list">
@@ -480,8 +439,56 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
               </button>
             </div>
           )}
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      <div className="sf-header">
+        {avatarUrl ? (
+          <img className="sf-avatar" src={avatarUrl} alt={name} loading="lazy" decoding="async" />
+        ) : (
+          <div className="sf-avatar-init" style={{ background: initialColor(name) }}>{name.charAt(0)}</div>
+        )}
+        <div className="sf-who">
+          <div className="sf-name">{name}</div>
+          <div className="sf-time">{formatDate(post.timestamp)}</div>
+        </div>
+        {post.pinned && <div className="sf-pin">Pinned</div>}
+      </div>
+
+      {caption && <p className="sf-text">{caption}</p>}
+
+      {count > 0 && (
+        <div className="sf-liked-row">
+          <div className="sf-liker-stack">
+            {likers.slice(0, 3).map((l, i) => (
+              <div key={l.userId} className="sf-liker-circle" style={{ background: initialColor(l.name || l.userId), zIndex: 3 - i }}>
+                {(l.name || "?").charAt(0).toUpperCase()}
+              </div>
+            ))}
+          </div>
+          <div className="sf-liked-text">
+            {likedByMe ? (
+              <>Liked by <strong>you</strong>{others ? `, ${others}` : ""}{count > (others ? 4 : 1) ? ` and ${count - (others ? 4 : 1)} others` : ""}</>
+            ) : (
+              <>{others ? <>Liked by {others}{count > 3 ? ` and ${count - 3} others` : ""}</> : <>{count} {count === 1 ? "like" : "likes"}</>}</>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="sf-interact-row">
+        <button type="button" className={`sf-interact-btn${likedByMe ? " sf-like-active" : ""}`} onClick={toggleLike} disabled={likeBusy}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
+          {likedByMe ? "Liked" : "Like"}
+        </button>
+        <button type="button" className="sf-interact-btn" onClick={toggleCommentPanel}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" /></svg>
+          Comment
+        </button>
+      </div>
     </article>
   );
 }
