@@ -639,7 +639,11 @@
 /* ---- Social feed-card (2026-07-28, replaces .sg-grid on migrated artists) ---- */
 .sf-feed{display:flex;flex-direction:column;gap:24px;max-width:640px}
 .sf-post{background:var(--lr-surface);border:1px solid var(--lr-border);border-radius:14px;overflow:hidden}
-.sf-media{width:100%;background:#000}
+.sf-media{width:100%;background:#000;position:relative}
+.sf-preview-play{position:absolute;bottom:12px;right:12px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.9);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;transition:transform .15s ease,background .15s ease}
+.sf-preview-play svg{width:20px;height:20px}
+.sf-preview-play:hover{background:rgba(0,0,0,.78);transform:scale(1.06)}
+.sf-preview-play.sf-preview-playing{background:var(--lr-orange,#F69820);border-color:#fff}
 .sf-media video,.sf-media img{width:100%;display:block;max-height:70vh;object-fit:cover}
 .sf-header{display:flex;align-items:center;gap:12px;padding:14px 16px}
 .sf-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;object-position:top center;flex-shrink:0;display:block}
