@@ -87,8 +87,8 @@ const CSS = `
 .pp-hero-price { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #E91E8C; border: 1px solid rgba(233,30,140,.4); border-radius: 4px; padding: 6px 16px; margin-bottom: 24px; }
 .pp-hero-title { font-size: clamp(42px, 7vw, 80px); font-weight: 900; letter-spacing: -2px; line-height: 1; margin: 0 0 20px; text-transform: uppercase; }
 .pp-hero-sub { font-size: 16px; font-weight: 400; color: rgba(255,255,255,.7); line-height: 1.6; margin: 0 0 40px; }
-.pp-hero-cta { display: inline-block; background: #E91E8C; color: #fff; font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 16px 40px; border-radius: 4px; text-decoration: none; transition: background .2s; cursor: pointer; border: none; }
-.pp-hero-cta:hover { background: #c41677; }
+.pp-hero-cta { display: inline-block; background: #C41677; color: #fff; font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 16px 40px; border-radius: 4px; text-decoration: none; transition: background .2s; cursor: pointer; border: none; }
+.pp-hero-cta:hover { background: #a01260; }
 .pp-hero-cta:focus-visible { outline: 2px solid #E91E8C; outline-offset: 3px; }
 
 /* Slide 2: perks toggle */
@@ -116,7 +116,7 @@ const CSS = `
 
 .pp-tier { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); padding: 40px 32px 36px; display: flex; flex-direction: column; position: relative; }
 .pp-tier.featured { background: rgba(233,30,140,.08); border-color: rgba(233,30,140,.35); }
-.pp-tier-badge { position: absolute; top: -1px; right: 28px; background: #E91E8C; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 5px 12px; }
+.pp-tier-badge { position: absolute; top: -1px; right: 28px; background: #C41677; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 5px 12px; }
 .pp-tier-name { font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 20px; }
 .pp-tier-price { font-size: clamp(38px, 5vw, 54px); font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
 .pp-tier-price span { font-size: 18px; font-weight: 700; vertical-align: top; margin-top: 10px; display: inline-block; }
@@ -129,7 +129,7 @@ const CSS = `
 .pp-tier.featured .pp-tier-items li::before { background: #E91E8C; }
 .pp-tier-btn { width: 100%; padding: 15px; font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; border: none; border-radius: 2px; cursor: pointer; transition: opacity .15s; font-family: inherit; }
 .pp-tier-btn:hover { opacity: .88; }
-.pp-tier-btn.primary { background: #E91E8C; color: #fff; }
+.pp-tier-btn.primary { background: #C41677; color: #fff; }
 .pp-tier-btn.secondary { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -232,6 +232,7 @@ function ProgressDots({ total, current, accent }: { total: number; current: numb
 }
 
 const ACCENT = "#E91E8C";
+const ACCENT_CTA = "#C41677"; // darker shade of the brand pink specifically for white-text CTAs - #E91E8C at 4.17:1 failed WCAG AA (needs 4.5:1), this hits ~5.6:1. Text/border/decorative uses of the brighter ACCENT are unaffected. Per Sean 2026-07-29.
 const TOTAL_SLIDES = 3;
 
 export default function PassportPage() {
@@ -424,7 +425,7 @@ export default function PassportPage() {
               <button
                 onClick={handleNext}
                 className="pp-nav-btn"
-                style={{ background: ACCENT, border: "none", borderRadius: "100px", padding: "12px 32px", color: "white", fontSize: "0.9rem", fontWeight: 800, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
+                style={{ background: ACCENT_CTA, border: "none", borderRadius: "100px", padding: "12px 32px", color: "white", fontSize: "0.9rem", fontWeight: 800, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em", transition: "transform 0.15s ease" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.03)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
               >
