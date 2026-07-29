@@ -1576,6 +1576,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                       thumb: thumbUrl,
                                       pinned: activePost.pinned,
                                       timestamp: activePost.timestamp,
+                                      audioUrl: activePost.audioUrl ? (activePost.audioUrl.startsWith("http") ? activePost.audioUrl : AUDIO + activePost.audioUrl) : undefined,
                                     }}
                                     artistSlug={slug ?? ""}
                                     name={c.name || name || "This artist"}
