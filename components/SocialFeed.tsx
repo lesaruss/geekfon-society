@@ -103,6 +103,36 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
   // dictation, no menu needed since there's nothing to choose between.
   const canRecordVoiceNote = tierRank >= 2;
 
+  // 30-second song preview button overlaid on cover-art posts. Per V,
+  // 2026-07-29: no separate trimmed audio file - just play the real track
+  // from 0:00 and auto-stop at 30s in the browser.
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [previewPlaying, setPreviewPlaying] = useState(false);
+
+  useEffect(() => {
+    return () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); };
+  }, []);
+
+  function togglePreview() {
+    const audio = previewAudioRef.current;
+    if (!audio) return;
+    if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+    if (previewPlaying) {
+      audio.pause();
+      setPreviewPlaying(false);
+      return;
+    }
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+    setPreviewPlaying(true);
+    previewTimeoutRef.current = setTimeout(() => {
+      audio.pause();
+      audio.currentTime = 0;
+      setPreviewPlaying(false);
+    }, 30000);
+  }
+
   async function authHeader(): Promise<Record<string, string>> {
     const { data: { session } } = await supabase.auth.getSession();
     return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
