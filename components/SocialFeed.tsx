@@ -24,6 +24,7 @@ export type SocialFeedPost = {
   thumb?: string | null;
   pinned?: boolean;
   timestamp?: string;
+  audioUrl?: string | null;
 };
 
 function stripSignOff(text: string | undefined, name: string): string {
