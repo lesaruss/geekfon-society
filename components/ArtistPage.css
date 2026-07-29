@@ -692,11 +692,13 @@
 .sf-comment-delete:hover:not(:disabled){color:var(--rx-text);background:var(--rx-tint)}
 .sf-comment-delete:disabled{opacity:.4;cursor:default}
 .sf-comment-delete svg{width:14px;height:14px}
-.sf-comment-row{display:flex;gap:8px;align-items:center}
-.sf-comment-input{flex:1;font-family:inherit;font-size:13.5px;padding:10px 14px;border-radius:100px;border:1px solid var(--lr-border);background:var(--lr-bg);color:var(--lr-text)}
+.sf-comment-row{display:flex;flex-direction:column;gap:10px;width:100%}
+.sf-comment-input{width:100%;font-family:inherit;font-size:16px;line-height:1.45;padding:12px 14px;border-radius:14px;border:1px solid var(--lr-border);background:var(--lr-bg);color:var(--lr-text);resize:none;min-height:78px}
 .sf-comment-input::placeholder{color:var(--lr-text-30)}
-.sf-comment-send{font-family:inherit;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--rx-text);background:none;border:none;padding:8px 10px;cursor:pointer;flex-shrink:0}
-.sf-comment-send:disabled{color:var(--lr-text-30);cursor:not-allowed}
+.sf-comment-actions-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sf-comment-send{font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--rx-text);background:#fff;border:1.5px solid var(--rx);border-radius:100px;padding:10px 24px;cursor:pointer;flex-shrink:0;transition:background .12s,color .12s}
+.sf-comment-send:hover:not(:disabled){background:var(--rx);color:#fff}
+.sf-comment-send:disabled{color:var(--lr-text-30);border-color:var(--lr-border);cursor:not-allowed}
 .sf-mic-wrap{position:relative;flex-shrink:0}
 .sf-mic-menu{position:absolute;bottom:44px;right:0;background:#fff;border:1px solid var(--lr-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px;display:flex;flex-direction:column;gap:2px;min-width:180px;z-index:5}
 .sf-mic-menu button{display:flex;align-items:center;gap:10px;font-family:inherit;font-size:13px;font-weight:700;color:var(--lr-text);background:none;border:none;border-radius:8px;padding:9px 10px;cursor:pointer;text-align:left;white-space:nowrap}
