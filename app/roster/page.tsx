@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 // roster page - 4-col desktop, 2-col mobile, all 13 artists live (V excluded per canon)
+// per-card "NOW LIVE" badge removed 2026-07-29 (Sean) - dead weight once every artist on the roster is live, not a subset
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
 
@@ -103,10 +104,7 @@ function ArtistCard({ a }: { a: Artist }) {
             height={400}
             // Roxanne's portrait has the head right at the top edge of the
             // source art. Shift the visible crop down for her only - other
-            // artists have natural headroom and don't need this. (Original
-            // reason was clearance under the NOW LIVE pill, which has since
-            // moved into the bottom info block - keeping the crop anyway
-            // since it's a framing improvement independent of the pill.)
+            // artists have natural headroom and don't need this.
             // Doing this per-slug (not a shared CSS change) on purpose per
             // Sean, to prove out the fix on one artist before any rollout.
             style={a.slug === "roxanne" ? { objectPosition: "center 20%" } : undefined}
@@ -119,7 +117,6 @@ function ArtistCard({ a }: { a: Artist }) {
         <div className="r-card-grad" />
       </div>
       <div className="r-card-info">
-        <span className="r-now-live-badge">NOW LIVE</span>
         <span className="r-card-name">{a.name}</span>
         {a.profile?.tagline && (
           <span className="r-card-tag">{a.profile.tagline}</span>
@@ -349,7 +346,6 @@ html, body { background: #020c0a !important; color: #e8e8e8; overflow-x: hidden;
 .r-card-info{position:absolute;bottom:0;left:0;right:0;padding:16px 14px 14px;z-index:2}
 .r-card-name{display:block;font-size:clamp(12px,1.3vw,16px);font-weight:800;color:#fff;letter-spacing:.01em;line-height:1.2;text-transform:uppercase}
 .r-card-tag{display:block;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.06em;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.r-now-live-badge{display:inline-block;margin-bottom:6px;background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:#00e676;font-size:8px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:4px 8px;border-radius:4px;backdrop-filter:blur(8px)}
 
 /* Loading */
 .r-loading{display:flex;flex-direction:column;align-items:center;gap:16px;padding:80px 0;color:rgba(255,255,255,.4);font-size:14px;letter-spacing:.08em}
