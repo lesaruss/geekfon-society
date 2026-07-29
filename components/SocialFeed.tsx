@@ -330,7 +330,26 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
           {post.type === "video" ? (
             <video src={post.mediaUrl} poster={post.thumb || undefined} controls playsInline preload="metadata" />
           ) : (
-            <img src={post.mediaUrl} alt="" />
+            <>
+              <img src={post.mediaUrl} alt="" />
+              {post.audioUrl && (
+                <button
+                  type="button"
+                  className={`sf-preview-play${previewPlaying ? " sf-preview-playing" : ""}`}
+                  aria-label={previewPlaying ? "Pause song preview" : "Play 30 second song preview"}
+                  onClick={(e) => { e.stopPropagation(); togglePreview(); }}
+                >
+                  {previewPlaying ? (
+                    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                  )}
+                </button>
+              )}
+              {post.audioUrl && (
+                <audio ref={previewAudioRef} src={post.audioUrl} preload="none" onEnded={() => setPreviewPlaying(false)} />
+              )}
+            </>
           )}
         </div>
       )}
