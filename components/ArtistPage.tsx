@@ -1472,7 +1472,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         })
                         .filter((p): p is { post: PulsePost; i: number; thumbUrl: string } => !!p.thumbUrl)
                         .sort((a, b) => {
-                          const pinDiff = (b.post.pinned ? 1 : 0) - (a.post.pinned ? 1 : 0);
+                          const pinDiff = ((b.post.pinned || b.post.featured) ? 1 : 0) - ((a.post.pinned || a.post.featured) ? 1 : 0);
                           if (pinDiff !== 0) return pinDiff;
                           const at = a.post.timestamp ? new Date(a.post.timestamp).getTime() : 0;
                           const bt = b.post.timestamp ? new Date(b.post.timestamp).getTime() : 0;
