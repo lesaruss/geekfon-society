@@ -1562,12 +1562,40 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             const mediaUrl = rawMedia ? (rawMedia.startsWith("http") ? rawMedia : MEDIA + rawMedia) : null;
                             const rawThumb = activePost.thumb;
                             const thumbUrl = rawThumb ? (rawThumb.startsWith("http") ? rawThumb : MEDIA + rawThumb) : undefined;
+                            const curGridPos = gridPosts.findIndex((p) => p.i === socialLightboxIdx);
+                            const prevLightboxIdx = curGridPos > 0 ? gridPosts[curGridPos - 1].i : null;
+                            const nextLightboxIdx = curGridPos >= 0 && curGridPos < gridPosts.length - 1 ? gridPosts[curGridPos + 1].i : null;
+                            const handleLightboxTouchStart = (e: React.TouchEvent) => { touchStartXRef.current = e.touches[0].clientX; };
+                            const handleLightboxTouchEnd = (e: React.TouchEvent) => {
+                              const startX = touchStartXRef.current;
+                              touchStartXRef.current = null;
+                              if (startX === null) return;
+                              const deltaX = e.changedTouches[0].clientX - startX;
+                              if (Math.abs(deltaX) < 50) return;
+                              if (deltaX < 0 && nextLightboxIdx !== null) setSocialLightboxIdx(nextLightboxIdx);
+                              else if (deltaX > 0 && prevLightboxIdx !== null) setSocialLightboxIdx(prevLightboxIdx);
+                            };
                             return (
                               <div className="sg-lightbox" onClick={() => setSocialLightboxIdx(null)}>
-                                <div className="sg-lightbox-inner sg-lightbox-card" onClick={(e) => e.stopPropagation()}>
+                                <div
+                                  className="sg-lightbox-inner sg-lightbox-card"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onTouchStart={handleLightboxTouchStart}
+                                  onTouchEnd={handleLightboxTouchEnd}
+                                >
                                   <button type="button" className="sg-lightbox-close" onClick={() => setSocialLightboxIdx(null)} aria-label="Close">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
                                   </button>
+                                  {prevLightboxIdx !== null && (
+                                    <button type="button" className="sg-lightbox-nav sg-lightbox-prev" onClick={() => setSocialLightboxIdx(prevLightboxIdx)} aria-label="Previous post">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                                    </button>
+                                  )}
+                                  {nextLightboxIdx !== null && (
+                                    <button type="button" className="sg-lightbox-nav sg-lightbox-next" onClick={() => setSocialLightboxIdx(nextLightboxIdx)} aria-label="Next post">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                                    </button>
+                                  )}
                                   <PostCard
                                     post={{
                                       id: activePost.id || "",
