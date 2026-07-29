@@ -54,16 +54,46 @@ function initialColor(seed: string): string {
   return palette[h % palette.length];
 }
 
-// Chrome's MediaRecorder writes webm/opus files with no real duration in
-// the container header - <audio> reports Infinity/NaN/0 and looks dead
-// even when the recording is complete and fine (confirmed live 2026-07-29:
-// a posted voice comment played back showing 0:00, but the underlying file
-// was a real 7.5s recording when inspected directly). Forcing a seek past
-// the end makes the browser walk the file and compute the real duration;
-// snapping back to 0 afterward leaves a normal, seekable player. Applies
-// to both the pre-post preview and every posted voice comment.
+// Voice-comment audio has two separate bugs to work around:
+// 1. Chrome's MediaRecorder writes webm/opus with no real duration in the
+//    container header - <audio> reports Infinity/NaN/0. Forcing a seek
+//    past the end makes the browser walk the file and compute the real
+//    duration; snapping back to 0 afterward leaves a normal player.
+// 2. CONFIRMED LIVE 2026-07-29: for a POSTED comment (network URL, not the
+//    in-memory blob: URL used by the pre-post preview), the <audio> tag
+//    never even got past readyState 0 - it hung forever. Root cause:
+//    Supabase Storage's public delivery answers Range requests with a 206
+//    but omits Accept-Ranges/Content-Range entirely, which breaks Chrome's
+//    duration-probing for a Cues-less webm and it just gives up silently.
+//    Fix: fetch the file ourselves as a Blob (proven to work fine and
+//    fast - it's a small file) and hand the <audio> tag a local blob: URL
+//    instead of the raw network URL, sidestepping the broken range path.
 function FixedDurationAudio({ src, className }: { src: string; className?: string }) {
+  const isBlob = src.startsWith("blob:");
+  const [playableSrc, setPlayableSrc] = useState<string | null>(isBlob ? src : null);
   const ref = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (src.startsWith("blob:")) {
+      setPlayableSrc(src);
+      return;
+    }
+    let localUrl: string | null = null;
+    let cancelled = false;
+    setPlayableSrc(null);
+    fetch(src)
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (cancelled) return;
+        localUrl = URL.createObjectURL(blob);
+        setPlayableSrc(localUrl);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      if (localUrl) URL.revokeObjectURL(localUrl);
+    };
+  }, [src]);
 
   function handleLoadedMetadata() {
     const audio = ref.current;
@@ -78,13 +108,17 @@ function FixedDurationAudio({ src, className }: { src: string; className?: strin
     }
   }
 
+  if (!playableSrc) {
+    return <span className="sf-audio-loading">Loading audio...</span>;
+  }
+
   return (
     <audio
       ref={ref}
       className={className}
       controls
       preload="metadata"
-      src={src}
+      src={playableSrc}
       onLoadedMetadata={handleLoadedMetadata}
     />
   );
