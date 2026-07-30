@@ -14,18 +14,48 @@ const supabase = createClient(
 //   any season after owning one -> 550 pts (loyalty rate)
 // Single track is a fixed 150 pts.
 //
+// Identity comes ONLY from a verified Supabase session token (Authorization:
+// Bearer <access_token>), never from a client-supplied userId -- points
+// redemption always requires a real logged-in member (guests have no
+// balance), so there is no guest-checkout case to preserve here, unlike
+// /api/checkout which intentionally supports guest email-based purchase.
+//
 // Entitlement is written to the same tables a cash purchase would use
 // (gfs_artist_unlocks / gfs_track_purchases), source="points", so downstream
 // access checks (gfs_check_season_access, gfs_can_download) don't need to
 // know or care how the item was paid for.
+
+async function requireUser(req: NextRequest) {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader ? authHeader.replace("Bearer ", "") : null;
+  if (!token) {
+    return NextResponse.json(
+      { error: "Sign in required to spend points." },
+      { status: 401 }
+    );
+  }
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data || !data.user) {
+    return NextResponse.json(
+      { error: "Sign in required to spend points." },
+      { status: 401 }
+    );
+  }
+  return { userId: data.user.id };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { userId, kind, artistSlug, season, trackName, trackUrl } = body || {};
+    const authResult = await requireUser(req);
+    if (authResult instanceof NextResponse) return authResult;
+    const { userId } = authResult as { userId: string };
 
-    if (!userId || !kind || !artistSlug) {
+    const body = await req.json();
+    const { kind, artistSlug, season, trackName, trackUrl } = body || {};
+
+    if (!kind || !artistSlug) {
       return NextResponse.json(
-        { error: "userId, kind, and artistSlug are required" },
+        { error: "kind and artistSlug are required" },
         { status: 400 }
       );
     }
@@ -98,14 +128,14 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function mapRedeemError(message: string) {
+function mapRedeemError(message: string): string {
   if (message.includes("insufficient points")) return "Not enough points for this purchase.";
   if (message.includes("already owned")) return "You already own this.";
   if (message.includes("not authorized")) return "Not authorized.";
   return "Unable to complete redemption.";
 }
 
-function statusForError(message: string) {
+function statusForError(message: string): number {
   if (message.includes("insufficient points")) return 402;
   if (message.includes("already owned")) return 409;
   if (message.includes("not authorized")) return 403;
