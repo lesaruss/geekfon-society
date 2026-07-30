@@ -34,8 +34,8 @@ async function requireAdmin(req: Request): Promise<NextResponse | null> {
 // full-name slugs that don't always match gfs_artists.slug (e.g. "riku-hayasaka" vs "riku").
 const ARTIST_NAMES: Record<string, string> = {
   "lex-from-brixton": "Lex from Brixton",
-  "lickle-bro": "Lickle Bro",
-  "lickle-sis": "Lickle Sis",
+  "likkle-bro": "Likkle Bro",
+  "likkle-sis": "Likkle Sis",
   "mad-tings": "Mad Tings",
   "mr-russell": "Mr. Russell",
   "nilo-wave": "Nilo Wave",
