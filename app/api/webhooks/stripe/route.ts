@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
         : (invoice.subscription as any)?.id;
 
     if (userId && subId && invoice.billing_reason === "subscription_cycle") {
-      await creditLesars(supabase, userId, 1500, "all-access-renewal", invoice.id);
+      await creditLesars(supabase, userId, 500, "all-access-renewal", invoice.id);
     }
   }
 
