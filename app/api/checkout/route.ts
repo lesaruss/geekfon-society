@@ -148,3 +148,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Checkout failed" }, { status: 500 });
   }
 }
+// redeploy-nudge: 2026-07-30 all-access price rotated
