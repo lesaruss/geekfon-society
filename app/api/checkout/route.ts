@@ -34,7 +34,69 @@ export async function POST(req: NextRequest) {
   );
 
   try {
-    const { plan, userId, returnUrl, artistSlug } = await req.json();
+    const { plan, userId, returnUrl, artistSlug, season } = await req.json();
+
+    // Season Pass (added 2026-07-30, Sean-approved rebuild): replaces the flat
+    // artist-unlock model above for now. artist-unlock is left in place, not
+    // deleted, same "leave it, don't rip it out" pattern already used for the
+    // retired Points/All-Access rows below. Price is computed server-side per
+    // user via gfs_calc_season_price (loyalty rate: $5.50 if they already own
+    // any prior season, $11 if not), so there is no fixed Stripe Price ID for
+    // this plan - price_data is built inline on every request instead.
+    if (plan === "season-pass") {
+      if (!artistSlug || !season) {
+        return NextResponse.json({ error: "artistSlug and season are required for season-pass" }, { status: 400 });
+      }
+
+      let priceCents = 1100;
+      let discountPct = 0;
+      if (userId) {
+        const { data: priceRow, error: priceErr } = await supabase
+          .rpc("gfs_calc_season_price", { p_user_id: userId })
+          .single();
+        if (priceErr) {
+          console.error("[checkout] gfs_calc_season_price failed", priceErr);
+        } else if (priceRow) {
+          priceCents = priceRow.price_cents;
+          discountPct = priceRow.discount_pct;
+        }
+      }
+
+      const origin = req.headers.get("origin") || "https://geekfon.ai";
+      const successUrl = returnUrl
+        ? `${origin}${returnUrl}?checkout=success&plan=season-pass&season=${encodeURIComponent(season)}`
+        : `${origin}/dashboard?checkout=success&plan=season-pass`;
+      const cancelUrl = returnUrl
+        ? `${origin}${returnUrl}?checkout=cancelled`
+        : `${origin}/passport?checkout=cancelled`;
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [{
+          price_data: {
+            currency: "usd",
+            unit_amount: priceCents,
+            product_data: {
+              name: `GeekFon Society - ${artistSlug} - ${season} Pass`,
+              description: "Own this season forever. Download every track.",
+            },
+          },
+          quantity: 1,
+        }],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: {
+          user_id: userId || "",
+          plan,
+          artist_slug: artistSlug,
+          season,
+          discount_pct_applied: String(discountPct),
+        },
+        ...(userId && { client_reference_id: userId }),
+      });
+
+      return NextResponse.json({ url: session.url });
+    }
 
     if (!plan || !PRICE_MAP[plan]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
