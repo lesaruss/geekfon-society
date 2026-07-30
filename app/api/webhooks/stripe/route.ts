@@ -7,8 +7,8 @@ import { creditLesars, creditReferralCommission } from "@/lib/ledger";
 export const config = { api: { bodyParser: false } };
 
 // Finds an existing Supabase auth user by email, or creates one if none
-// exists yet. Used only for guest (no prior account) artist-unlock
-// purchases - see the artist-unlock branch below. Uses the Auth Admin
+// exists yet. Used for guest (no prior account) artist-unlock and
+// season-pass purchases - see the branches below. Uses the Auth Admin
 // listUsers/createUser API rather than querying auth.users directly, since
 // the auth schema isn't exposed over PostgREST. Scans the first page of
 // users, which is fine at GeekFon's current member volume; if the member
@@ -130,6 +130,58 @@ export async function POST(req: NextRequest) {
         // Affiliate commission (added 2026-07-27, see lib/ledger.ts) - covers
         // the guest-checkout path too, since unlockUserId is set either way.
         await creditReferralCommission(supabase, unlockUserId, session.amount_total ?? 1100);
+      }
+    }
+
+    // Season Pass (added 2026-07-30, Sean-approved rebuild): the new default
+    // purchase mechanic, replacing artist-unlock above for now without
+    // deleting it. Same guest-checkout pattern as artist-unlock - find or
+    // create a Supabase user by email so no one has to log in before paying.
+    // Unlike artist-unlock, this writes season + purchase_type + a permanent
+    // download_enabled=true flag, and is keyed unique on
+    // (user_id, artist_slug, season) so a second season for the same artist
+    // creates a new row instead of overwriting the first one's flags.
+    if (plan === "season-pass" && session.metadata?.artist_slug && session.metadata?.season) {
+      let seasonUserId = userId || null;
+
+      if (!seasonUserId) {
+        const guestEmail = session.customer_details?.email || (session as any).customer_email;
+        if (guestEmail) {
+          try {
+            seasonUserId = await findOrCreateUserIdByEmail(supabase, guestEmail);
+            await supabase
+              .from("gfs_members")
+              .upsert(
+                { user_id: seasonUserId, tier: "free", tier_source: "stripe" },
+                { onConflict: "user_id", ignoreDuplicates: true }
+              );
+          } catch (e) {
+            console.error("[webhook] guest season-pass provisioning failed", e);
+          }
+        } else {
+          console.error("[webhook] guest season-pass with no email on session", session.id);
+        }
+      }
+
+      if (seasonUserId) {
+        await supabase
+          .from("gfs_artist_unlocks")
+          .upsert(
+            {
+              user_id: seasonUserId,
+              artist_slug: session.metadata.artist_slug,
+              season: session.metadata.season,
+              purchase_type: "season_pass",
+              download_enabled: true,
+              discount_pct_applied: Number(session.metadata.discount_pct_applied || 0),
+              source: "stripe",
+              amount_cents: session.amount_total ?? 1100,
+              external_id: session.id,
+            },
+            { onConflict: "user_id,artist_slug,season" }
+          );
+
+        await creditReferralCommission(supabase, seasonUserId, session.amount_total ?? 1100);
       }
     }
   }
