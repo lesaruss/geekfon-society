@@ -10,8 +10,8 @@ import { resolvePlayhead, RadioTrack as ScheduleTrack, ScheduleOverride } from "
 // used there) rather than shared, to keep this a minimal, low-risk addition.
 const ARTIST_NAMES: Record<string, string> = {
   "lex-from-brixton": "Lex from Brixton",
-  "lickle-bro": "Lickle Bro",
-  "lickle-sis": "Lickle Sis",
+  "likkle-bro": "Likkle Bro",
+  "likkle-sis": "Likkle Sis",
   "mad-tings": "Mad Tings",
   "mr-russell": "Mr. Russell",
   "nilo-wave": "Nilo Wave",
