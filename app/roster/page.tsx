@@ -58,7 +58,7 @@ const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const ARTIST_ORDER = [
   "roxanne", "lex-from-brixton", "shamanic-resin", "riku",
   "straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings",
-  "vuka", "lickle-bro", "lickle-sis", "mr-russell",
+  "vuka", "likkle-bro", "likkle-sis", "mr-russell",
 ];
 
 type Artist = {
