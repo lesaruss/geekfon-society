@@ -21,7 +21,7 @@ const LESARS_MAP: Record<string, number> = {
   "pack-starter":  500,
   "pack-standard": 1000,
   "pack-power":    5000,
-  "all-access":    1500,
+  "all-access":    500,
   "passport":      111,
   "artist-unlock": 0,
 };
