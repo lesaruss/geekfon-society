@@ -169,7 +169,7 @@ const PLACEHOLDER_NEWS: News[] = [
 ];
 
 
-// ── Module-level constants + helpers (hoisted for BiblePanel access) ─────────
+// ââ Module-level constants + helpers (hoisted for BiblePanel access) âââââââââ
 const PHASES = [
   { label: "Identity Layer", modules: ["identity","psychology","personality"] },
   { label: "Character",      modules: ["backstory","voice","emotional_performance","visual_identity"] },
@@ -195,7 +195,7 @@ function getDisplayStatus(mod: { status: string; data: Record<string, unknown> }
   return                                 { label: "Not Started", color: "#9ca3af", bg: "#f3f4f6", weight: 0.00 };
 }
 
-// ── BiblePanel ─────────────────────────────────────────────────────────────
+// ââ BiblePanel âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // Standalone component so it can be extracted to its own file as usage grows.
 // Scalable for hundreds of artists: search, status filter, versioning, progress.
 function BiblePanel({
@@ -318,15 +318,15 @@ function BiblePanel({
                         <div style={{display:"flex",flexWrap:"wrap",gap:16}}>
                           <div>
                             <div style={{fontSize:10,color:"#9ca3af",textTransform:"uppercase",letterSpacing:.4}}>Label</div>
-                            <div style={{fontSize:13}}>{b.label_name || "—"}</div>
+                            <div style={{fontSize:13}}>{b.label_name || "â"}</div>
                           </div>
                           <div>
                             <div style={{fontSize:10,color:"#9ca3af",textTransform:"uppercase",letterSpacing:.4}}>Copyright</div>
-                            <div style={{fontSize:13}}>{b.copyright_line || "—"}</div>
+                            <div style={{fontSize:13}}>{b.copyright_line || "â"}</div>
                           </div>
                           <div>
                             <div style={{fontSize:10,color:"#9ca3af",textTransform:"uppercase",letterSpacing:.4}}>Songwriter</div>
-                            <div style={{fontSize:13}}>{b.songwriter_name || "—"}{b.songwriter_pro ? ` (${b.songwriter_pro})` : ""}</div>
+                            <div style={{fontSize:13}}>{b.songwriter_name || "â"}{b.songwriter_pro ? ` (${b.songwriter_pro})` : ""}</div>
                           </div>
                         </div>
                         <div>
@@ -542,7 +542,7 @@ function BiblePanel({
           {(songAudits || []).map((a, i) => (
             <div key={i} className="audit">
               <div className="audit-title">{a.title}</div>
-              {(a.status || a.pillar) && <div className="audit-meta">{a.status}{a.status && a.pillar ? " · " : ""}{a.pillar}</div>}
+              {(a.status || a.pillar) && <div className="audit-meta">{a.status}{a.status && a.pillar ? " Â· " : ""}{a.pillar}</div>}
               {a.theme && <p className="audit-theme">{a.theme}</p>}
               <div className="scores">
                 {Object.entries(a.scores || {}).map(([k, v]) => (<span key={k} className="score">{k.replace(/_/g, " ")} {v}</span>))}
@@ -555,6 +555,11 @@ function BiblePanel({
     </section>
   );
 }
+
+// GeekFon Society is currently in its first content season for every
+// artist. Season pass pricing/entitlement is scoped to a season string
+// (see gfs_artist_unlocks.season); update this when Season 2 launches.
+const CURRENT_SEASON = "Season 1";
 
 export default function ArtistPage({ content, cityBg, activeArticle, slug }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null; activeArticle?: News; slug?: string }) {
   const [tab, setTab] = useState(() => {
@@ -571,6 +576,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [userTier, setUserTier] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userBalance, setUserBalance] = useState<number>(0);
+  const [seasonModalOpen, setSeasonModalOpen] = useState(false);
+  const [seasonPriceCents, setSeasonPriceCents] = useState<number | null>(null);
+  const [seasonDiscountPct, setSeasonDiscountPct] = useState<number>(0);
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
   const [audioProgress, setAudioProgress] = useState<Record<string, number>>({});
   const [audioDuration, setAudioDuration] = useState<Record<string, number>>({});
   const [playingV, setPlayingV] = useState<string | null>(null);
@@ -672,7 +682,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     ? viewAs === "public" ? null       // visitor: no tier access
     : viewAs === "visitor" ? null      // legacy
     : viewAs === "passport" ? "passport"
-    : viewAs === "plus" ? "promoter"   // SiteChrome "plus" → TIER_RANK "promoter"
+    : viewAs === "plus" ? "promoter"   // SiteChrome "plus" â TIER_RANK "promoter"
     : viewAs === "pro" ? "pro"
     : null
     : userTier;
@@ -808,11 +818,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   }
   // Split text into caption chunks (karaoke-style)
   function splitCaption(text: string): string[] {
-    const isCJK = /[　-鿿一-龯]/.test(text);
+    const isCJK = /[ã-é¿¿ä¸-é¾¯]/.test(text);
     if (isCJK) {
-      const segs = text.split(/([。、！？…])/).filter(Boolean);
+      const segs = text.split(/([ããï¼ï¼â¦])/).filter(Boolean);
       const chunks: string[] = []; let cur = "";
-      segs.forEach(s => { cur += s; if (cur.length >= 5 || /[。！？]/.test(s)) { chunks.push(cur.trim()); cur = ""; } });
+      segs.forEach(s => { cur += s; if (cur.length >= 5 || /[ãï¼ï¼]/.test(s)) { chunks.push(cur.trim()); cur = ""; } });
       if (cur.trim()) chunks.push(cur.trim());
       return chunks;
     }
@@ -826,7 +836,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     if (playing !== url) {
-      // Not playing yet — start from this position
+      // Not playing yet â start from this position
       a.src = url;
       a.addEventListener("canplay", () => { a.currentTime = pct * (a.duration || 0); a.play().then(() => { setPlaying(url); setPlayingV("voice"); }).catch(() => {}); }, { once: true });
     } else {
@@ -1033,24 +1043,104 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       // (app/api/webhooks/stripe/route.ts) grants the unlock server-side by
       // finding-or-creating a Supabase account for that email, so if the fan
       // later logs in with the same email their unlock is already there.
-      const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
+      // 2026-07-30: web checkout now opens the season-pass/points modal instead
+      // of redirecting straight to the old artist-unlock Stripe plan. Native
+      // purchases above (RevenueCat) are untouched, separate scope.
+      setShowVoteModal(null); // in case this click came from inside that modal
+      openSeasonModal();
+      setUnlockLoading(false);
+      return;
+      } catch {
+      setUnlockError("Checkout failed. Please try again.");
+      setUnlockLoading(false);
+    }
+  }
+  async function openSeasonModal() {
+    setRedeemError(null);
+    setSeasonPriceCents(null);
+    setSeasonModalOpen(true);
+    if (!SUPA_ANON || !userId) return;
+    try {
+      const sb = createClient(SUPA_URL, SUPA_ANON);
+      const { data, error } = await sb
+        .rpc("gfs_calc_season_price", { p_user_id: userId })
+        .single();
+      if (!error && data) {
+        const row = data as { price_cents: number; discount_pct: number };
+        setSeasonPriceCents(row.price_cents);
+        setSeasonDiscountPct(row.discount_pct);
+      }
+    } catch {
+      // Non-fatal: modal falls back to static "$11 / $5.50 loyalty" copy.
+    }
+  }
+
+  async function checkoutSeasonPass() {
+    setRedeemError(null);
+    setRedeemLoading(true);
+    const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
+    try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "artist-unlock", userId: userId || null, artistSlug: slug, returnUrl: returnPath }),
+        body: JSON.stringify({
+          plan: "season-pass",
+          userId: userId || null,
+          artistSlug: slug,
+          season: CURRENT_SEASON,
+          returnUrl: returnPath,
+        }),
       });
       const { url, error } = await res.json();
       if (url) {
         window.location.href = url;
       } else {
-        setUnlockError(error || "Checkout failed. Please try again.");
-        setUnlockLoading(false);
+        setRedeemError(error || "Checkout failed. Please try again.");
+        setRedeemLoading(false);
       }
     } catch {
-      setUnlockError("Checkout failed. Please try again.");
-      setUnlockLoading(false);
+      setRedeemError("Checkout failed. Please try again.");
+      setRedeemLoading(false);
     }
   }
+
+  async function redeemSeasonWithPoints() {
+    if (!userId || !SUPA_ANON) return;
+    setRedeemError(null);
+    setRedeemLoading(true);
+    try {
+      const sb = createClient(SUPA_URL, SUPA_ANON);
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session?.access_token) {
+        setRedeemError("Please sign in again to use points.");
+        setRedeemLoading(false);
+        return;
+      }
+      const res = await fetch("/api/points/redeem", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ kind: "season_pass", artistSlug: slug, season: CURRENT_SEASON }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setUnlockedArtist(true);
+        setUnlockSuccess(true);
+        setUserBalance(data.newBalance);
+        setSeasonModalOpen(false);
+        setTimeout(() => setUnlockSuccess(false), 4000);
+      } else {
+        setRedeemError(data.error || "Unable to redeem points.");
+      }
+    } catch {
+      setRedeemError("Unable to redeem points. Please try again.");
+    } finally {
+      setRedeemLoading(false);
+    }
+  }
+
   function trackPlayLabel(isPlaying: boolean, t?: Track | null): string {
     if (isPlaying) return "Pause";
     if (t && isRegisterLockedTrack(t)) return "Register";
@@ -1190,7 +1280,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     { label: name },
   ];
 
-  // ── Pulse feed ────────────────────────────────────────────────────────────────
+  // ââ Pulse feed ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   const msg = c.message || {};
   const hasMsg = !!(msg.ja || msg.en);
   // 2026-07-26 (3rd pass) per Sean's report: hoisted to a single top-level const
@@ -1332,14 +1422,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
           <div className="body-layout">
             <div className="body-main">
 
-              {/* Article detail view — rendered when activeArticle is passed */}
+              {/* Article detail view â rendered when activeArticle is passed */}
               {activeArticle ? (
                 <div className="art-view">
                   <nav className="art-crumb">
                     <a href="/" className="art-crumb-link">GeekFon Society</a>
-                    <span className="art-crumb-sep">›</span>
+                    <span className="art-crumb-sep">âº</span>
                     <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-crumb-link">{c.name || ""}</a>
-                    <span className="art-crumb-sep">›</span>
+                    <span className="art-crumb-sep">âº</span>
                     <span className="art-crumb-cur">{activeArticle.title}</span>
                   </nav>
                   {activeArticle.videoUrl ? (
@@ -1993,6 +2083,56 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         </div>
                       </div>
                     )}
+                    {seasonModalOpen && (
+                      <div
+                        className="vote-modal-overlay"
+                        onClick={() => { if (!redeemLoading) setSeasonModalOpen(false); }}
+                      >
+                        <div
+                          className="vote-modal"
+                          role="dialog"
+                          aria-modal="true"
+                          aria-labelledby="season-modal-title"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div id="season-modal-title" className="vote-modal-title-text">
+                            Get {name}&apos;s {CURRENT_SEASON}
+                          </div>
+                          <p className="vote-modal-lead">
+                            {seasonDiscountPct > 0
+                              ? `Loyalty rate applied: $${((seasonPriceCents ?? 550) / 100).toFixed(2)} for this season.`
+                              : `$${((seasonPriceCents ?? 1100) / 100).toFixed(2)} once, own the whole season, download every track, yours forever.`}
+                          </p>
+                          <ul className="vote-modal-benefits">
+                            <li>{CHECK}<span>Every {name} track this season, no preview cap</span></li>
+                            <li>{CHECK}<span>Download and keep, no subscription</span></li>
+                            <li>{CHECK}<span>Own it forever, even after the season closes to new fans</span></li>
+                          </ul>
+                          {redeemError && <p className="pur-error">{redeemError}</p>}
+                          <div className="vote-modal-actions">
+                            <button
+                              className="mp-btn-buy"
+                              disabled={redeemLoading}
+                              onClick={checkoutSeasonPass}
+                            >
+                              {redeemLoading ? "Please wait..." : `Pay $${((seasonPriceCents ?? 1100) / 100).toFixed(2)}`}
+                            </button>
+                            {userId && (
+                              <button
+                                className="mp-btn-buy"
+                                disabled={redeemLoading || userBalance < (seasonPriceCents ?? 1100)}
+                                onClick={redeemSeasonWithPoints}
+                              >
+                                {redeemLoading
+                                  ? "Please wait..."
+                                  : `Use ${seasonPriceCents ?? 1100} points (you have ${userBalance})`}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {unlockError && <p className="pur-error">{unlockError}</p>}
 
                     <div className={"mp-rows" + (useRowLyrics ? " mp-rows-row-lyrics" : "")}>
@@ -2375,7 +2515,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               })()}
 
               {tab === "brief" && (() => {
-                // ── Artist Bible Admin UI ──────────────────────────────────────────────
+                // ââ Artist Bible Admin UI ââââââââââââââââââââââââââââââââââââââââââââââ
                 // Scalable for hundreds of artists: searchable, filtered, versioned.
                 const MODULE_ORDER = [
                   // Identity Layer
@@ -2502,7 +2642,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
 
             </div>
 
-            {/* Billboard rotator sidebar — 2 slots */}
+            {/* Billboard rotator sidebar â 2 slots */}
             <aside className="billboard"
               onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }}
               onMouseLeave={() => { const slots = isMobile ? 3 : 2; bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000); }}
@@ -2564,7 +2704,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                     </div>
                   )}
                 </div>
-                {/* Slide 2: Mobile only — feature ad */}
+                {/* Slide 2: Mobile only â feature ad */}
                 {isMobile && (
                   <div className={"bb-slide" + (bbSlot === 2 ? " active" : "")}>
                     {c.featureAdUrl ? (
