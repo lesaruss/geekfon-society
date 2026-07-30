@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const row = data;
+      const row = data as { points_spent: number; discount_pct: number; new_balance: number };
       return NextResponse.json({
         ok: true,
         kind: "season_pass",
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const row = data;
+      const row = data as { points_spent: number; new_balance: number };
       return NextResponse.json({
         ok: true,
         kind: "single_track",
