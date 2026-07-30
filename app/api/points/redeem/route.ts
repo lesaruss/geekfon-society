@@ -92,20 +92,20 @@ export async function POST(req: NextRequest) {
       { error: 'kind must be "season_pass" or "single_track"' },
       { status: 400 }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("points/redeem error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 
-function mapRedeemError(message) {
+function mapRedeemError(message: string) {
   if (message.includes("insufficient points")) return "Not enough points for this purchase.";
   if (message.includes("already owned")) return "You already own this.";
   if (message.includes("not authorized")) return "Not authorized.";
   return "Unable to complete redemption.";
 }
 
-function statusForError(message) {
+function statusForError(message: string) {
   if (message.includes("insufficient points")) return 402;
   if (message.includes("already owned")) return 409;
   if (message.includes("not authorized")) return 403;
