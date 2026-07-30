@@ -57,8 +57,9 @@ export async function POST(req: NextRequest) {
         if (priceErr) {
           console.error("[checkout] gfs_calc_season_price failed", priceErr);
         } else if (priceRow) {
-          priceCents = priceRow.price_cents;
-          discountPct = priceRow.discount_pct;
+          const row = priceRow as { price_cents: number; discount_pct: number };
+          priceCents = row.price_cents;
+          discountPct = row.discount_pct;
         }
       }
 
