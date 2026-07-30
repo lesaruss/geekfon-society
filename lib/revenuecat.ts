@@ -167,8 +167,8 @@ export async function purchaseLesarsPack(productId: keyof typeof LESARS_PACK_PRO
 // and the 2026-07-23 pricing pivot notes) for the full list still to be set up.
 export const ARTIST_UNLOCK_PRODUCTS: Record<string, string> = {
   "unlock_lex_from_brixton":    "lex-from-brixton",
-  "unlock_lickle_bro":          "lickle-bro",
-  "unlock_lickle_sis":          "lickle-sis",
+  "unlock_likkle_bro":          "likkle-bro",
+  "unlock_likkle_sis":          "likkle-sis",
   "unlock_lord_zorlot":         "lord-zorlot",
   "unlock_mad_tings":           "mad-tings",
   "unlock_mr_russell":          "mr-russell",
