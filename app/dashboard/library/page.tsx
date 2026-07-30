@@ -13,8 +13,8 @@ type PlaylistRow = { id: string; track_id: string; added_at: string; position: n
 // gfs_artists.slug).
 const ARTIST_NAMES: Record<string, string> = {
   "lex-from-brixton": "Lex from Brixton",
-  "lickle-bro": "Lickle Bro",
-  "lickle-sis": "Lickle Sis",
+  "likkle-bro": "Likkle Bro",
+  "likkle-sis": "Likkle Sis",
   "mad-tings": "Mad Tings",
   "mr-russell": "Mr. Russell",
   "nilo-wave": "Nilo Wave",
