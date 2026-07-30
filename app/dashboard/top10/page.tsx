@@ -10,7 +10,7 @@ import { useDashboard, ADMIN_EMAIL } from "../context";
 const FEATURED_SLUGS = [
   "roxanne", "lex-from-brixton", "shamanic-resin", "riku",
   "straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings",
-  "vuka", "lickle-bro", "lickle-sis", "mr-russell",
+  "vuka", "likkle-bro", "likkle-sis", "mr-russell",
 ];
 
 type RankedArtist = {
