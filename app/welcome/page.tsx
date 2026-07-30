@@ -93,25 +93,25 @@ const ARTISTS: ArtistCard[] = [
     ],
   },
   {
-    slug: "lickle-bro", name: "Lickle Bro", initial: "LB", accent: "#4CAF50",
+    slug: "likkle-bro", name: "Likkle Bro", initial: "LB", accent: "#4CAF50",
     genre: "Dancehall / London, UK", tagline: "R&B and dancehall raised in the same house. The harmony was inevitable.",
-    heroUrl: SUPA_MEDIA + "lickle-bro/hero.png",
+    heroUrl: SUPA_MEDIA + "likkle-bro/hero.png",
     tracks: [
-      { title: "Full Song", url: SUPA_AUDIO + "lickle-bro/full.mp3", full: true },
-      { title: "Preview 1", url: SUPA_AUDIO + "lickle-bro/sample-a.mp3" },
-      { title: "Preview 2", url: SUPA_AUDIO + "lickle-bro/sample-b.mp3" },
-      { title: "Preview 3", url: SUPA_AUDIO + "lickle-bro/sample-c.mp3" },
+      { title: "Full Song", url: SUPA_AUDIO + "likkle-bro/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "likkle-bro/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "likkle-bro/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "likkle-bro/sample-c.mp3" },
     ],
   },
   {
-    slug: "lickle-sis", name: "Lickle Sis", initial: "LS", accent: "#FF5722",
+    slug: "likkle-sis", name: "Likkle Sis", initial: "LS", accent: "#FF5722",
     genre: "Dembow / London, UK", tagline: "Soul at full volume. She is not asking for permission.",
-    heroUrl: SUPA_MEDIA + "lickle-sis/hero.png",
+    heroUrl: SUPA_MEDIA + "likkle-sis/hero.png",
     tracks: [
-      { title: "Full Song", url: SUPA_AUDIO + "lickle-sis/full.mp3", full: true },
-      { title: "Preview 1", url: SUPA_AUDIO + "lickle-sis/sample-a.mp3" },
-      { title: "Preview 2", url: SUPA_AUDIO + "lickle-sis/sample-b.mp3" },
-      { title: "Preview 3", url: SUPA_AUDIO + "lickle-sis/sample-c.mp3" },
+      { title: "Full Song", url: SUPA_AUDIO + "likkle-sis/full.mp3", full: true },
+      { title: "Preview 1", url: SUPA_AUDIO + "likkle-sis/sample-a.mp3" },
+      { title: "Preview 2", url: SUPA_AUDIO + "likkle-sis/sample-b.mp3" },
+      { title: "Preview 3", url: SUPA_AUDIO + "likkle-sis/sample-c.mp3" },
     ],
   },
   {
@@ -309,12 +309,12 @@ const PREVIEW: Record<string, { title: string; path: string }> = {
   "shamanic-resin":     { title: "Real Dream",            path: "shamanic-resin/f420ce12-f399-4a1b-a9ed-b9b3cd012ecb.mp3" },
   "riku":               { title: "Lottery of Love",       path: "riku-hayasaka/lottery-of-love.mp3" },
   "straight-and-narrow":{ title: "Dead Broke",            path: "straight-and-narrow/dead-broke.mp3" },
-  "nilo-wave":          { title: "De Borinquen Pa Jamaica (feat. Lickle Bro)", path: "nilo-wave/de-borinquen-pa-jamaica-feat-lickle-bro.mp3" },
+  "nilo-wave":          { title: "De Borinquen Pa Jamaica (feat. Likkle Bro)", path: "nilo-wave/de-borinquen-pa-jamaica-feat-likkle-bro.mp3" },
   "rustblood-prophets": { title: "Beyond Space and Time", path: "rustblood-prophets/beyond-space-and-time.mp3" },
   "mad-tings":          { title: "Never Broke Us",        path: "mad-tings/never-broke-us.mp3" },
   "vuka":               { title: "Fall Into Rhythm",      path: "vuka/fall-into-rhythm.mp3" },
-  "lickle-bro":         { title: "Let Em",                 path: "lickle-bro/let-em.mp3" },
-  "lickle-sis":         { title: "No Te Me Montes",       path: "lickle-sis/no-te-me-montes.mp3" },
+  "likkle-bro":         { title: "Let Em",                 path: "likkle-bro/let-em.mp3" },
+  "likkle-sis":         { title: "No Te Me Montes",       path: "likkle-sis/no-te-me-montes.mp3" },
   "mr-russell":         { title: "Super Nintendo Sega Genesis Solo Mix", path: "mr-russell/super-nintendo-sega-genesis-solo-mix.mp3" },
 };
 // Same order as the live /roster page (ARTIST_ORDER), so this dropdown always matches
@@ -322,7 +322,7 @@ const PREVIEW: Record<string, { title: string; path: string }> = {
 const TOUR_ARTIST_ORDER = [
   "roxanne", "lex-from-brixton", "shamanic-resin", "riku",
   "straight-and-narrow", "nilo-wave", "rustblood-prophets", "mad-tings",
-  "vuka", "lickle-bro", "lickle-sis", "mr-russell",
+  "vuka", "likkle-bro", "likkle-sis", "mr-russell",
 ];
 const FEATURED: ArtistCard[] = TOUR_ARTIST_ORDER.map((s) => {
   const base = ARTISTS.find((a) => a.slug === s)!;
@@ -403,8 +403,8 @@ function SlidePreview({ slideId, accent }: { slideId: string; accent: string }) 
 // ── Artist Portrait Gallery (label-cta) ───────────────────────────────────────
 const GALLERY_ORDER = [
   "roxanne", "lex-from-brixton", "shamanic-resin",
-  "riku", "nilo-wave", "lickle-bro",
-  "lickle-sis", "mad-tings", "mr-russell",
+  "riku", "nilo-wave", "likkle-bro",
+  "likkle-sis", "mad-tings", "mr-russell",
   "rustblood-prophets", "straight-and-narrow",
 ];
 const GALLERY_ARTISTS = GALLERY_ORDER
