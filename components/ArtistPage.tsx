@@ -1315,59 +1315,18 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); currentUrlRef.current = null; }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
         <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
-          {/* 2026-07-31 per Sean (3rd pass): matches the Vegans Explore SoFlo
-              community-hub pattern exactly, per his reference screenshots -
-              a dark persistent bar (Collapse/Expand pill + breadcrumb) that
-              stays in the same spot in both states, directly above the tab
-              bar, while only the decorative hero above it (portrait/name/
-              tagline/pills/city bg) actually collapses/expands. Starts
-              collapsed on an article drill-down page (no room to read past a
-              big header) and expanded otherwise, but the pill is a real
-              click toggle either way - same as SoFlo's, not just automatic.
-              No "Get Passport"-style CTA on the right - GFS doesn't have a
-              direct equivalent to that action, so that slot just keeps the
-              existing superadmin viewAs indicator when present. */}
-          <div className="crumb-bar">
-            <button
-              type="button"
-              className="crumb-toggle"
-              onClick={() => setHeroCollapsed(v => !v)}
-              aria-expanded={!heroCollapsed}
-            >
-              {/* Matches SoFlo exactly: chevron-up next to "Collapse" (expanded
-                  state, click to collapse), chevron-down next to "Expand"
-                  (collapsed state, click to expand). */}
-              <svg viewBox="0 0 12 12" fill="none" style={{ transform: heroCollapsed ? "none" : "rotate(180deg)" }}>
-                <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {heroCollapsed ? "Expand" : "Collapse"}
-            </button>
-            <nav className="art-crumb" aria-label="Breadcrumb">
-              <a href="/" className="art-crumb-link">GeekFon Society</a>
-              <span className="art-crumb-sep">&rsaquo;</span>
-              <a href="/roster" className="art-crumb-link">Roster</a>
-              <span className="art-crumb-sep">&rsaquo;</span>
-              {activeArticle ? (
-                <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-crumb-link">{c.name || name}</a>
-              ) : (
-                <span className="art-crumb-cur">{name}</span>
-              )}
-              {activeArticle && (
-                <>
-                  <span className="art-crumb-sep">&rsaquo;</span>
-                  <span className="art-crumb-cur">{activeArticle.title}</span>
-                </>
-              )}
-            </nav>
-            {isSuperAdmin && viewAs !== "real" && (
-              <span className="va-indicator">
-                Viewing as: <strong>{viewAs === "public" ? "Visitor" : viewAs.charAt(0).toUpperCase() + viewAs.slice(1)}</strong>
-              </span>
-            )}
-          </div>
+          {/* 2026-07-31 per Sean (4th pass): the dark bar's ORDER was wrong -
+              it was rendering above the decorative hero, but on the SoFlo
+              reference the hero comes first (when expanded) and the dark
+              bar sits BELOW it, directly above the tab bar. Corrected so the
+              hero (if expanded) renders first, then the persistent crumb-bar,
+              then the tab bar - when collapsed, the hero is gone and the
+              crumb-bar is simply the first thing under the global nav,
+              exactly like SoFlo's collapsed state. */}
 
-          {/* Decorative hero - collapses/expands via the toggle above (starts
-              collapsed on an article drill-down page, expanded otherwise) */}
+          {/* Decorative hero - collapses/expands via the toggle in the bar
+              below it (starts collapsed on an article drill-down page,
+              expanded otherwise) */}
           {!heroCollapsed && (
           <div className="bible-head">
 
@@ -1420,6 +1379,52 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             </div>
           </div>
           )}
+
+          {/* Persistent dark bar (Collapse/Expand pill + breadcrumb) - stays
+              in the same spot in both states, directly above the tab bar,
+              matching the Vegans Explore SoFlo community-hub pattern
+              exactly. No "Get Passport"-style CTA on the right - GFS
+              doesn't have a direct equivalent to that action, so that slot
+              just keeps the existing superadmin viewAs indicator when
+              present. */}
+          <div className="crumb-bar">
+            <button
+              type="button"
+              className="crumb-toggle"
+              onClick={() => setHeroCollapsed(v => !v)}
+              aria-expanded={!heroCollapsed}
+            >
+              {/* Matches SoFlo exactly: chevron-up next to "Collapse" (expanded
+                  state, click to collapse), chevron-down next to "Expand"
+                  (collapsed state, click to expand). */}
+              <svg viewBox="0 0 12 12" fill="none" style={{ transform: heroCollapsed ? "none" : "rotate(180deg)" }}>
+                <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {heroCollapsed ? "Expand" : "Collapse"}
+            </button>
+            <nav className="art-crumb" aria-label="Breadcrumb">
+              <a href="/" className="art-crumb-link">GeekFon Society</a>
+              <span className="art-crumb-sep">&rsaquo;</span>
+              <a href="/roster" className="art-crumb-link">Roster</a>
+              <span className="art-crumb-sep">&rsaquo;</span>
+              {activeArticle ? (
+                <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-crumb-link">{c.name || name}</a>
+              ) : (
+                <span className="art-crumb-cur">{name}</span>
+              )}
+              {activeArticle && (
+                <>
+                  <span className="art-crumb-sep">&rsaquo;</span>
+                  <span className="art-crumb-cur">{activeArticle.title}</span>
+                </>
+              )}
+            </nav>
+            {isSuperAdmin && viewAs !== "real" && (
+              <span className="va-indicator">
+                Viewing as: <strong>{viewAs === "public" ? "Visitor" : viewAs.charAt(0).toUpperCase() + viewAs.slice(1)}</strong>
+              </span>
+            )}
+          </div>
 
           {/* Tab bar - always rendered (not just on the non-article view), since
               it sits directly below the persistent crumb-bar in both states. */}
