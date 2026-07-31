@@ -180,7 +180,7 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
   // Fetch profile, audits, and active ads in parallel
   const [profileRes, auditsRes, adsRes, pulseRes] = await Promise.all([
     fetch(
-      `${url}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(slug)}&select=name,profile&limit=1`,
+      `${url}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(slug)}&select=name,profile,updated_at&limit=1`,
       opts
     ),
     fetch(
@@ -213,6 +213,26 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
   const row = rows[0];
   const profile: ArtistContent = { ...(row.profile || {}) };
   if (!profile.name) profile.name = row.name;
+
+  // Fix 2026-07-31 (Sean, direct: an artist's own page still showed the old
+  // hat+necklace portrait after Supabase Storage and gfs_artists.profile
+  // were already corrected). heroUrl/profileUrl point at storage paths that
+  // get overwritten IN PLACE on every portrait update - the URL itself never
+  // changes, so a browser that already fetched that exact URL once can keep
+  // serving the old bytes indefinitely no matter how many times the file is
+  // replaced underneath it. This route already force-dynamics the *data*
+  // fresh on every request (see comment at top of file), but that doesn't
+  // stop the *image* from being served out of browser/CDN cache. Appending
+  // the row's updated_at as a query param forces a fresh image fetch
+  // whenever the artist record (and by convention, its art) actually
+  // changes. Same class of bug fixed the same day in the HQ Pulse Studio
+  // image drill-in and on this site's /roster grid.
+  if (row.updated_at) {
+    const bust = (u: string | undefined) =>
+      u ? `${u}${u.includes("?") ? "&" : "?"}v=${encodeURIComponent(row.updated_at)}` : u;
+    if (profile.heroUrl) profile.heroUrl = bust(profile.heroUrl);
+    if (profile.profileUrl) profile.profileUrl = bust(profile.profileUrl);
+  }
 
   // Pulse Studios live-pipe test: override profile.news with the shared-store
   // version when present, so GeekFon's Pulse tab is proven to pull from the
