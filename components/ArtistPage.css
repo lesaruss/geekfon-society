@@ -4,13 +4,19 @@
 /* Black header */
 .bible-head{background:#111;color:#fff;padding:0 0 28px;border-bottom:4px solid var(--rx)}
 
-/* Collapsed header for a drill-down article page, per Sean 2026-07-31: the
-   big .bible-head (hero portrait, name, tagline, pills) is replaced entirely
-   by this slim breadcrumb bar when activeArticle is set, so there's no big
-   header to scroll past to reach the article - matches the pattern already
-   used on Vegans Explore's listing/article drill-down. */
-.art-topbar{background:#fff;border-bottom:1px solid var(--lr-border);padding:16px 40px;position:sticky;top:60px;z-index:6}
-.art-topbar .art-crumb{padding-bottom:0}
+/* Persistent breadcrumb bar, per Sean 2026-07-31 (follow-up to the first
+   collapse pass): the breadcrumb used to live inside the decorative
+   .bible-head (dark theme, .head-crumb) on the normal page and in a
+   one-off .art-topbar only on the article page - two different bars in two
+   different places. Sean asked to "move the breadcrumbs down" so there's
+   just ONE breadcrumb bar, always rendered right above the tab bar in both
+   states ("part of that menu full time"). Only the decorative hero below it
+   (portrait, name, tagline, pills, city bg) collapses away on a drill-down
+   article page - this bar and the tab bar underneath it never do. */
+.crumb-bar{display:flex;align-items:center;background:#fff;border-bottom:1px solid var(--lr-border);padding:13px 40px;position:sticky;top:60px;z-index:7}
+.crumb-bar .art-crumb{padding-bottom:0}
+.crumb-bar .va-indicator{color:rgba(26,26,26,.5)}
+.crumb-bar .va-indicator strong{color:var(--rx)}
 
 .head-topbar{
   display:flex;align-items:center;gap:14px;
@@ -71,7 +77,9 @@
 .vote-modal-dismiss:hover{color:var(--lr-text);border-color:var(--lr-text-30)}
 @media(max-width:480px){.vote-modal{padding:28px 20px 22px}}
 
-.tabbar{position:sticky;top:60px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);display:flex;gap:2px;padding:0 40px}
+/* top:102px = 60px global nav + ~42px .crumb-bar, so this stacks directly
+   below the persistent breadcrumb bar instead of overlapping it. */
+.tabbar{position:sticky;top:102px;z-index:6;background:#fff;border-bottom:1px solid var(--lr-border);display:flex;gap:2px;padding:0 40px}
 .tab{position:relative;font-family:inherit;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(26,26,26,.68);background:none;border:none;padding:18px 18px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
 .tab[aria-selected="true"]{color:var(--rx-text)}
 .tab[aria-selected="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--rx)}
@@ -127,7 +135,12 @@
   .head-tagline{font-size:13px;margin-top:6px}
   .pill-row{margin-top:10px}
   .head-topbar{padding:14px 16px 16px}
-  .art-topbar{padding:14px 16px;top:0}
+  /* Non-sticky on mobile - there's a separate .tabbar-mobile dropdown
+     pattern (sticky top:60px) already reserving that stacking slot below
+     the global nav, and stacking a second sticky bar on top of it without
+     device testing risked overlap. Desktop keeps the persistent sticky
+     behavior Sean asked for; revisit mobile stickiness once confirmed. */
+  .crumb-bar{padding:12px 16px;position:static}
   .tabbar{padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tab{padding:14px 12px;font-size:12px}
 }
