@@ -4,19 +4,17 @@
 /* Black header */
 .bible-head{background:#111;color:#fff;padding:0 0 28px;border-bottom:4px solid var(--rx)}
 
-/* Persistent breadcrumb bar, per Sean 2026-07-31 (follow-up to the first
-   collapse pass): the breadcrumb used to live inside the decorative
-   .bible-head (dark theme, .head-crumb) on the normal page and in a
-   one-off .art-topbar only on the article page - two different bars in two
-   different places. Sean asked to "move the breadcrumbs down" so there's
-   just ONE breadcrumb bar, always rendered right above the tab bar in both
-   states ("part of that menu full time"). Only the decorative hero below it
-   (portrait, name, tagline, pills, city bg) collapses away on a drill-down
-   article page - this bar and the tab bar underneath it never do. */
-.crumb-bar{display:flex;align-items:center;background:#fff;border-bottom:1px solid var(--lr-border);padding:13px 40px;position:sticky;top:60px;z-index:7}
-.crumb-bar .art-crumb{padding-bottom:0}
-.crumb-bar .va-indicator{color:rgba(26,26,26,.5)}
-.crumb-bar .va-indicator strong{color:var(--rx)}
+/* Persistent breadcrumb bar, per Sean 2026-07-31 (3rd pass, matched to his
+   Vegans Explore SoFlo community-hub reference screenshots): a single dark
+   bar - Collapse/Expand pill, then breadcrumb - always rendered right above
+   the tab bar in both states ("part of that menu full time"), styled dark
+   like SoFlo's, not the earlier white version. Only the decorative hero
+   below it (portrait, name, tagline, pills, city bg) collapses/expands via
+   the pill - this bar and the tab bar underneath it never do. */
+.crumb-bar{display:flex;align-items:center;gap:20px;background:#141414;border-bottom:1px solid rgba(255,255,255,.08);padding:13px 40px;position:sticky;top:60px;z-index:7}
+.crumb-toggle{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
+.crumb-toggle:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.06)}
+.crumb-toggle svg{width:11px;height:11px;transition:transform .2s;flex-shrink:0}
 
 .head-topbar{
   display:flex;align-items:center;gap:14px;
@@ -140,7 +138,9 @@
      the global nav, and stacking a second sticky bar on top of it without
      device testing risked overlap. Desktop keeps the persistent sticky
      behavior Sean asked for; revisit mobile stickiness once confirmed. */
-  .crumb-bar{padding:12px 16px;position:static}
+  .crumb-bar{padding:12px 16px;gap:10px;position:static}
+  .crumb-toggle{padding:6px 10px;font-size:10px}
+  .art-crumb{font-size:10px}
   .tabbar{padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tab{padding:14px 12px;font-size:12px}
 }
@@ -861,10 +861,12 @@
 
 /* Article detail view inside body-main */
 .art-view{padding:0 0 40px}
-.art-crumb{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--lr-text-30);padding-bottom:24px;flex-wrap:wrap}
-.art-crumb-link{color:var(--lr-text-30);text-decoration:none;transition:color .15s}.art-crumb-link:hover{color:var(--lr-text)}
-.art-crumb-sep{opacity:.4}
-.art-crumb-cur{color:var(--lr-text-50)}
+/* Only used inside .crumb-bar (dark) as of the 2026-07-31 consolidation -
+   colors are dark-theme (white-on-black), not the site's usual light theme. */
+.art-crumb{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);flex-wrap:wrap;min-width:0}
+.art-crumb-link{color:rgba(255,255,255,.55);text-decoration:none;transition:color .15s}.art-crumb-link:hover{color:#fff}
+.art-crumb-sep{opacity:.35;color:#fff}
+.art-crumb-cur{color:var(--rx)}
 .art-hero{width:100%;border-radius:14px;overflow:hidden;margin-bottom:28px;aspect-ratio:16/9;background:var(--lr-surface)}.art-hero img{width:100%;height:100%;object-fit:cover;display:block}.art-hero-video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
 .art-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .art-tag{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;background:var(--rx,#c084fc);color:#fff;padding:3px 10px;border-radius:99px}
