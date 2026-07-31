@@ -1274,11 +1274,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     return () => window.removeEventListener("keydown", onKey);
   }, [showVoteModal]);
 
-  const crumb = [
-    { label: "GeekFon", href: "/" },
-    { label: "Roster", href: "/roster" },
-    { label: name },
-  ];
+  // Note: the old `crumb` array (GeekFon/Roster/name) that fed the
+  // dark-theme .head-crumb nav is gone as of 2026-07-31 - the persistent
+  // .crumb-bar below is built inline instead so it can also append the
+  // article title when activeArticle is set.
 
   // ââ Pulse feed ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   const msg = c.message || {};
@@ -1309,28 +1308,46 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); currentUrlRef.current = null; }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
         <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
-          {/* 2026-07-31 per Sean: on a drill-down page (activeArticle set),
-              collapse the big hero header down to a slim breadcrumb bar
-              instead of showing it in full above the article - same pattern
-              already used on Vegans Explore's listing/article drill-down
-              (directory/listing.html's #article-view + .article-topbar,
-              which swaps out the whole big header for just a breadcrumb so
-              there's no scrolling past a large header to reach the content).
-              The tab bar is hidden the same way for the same reason - tabs
-              don't apply mid-article anyway. */}
-          {activeArticle ? (
-            <div className="art-topbar">
-              <nav className="art-crumb" aria-label="Breadcrumb">
-                <a href="/" className="art-crumb-link">GeekFon Society</a>
-                <span className="art-crumb-sep">&rsaquo;</span>
-                <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-crumb-link">{c.name || ""}</a>
-                <span className="art-crumb-sep">&rsaquo;</span>
-                <span className="art-crumb-cur">{activeArticle.title}</span>
-              </nav>
-            </div>
-          ) : (
-          <>
-          {/* Black header - city bg is scoped inside here */}
+          {/* 2026-07-31 per Sean (2nd pass): the first version of this fix
+              rendered TWO different bars - the full .bible-head (dark theme,
+              .head-crumb) on the normal page, and a one-off .art-topbar only
+              on the article page. Sean corrected that: there should be ONE
+              persistent breadcrumb bar, part of the tab bar row, shown in
+              BOTH states ("part of that menu full time"). Only the
+              decorative hero below it (portrait/name/tagline/pills/city bg)
+              actually collapses away on an article drill-down page - same
+              collapse idea as Vegans Explore's listing/article drill-down
+              (directory/listing.html's #article-view + .article-topbar),
+              just with the crumb bar itself no longer part of what hides.
+              The tab bar is now always rendered too, since it sits directly
+              under the crumb bar in both states. */}
+          <div className="crumb-bar">
+            <nav className="art-crumb" aria-label="Breadcrumb">
+              <a href="/" className="art-crumb-link">GeekFon Society</a>
+              <span className="art-crumb-sep">&rsaquo;</span>
+              <a href="/roster" className="art-crumb-link">Roster</a>
+              <span className="art-crumb-sep">&rsaquo;</span>
+              {activeArticle ? (
+                <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-crumb-link">{c.name || name}</a>
+              ) : (
+                <span className="art-crumb-cur">{name}</span>
+              )}
+              {activeArticle && (
+                <>
+                  <span className="art-crumb-sep">&rsaquo;</span>
+                  <span className="art-crumb-cur">{activeArticle.title}</span>
+                </>
+              )}
+            </nav>
+            {isSuperAdmin && viewAs !== "real" && (
+              <span className="va-indicator">
+                Viewing as: <strong>{viewAs === "public" ? "Visitor" : viewAs.charAt(0).toUpperCase() + viewAs.slice(1)}</strong>
+              </span>
+            )}
+          </div>
+
+          {/* Decorative hero - collapses away entirely on an article drill-down page */}
+          {!activeArticle && (
           <div className="bible-head">
 
             {/* City background layers - absolute, behind all content */}
@@ -1350,26 +1367,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 </div>
               </>
             )}
-
-            {/* Logo + breadcrumb bar */}
-            <div className="head-topbar">
-              <nav className="head-crumb" aria-label="Breadcrumb">
-                {crumb.map((x, i, a) => (
-                  <span key={i} className="head-crumb-item">
-                    {x.href
-                      ? <a href={x.href}>{x.label}</a>
-                      : <span className="cur">{x.label}</span>
-                    }
-                    {i < a.length - 1 && <span className="sep">/</span>}
-                  </span>
-                ))}
-              </nav>
-              {isSuperAdmin && viewAs !== "real" && (
-                <span className="va-indicator">
-                  Viewing as: <strong>{viewAs === "public" ? "Visitor" : viewAs.charAt(0).toUpperCase() + viewAs.slice(1)}</strong>
-                </span>
-              )}
-            </div>
 
             {/* Artist hero + meta */}
             <div className="head-grid">
@@ -1401,8 +1398,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               </div>
             </div>
           </div>
+          )}
 
-          {/* Tab bar */}
+          {/* Tab bar - always rendered (not just on the non-article view), since
+              it sits directly below the persistent crumb-bar in both states. */}
           {(() => {
             // Fixed 2026-07-26 per Sean: this bare `isSuperAdmin ||` bypassed the
             // view-as simulator entirely - switching to "view as: public" still
@@ -1438,8 +1437,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               </div>
             );
           })()}
-          </>
-          )}
 
           {/* Two-column body: content + billboard */}
           <div className="body-layout">
