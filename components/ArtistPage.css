@@ -660,6 +660,20 @@
 .sf-name{font-size:14px;font-weight:800;color:var(--lr-text);line-height:1.2}
 .sf-time{font-size:12px;color:var(--lr-text-50)}
 .sf-pin{margin-left:auto;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--rx-text);background:var(--rx-tint);padding:4px 9px;border-radius:20px;flex-shrink:0}
+/* Like/Comment relocated from the bottom .sf-interact-row into this header
+   row, per Sean 2026-07-31 - see the comment in SocialFeed.tsx for why. This
+   wrapper is what actually pushes both the Pinned badge and the two icon
+   buttons to the right edge of the header now; .sf-pin keeps its own
+   margin-left:auto harmlessly (it's a no-op as the first/only-left item
+   here) so it still behaves the same if this wrapper is ever restructured. */
+.sf-header-actions{margin-left:auto;display:flex;align-items:center;gap:4px;flex-shrink:0}
+.sf-header-actions .sf-pin{margin-left:0}
+.sf-header-icon-btn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:none;border:none;color:var(--lr-text-50);cursor:pointer;transition:background .12s,color .12s;flex-shrink:0}
+.sf-header-icon-btn:hover:not(:disabled){background:var(--lr-bg);color:var(--lr-text)}
+.sf-header-icon-btn:disabled{opacity:.6;cursor:default}
+.sf-header-icon-btn svg{width:18px;height:18px;flex-shrink:0}
+.sf-header-icon-btn.sf-like-active{color:var(--rx-text)}
+.sf-header-icon-btn.sf-like-active svg{fill:var(--rx);stroke:var(--rx)}
 .sf-text{font-size:14.5px;line-height:1.6;color:var(--lr-text);margin:0;padding:0 16px 12px;white-space:pre-wrap;max-height:22vh;overflow-y:auto;overscroll-behavior:contain}
 .sf-liked-row{display:flex;align-items:center;gap:8px;padding:12px 16px 4px}
 .sf-liker-stack{display:flex}
