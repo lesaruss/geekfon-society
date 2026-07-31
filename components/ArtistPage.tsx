@@ -1417,7 +1417,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               {heroCollapsed ? "Expand" : "Collapse"}
             </button>
             <nav className="art-crumb" aria-label="Breadcrumb">
-              <a href="/" className="art-crumb-link">GeekFon Society</a>
+              {/* 2026-07-31 per Sean: "GeekFon Society" was wrapping the
+                  crumb-bar to two rows once the Collapse/Expand pill sat
+                  next to it, especially on longer artist names (Shamanic
+                  Resin). Shortened to just "GeekFon" to buy back the space. */}
+              <a href="/" className="art-crumb-link">GeekFon</a>
               <span className="art-crumb-sep">&rsaquo;</span>
               <a href="/roster" className="art-crumb-link">Roster</a>
               <span className="art-crumb-sep">&rsaquo;</span>
