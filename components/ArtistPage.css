@@ -4,6 +4,14 @@
 /* Black header */
 .bible-head{background:#111;color:#fff;padding:0 0 28px;border-bottom:4px solid var(--rx)}
 
+/* Collapsed header for a drill-down article page, per Sean 2026-07-31: the
+   big .bible-head (hero portrait, name, tagline, pills) is replaced entirely
+   by this slim breadcrumb bar when activeArticle is set, so there's no big
+   header to scroll past to reach the article - matches the pattern already
+   used on Vegans Explore's listing/article drill-down. */
+.art-topbar{background:#fff;border-bottom:1px solid var(--lr-border);padding:16px 40px;position:sticky;top:60px;z-index:6}
+.art-topbar .art-crumb{padding-bottom:0}
+
 .head-topbar{
   display:flex;align-items:center;gap:14px;
   padding:16px 40px 20px;
@@ -119,6 +127,7 @@
   .head-tagline{font-size:13px;margin-top:6px}
   .pill-row{margin-top:10px}
   .head-topbar{padding:14px 16px 16px}
+  .art-topbar{padding:14px 16px;top:0}
   .tabbar{padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tab{padding:14px 12px;font-size:12px}
 }
