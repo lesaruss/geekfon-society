@@ -865,10 +865,17 @@
 .art-view{padding:0 0 40px}
 /* Only used inside .crumb-bar (dark) as of the 2026-07-31 consolidation -
    colors are dark-theme (white-on-black), not the site's usual light theme. */
-.art-crumb{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);flex-wrap:wrap;min-width:0}
-.art-crumb-link{color:rgba(255,255,255,.55);text-decoration:none;transition:color .15s}.art-crumb-link:hover{color:#fff}
-.art-crumb-sep{opacity:.35;color:#fff}
-.art-crumb-cur{color:var(--rx)}
+/* 2026-07-31 per Sean: was flex-wrap:wrap, which pushed the crumb-bar to two
+   rows on longer artist names (Rustblood Prophets) once there wasn't room
+   next to the Collapse/Expand pill - mainly a mobile-width problem, desktop
+   always has room. Switched to nowrap + ellipsis truncation instead: each
+   segment shrinks and truncates with "..." rather than wrapping. Doesn't
+   change anything on desktop (never runs out of room there), only kicks in
+   once the row is actually too narrow to fit. */
+.art-crumb{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);flex-wrap:nowrap;overflow:hidden;min-width:0}
+.art-crumb-link{color:rgba(255,255,255,.55);text-decoration:none;transition:color .15s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.art-crumb-link:hover{color:#fff}
+.art-crumb-sep{opacity:.35;color:#fff;flex-shrink:0}
+.art-crumb-cur{color:var(--rx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .art-hero{width:100%;border-radius:14px;overflow:hidden;margin-bottom:28px;aspect-ratio:16/9;background:var(--lr-surface)}.art-hero img{width:100%;height:100%;object-fit:cover;display:block}.art-hero-video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
 .art-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .art-tag{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;background:var(--rx,#c084fc);color:#fff;padding:3px 10px;border-radius:99px}
