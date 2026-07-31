@@ -561,7 +561,7 @@ function BiblePanel({
 // (see gfs_artist_unlocks.season); update this when Season 2 launches.
 const CURRENT_SEASON = "Season 1";
 
-export default function ArtistPage({ content, cityBg, activeArticle, slug }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string } | null; activeArticle?: News; slug?: string }) {
+export default function ArtistPage({ content, cityBg, activeArticle, slug }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string; position?: string } | null; activeArticle?: News; slug?: string }) {
   const [tab, setTab] = useState(() => {
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("tab");
@@ -575,9 +575,19 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // exactly - a dark persistent bar (toggle + breadcrumb) that stays put while
   // just the decorative hero above it collapses/expands. On an article
   // drill-down page it starts collapsed (no room to read past a big header);
-  // otherwise it starts expanded. The toggle itself is a real click handler
-  // in both cases, same as SoFlo's Collapse/Expand pill.
+  // otherwise it starts expanded (default landing tab is Music). The toggle
+  // itself is a real click handler in both cases, same as SoFlo's
+  // Collapse/Expand pill.
   const [heroCollapsed, setHeroCollapsed] = useState<boolean>(!!activeArticle);
+  // 2026-07-31 (2nd pass) per Sean: the ONLY automatic collapse trigger is
+  // landing on/switching to the Pulse tab (it's content-dense, same reason
+  // an article drill-down starts collapsed). Moving to any other tab after
+  // that must NOT auto re-expand it - once collapsed, it stays collapsed
+  // until the user clicks Expand themselves or does a full page refresh
+  // (which remounts the component and re-runs this effect from scratch).
+  useEffect(() => {
+    if (tab === "pulse") setHeroCollapsed(true);
+  }, [tab]);
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string | null>(null);
@@ -1342,7 +1352,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 <div className="apg-city-stage" aria-hidden="true">
                   <picture>
                     <source media="(max-width:768px)" srcSet={cityBg.mobile} />
-                    <img src={cityBg.desktop} alt="" aria-hidden="true" />
+                    {/* 2026-07-31 per Sean: per-artist crop override - some
+                        source images (Nilo Wave's) have solid black margin
+                        baked into an edge, so the default "center bottom"
+                        CSS anchor isn't always right. */}
+                    <img src={cityBg.desktop} alt="" aria-hidden="true" style={cityBg.position ? { objectPosition: cityBg.position } : undefined} />
                   </picture>
                 </div>
               </>
