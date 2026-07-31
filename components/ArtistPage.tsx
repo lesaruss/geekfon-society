@@ -571,6 +571,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     }
     return "music";
   });
+  // 2026-07-31 per Sean: match the Vegans Explore SoFlo community-hub pattern
+  // exactly - a dark persistent bar (toggle + breadcrumb) that stays put while
+  // just the decorative hero above it collapses/expands. On an article
+  // drill-down page it starts collapsed (no room to read past a big header);
+  // otherwise it starts expanded. The toggle itself is a real click handler
+  // in both cases, same as SoFlo's Collapse/Expand pill.
+  const [heroCollapsed, setHeroCollapsed] = useState<boolean>(!!activeArticle);
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string | null>(null);
@@ -1308,20 +1315,30 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); currentUrlRef.current = null; }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
         <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
-          {/* 2026-07-31 per Sean (2nd pass): the first version of this fix
-              rendered TWO different bars - the full .bible-head (dark theme,
-              .head-crumb) on the normal page, and a one-off .art-topbar only
-              on the article page. Sean corrected that: there should be ONE
-              persistent breadcrumb bar, part of the tab bar row, shown in
-              BOTH states ("part of that menu full time"). Only the
-              decorative hero below it (portrait/name/tagline/pills/city bg)
-              actually collapses away on an article drill-down page - same
-              collapse idea as Vegans Explore's listing/article drill-down
-              (directory/listing.html's #article-view + .article-topbar),
-              just with the crumb bar itself no longer part of what hides.
-              The tab bar is now always rendered too, since it sits directly
-              under the crumb bar in both states. */}
+          {/* 2026-07-31 per Sean (3rd pass): matches the Vegans Explore SoFlo
+              community-hub pattern exactly, per his reference screenshots -
+              a dark persistent bar (Collapse/Expand pill + breadcrumb) that
+              stays in the same spot in both states, directly above the tab
+              bar, while only the decorative hero above it (portrait/name/
+              tagline/pills/city bg) actually collapses/expands. Starts
+              collapsed on an article drill-down page (no room to read past a
+              big header) and expanded otherwise, but the pill is a real
+              click toggle either way - same as SoFlo's, not just automatic.
+              No "Get Passport"-style CTA on the right - GFS doesn't have a
+              direct equivalent to that action, so that slot just keeps the
+              existing superadmin viewAs indicator when present. */}
           <div className="crumb-bar">
+            <button
+              type="button"
+              className="crumb-toggle"
+              onClick={() => setHeroCollapsed(v => !v)}
+              aria-expanded={!heroCollapsed}
+            >
+              <svg viewBox="0 0 12 12" fill="none" style={{ transform: heroCollapsed ? "rotate(180deg)" : "none" }}>
+                <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {heroCollapsed ? "Expand" : "Collapse"}
+            </button>
             <nav className="art-crumb" aria-label="Breadcrumb">
               <a href="/" className="art-crumb-link">GeekFon Society</a>
               <span className="art-crumb-sep">&rsaquo;</span>
@@ -1346,8 +1363,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             )}
           </div>
 
-          {/* Decorative hero - collapses away entirely on an article drill-down page */}
-          {!activeArticle && (
+          {/* Decorative hero - collapses/expands via the toggle above (starts
+              collapsed on an article drill-down page, expanded otherwise) */}
+          {!heroCollapsed && (
           <div className="bible-head">
 
             {/* City background layers - absolute, behind all content */}
