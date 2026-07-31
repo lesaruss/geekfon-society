@@ -64,6 +64,7 @@ const ARTIST_ORDER = [
 type Artist = {
   slug: string;
   name: string;
+  updated_at?: string;
   profile: {
     heroUrl?: string;
     initial?: string;
@@ -71,6 +72,21 @@ type Artist = {
     tagline?: string;
   };
 };
+
+// Fix 2026-07-31 (Sean, direct: roster card still showed Nilo Wave's old
+// hat+necklace portrait after the DB/storage were already corrected):
+// gfs_artists.profile.heroUrl points at a storage path (hero.png) that gets
+// overwritten IN PLACE every time an artist's portrait is updated - the URL
+// itself never changes. A browser that already fetched that exact URL once
+// can keep serving those old bytes indefinitely, no matter how many times
+// the file underneath is replaced. Same class of bug already fixed the same
+// day in the HQ Pulse Studio image drill-in. Appending the row's updated_at
+// as a query param forces a fresh fetch whenever the artist record (and by
+// convention, its art) actually changes.
+function withCacheBust(url: string | undefined, version: string | undefined): string | undefined {
+  if (!url || !version) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}v=${encodeURIComponent(version)}`;
+}
 
 // Bug fix 2026-07-24: ArtistCard used to be declared *inside* RosterPage(),
 // so every time the 5.2s city-background interval called setCurrent() and
@@ -136,14 +152,21 @@ export default function RosterPage() {
   useEffect(() => {
     const slugList = ARTIST_ORDER.map(s => `"${s}"`).join(",");
     fetch(
-      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile&slug=in.(${slugList})`,
+      `${SUPA}/rest/v1/gfs_artists?select=slug,name,profile,updated_at&slug=in.(${slugList})`,
       { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } }
     )
       .then((r) => r.json())
       .then((data: Artist[]) => {
         if (!Array.isArray(data)) return;
         const ordered = ARTIST_ORDER.map(s => data.find(a => a.slug === s)).filter(Boolean) as Artist[];
-        setArtists(ordered);
+        // Cache-bust each card's portrait so an in-place file replacement
+        // (see withCacheBust above) shows up without anyone needing to
+        // hard-refresh or clear cache.
+        const busted = ordered.map(a => ({
+          ...a,
+          profile: { ...a.profile, heroUrl: withCacheBust(a.profile?.heroUrl, a.updated_at) },
+        }));
+        setArtists(busted);
       })
       .catch(() => {});
   }, []);
