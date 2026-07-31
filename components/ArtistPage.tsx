@@ -1309,6 +1309,27 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); currentUrlRef.current = null; }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
         <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
+          {/* 2026-07-31 per Sean: on a drill-down page (activeArticle set),
+              collapse the big hero header down to a slim breadcrumb bar
+              instead of showing it in full above the article - same pattern
+              already used on Vegans Explore's listing/article drill-down
+              (directory/listing.html's #article-view + .article-topbar,
+              which swaps out the whole big header for just a breadcrumb so
+              there's no scrolling past a large header to reach the content).
+              The tab bar is hidden the same way for the same reason - tabs
+              don't apply mid-article anyway. */}
+          {activeArticle ? (
+            <div className="art-topbar">
+              <nav className="art-crumb" aria-label="Breadcrumb">
+                <a href="/" className="art-crumb-link">GeekFon Society</a>
+                <span className="art-crumb-sep">&rsaquo;</span>
+                <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-crumb-link">{c.name || ""}</a>
+                <span className="art-crumb-sep">&rsaquo;</span>
+                <span className="art-crumb-cur">{activeArticle.title}</span>
+              </nav>
+            </div>
+          ) : (
+          <>
           {/* Black header - city bg is scoped inside here */}
           <div className="bible-head">
 
@@ -1417,6 +1438,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               </div>
             );
           })()}
+          </>
+          )}
 
           {/* Two-column body: content + billboard */}
           <div className="body-layout">
@@ -1425,13 +1448,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               {/* Article detail view â rendered when activeArticle is passed */}
               {activeArticle ? (
                 <div className="art-view">
-                  <nav className="art-crumb">
-                    <a href="/" className="art-crumb-link">GeekFon Society</a>
-                    <span className="art-crumb-sep">âº</span>
-                    <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-crumb-link">{c.name || ""}</a>
-                    <span className="art-crumb-sep">âº</span>
-                    <span className="art-crumb-cur">{activeArticle.title}</span>
-                  </nav>
+                  {/* Breadcrumb moved up to .art-topbar, above the (now-hidden)
+                      big header, per Sean 2026-07-31 - not duplicated here. */}
                   {activeArticle.videoUrl ? (
                     <div className="art-hero"><video src={activeArticle.videoUrl} poster={activeArticle.thumb || undefined} controls playsInline className="art-hero-video" /></div>
                   ) : activeArticle.thumb ? (
