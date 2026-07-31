@@ -2,7 +2,9 @@
 .apg{max-width:none;margin:0;padding:0 0 80px}
 
 /* Black header */
-.bible-head{background:#111;color:#fff;padding:0 0 28px;border-bottom:4px solid var(--rx)}
+/* 2026-07-31 per Sean: added top padding - the portrait was sitting flush
+   against the top nav/crumb-bar with zero breathing room above it. */
+.bible-head{background:#111;color:#fff;padding:28px 0 28px;border-bottom:4px solid var(--rx)}
 
 /* Persistent breadcrumb bar, per Sean 2026-07-31 (3rd pass, matched to his
    Vegans Explore SoFlo community-hub reference screenshots): a single dark
