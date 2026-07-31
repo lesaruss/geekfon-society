@@ -1334,7 +1334,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
               onClick={() => setHeroCollapsed(v => !v)}
               aria-expanded={!heroCollapsed}
             >
-              <svg viewBox="0 0 12 12" fill="none" style={{ transform: heroCollapsed ? "rotate(180deg)" : "none" }}>
+              {/* Matches SoFlo exactly: chevron-up next to "Collapse" (expanded
+                  state, click to collapse), chevron-down next to "Expand"
+                  (collapsed state, click to expand). */}
+              <svg viewBox="0 0 12 12" fill="none" style={{ transform: heroCollapsed ? "none" : "rotate(180deg)" }}>
                 <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {heroCollapsed ? "Expand" : "Collapse"}
