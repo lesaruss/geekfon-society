@@ -590,7 +590,39 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
           <div className="sf-name">{name}</div>
           <div className="sf-time">{formatDate(post.timestamp)}</div>
         </div>
-        {post.pinned && <div className="sf-pin">Pinned</div>}
+        {/* Like/Comment moved up here from the bottom of the card, per Sean
+            2026-07-31: on desktop, opening a post in the lightbox with a tall
+            image and a long caption pushed the old bottom interact row out of
+            view entirely - no way to see or reach Like/Comment without
+            scrolling past the caption first. Pinning them to this header row
+            instead means they're always visible and reachable regardless of
+            image height or caption length; the card doesn't need to resize,
+            and the caption/liked-by content below is free to run long or
+            scroll with no downside now. Same handlers as before (toggleLike,
+            toggleCommentPanel) and the same comment overlay/like behavior -
+            only the layout position changed. */}
+        <div className="sf-header-actions">
+          {post.pinned && <div className="sf-pin">Pinned</div>}
+          <button
+            type="button"
+            className={`sf-header-icon-btn${likedByMe ? " sf-like-active" : ""}`}
+            onClick={toggleLike}
+            disabled={likeBusy}
+            aria-label={likedByMe ? "Unlike" : "Like"}
+            title={likedByMe ? "Unlike" : "Like"}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
+          </button>
+          <button
+            type="button"
+            className="sf-header-icon-btn"
+            onClick={toggleCommentPanel}
+            aria-label="Comment"
+            title="Comment"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" /></svg>
+          </button>
+        </div>
       </div>
 
       {caption && <p className="sf-text">{caption}</p>}
@@ -613,17 +645,6 @@ export function PostCard({ post, artistSlug, name, avatarUrl, tierRank = 1, isAd
           </div>
         </div>
       )}
-
-      <div className="sf-interact-row">
-        <button type="button" className={`sf-interact-btn${likedByMe ? " sf-like-active" : ""}`} onClick={toggleLike} disabled={likeBusy}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
-          {likedByMe ? "Liked" : "Like"}
-        </button>
-        <button type="button" className="sf-interact-btn" onClick={toggleCommentPanel}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" /></svg>
-          Comment
-        </button>
-      </div>
     </article>
   );
 }
