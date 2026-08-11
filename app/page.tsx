@@ -90,6 +90,24 @@ export default function HomePage() {
   const [current, setCurrent] = useState(0);
   const [fonIdx, setFonIdx] = useState(0);
   const currentRef = useRef(0);
+  // Perf fix 2026-08-11 (Sean reported geekfon.ai loading slowly + background
+  // not showing correctly): all 7 city panels used to render a real <img> src
+  // on mount, so the browser fetched all 7 full-res backgrounds (~1.5MB each,
+  // ~10MB total) up front even though only one panel is ever visible. The
+  // Orlando panel is also the one background hosted on Supabase storage with
+  // cache-control: no-cache (every other city is on the CloudFront CDN with
+  // immutable caching) - on a slow connection that request could still be in
+  // flight when the carousel rotated to it, showing a blank/broken panel.
+  // Fix: only mount a real <img> src for the current panel and the one that's
+  // up next; each city now gets its own ~5.2s dwell window to finish loading
+  // before it's ever displayed, instead of all 7 competing for bandwidth at
+  // once. `loading="lazy"` was tried first but doesn't help here - every
+  // panel occupies the same full-viewport layout box (position varies only
+  // via CSS transform), so the browser's viewport-based lazy-load heuristic
+  // treats all 7 as already visible.
+  const [loadedCities, setLoadedCities] = useState<Set<number>>(
+    () => new Set([0, 1 % CITIES.length])
+  );
   const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -139,6 +157,18 @@ export default function HomePage() {
 
     currentRef.current = next;
     setCurrent(next);
+    // Make sure `next` itself is loaded (covers manual dot-clicks that jump
+    // ahead of the sequential preload below), and kick off the fetch for the
+    // city after `next` now, so it has this whole dwell period to finish
+    // loading before it's ever the active panel.
+    const upcoming = (next + 1) % CITIES.length;
+    setLoadedCities((prev) => {
+      if (prev.has(next) && prev.has(upcoming)) return prev;
+      const copy = new Set(prev);
+      copy.add(next);
+      copy.add(upcoming);
+      return copy;
+    });
   }, []);
 
   useEffect(() => {
@@ -347,10 +377,12 @@ export default function HomePage() {
             className="city-panel"
             ref={(el) => { panelRefs.current[i] = el; }}
           >
-            <picture>
-              <source media="(max-width: 768px)" srcSet={c.mobile} />
-              <img src={c.desktop} alt="" aria-hidden="true" />
-            </picture>
+            {loadedCities.has(i) && (
+              <picture>
+                <source media="(max-width: 768px)" srcSet={c.mobile} />
+                <img src={c.desktop} alt="" aria-hidden="true" />
+              </picture>
+            )}
           </div>
         ))}
       </div>
