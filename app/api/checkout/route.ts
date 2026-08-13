@@ -21,7 +21,10 @@ const LESARS_MAP: Record<string, number> = {
   "pack-starter":  500,
   "pack-standard": 1000,
   "pack-power":    5000,
-  "all-access":    500,
+  // Universal points convention (locked 2026-08-13): $1 = 100 points, so the
+  // $11/mo All Access tier grants 1,100 points/month, not the old placeholder
+  // 500. See knowledge_records exploration-universal-points-ladder.
+  "all-access":    1100,
   "passport":      111,
   "artist-unlock": 0,
 };
