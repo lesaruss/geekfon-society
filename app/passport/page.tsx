@@ -340,8 +340,9 @@ export default function PassportPage() {
                 <div className="pp-hero-price">Free to Join</div>
                 <h1 className="pp-hero-title">GeekFon Passport</h1>
                 <p className="pp-hero-sub">
-                  Your membership into the GeekFon universe. Stream every release for free, forever,
-                  and unlock any artist&apos;s full catalog for $11 whenever you&apos;re ready.
+                  Your membership into the GeekFon universe. Stream every release for free, forever.
+                  Go All Access for $11/month to unlock every artist and get 1,100 points a month
+                  to download tracks and take them with you.
                 </p>
                 <button className="pp-hero-cta" onClick={handleNext}>
                   Get Your Passport
