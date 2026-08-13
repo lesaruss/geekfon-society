@@ -1974,7 +1974,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                 // full access. hasFullAccess folds that bypass into the same check as an
                 // actual paid unlock, so the CTA only shows to people who'd actually benefit
                 // from clicking it.
-                const hasFullAccess = unlockedArtist || simulatingFullAccess || (isSuperAdmin && viewAs === "real");
+                const hasFullAccess = unlockedArtist || hasAllAccessTier || simulatingFullAccess || (isSuperAdmin && viewAs === "real");
 
                 function rowLyricsFor(t: Track) {
                   const hasTranslation = !!(t.lyricsEn && t.lyricsOriginalLang && t.lyricsOriginalLang !== "en");
