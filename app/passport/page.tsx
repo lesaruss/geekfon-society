@@ -20,8 +20,22 @@ const PERKS = [
     icon: "◉",
     short: "Radio",
     title: "GeekFon Radio",
-    desc: "24/7 members-only radio across every artist. Your Passport is the only ticket in.",
+    desc: "24/7 rotation across every artist, free for anyone to listen - no account needed. Sign up to vote on the leaderboard and unlock full catalogs.",
     accent: "#E91E8C",
+  },
+  {
+    icon: "◈",
+    short: "All Access",
+    title: "$11/mo All Access",
+    desc: "One membership, every artist. $11/month unlocks the full catalog across the whole roster and drops 1,100 points into your wallet every month - no per-artist unlocking.",
+    accent: "#AAFF00",
+  },
+  {
+    icon: "⬡",
+    short: "Points",
+    title: "Points for Downloads",
+    desc: "Streaming is always included. Spend points only when you want to take a song with you - download it to keep and use anywhere, off the platform, for a flat 150 points per track.",
+    accent: "#00BCD4",
   },
   {
     icon: "★",
