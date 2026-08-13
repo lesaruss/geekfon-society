@@ -966,6 +966,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // real $11 unlock for the artist currently being viewed.
   const simulatingFullAccess = isSuperAdmin && (viewAs === "plus" || viewAs === "pro");
 
+  // 2026-08-13: the $11/mo All Access subscription (gfs_members.tier = "all-access",
+  // set by the Stripe/RevenueCat webhooks on purchase) grants full catalog access
+  // across every artist, the same as a per-artist unlock but universe-wide. Before
+  // this, userTier was fetched but never checked here - only the per-artist
+  // unlockedArtist row and the superadmin simulator bypassed gating, so a real
+  // paying all-access subscriber saw the exact same preview caps as a free member.
+  // "lifetime" (STRIPE_PRICE_LIFETIME, $111 one-time) gets the same bypass.
+  const hasAllAccessTier = userTier === "all-access" || userTier === "lifetime";
+
   // 2026-07-26 per Sean: a track's Song Manager Tier (public/preview="Passport"/
   // members="Plus"/pro="Pro") now also gates playback AFTER release, not just
   // before it. Pre-release, the gate stays exactly what it was (registered vs
