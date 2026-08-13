@@ -400,22 +400,28 @@ export default function PassportPage() {
               </div>
             )}
 
-            {/* Slide 3: Join - single free tier. All Access ($11/mo) and the Points economy
-                were retired 2026-07-23; the only paid mechanic now is the one-time $11
-                per-artist unlock, sold on each artist's own page. */}
+            {/* Slide 3: Join - two tiers. Relocked 2026-08-13 per Sean: universal
+                $1 = 100 points convention. Free stays pay-as-you-go (buy points,
+                or unlock one artist at a time for $11 on that artist's own page).
+                All Access is $11/month, unlocks every artist's full catalog flat
+                (no per-artist unlocking), and drops 1,100 points/month into the
+                wallet - points spend only on downloading tracks to keep off-platform,
+                streaming itself is never metered. See knowledge_records
+                exploration-universal-points-ladder for the locked convention. */}
             {slideIdx === 2 && (
               <div className="pp-pricing-wrap">
                 <div className="pp-pricing-label">Join GeekFon Society</div>
-                <h2 className="pp-pricing-heading">Free to join. Pay only for what you love.</h2>
+                <h2 className="pp-pricing-heading">Free to join. Go All Access whenever you're ready.</h2>
                 <p className="pp-pricing-sub">
-                  Membership is free, forever. Stream every released song at no cost. When an artist
-                  clicks, unlock their full catalog once for $11 - including anything not out yet.
+                  Membership is free, forever. Stream every released song at no cost. Go All Access
+                  for $11/month to unlock every artist and get points every month to download tracks
+                  and take them with you.
                 </p>
 
-                <div className="pp-pricing-grid pp-pricing-grid-single" role="list">
+                <div className="pp-pricing-grid" role="list">
 
                   {/* --- FREE --- */}
-                  <div className="pp-tier featured" role="listitem">
+                  <div className="pp-tier" role="listitem">
                     <div className="pp-tier-name">Free Forever</div>
                     <div className="pp-tier-price">Free</div>
                     <div className="pp-tier-period">no card required</div>
@@ -424,10 +430,30 @@ export default function PassportPage() {
                       <li>Preview any track before it drops</li>
                       <li>Full access to GeekFon Radio</li>
                       <li>Vote on the Artist Top 10</li>
-                      <li>Unlock any artist&apos;s full catalog once for $11 - yours forever</li>
+                      <li>Unlock any single artist&apos;s full catalog for $11, or buy points to download tracks a la carte</li>
                     </ul>
-                    <button className="pp-tier-btn primary" onClick={handleJoin}>
+                    <button className="pp-tier-btn secondary" onClick={handleJoin}>
                       Join Free
+                    </button>
+                  </div>
+
+                  {/* --- ALL ACCESS --- */}
+                  <div className="pp-tier featured" role="listitem">
+                    <div className="pp-tier-badge">Best Value</div>
+                    <div className="pp-tier-name">All Access</div>
+                    <div className="pp-tier-price">$11<span>/mo</span></div>
+                    <div className="pp-tier-period">cancel anytime</div>
+                    <div className="pp-tier-highlight">1,100 points/month</div>
+                    <div className="pp-tier-highlight-sub">$1 = 100 points, everywhere</div>
+                    <ul className="pp-tier-items">
+                      <li>Every artist unlocked, full catalog, no per-artist purchases</li>
+                      <li>Streaming never costs a point - it's simply included</li>
+                      <li>Spend points only when you want to download a track to keep - flat rate per track</li>
+                      <li>Points roll over while you're subscribed</li>
+                      <li>Everything in Free Forever, plus GeekFon Pro eligibility</li>
+                    </ul>
+                    <button className="pp-tier-btn primary" onClick={handleSubscribe} disabled={subscribing}>
+                      {subscribing ? "Redirecting..." : "Go All Access - $11/mo"}
                     </button>
                   </div>
 
