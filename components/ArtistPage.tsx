@@ -1012,7 +1012,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // catalog forever" means forever, no tier is held back from a paying fan.
   function isRegisterLockedTrack(t: Track): boolean {
     if (isSuperAdmin && viewAs === "real") return false;
-    if (unlockedArtist || simulatingFullAccess) return false;
+    if (unlockedArtist || simulatingFullAccess || hasAllAccessTier) return false;
     if (isScheduledFuture(t)) return !isRegistered();
     const diff = trackTierRank(t.v) - (isRegistered() ? 1 : 0);
     return diff >= 2;
