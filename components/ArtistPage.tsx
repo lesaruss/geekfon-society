@@ -997,7 +997,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
 
   function isPreviewCappedTrack(t: Track): boolean {
     if (isSuperAdmin && viewAs === "real") return false;
-    if (unlockedArtist || simulatingFullAccess) return false;
+    if (unlockedArtist || simulatingFullAccess || hasAllAccessTier) return false;
     if (isScheduledFuture(t)) return isRegistered();
     const diff = trackTierRank(t.v) - (isRegistered() ? 1 : 0);
     return diff === 1;
