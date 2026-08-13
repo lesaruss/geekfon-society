@@ -306,11 +306,33 @@ export default function PassportPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleNext, handleBack, slideIdx]);
 
-  // All Access ($11/mo subscription) retired 2026-07-23 along with the Points economy -
-  // free signup (registration) is the only path from this page now. Per-artist unlocks
-  // happen on the artist's own page (components/ArtistPage.tsx handleUnlockArtist), not here.
+  // 2026-08-13: All Access ($11/mo) relocked per Sean at $11 = 1,100 points/month
+  // (universal $1 = 100 points convention), replacing the retired 2026-07-23 flow.
+  // Free signup is still the no-cost path; All Access is now sold from this page
+  // via Stripe Checkout (subscription mode, see app/api/checkout/route.ts).
+  // Per-artist one-time unlocks still happen on the artist's own page
+  // (components/ArtistPage.tsx handleUnlockArtist) and are unaffected.
   function handleJoin() {
     window.location.href = "/register";
+  }
+
+  const [subscribing, setSubscribing] = useState(false);
+  async function handleSubscribe() {
+    setSubscribing(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "all-access", userId, returnUrl: "/dashboard" }),
+      });
+      const { url, error } = await res.json();
+      if (url) { window.location.href = url; return; }
+      console.error("[passport] all-access checkout failed", error);
+      setSubscribing(false);
+    } catch (e) {
+      console.error("[passport] all-access checkout failed", e);
+      setSubscribing(false);
+    }
   }
 
   const perk = PERKS[activePerk];
