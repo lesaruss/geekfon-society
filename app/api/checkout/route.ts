@@ -102,20 +102,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url: session.url });
     }
 
-    // LESARs pack (added 2026-08-14, Sean-locked pricing spec): fixed $11 for
-    // 1,110 LESARs, the bulk top-up that funds per-song unlocks (111 LESARs
-    // unlocks one song, see app/api/tracks/unlock/route.ts). Built inline
-    // like season-pass above instead of via PRICE_MAP/STRIPE_PRICE_* env
-    // vars, since it is a single fixed price with no server-side pricing
-    // logic needed. The webhook's existing generic
-    // `if (userId && plan && lesars > 0) creditLesars(...)` branch
-    // (app/api/webhooks/stripe/route.ts) already credits any plan that
-    // carries a `lesars` metadata value, so no webhook change was needed to
-    // ship this.
+    // LESARs pack (added 2026-08-14, Sean-locked pricing spec; generalized
+    // 2026-08-14 to a tiered lookup table per Sean's "different increments"
+    // direction). Fixed dollar tiers, each mapping to a fixed LESARs amount
+    // - not a derived multiplier, since 1110/11 is not a clean scalar. The
+    // bulk top-up that funds per-song unlocks (111 LESARs unlocks one song,
+    // see app/api/tracks/unlock/route.ts). Built inline like season-pass
+    // above instead of via PRICE_MAP/STRIPE_PRICE_* env vars, since these are
+    // fixed prices with no server-side pricing logic needed. The webhook's
+    // existing generic `if (userId && plan && lesars > 0) creditLesars(...)`
+    // branch (app/api/webhooks/stripe/route.ts) already credits any plan
+    // that carries a `lesars` metadata value, so no webhook change was
+    // needed to ship this or the tier generalization.
     if (plan === "lesars-pack") {
       if (!userId) {
         return NextResponse.json({ error: "Sign in required to buy a LESARs pack" }, { status: 400 });
       }
+
+      const LESARS_PACKS: Record<number, number> = {
+        11: 1110,
+        22: 2220,
+        55: 5550,
+        111: 11100,
+      };
+      const packAmount = Number(rawPackAmount) || 11;
+      const lesarsForPack = LESARS_PACKS[packAmount];
+      if (!lesarsForPack) {
+        return NextResponse.json({ error: "Invalid LESARs pack amount" }, { status: 400 });
+      }
+      const priceCents = packAmount * 100;
 
       const origin = req.headers.get("origin") || "https://geekfon.ai";
       const successUrl = returnUrl
@@ -130,10 +145,10 @@ export async function POST(req: NextRequest) {
         line_items: [{
           price_data: {
             currency: "usd",
-            unit_amount: 1100,
+            unit_amount: priceCents,
             product_data: {
-              name: "GeekFon Society - 1,110 LESARs",
-              description: "1,110 LESARs to spend unlocking songs (111 LESARs unlocks one song).",
+              name: `GeekFon Society - ${lesarsForPack.toLocaleString()} LESARs`,
+              description: `${lesarsForPack.toLocaleString()} LESARs to spend unlocking songs (111 LESARs unlocks one song).`,
             },
           },
           quantity: 1,
@@ -143,7 +158,7 @@ export async function POST(req: NextRequest) {
         metadata: {
           user_id: userId,
           plan,
-          lesars: "1110",
+          lesars: String(lesarsForPack),
         },
         client_reference_id: userId,
       });
