@@ -2299,7 +2299,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 disabled={redeemLoading}
                                 onClick={() => buyLesarsPack(pack.amount)}
                               >
-                                {redeemLoading ? "Please wait..." : `Buy ${pack.lesars.toLocaleString()} LESARs - ${pack.amount}`}
+                                {redeemLoading ? "Please wait..." : `Buy ${pack.lesars.toLocaleString()} LESARs - $${pack.amount}`}
                               </button>
                             ))}
                           </div>
