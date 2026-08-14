@@ -1171,11 +1171,16 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       // (app/api/webhooks/stripe/route.ts) grants the unlock server-side by
       // finding-or-creating a Supabase account for that email, so if the fan
       // later logs in with the same email their unlock is already there.
-      // 2026-07-30: web checkout now opens the season-pass/points modal instead
-      // of redirecting straight to the old artist-unlock Stripe plan. Native
-      // purchases above (RevenueCat) are untouched, separate scope.
+      // Retired 2026-08-14 per Sean: the flat $11 per-artist Season Pass (and
+      // the artist-unlock plan before it) is no longer offered from any live
+      // UI - per-song 111 LESARs unlocks (unlockTrack above) are the only
+      // paid mechanic now. This web branch, and every existing onClick that
+      // still points at handleUnlockArtist (the generic catalog-header/plus
+      // vote-modal buttons, which have no single song to unlock), now opens
+      // the LESARs-pack purchase modal instead of the retired Season Pass
+      // modal, so none of those old buttons can resurrect that flow.
       setShowVoteModal(null); // in case this click came from inside that modal
-      openSeasonModal();
+      openLesarsPackModal();
       setUnlockLoading(false);
       return;
       } catch {
@@ -1183,27 +1188,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       setUnlockLoading(false);
     }
   }
-  async function openSeasonModal() {
+  // Renamed/repurposed 2026-08-14 (was openSeasonModal): sells a fixed
+  // $11 -> 1,110 LESARs pack (buyLesarsPack below) instead of a per-artist
+  // Season Pass, so no gfs_calc_season_price lookup is needed - the price is
+  // fixed, not a per-user loyalty rate.
+  function openLesarsPackModal() {
     setRedeemError(null);
-    setSeasonPriceCents(null);
     setSeasonModalOpen(true);
-    if (!SUPA_ANON || !userId) return;
-    try {
-      const sb = createClient(SUPA_URL, SUPA_ANON);
-      const { data, error } = await sb
-        .rpc("gfs_calc_season_price", { p_user_id: userId })
-        .single();
-      if (!error && data) {
-        const row = data as { price_cents: number; discount_pct: number };
-        setSeasonPriceCents(row.price_cents);
-        setSeasonDiscountPct(row.discount_pct);
-      }
-    } catch {
-      // Non-fatal: modal falls back to static "$11 / $5.50 loyalty" copy.
-    }
   }
 
-  async function checkoutSeasonPass() {
+  // Renamed/repurposed 2026-08-14 (was checkoutSeasonPass).
+  async function buyLesarsPack() {
     setRedeemError(null);
     setRedeemLoading(true);
     const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
@@ -1212,10 +1207,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          plan: "season-pass",
+          plan: "lesars-pack",
           userId: userId || null,
-          artistSlug: slug,
-          season: CURRENT_SEASON,
           returnUrl: returnPath,
         }),
       });
