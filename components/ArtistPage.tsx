@@ -1197,8 +1197,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     setSeasonModalOpen(true);
   }
 
-  // Renamed/repurposed 2026-08-14 (was checkoutSeasonPass).
-  async function buyLesarsPack() {
+  // Renamed/repurposed 2026-08-14 (was checkoutSeasonPass). Generalized
+  // same day to accept a tier amount so this modal can offer the same four
+  // LESARs pack tiers ($11/$22/$55/$111) as the dashboard's new Buy LESARs
+  // card instead of only the flat $11 pack - see app/dashboard/page.tsx.
+  async function buyLesarsPack(amount: number = 11) {
     setRedeemError(null);
     setRedeemLoading(true);
     const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
@@ -1208,6 +1211,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plan: "lesars-pack",
+          packAmount: amount,
           userId: userId || null,
           returnUrl: returnPath,
         }),
