@@ -2349,11 +2349,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               {isRegistered() ? (
                                 <button
                                   className="mp-btn-buy mp-row-unlock"
-                                  onClick={handleUnlockArtist}
-                                  disabled={unlockLoading}
-                                  aria-label={`Unlock ${name}'s full catalog for $11 to hear ${t.n}`}
+                                  onClick={() => unlockTrack(t)}
+                                  disabled={trackUnlockLoading === t.n}
+                                  aria-label={`Unlock ${t.n} for 111 LESARs`}
                                 >
-                                  {unlockLoading ? "..." : "Unlock - $11"}
+                                  {trackUnlockLoading === t.n ? "..." : "111 LESARs"}
                                 </button>
                               ) : t.scheduledFor ? (
                                 // 2026-07-27 per Sean's Fieldy note: the raw scheduled date
