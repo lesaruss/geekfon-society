@@ -191,6 +191,19 @@ export default function SiteChrome({
     setAdminOpen(false);
   };
 
+  // Log Out: clears the real Supabase Auth session (this app's only session
+  // mechanism - see loadAuth() above using supabase.auth.getSession()), then
+  // sends the user to the homepage so SiteChrome re-reads auth as logged out.
+  const handleLogout = async () => {
+    setOpen(false);
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore - we redirect regardless so the user always lands logged out
+    }
+    window.location.href = "/";
+  };
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (adminRef.current && !adminRef.current.contains(e.target as Node)) {
