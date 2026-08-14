@@ -144,6 +144,11 @@ export default function DashboardOverview() {
           <div className="do-stat-sub">Active</div>
         </div>
         <div className="do-stat-card">
+          <div className="do-stat-label">LESARs Balance</div>
+          <div className="do-stat-val do-val-green">{points === null ? "..." : (points.available_points ?? 0).toLocaleString()}</div>
+          <div className="do-stat-sub">Spend on unlocks</div>
+        </div>
+        <div className="do-stat-card">
           <div className="do-stat-label">Artists Unlocked</div>
           <div className="do-stat-val do-val-green">{unlockedArtists === null ? "..." : unlockedArtists.length}</div>
           <div className="do-stat-sub">Full Experience</div>
@@ -153,6 +158,28 @@ export default function DashboardOverview() {
           <div className="do-stat-val">{songsOwned === null ? "..." : songsOwned}</div>
           <div className="do-stat-sub">In library &rarr;</div>
         </a>
+      </div>
+
+      {/* Buy LESARs (added 2026-08-14): direct top-up from the dashboard,
+          not just the reactive insufficient-balance modal on ArtistPage.
+          Same four tiers as that modal now offers. */}
+      <div className="do-section do-buy-section">
+        <div className="do-section-title">Buy LESARs</div>
+        <p className="do-buy-sub">111 LESARs unlocks any song, released or not - forever, yours to download.</p>
+        {buyError && <p className="do-buy-error">{buyError}</p>}
+        <div className="do-buy-grid">
+          {LESARS_PACKS.map(pack => (
+            <button
+              key={pack.amount}
+              className="do-buy-tile"
+              disabled={buyLoading !== null}
+              onClick={() => buyLesarsPack(pack.amount)}
+            >
+              <div className="do-buy-tile-lesars">{pack.lesars.toLocaleString()}<span> LESARs</span></div>
+              <div className="do-buy-tile-price">{buyLoading === pack.amount ? "Please wait..." : `${pack.amount}`}</div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Unlocks + Passport grid - replaces the old Points Balance card + Passport plan picker,
