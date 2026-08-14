@@ -342,7 +342,7 @@ const CSS = `
 .do-topup-hero-btn{flex-shrink:0;padding:13px 24px;border-radius:100px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;border:1px solid rgba(0,215,95,.3);background:rgba(0,215,95,.14);color:rgba(0,215,95,.95);cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap;margin-top:2px;}
 .do-topup-hero-btn:hover{background:rgba(0,215,95,.22);}
 /* Stats row */
-.do-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+.do-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
 .do-stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px 20px;}
 .do-stat-link{text-decoration:none;display:block;transition:background .15s,border-color .15s;}
 .do-stat-link:hover{background:rgba(255,255,255,.07);border-color:rgba(246,152,32,.3);}
