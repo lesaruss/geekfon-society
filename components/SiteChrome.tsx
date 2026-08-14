@@ -353,6 +353,11 @@ export default function SiteChrome({
               {n.label}
             </a>
           ))}
+          {isLoggedIn && (
+            <button type="button" className="gitem gitem-btn" onClick={handleLogout}>
+              Log Out
+            </button>
+          )}
         </nav>
 
         {!isLoggedIn && (
