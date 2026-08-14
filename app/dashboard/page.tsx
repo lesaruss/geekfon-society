@@ -20,6 +20,50 @@ export default function DashboardOverview() {
 
   const [copied, setCopied] = useState(false);
 
+  // Buy LESARs (added 2026-08-14, per Sean's dashboard direct top-up
+  // request): lets members top up their LESARs balance from the dashboard
+  // instead of only running into the LESARs-pack purchase modal reactively
+  // when they run short mid-unlock (see components/ArtistPage.tsx
+  // openLesarsPackModal/buyLesarsPack). Same four tiers as that modal now
+  // offers, same checkout branch (app/api/checkout/route.ts
+  // plan === "lesars-pack"), now generalized to accept packAmount.
+  const LESARS_PACKS: { amount: number; lesars: number }[] = [
+    { amount: 11, lesars: 1110 },
+    { amount: 22, lesars: 2220 },
+    { amount: 55, lesars: 5550 },
+    { amount: 111, lesars: 11100 },
+  ];
+  const [buyLoading, setBuyLoading] = useState<number | null>(null);
+  const [buyError, setBuyError] = useState<string | null>(null);
+
+  async function buyLesarsPack(amount: number) {
+    if (!userId || buyLoading) return;
+    setBuyError(null);
+    setBuyLoading(amount);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: "lesars-pack",
+          packAmount: amount,
+          userId,
+          returnUrl: "/dashboard",
+        }),
+      });
+      const { url, error } = await res.json();
+      if (url) {
+        window.location.href = url;
+      } else {
+        setBuyError(error || "Checkout failed. Please try again.");
+        setBuyLoading(null);
+      }
+    } catch {
+      setBuyError("Checkout failed. Please try again.");
+      setBuyLoading(null);
+    }
+  }
+
   // Artists this member has unlocked via the one-time $11 Full Experience purchase
   // (components/ArtistPage.tsx handleUnlockArtist). Replaces the old Points balance.
   const [unlockedArtists, setUnlockedArtists] = useState<string[] | null>(null);
