@@ -90,3 +90,37 @@ export async function creditReferralCommission(
     })
     .eq("referrer_id", referral.referrer_id);
 }
+
+// Added 2026-08-14 for the per-song LESARs unlock mechanic (111 LESARs per
+// song, see app/api/tracks/unlock/route.ts). Thin wrapper around the
+// existing Postgres debit_lesars() RPC, which was already fully implemented
+// (balance check, lesars_ledger row, gfs_track_purchases insert, idempotent
+// via the (user_id, artist_slug, track_name) unique constraint) but had zero
+// callers anywhere in the app before this. Mirrors creditLesars() above -
+// callers pass a plain supabase client, this does the RPC call and normalizes
+// the jsonb result shape.
+export async function debitLesars(
+  supabase: any,
+  userId: string,
+  artistSlug: string,
+  trackName: string,
+  amount: number,
+  trackUrl?: string | null
+): Promise<{ ok: boolean; balance: number; alreadyOwned?: boolean; error?: string }> {
+  const { data, error } = await supabase.rpc("debit_lesars", {
+    p_user_id: userId,
+    p_artist_slug: artistSlug,
+    p_track_name: trackName,
+    p_amount: amount,
+    p_track_url: trackUrl || null,
+  });
+  if (error) {
+    return { ok: false, balance: 0, error: error.message || "debit_lesars failed" };
+  }
+  return {
+    ok: !!data?.ok,
+    balance: data?.balance ?? 0,
+    alreadyOwned: !!data?.already_owned,
+    error: data?.error,
+  };
+}
