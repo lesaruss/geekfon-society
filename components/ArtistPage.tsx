@@ -2270,38 +2270,26 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div id="season-modal-title" className="vote-modal-title-text">
-                            Get {name}&apos;s {CURRENT_SEASON}
+                            Get More LESARs
                           </div>
                           <p className="vote-modal-lead">
-                            {seasonDiscountPct > 0
-                              ? `Loyalty rate applied: $${((seasonPriceCents ?? 550) / 100).toFixed(2)} for this season.`
-                              : `$${((seasonPriceCents ?? 1100) / 100).toFixed(2)} once, own the whole season, download every track, yours forever.`}
+                            You have {userBalance} LESARs. 111 LESARs unlocks any song, released or
+                            not - forever, yours to download. $11 gets you 1,110 LESARs, about 10 songs.
                           </p>
                           <ul className="vote-modal-benefits">
-                            <li>{CHECK}<span>Every {name} track this season, no preview cap</span></li>
-                            <li>{CHECK}<span>Download and keep, no subscription</span></li>
-                            <li>{CHECK}<span>Own it forever, even after the season closes to new fans</span></li>
+                            <li>{CHECK}<span>1,110 LESARs, no expiration</span></li>
+                            <li>{CHECK}<span>111 LESARs unlocks any song, released or not</span></li>
+                            <li>{CHECK}<span>Download unlocked songs and add them to your GeekFon Playlist</span></li>
                           </ul>
                           {redeemError && <p className="pur-error">{redeemError}</p>}
                           <div className="vote-modal-actions">
                             <button
                               className="mp-btn-buy"
                               disabled={redeemLoading}
-                              onClick={checkoutSeasonPass}
+                              onClick={buyLesarsPack}
                             >
-                              {redeemLoading ? "Please wait..." : `Pay $${((seasonPriceCents ?? 1100) / 100).toFixed(2)}`}
+                              {redeemLoading ? "Please wait..." : "Buy 1,110 LESARs - $11"}
                             </button>
-                            {userId && (
-                              <button
-                                className="mp-btn-buy"
-                                disabled={redeemLoading || userBalance < (seasonPriceCents ?? 1100)}
-                                onClick={redeemSeasonWithPoints}
-                              >
-                                {redeemLoading
-                                  ? "Please wait..."
-                                  : `Use ${seasonPriceCents ?? 1100} points (you have ${userBalance})`}
-                              </button>
-                            )}
                           </div>
                         </div>
                       </div>
