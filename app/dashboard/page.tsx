@@ -16,7 +16,7 @@ const ADMIN_EMAIL = "contact@lesaruss.com";
 const GOAL = 1_000_000;
 
 export default function DashboardOverview() {
-  const { userId, userEmail, member, purchases, referral, memberCount, isAdmin, viewAs } = useDashboard();
+  const { userId, userEmail, member, points, purchases, referral, memberCount, isAdmin, viewAs } = useDashboard();
 
   const [copied, setCopied] = useState(false);
 
