@@ -2463,11 +2463,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               {rowPreviewCapped ? (
                                 <button
                                   className="mp-row-lock"
-                                  onClick={() => setShowVoteModal(isRegistered() ? "plus" : "non-member")}
-                                  aria-label={isRegistered() ? `Unlock ${name}'s full catalog to like ${t.n}` : `Sign up free to like ${t.n}`}
-                                  title={isRegistered() ? "Unlock Plus to like this song" : "Sign up free to like this song"}
+                                  onClick={() => isRegistered() ? unlockTrack(t) : setShowVoteModal("non-member")}
+                                  aria-label={isRegistered() ? `Unlock ${t.n} for 111 LESARs` : `Sign up free to preview ${t.n}`}
+                                  title={isRegistered() ? "111 LESARs to unlock this song" : "Sign up free to preview this song"}
+                                  disabled={trackUnlockLoading === t.n}
                                 >
-                                  {LOCK}
+                                  {trackUnlockLoading === t.n ? "..." : LOCK}
                                 </button>
                               ) : (
                                 <button
@@ -2478,6 +2479,45 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   title={votedTracksToday.has(t.n) ? "Liked - click to remove" : "Like this song - votes for " + name}
                                 >
                                   <svg viewBox="0 0 24 24" fill={votedTracksToday.has(t.n) ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                </button>
+                              )}
+                              {/* Added 2026-08-14: per-song LESARs unlock/ownership affordance, shown
+                                  on every row regardless of preview-cap state - 111 LESARs unlocks a
+                                  song whether it is already free to preview or not (Sean's locked
+                                  pricing spec). Owned tracks show download + add-to-playlist instead
+                                  of the buy pill. */}
+                              {ownedTracks.has(t.n) ? (
+                                <>
+                                  {url && (
+                                    <a
+                                      className="mp-row-owned-action"
+                                      href={url}
+                                      download
+                                      aria-label={`Download ${t.n}`}
+                                      title="Download"
+                                    >
+                                      Download
+                                    </a>
+                                  )}
+                                  <button
+                                    className="mp-row-owned-action"
+                                    onClick={() => addToPlaylist(t)}
+                                    disabled={playlistAdding === t.n || playlistAdded.has(t.n)}
+                                    aria-label={`Add ${t.n} to your GeekFon Playlist`}
+                                    title="Add to GeekFon Playlist"
+                                  >
+                                    {playlistAdded.has(t.n) ? "Added" : playlistAdding === t.n ? "..." : "+ Playlist"}
+                                  </button>
+                                </>
+                              ) : !rowPreviewCapped && (
+                                <button
+                                  className="mp-row-lesars-buy"
+                                  onClick={() => unlockTrack(t)}
+                                  disabled={trackUnlockLoading === t.n}
+                                  aria-label={`Unlock ${t.n} for 111 LESARs`}
+                                  title="111 LESARs to unlock"
+                                >
+                                  {trackUnlockLoading === t.n ? "..." : "111 LESARs"}
                                 </button>
                               )}
                               {/* 2026-07-26 per Sean: swapped the text "Lyrics" pill for a
