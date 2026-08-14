@@ -176,7 +176,7 @@ export default function DashboardOverview() {
               onClick={() => buyLesarsPack(pack.amount)}
             >
               <div className="do-buy-tile-lesars">{pack.lesars.toLocaleString()}<span> LESARs</span></div>
-              <div className="do-buy-tile-price">{buyLoading === pack.amount ? "Please wait..." : `${pack.amount}`}</div>
+              <div className="do-buy-tile-price">{buyLoading === pack.amount ? "Please wait..." : `$${pack.amount}`}</div>
             </button>
           ))}
         </div>
