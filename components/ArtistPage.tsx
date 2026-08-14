@@ -734,6 +734,22 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     });
   }, []);
 
+  // Added 2026-08-14: fetch which tracks this user already owns for this
+  // artist (gfs_track_purchases), so the per-song unlock pill can flip to
+  // Owned + download/playlist actions without waiting on a full re-fetch
+  // after every purchase (unlockTrack below updates this set locally too).
+  useEffect(() => {
+    if (!userId || !slug || !SUPA_ANON) return;
+    const sb = createClient(SUPA_URL, SUPA_ANON);
+    sb.from("gfs_track_purchases")
+      .select("track_name")
+      .eq("user_id", userId)
+      .eq("artist_slug", slug)
+      .then(({ data }) => {
+        if (data) setOwnedTracks(new Set(data.map((r: { track_name: string }) => r.track_name)));
+      });
+  }, [userId, slug]);
+
   // Track mobile breakpoint for billboard slots
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 768);
