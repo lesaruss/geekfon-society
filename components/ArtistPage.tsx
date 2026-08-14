@@ -1403,6 +1403,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
           </div>
           )}
 
+          {/* 2026-08-14 fix: .crumb-bar and .tabbar below used to each be
+              independently position:sticky with hardcoded pixel offsets
+              (crumb-bar @60px, tabbar @102px assuming crumb-bar renders at
+              exactly 42px tall - never actually true on every viewport/font),
+              which desynced them during scroll. Wrapped together in a single
+              .nav-stack sticky container (top:60px, matching .gtop's fixed
+              height) instead - see components/ArtistPage.css. */}
+          <div className="nav-stack">
+
           {/* Persistent dark bar (Collapse/Expand pill + breadcrumb) - stays
               in the same spot in both states, directly above the tab bar,
               matching the Vegans Explore SoFlo community-hub pattern
