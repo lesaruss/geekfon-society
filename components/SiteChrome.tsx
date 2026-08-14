@@ -487,6 +487,7 @@ const CHROME_CSS = `
 .gnav { padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
 .gitem { display: block; padding: 11px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.7); text-decoration: none; }
 .gitem:hover { background: rgba(255,255,255,.07); color: #fff; }
+.gitem-btn { width: 100%; text-align: left; background: none; border: none; cursor: pointer; font-family: inherit; }
 .gdrawer-tour-link { display: block; margin: 12px 16px; padding: 12px 18px; border-radius: 10px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #E91E8C; text-decoration: none; background: rgba(233,30,140,.1); border: 1px solid rgba(233,30,140,.3); text-align: center; transition: background .2s; }
 .gdrawer-tour-link:hover { background: rgba(233,30,140,.2); }
 .gdrawer-member { padding: 16px; border-top: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: 12px; }
