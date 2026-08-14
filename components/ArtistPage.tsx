@@ -614,6 +614,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
+  // Added 2026-08-14: per-song LESARs unlock (111 LESARs/song), replacing the
+  // flat $11 per-artist Season Pass as the only paid mechanic. ownedTracks
+  // holds track names (t.n) this user already owns for this artist, fetched
+  // from gfs_track_purchases on mount.
+  const [ownedTracks, setOwnedTracks] = useState<Set<string>>(new Set());
+  const [trackUnlockLoading, setTrackUnlockLoading] = useState<string | null>(null);
+  const [playlistAdding, setPlaylistAdding] = useState<string | null>(null);
+  const [playlistAdded, setPlaylistAdded] = useState<Set<string>>(new Set());
   // 2026-07-27 per Sean/V: Instagram-style Social grid, piloted on Roxanne only
   // (real c.pulse content already exists for her). Index into the filtered,
   // thumbnail-resolved post list below, or null when the lightbox is closed.
