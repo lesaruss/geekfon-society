@@ -478,4 +478,16 @@ const CSS = `
 .do-tu-confirm.do-tu-disabled:hover{background:#F69820;}
 .do-tu-cancel{padding:14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
 .do-tu-cancel:hover{background:rgba(255,255,255,.14);}
+/* Buy LESARs (dashboard direct top-up, added 2026-08-14) */
+.do-buy-section{margin-top:4px;}
+.do-buy-sub{font-size:12px;color:rgba(255,255,255,.45);margin:0 0 16px;line-height:1.5;}
+.do-buy-error{font-size:12px;font-weight:700;color:rgba(255,100,100,.9);margin:0 0 12px;}
+.do-buy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+@media(max-width:700px){.do-buy-grid{grid-template-columns:1fr 1fr;}}
+.do-buy-tile{background:rgba(255,255,255,.04);border:1.5px solid rgba(0,215,95,.2);border-radius:14px;padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;font-family:inherit;transition:border-color .15s,background .15s;}
+.do-buy-tile:hover{border-color:#F69820;background:rgba(246,152,32,.06);}
+.do-buy-tile:disabled{opacity:.55;cursor:not-allowed;}
+.do-buy-tile-lesars{font-size:16px;font-weight:900;color:rgba(0,215,95,.95);letter-spacing:-.01em;text-align:center;}
+.do-buy-tile-lesars span{font-size:10px;font-weight:800;color:rgba(0,215,95,.6);text-transform:uppercase;letter-spacing:.1em;}
+.do-buy-tile-price{font-size:13px;font-weight:800;color:#F69820;}
 `;
