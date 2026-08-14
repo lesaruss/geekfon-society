@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   );
 
   try {
-    const { plan, userId, returnUrl, artistSlug, season } = await req.json();
+    const { plan, userId, returnUrl, artistSlug, season, packAmount: rawPackAmount } = await req.json();
 
     // Season Pass (added 2026-07-30, Sean-approved rebuild): replaces the flat
     // artist-unlock model above for now. artist-unlock is left in place, not
