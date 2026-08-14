@@ -2138,11 +2138,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             {npTrack && npPreviewCapped && (
                               <button
                                 className="mp-btn-buy"
-                                onClick={handleUnlockArtist}
-                                disabled={unlockLoading}
-                                aria-label={`Unlock the full GeekFon Society experience for ${name}`}
+                                onClick={() => unlockTrack(npTrack)}
+                                disabled={trackUnlockLoading === npTrack.n}
+                                aria-label={`Unlock ${npTrack.n} for 111 LESARs`}
                               >
-                                {unlockLoading ? "..." : "Unlock $11"}
+                                {trackUnlockLoading === npTrack.n ? "..." : "Unlock - 111 LESARs"}
                               </button>
                             )}
                           </div>
