@@ -1500,6 +1500,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
             );
           })()}
 
+          </div>
+
           {/* Two-column body: content + billboard */}
           <div className="body-layout">
             <div className="body-main">
