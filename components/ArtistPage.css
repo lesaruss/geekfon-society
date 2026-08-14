@@ -152,7 +152,8 @@
      the global nav, and stacking a second sticky bar on top of it without
      device testing risked overlap. Desktop keeps the persistent sticky
      behavior Sean asked for; revisit mobile stickiness once confirmed. */
-  .crumb-bar{padding:12px 16px;gap:10px;position:static}
+  .nav-stack{position:static}
+  .crumb-bar{padding:12px 16px;gap:10px}
   .crumb-toggle{padding:6px 10px;font-size:10px}
   .art-crumb{font-size:10px}
   .tabbar{padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
