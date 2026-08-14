@@ -13,7 +13,18 @@
    like SoFlo's, not the earlier white version. Only the decorative hero
    below it (portrait, name, tagline, pills, city bg) collapses/expands via
    the pill - this bar and the tab bar underneath it never do. */
-.crumb-bar{display:flex;align-items:center;gap:20px;background:#141414;border-bottom:1px solid rgba(255,255,255,.08);padding:13px 40px;position:sticky;top:60px;z-index:7}
+/* 2026-08-14 fix: .crumb-bar and .tabbar (below) are siblings in
+   ArtistPage.tsx and used to each be independently position:sticky with a
+   hardcoded pixel offset - crumb-bar @60px, tabbar @102px, the latter
+   assuming crumb-bar renders at exactly 42px tall, which was never actually
+   pinned anywhere. Any viewport/font where crumb-bar's real height drifted
+   from that assumption desynced the two bars during scroll, leaving a
+   visible background gap or overlap. Fix: .nav-stack is now the single
+   sticky element wrapping both bars (top:60px, matching .gtop's fixed
+   height in SiteChrome.tsx) - crumb-bar and tabbar just stack in normal
+   flow inside it, so no hardcoded height assumption is needed at all. */
+.nav-stack{position:sticky;top:60px;z-index:7}
+.crumb-bar{display:flex;align-items:center;gap:20px;background:#141414;border-bottom:1px solid rgba(255,255,255,.08);padding:13px 40px}
 .crumb-toggle{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
 .crumb-toggle:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.06)}
 .crumb-toggle svg{width:11px;height:11px;transition:transform .2s;flex-shrink:0}
