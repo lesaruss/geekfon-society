@@ -2281,19 +2281,27 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             not - forever, yours to download. $11 gets you 1,110 LESARs, about 10 songs.
                           </p>
                           <ul className="vote-modal-benefits">
-                            <li>{CHECK}<span>1,110 LESARs, no expiration</span></li>
+                            <li>{CHECK}<span>No expiration</span></li>
                             <li>{CHECK}<span>111 LESARs unlocks any song, released or not</span></li>
                             <li>{CHECK}<span>Download unlocked songs and add them to your GeekFon Playlist</span></li>
                           </ul>
                           {redeemError && <p className="pur-error">{redeemError}</p>}
                           <div className="vote-modal-actions">
-                            <button
-                              className="mp-btn-buy"
-                              disabled={redeemLoading}
-                              onClick={buyLesarsPack}
-                            >
-                              {redeemLoading ? "Please wait..." : "Buy 1,110 LESARs - $11"}
-                            </button>
+                            {[
+                              { amount: 11, lesars: 1110 },
+                              { amount: 22, lesars: 2220 },
+                              { amount: 55, lesars: 5550 },
+                              { amount: 111, lesars: 11100 },
+                            ].map(pack => (
+                              <button
+                                key={pack.amount}
+                                className="mp-btn-buy"
+                                disabled={redeemLoading}
+                                onClick={() => buyLesarsPack(pack.amount)}
+                              >
+                                {redeemLoading ? "Please wait..." : `Buy ${pack.lesars.toLocaleString()} LESARs - ${pack.amount}`}
+                              </button>
+                            ))}
                           </div>
                         </div>
                       </div>
