@@ -102,6 +102,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url: session.url });
     }
 
+    // LESARs pack (added 2026-08-14, Sean-locked pricing spec): fixed $11 for
+    // 1,110 LESARs, the bulk top-up that funds per-song unlocks (111 LESARs
+    // unlocks one song, see app/api/tracks/unlock/route.ts). Built inline
+    // like season-pass above instead of via PRICE_MAP/STRIPE_PRICE_* env
+    // vars, since it is a single fixed price with no server-side pricing
+    // logic needed. The webhook's existing generic
+    // `if (userId && plan && lesars > 0) creditLesars(...)` branch
+    // (app/api/webhooks/stripe/route.ts) already credits any plan that
+    // carries a `lesars` metadata value, so no webhook change was needed to
+    // ship this.
+    if (plan === "lesars-pack") {
+      if (!userId) {
+        return NextResponse.json({ error: "Sign in required to buy a LESARs pack" }, { status: 400 });
+      }
+
+      const origin = req.headers.get("origin") || "https://geekfon.ai";
+      const successUrl = returnUrl
+        ? `${origin}${returnUrl}?checkout=success&plan=lesars-pack`
+        : `${origin}/dashboard?checkout=success&plan=lesars-pack`;
+      const cancelUrl = returnUrl
+        ? `${origin}${returnUrl}?checkout=cancelled`
+        : `${origin}/passport?checkout=cancelled`;
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [{
+          price_data: {
+            currency: "usd",
+            unit_amount: 1100,
+            product_data: {
+              name: "GeekFon Society - 1,110 LESARs",
+              description: "1,110 LESARs to spend unlocking songs (111 LESARs unlocks one song).",
+            },
+          },
+          quantity: 1,
+        }],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: {
+          user_id: userId,
+          plan,
+          lesars: "1110",
+        },
+        client_reference_id: userId,
+      });
+
+      return NextResponse.json({ url: session.url });
+    }
+
     if (!plan || !PRICE_MAP[plan]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
