@@ -928,3 +928,10 @@
 .mcb-quote{font-size:14px;font-weight:700;line-height:1.45;margin:0 0 12px;font-style:italic}
 .mcb-detail{font-size:12px;color:rgba(255,255,255,.85);line-height:1.6;margin:0}
 .mcb-tapcue{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.55);margin-top:14px}
+
+/* Added 2026-08-14: per-song LESARs unlock pill + owned-track actions
+   (download / add to playlist), see components/ArtistPage.tsx unlockTrack. */
+.mp-row-lesars-buy{font-size:10px;font-weight:800;letter-spacing:.04em;padding:5px 10px;border-radius:20px;border:1px solid var(--rx);color:var(--rx-text);background:var(--rx-tint);cursor:pointer;white-space:nowrap}
+.mp-row-lesars-buy:disabled{opacity:.6;cursor:default}
+.mp-row-owned-action{font-size:10px;font-weight:800;letter-spacing:.03em;padding:5px 10px;border-radius:20px;border:1px solid rgba(0,0,0,0.12);color:#16a34a;background:#dcfce7;cursor:pointer;white-space:nowrap;text-decoration:none;margin-left:4px}
+.mp-row-owned-action:disabled{opacity:.6;cursor:default}
