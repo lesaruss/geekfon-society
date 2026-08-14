@@ -1056,8 +1056,86 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   }
 
   // Route straight to the artist-level unlock instead of a per-track modal.
-  function handleBadgeClick(_t: Track) {
-    handleUnlockArtist();
+  function handleBadgeClick(t: Track) {
+    unlockTrack(t);
+  }
+
+  // Added 2026-08-14: per-song LESARs unlock (111 LESARs/song), replacing the
+  // flat $11 per-artist Season Pass as GeekFon's only paid mechanic (Sean,
+  // 2026-08-14 pricing spec). Calls app/api/tracks/unlock, which calls the
+  // existing debit_lesars() Postgres function (balance check + ledger row +
+  // gfs_track_purchases insert, idempotent). On insufficient balance, opens
+  // the LESARs-pack purchase modal (openLesarsPackModal) instead of failing
+  // silently.
+  async function unlockTrack(t: Track) {
+    if (!t?.n || trackUnlockLoading || ownedTracks.has(t.n)) return;
+    if (!userId || !SUPA_ANON) {
+      const returnPath = typeof window !== "undefined" ? window.location.pathname : "";
+      window.location.href = `/login?redirect=${encodeURIComponent(returnPath)}`;
+      return;
+    }
+    setUnlockError(null);
+    setTrackUnlockLoading(t.n);
+    try {
+      const sb = createClient(SUPA_URL, SUPA_ANON);
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session?.access_token) {
+        setUnlockError("Please sign in again to unlock songs.");
+        setTrackUnlockLoading(null);
+        return;
+      }
+      const res = await fetch("/api/tracks/unlock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ artistSlug: slug, trackName: t.n, trackUrl: t.url || null }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOwnedTracks(prev => new Set(prev).add(t.n));
+        if (typeof data.balance_after === "number") setUserBalance(data.balance_after);
+        setUnlockSuccess(true);
+        setTimeout(() => setUnlockSuccess(false), 4000);
+      } else if (data.error === "insufficient_balance") {
+        if (typeof data.balance_after === "number") setUserBalance(data.balance_after);
+        openLesarsPackModal();
+      } else {
+        setUnlockError(data.error || "Unlock failed. Please try again.");
+      }
+    } catch {
+      setUnlockError("Unlock failed. Please try again.");
+    } finally {
+      setTrackUnlockLoading(null);
+    }
+  }
+
+  // Adds an already-unlocked track to the fan's GeekFon Playlist
+  // (gfs_playlist_tracks). Resolves radio_tracks.id by artist_slug+title,
+  // since ownership (gfs_track_purchases) is keyed by track_name/artist_slug
+  // text, not the track's uuid.
+  async function addToPlaylist(t: Track) {
+    if (!t?.n || !userId || !SUPA_ANON || playlistAdding) return;
+    setPlaylistAdding(t.n);
+    try {
+      const sb = createClient(SUPA_URL, SUPA_ANON);
+      const { data: rt } = await sb
+        .from("radio_tracks")
+        .select("id")
+        .eq("artist_slug", slug)
+        .eq("title", t.n)
+        .maybeSingle();
+      if (!rt?.id) {
+        setPlaylistAdding(null);
+        return;
+      }
+      const { error } = await sb
+        .from("gfs_playlist_tracks")
+        .upsert({ user_id: userId, track_id: rt.id }, { onConflict: "user_id,track_id", ignoreDuplicates: true });
+      if (!error) setPlaylistAdded(prev => new Set(prev).add(t.n));
+    } catch { /* silent */ }
+    setPlaylistAdding(null);
   }
 
   async function handleUnlockArtist() {
