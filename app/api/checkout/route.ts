@@ -216,3 +216,4 @@ export async function POST(req: NextRequest) {
   }
 }
 // redeploy-nudge: 2026-07-30 all-access price rotated
+// redeploy-nudge: 2026-08-16 checkout + webhook Stripe account moved VE -> LESARUSS (Sean-approved)
