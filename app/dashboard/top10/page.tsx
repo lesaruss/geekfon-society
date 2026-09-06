@@ -130,7 +130,7 @@ export default function ArtistRankingsPage() {
       <div className="t10-head">
         <div className="t10-eyebrow">Season 1</div>
         <h1 className="t10-title">Artist Rankings</h1>
-        <p className="t10-sub">Score = plays + votes + $11 artist unlocks, weighted. Cumulative all-time, never resets.</p>
+        <p className="t10-sub">Score = plays + votes + points spent, weighted. Cumulative all-time, never resets.</p>
       </div>
 
       <div className="t10-season-bar">
@@ -214,7 +214,7 @@ export default function ArtistRankingsPage() {
           })}
 
           <div className="t10-footnote">
-            Score = plays + votes + $11 artist unlocks (each unlock counts extra). Cumulative all-time - this never resets.
+            Score = plays + votes + points spent (each spend counts extra). Cumulative all-time - this never resets.
           </div>
         </div>
       )}
