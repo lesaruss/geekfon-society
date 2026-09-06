@@ -21,10 +21,12 @@ const LESARS_MAP: Record<string, number> = {
   "pack-starter":  500,
   "pack-standard": 1000,
   "pack-power":    5000,
-  // Universal points convention (locked 2026-08-13): $1 = 100 points, so the
-  // $11/mo All Access tier grants 1,100 points/month, not the old placeholder
-  // 500. See knowledge_records exploration-universal-points-ladder.
-  "all-access":    1100,
+  // 2026-09-06 (Sean, direct correction, geekfon-society-blueprint canon):
+  // All Access grants 1,500 points/month, not the 1,100 the universal $1=100
+  // convention would imply. This is a locked exception for the monthly
+  // subscription specifically -- one-off LESARs packs below still follow the
+  // strict 100:1 rate. See public.briefings slug geekfon-society-blueprint.
+  "all-access":    1500,
   "passport":      111,
   "artist-unlock": 0,
 };
