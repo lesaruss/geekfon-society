@@ -183,8 +183,12 @@ export default function DashboardOverview() {
       </div>
 
       {/* Unlocks + Passport grid - replaces the old Points Balance card + Passport plan picker,
-          both retired 2026-07-23. Free membership is the only tier now; the paid mechanic is a
-          one-time $11 per-artist unlock (see components/ArtistPage.tsx handleUnlockArtist). */}
+          both retired 2026-07-23. 2026-09-06 (Sean, direct correction): the one-time $11
+          per-artist unlock that used to be the paid mechanic here is retired - it no longer
+          matches locked canon. Points purchases (a la carte song downloads) and $11/mo All
+          Access (whole roster) are the only paid mechanics now. This card still lists any
+          artists unlocked under the old mechanic (gfs_artist_unlocks is historical data,
+          untouched), it just no longer advertises unlocking as something you can still buy. */}
       <div className="do-main-grid">
         {/* Unlocks card */}
         <div className="do-balance-card">
@@ -194,7 +198,7 @@ export default function DashboardOverview() {
           ) : unlockedArtists.length === 0 ? (
             <>
               <div className="do-bal-amount" style={{ fontSize: 20, color: "rgba(255,255,255,.7)" }}>No artists unlocked yet</div>
-              <div className="do-bal-reset">Every song plays free once it&apos;s released. Unlock any artist once for $11 to hear their full catalog right now, including tracks that haven&apos;t dropped yet.</div>
+              <div className="do-bal-reset">Every song plays free once it&apos;s released. Spend points to download any song, released or not, and keep it forever - or go <a href="/passport" style={{ color: "inherit", textDecoration: "underline" }}>All Access</a> to unlock the whole roster.</div>
             </>
           ) : (
             <>
@@ -221,7 +225,7 @@ export default function DashboardOverview() {
             {[
               "Stream every released song, free, always",
               "Preview any unreleased track before it drops",
-              "Unlock an artist's full catalog once for $11 - yours forever",
+              "Buy points to download any song and keep it forever",
               "GeekFon Radio full access",
             ].map(f => (
               <div key={f} className="do-psp-feature">
