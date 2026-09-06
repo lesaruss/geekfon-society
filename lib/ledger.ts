@@ -91,8 +91,8 @@ export async function creditReferralCommission(
     .eq("referrer_id", referral.referrer_id);
 }
 
-// Added 2026-08-14 for the per-song LESARs unlock mechanic (111 LESARs per
-// song, see app/api/tracks/unlock/route.ts). Thin wrapper around the
+// Added 2026-08-14 for the per-song LESARs unlock mechanic (150 LESARs per
+// song, locked 2026-09-06 - see app/api/tracks/unlock/route.ts). Thin wrapper around the
 // existing Postgres debit_lesars() RPC, which was already fully implemented
 // (balance check, lesars_ledger row, gfs_track_purchases insert, idempotent
 // via the (user_id, artist_slug, track_name) unique constraint) but had zero
