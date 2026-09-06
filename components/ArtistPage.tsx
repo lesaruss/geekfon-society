@@ -614,7 +614,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
-  // Added 2026-08-14: per-song LESARs unlock (111 LESARs/song), replacing the
+  // Added 2026-08-14: per-song LESARs unlock (150 LESARs/song), replacing the
   // flat $11 per-artist Season Pass as the only paid mechanic. ownedTracks
   // holds track names (t.n) this user already owns for this artist, fetched
   // from gfs_track_purchases on mount.
@@ -1060,7 +1060,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
     unlockTrack(t);
   }
 
-  // Added 2026-08-14: per-song LESARs unlock (111 LESARs/song), replacing the
+  // Added 2026-08-14: per-song LESARs unlock (150 LESARs/song), replacing the
   // flat $11 per-artist Season Pass as GeekFon's only paid mechanic (Sean,
   // 2026-08-14 pricing spec). Calls app/api/tracks/unlock, which calls the
   // existing debit_lesars() Postgres function (balance check + ledger row +
@@ -1173,7 +1173,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
       // later logs in with the same email their unlock is already there.
       // Retired 2026-08-14 per Sean: the flat $11 per-artist Season Pass (and
       // the artist-unlock plan before it) is no longer offered from any live
-      // UI - per-song 111 LESARs unlocks (unlockTrack above) are the only
+      // UI - per-song 150 LESARs unlocks (unlockTrack above) are the only
       // paid mechanic now. This web branch, and every existing onClick that
       // still points at handleUnlockArtist (the generic catalog-header/plus
       // vote-modal buttons, which have no single song to unlock), now opens
@@ -2144,9 +2144,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 className="mp-btn-buy"
                                 onClick={() => unlockTrack(npTrack)}
                                 disabled={trackUnlockLoading === npTrack.n}
-                                aria-label={`Unlock ${npTrack.n} for 111 LESARs`}
+                                aria-label={`Unlock ${npTrack.n} for 150 LESARs`}
                               >
-                                {trackUnlockLoading === npTrack.n ? "..." : "Unlock - 111 LESARs"}
+                                {trackUnlockLoading === npTrack.n ? "..." : "Unlock - 150 LESARs"}
                               </button>
                             )}
                           </div>
@@ -2274,12 +2274,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                             Get More LESARs
                           </div>
                           <p className="vote-modal-lead">
-                            You have {userBalance} LESARs. 111 LESARs unlocks any song, released or
-                            not - forever, yours to download. $11 gets you 1,110 LESARs, about 10 songs.
+                            You have {userBalance} LESARs. 150 LESARs unlocks any song, released or
+                            not - forever, yours to download. $11 gets you 1,110 LESARs, about 7 songs.
                           </p>
                           <ul className="vote-modal-benefits">
                             <li>{CHECK}<span>No expiration</span></li>
-                            <li>{CHECK}<span>111 LESARs unlocks any song, released or not</span></li>
+                            <li>{CHECK}<span>150 LESARs unlocks any song, released or not</span></li>
                             <li>{CHECK}<span>Download unlocked songs and add them to your GeekFon Playlist</span></li>
                           </ul>
                           {redeemError && <p className="pur-error">{redeemError}</p>}
@@ -2360,9 +2360,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   className="mp-btn-buy mp-row-unlock"
                                   onClick={() => unlockTrack(t)}
                                   disabled={trackUnlockLoading === t.n}
-                                  aria-label={`Unlock ${t.n} for 111 LESARs`}
+                                  aria-label={`Unlock ${t.n} for 150 LESARs`}
                                 >
-                                  {trackUnlockLoading === t.n ? "..." : "111 LESARs"}
+                                  {trackUnlockLoading === t.n ? "..." : "150 LESARs"}
                                 </button>
                               ) : t.scheduledFor ? (
                                 // 2026-07-27 per Sean's Fieldy note: the raw scheduled date
@@ -2473,8 +2473,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 <button
                                   className="mp-row-lock"
                                   onClick={() => isRegistered() ? unlockTrack(t) : setShowVoteModal("non-member")}
-                                  aria-label={isRegistered() ? `Unlock ${t.n} for 111 LESARs` : `Sign up free to preview ${t.n}`}
-                                  title={isRegistered() ? "111 LESARs to unlock this song" : "Sign up free to preview this song"}
+                                  aria-label={isRegistered() ? `Unlock ${t.n} for 150 LESARs` : `Sign up free to preview ${t.n}`}
+                                  title={isRegistered() ? "150 LESARs to unlock this song" : "Sign up free to preview this song"}
                                   disabled={trackUnlockLoading === t.n}
                                 >
                                   {trackUnlockLoading === t.n ? "..." : LOCK}
@@ -2491,7 +2491,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                 </button>
                               )}
                               {/* Added 2026-08-14: per-song LESARs unlock/ownership affordance, shown
-                                  on every row regardless of preview-cap state - 111 LESARs unlocks a
+                                  on every row regardless of preview-cap state - 150 LESARs unlocks a
                                   song whether it is already free to preview or not (Sean's locked
                                   pricing spec). Owned tracks show download + add-to-playlist instead
                                   of the buy pill. */}
@@ -2523,10 +2523,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                                   className="mp-row-lesars-buy"
                                   onClick={() => unlockTrack(t)}
                                   disabled={trackUnlockLoading === t.n}
-                                  aria-label={`Unlock ${t.n} for 111 LESARs`}
-                                  title="111 LESARs to unlock"
+                                  aria-label={`Unlock ${t.n} for 150 LESARs`}
+                                  title="150 LESARs to unlock"
                                 >
-                                  {trackUnlockLoading === t.n ? "..." : "111 LESARs"}
+                                  {trackUnlockLoading === t.n ? "..." : "150 LESARs"}
                                 </button>
                               )}
                               {/* 2026-07-26 per Sean: swapped the text "Lyrics" pill for a
