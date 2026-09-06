@@ -346,7 +346,7 @@ export default function LibraryPage() {
         <p className="lib-sub">
           {hasFullCatalogAccess
             ? "Pro access - add any GeekFon song to build your own personal radio station."
-            : "Add songs from artists you've unlocked for $11 to build your own personal radio station."}
+            : "Add songs you've unlocked with points to build your own personal radio station."}
         </p>
       </div>
 
@@ -425,7 +425,7 @@ export default function LibraryPage() {
           </div>
           <h2 className="lib-empty-title">Your playlist is empty</h2>
           <p className="lib-empty-sub">
-            Add songs below from artists you've unlocked{hasFullCatalogAccess ? "" : ", or unlock a new artist for $11"} to start building your station.
+            Add songs below from artists you've unlocked{hasFullCatalogAccess ? "" : ", or spend points to unlock more songs"} to start building your station.
           </p>
         </div>
       ) : (
@@ -551,7 +551,7 @@ export default function LibraryPage() {
             <div className="pl-selected-head">
               <span className="pl-artist-group-name">{artistName(selectedArtist)}</span>
               {!canAccess(selectedArtist) && (
-                <a href={`/${toArtistSlug(selectedArtist)}?tab=music`} className="pl-unlock-cta">Unlock for $11</a>
+                <a href={`/${toArtistSlug(selectedArtist)}?tab=music`} className="pl-unlock-cta">Unlock with Points</a>
               )}
             </div>
           )}
