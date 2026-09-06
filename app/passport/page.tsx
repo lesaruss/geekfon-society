@@ -45,17 +45,10 @@ const PERKS = [
     accent: "#AAFF00",
   },
   {
-    icon: "◆",
-    short: "Unlock",
-    title: "Unlock Any Artist for $11",
-    desc: "One price, once, forever. Unlock an artist's full catalog - every song, released or not - no subscription required.",
-    accent: "#9C27B0",
-  },
-  {
     icon: "⚡",
     short: "Early Access",
     title: "Preview Every New Track",
-    desc: "Hear a preview of every new song before it drops. Unlock the artist to hear the whole thing before anyone else.",
+    desc: "Hear a preview of every new song before it drops. Spend points or go All Access to hear the whole thing before anyone else.",
     accent: "#00BCD4",
   },
   {
@@ -312,8 +305,10 @@ export default function PassportPage() {
   // 2026-08-13 relock at 1,100.
   // Free signup is still the no-cost path; All Access is now sold from this page
   // via Stripe Checkout (subscription mode, see app/api/checkout/route.ts).
-  // Per-artist one-time unlocks still happen on the artist's own page
-  // (components/ArtistPage.tsx handleUnlockArtist) and are unaffected.
+  // 2026-09-06 (Sean, direct correction): the old per-artist one-time unlock
+  // on the artist's own page (components/ArtistPage.tsx handleUnlockArtist)
+  // is retired - it no longer matches locked canon. That page now points
+  // non-members at points purchases or this All Access page instead.
   function handleJoin() {
     window.location.href = "/register";
   }
@@ -402,14 +397,13 @@ export default function PassportPage() {
               </div>
             )}
 
-            {/* Slide 3: Join - two tiers. Relocked 2026-08-13 per Sean: universal
-                $1 = 100 points convention. Free stays pay-as-you-go (buy points,
-                or unlock one artist at a time for $11 on that artist's own page).
-                All Access is $11/month, unlocks every artist's full catalog flat
-                (no per-artist unlocking), and drops 1,500 points/month into the
-                wallet - points spend only on downloading tracks to keep off-platform,
-                streaming itself is never metered. See knowledge_records
-                exploration-universal-points-ladder for the locked convention. */}
+            {/* Slide 3: Join - two tiers. 2026-09-06 (Sean, direct correction,
+                geekfon-society-blueprint canon): Free is pay-as-you-go only
+                (buy points, spend on individual song downloads) - there is no
+                per-artist unlock at any price. All Access is $11/month,
+                unlocks every artist's full catalog flat, and drops 1,500
+                points/month into the wallet - points spend only on downloading
+                tracks to keep off-platform, streaming itself is never metered. */}
             {slideIdx === 2 && (
               <div className="pp-pricing-wrap">
                 <div className="pp-pricing-label">Join GeekFon Society</div>
@@ -432,7 +426,7 @@ export default function PassportPage() {
                       <li>Preview any track before it drops</li>
                       <li>Full access to GeekFon Radio</li>
                       <li>Vote on the Artist Top 10</li>
-                      <li>Unlock any single artist&apos;s full catalog for $11, or buy points to download tracks a la carte</li>
+                      <li>Buy points to download any song to keep, a la carte</li>
                     </ul>
                     <button className="pp-tier-btn secondary" onClick={handleJoin}>
                       Join Free
