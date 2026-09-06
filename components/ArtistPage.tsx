@@ -2166,14 +2166,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                           onClick={handleUnlockArtist}
                           disabled={unlockLoading}
                         >
-                          {unlockLoading ? "Redirecting..." : "Unlock Full Experience - $11"}
+                          {unlockLoading ? "Loading..." : "Get Points"}
                         </button>
                       )}
                     </div>
                     <p className="mp-catalog-note">
                       {hasFullAccess
                         ? "You've unlocked every song by " + name + ", released or not."
-                        : "Every song plays free once it's officially released. Unlock the Full Experience once for $11 to hear everything by " + name + " right now, including tracks that haven't dropped yet. Be sure to like your favorite songs to help " + name + " rise on the leaderboard."}
+                        : "Every song plays free once it's officially released. Spend points to download any song, released or not, and keep it forever - or go All Access for $11/month to unlock the whole roster plus 1,500 points every month. Be sure to like your favorite songs to help " + name + " rise on the leaderboard."}
                     </p>
                     {/* 2026-07-26 round 2 removed the CTA here entirely per Sean (it was
                         a stale "Get Passport - Free" link tied to the old subscription
@@ -2213,19 +2213,20 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                               <p>Sign up free to preview {name}&apos;s unreleased songs before they officially drop.</p>
                             </>
                           ) : showVoteModal === "plus" ? (
-                            // 2026-07-27 round 2 per Sean: mirrors the Passport benefits
-                            // card below, but for the $11 paid tier - opened from the
-                            // renamed "Plus - $11" bottom CTA instead of the old
-                            // straight-to-Stripe click. Benefits list confirmed with
-                            // Sean: full catalog incl. unreleased, Playlist access
-                            // (added 2026-07-27 earlier today), one-time payment.
+                            // 2026-09-06 (Sean, direct correction): the old per-artist
+                            // $11 one-time "Plus" unlock is retired - it no longer
+                            // matches locked canon (geekfon-society-blueprint: no
+                            // per-artist purchase, only $11/mo All Access for the
+                            // whole roster + points for individual song downloads).
+                            // This modal now pitches All Access instead of a fake
+                            // per-artist unlock.
                             <>
-                              <div id="vote-modal-title" className="vote-modal-title-text">Unlock Plus</div>
-                              <p className="vote-modal-lead">$11 once, {name}&apos;s full experience, forever:</p>
+                              <div id="vote-modal-title" className="vote-modal-title-text">Go All Access</div>
+                              <p className="vote-modal-lead">$11/month unlocks every artist on the roster, plus 1,500 points every month:</p>
                               <ul className="vote-modal-benefits">
                                 <li>{CHECK}<span>Every {name} song, released or not - no preview cap</span></li>
-                                <li>{CHECK}<span>Add every {name} track to your Playlist</span></li>
-                                <li>{CHECK}<span>One-time payment - $11 once, yours forever, no subscription</span></li>
+                                <li>{CHECK}<span>Every other artist on the roster too - not just {name}</span></li>
+                                <li>{CHECK}<span>1,500 points a month to download tracks and add them to your Playlist</span></li>
                               </ul>
                             </>
                           ) : (
@@ -2241,13 +2242,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                           )}
                           <div className="vote-modal-actions">
                             {showVoteModal === "plus" ? (
-                              <button
-                                className="vote-modal-cta"
-                                onClick={handleUnlockArtist}
-                                disabled={unlockLoading}
-                              >
-                                {unlockLoading ? "Redirecting..." : "Yes, Unlock for $11"}
-                              </button>
+                              <a className="vote-modal-cta" href="/passport">
+                                Get Your Passport
+                              </a>
                             ) : (
                               <a
                                 className="vote-modal-cta"
@@ -2646,22 +2643,17 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                         Passport - Free
                       </button>
                     )}
-                    {/* 2026-07-27 round 2 per Sean: renamed to "Plus - $11" to match
-                        "Passport - Free" - the tier is called Plus everywhere in the
-                        code (Passport < Plus < Pro) but was never actually said to a
-                        visitor. Clicking used to jump straight to Stripe, now opens a
-                        benefits pitch first (mirrors the Passport modal) with a real
-                        confirm step before checkout. Per Sean's explicit scoping
-                        answer, the small per-track "Unlock - $11" row buttons
-                        elsewhere are UNCHANGED - still instant checkout, no popup -
-                        this only touches the main bottom CTA. Piloted on Vuka only
-                        first, confirmed good, rolled out to the full roster same day. */}
+                    {/* 2026-09-06 (Sean, direct correction): "Plus - $11" was the
+                        old per-artist one-time unlock CTA. Retired - it no longer
+                        matches locked canon (no per-artist purchase; $11/mo All
+                        Access unlocks the whole roster). Button now opens the same
+                        modal, repointed to pitch All Access instead. */}
                     {useRowLyrics && !hasFullAccess && (
                       <button
                         className="mp-btn-buy mp-catalog-unlock-bottom"
                         onClick={() => setShowVoteModal("plus")}
                       >
-                        Plus - $11
+                        Go All Access
                       </button>
                     )}
                   </section>
