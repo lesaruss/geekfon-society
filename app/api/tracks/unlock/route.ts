@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { debitLesars } from "@/lib/ledger";
 
-// Added 2026-08-14: per-song LESARs unlock (111 LESARs/song), replacing the
-// flat $11 per-artist Season Pass as GeekFon's only paid mechanic (Sean,
-// 2026-08-14 - locked pricing spec). Calls the existing Postgres
-// debit_lesars() RPC via lib/ledger.ts's debitLesars() wrapper, which does
-// the balance check, ledger row, and gfs_track_purchases insert atomically
-// and idempotently (ON CONFLICT DO NOTHING on user_id+artist_slug+track_name,
-// so a double-click or retry never double-charges).
-const TRACK_UNLOCK_COST_LESARS = 111;
+// Added 2026-08-14: per-song LESARs unlock, replacing the flat $11
+// per-artist Season Pass as GeekFon's only paid mechanic (Sean, 2026-08-14 -
+// locked pricing spec). Calls the existing Postgres debit_lesars() RPC via
+// lib/ledger.ts's debitLesars() wrapper, which does the balance check,
+// ledger row, and gfs_track_purchases insert atomically and idempotently
+// (ON CONFLICT DO NOTHING on user_id+artist_slug+track_name, so a
+// double-click or retry never double-charges).
+// 2026-09-06 (Sean, direct correction): locked at 150, not the earlier 111 -
+// "the last one I remember was one fifty, that's where we landed." This also
+// matches the rate already used by gfs_redeem_points_for_track and the
+// passport page copy, which were both already at 150.
+const TRACK_UNLOCK_COST_LESARS = 150;
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
