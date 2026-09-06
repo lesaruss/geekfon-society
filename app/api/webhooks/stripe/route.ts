@@ -197,9 +197,10 @@ export async function POST(req: NextRequest) {
         : (invoice.subscription as any)?.id;
 
     if (userId && subId && invoice.billing_reason === "subscription_cycle") {
-      // Universal points convention (locked 2026-08-13): $1 = 100 points, so the
-      // $11/mo renewal grants 1,100 points, not the old placeholder 500.
-      await creditLesars(supabase, userId, 1100, "all-access-renewal", invoice.id);
+      // 2026-09-06 (Sean, direct correction, geekfon-society-blueprint canon):
+      // $11/mo renewal grants 1,500 points, a locked exception to the
+      // universal 100:1 convention used elsewhere (LESARs packs, etc.).
+      await creditLesars(supabase, userId, 1500, "all-access-renewal", invoice.id);
     }
   }
 
