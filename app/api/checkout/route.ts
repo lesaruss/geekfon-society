@@ -108,8 +108,8 @@ export async function POST(req: NextRequest) {
     // 2026-08-14 to a tiered lookup table per Sean's "different increments"
     // direction). Fixed dollar tiers, each mapping to a fixed LESARs amount
     // - not a derived multiplier, since 1110/11 is not a clean scalar. The
-    // bulk top-up that funds per-song unlocks (111 LESARs unlocks one song,
-    // see app/api/tracks/unlock/route.ts). Built inline like season-pass
+    // bulk top-up that funds per-song unlocks (150 LESARs unlocks one song,
+    // locked 2026-09-06 - see app/api/tracks/unlock/route.ts). Built inline like season-pass
     // above instead of via PRICE_MAP/STRIPE_PRICE_* env vars, since these are
     // fixed prices with no server-side pricing logic needed. The webhook's
     // existing generic `if (userId && plan && lesars > 0) creditLesars(...)`
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
             unit_amount: priceCents,
             product_data: {
               name: `GeekFon Society - ${lesarsForPack.toLocaleString()} LESARs`,
-              description: `${lesarsForPack.toLocaleString()} LESARs to spend unlocking songs (111 LESARs unlocks one song).`,
+              description: `${lesarsForPack.toLocaleString()} LESARs to spend unlocking songs (150 LESARs unlocks one song).`,
             },
           },
           quantity: 1,
