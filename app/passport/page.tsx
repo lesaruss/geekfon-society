@@ -27,7 +27,7 @@ const PERKS = [
     icon: "◈",
     short: "All Access",
     title: "$11/mo All Access",
-    desc: "One membership, every artist. $11/month unlocks the full catalog across the whole roster and drops 1,100 points into your wallet every month - no per-artist unlocking.",
+    desc: "One membership, every artist. $11/month unlocks the full catalog across the whole roster and drops 1,500 points into your wallet every month - no per-artist unlocking.",
     accent: "#AAFF00",
   },
   {
@@ -306,8 +306,10 @@ export default function PassportPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleNext, handleBack, slideIdx]);
 
-  // 2026-08-13: All Access ($11/mo) relocked per Sean at $11 = 1,100 points/month
-  // (universal $1 = 100 points convention), replacing the retired 2026-07-23 flow.
+  // 2026-09-06: All Access ($11/mo) grants 1,500 points/month, a locked
+  // exception to the universal $1 = 100 points convention (Sean, direct
+  // correction, geekfon-society-blueprint canon), replacing the earlier
+  // 2026-08-13 relock at 1,100.
   // Free signup is still the no-cost path; All Access is now sold from this page
   // via Stripe Checkout (subscription mode, see app/api/checkout/route.ts).
   // Per-artist one-time unlocks still happen on the artist's own page
@@ -363,7 +365,7 @@ export default function PassportPage() {
                 <h1 className="pp-hero-title">GeekFon Passport</h1>
                 <p className="pp-hero-sub">
                   Your membership into the GeekFon universe. Stream every release for free, forever.
-                  Go All Access for $11/month to unlock every artist and get 1,100 points a month
+                  Go All Access for $11/month to unlock every artist and get 1,500 points a month
                   to download tracks and take them with you.
                 </p>
                 <button className="pp-hero-cta" onClick={handleNext}>
@@ -404,7 +406,7 @@ export default function PassportPage() {
                 $1 = 100 points convention. Free stays pay-as-you-go (buy points,
                 or unlock one artist at a time for $11 on that artist's own page).
                 All Access is $11/month, unlocks every artist's full catalog flat
-                (no per-artist unlocking), and drops 1,100 points/month into the
+                (no per-artist unlocking), and drops 1,500 points/month into the
                 wallet - points spend only on downloading tracks to keep off-platform,
                 streaming itself is never metered. See knowledge_records
                 exploration-universal-points-ladder for the locked convention. */}
@@ -443,7 +445,7 @@ export default function PassportPage() {
                     <div className="pp-tier-name">All Access</div>
                     <div className="pp-tier-price">$11<span>/mo</span></div>
                     <div className="pp-tier-period">cancel anytime</div>
-                    <div className="pp-tier-highlight">1,100 points/month</div>
+                    <div className="pp-tier-highlight">1,500 points/month</div>
                     <div className="pp-tier-highlight-sub">$1 = 100 points, everywhere</div>
                     <ul className="pp-tier-items">
                       <li>Every artist unlocked, full catalog, no per-artist purchases</li>
