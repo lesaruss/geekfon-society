@@ -165,7 +165,7 @@ export default function DashboardOverview() {
           Same four tiers as that modal now offers. */}
       <div className="do-section do-buy-section">
         <div className="do-section-title">Buy LESARs</div>
-        <p className="do-buy-sub">111 LESARs unlocks any song, released or not - forever, yours to download.</p>
+        <p className="do-buy-sub">150 LESARs unlocks any song, released or not - forever, yours to download.</p>
         {buyError && <p className="do-buy-error">{buyError}</p>}
         <div className="do-buy-grid">
           {LESARS_PACKS.map(pack => (
