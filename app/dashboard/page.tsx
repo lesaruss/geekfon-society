@@ -73,7 +73,9 @@ export default function DashboardOverview() {
       .from("gfs_artist_unlocks")
       .select("artist_slug")
       .eq("user_id", userId)
-      .then(({ data }) => setUnlockedArtists((data || []).map(r => r.artist_slug)));
+      // Deduped: one row per album owned (2026-09-27), so two albums by the
+      // same artist would otherwise list that artist twice.
+      .then(({ data }) => setUnlockedArtists([...new Set((data || []).map(r => r.artist_slug))]));
   }, [userId]);
 
   // Real count backing the "Songs Owned" stat card below (was previously a permanent "..." placeholder)

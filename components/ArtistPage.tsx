@@ -724,7 +724,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
         sb.from("gfs_members").select("tier").eq("user_id", user.id).single(),
         sb.from("member_points").select("available_points").eq("user_id", user.id).maybeSingle(),
         slug
-          ? sb.from("gfs_artist_unlocks").select("id").eq("user_id", user.id).eq("artist_slug", slug).maybeSingle()
+          // limit(1), not maybeSingle(): a fan can own several albums by one
+          // artist (one gfs_artist_unlocks row each, 2026-09-27), and
+          // maybeSingle() errors on 2+ rows, which would read as "not owned".
+          ? sb.from("gfs_artist_unlocks").select("id").eq("user_id", user.id).eq("artist_slug", slug).limit(1).maybeSingle()
           : Promise.resolve({ data: null }),
       ]).then(([{ data: member }, { data: pts }, { data: unlock }]) => {
         if (member?.tier) setUserTier(member.tier);

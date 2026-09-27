@@ -184,6 +184,66 @@ export async function POST(req: NextRequest) {
         await creditReferralCommission(supabase, seasonUserId, session.amount_total ?? 1100);
       }
     }
+
+    // Album (added 2026-09-27, playbook geekfon-album-model). Same guest
+    // pattern as season-pass. The row lands in gfs_artist_unlocks because
+    // geekfon.ai already reads any row there as "owns this artist", which
+    // is the album rule. season = 'album:<id>' keeps the existing unique key
+    // doing the work: a repeat delivery of this event is a no-op, and one
+    // person can own several albums by the same artist. A pre-order records
+    // founding_fan and holds downloads until the album releases on GeekFon.
+    //
+    // Unlike the branches above, a failed write returns 500 so Stripe
+    // retries delivery - the upsert is idempotent, and a paid album that
+    // silently never recorded is the one outcome this must not allow.
+    if (plan === "album" && session.metadata?.album_id && session.metadata?.artist_slug) {
+      let albumUserId = userId || null;
+
+      if (!albumUserId) {
+        const guestEmail = session.customer_details?.email || (session as any).customer_email;
+        if (!guestEmail) {
+          console.error("[webhook] guest album purchase with no email on session", session.id);
+          return NextResponse.json({ error: "No buyer to record album against" }, { status: 500 });
+        }
+        try {
+          albumUserId = await findOrCreateUserIdByEmail(supabase, guestEmail);
+          await supabase
+            .from("gfs_members")
+            .upsert(
+              { user_id: albumUserId, tier: "free", tier_source: "stripe" },
+              { onConflict: "user_id", ignoreDuplicates: true }
+            );
+        } catch (e) {
+          console.error("[webhook] guest album provisioning failed", session.id, e);
+          return NextResponse.json({ error: "Guest provisioning failed" }, { status: 500 });
+        }
+      }
+
+      const isPreorder = session.metadata.preorder === "true";
+      const { error: albumWriteErr } = await supabase
+        .from("gfs_artist_unlocks")
+        .upsert(
+          {
+            user_id: albumUserId,
+            artist_slug: session.metadata.artist_slug,
+            season: `album:${session.metadata.album_id}`,
+            album_id: session.metadata.album_id,
+            purchase_type: isPreorder ? "album_preorder" : "album",
+            founding_fan: isPreorder,
+            download_enabled: !isPreorder,
+            source: "stripe",
+            amount_cents: session.amount_total ?? 1100,
+            external_id: session.id,
+          },
+          { onConflict: "user_id,artist_slug,season" }
+        );
+      if (albumWriteErr) {
+        console.error("[webhook] album unlock write failed", session.id, albumWriteErr);
+        return NextResponse.json({ error: "Album unlock write failed" }, { status: 500 });
+      }
+
+      await creditReferralCommission(supabase, albumUserId, session.amount_total ?? 1100);
+    }
   }
 
   if (event.type === "invoice.payment_succeeded") {

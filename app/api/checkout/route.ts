@@ -39,7 +39,77 @@ export async function POST(req: NextRequest) {
   );
 
   try {
-    const { plan, userId, returnUrl, artistSlug, season, packAmount: rawPackAmount } = await req.json();
+    const { plan, userId, returnUrl, artistSlug, season, albumId, packAmount: rawPackAmount } = await req.json();
+
+    // Album (added 2026-09-27, playbook geekfon-album-model, canon
+    // canon-geekfon-album-model): the $11 album - finished or pre-order - is
+    // the product, and buying it unlocks that artist's whole world for good.
+    // Same shape as season-pass below (inline price_data, guest checkout
+    // allowed, webhook records a gfs_artist_unlocks row), but keyed to a
+    // gfs_albums row the HQ roster owns. Everything about the album comes
+    // from that row server-side; the client only names which one. An album
+    // still in_progress is sold as a pre-order at the same $11, and the
+    // buyer is marked a Founding Fan. Flat price: the season-pass loyalty
+    // rate (gfs_calc_season_price) is deliberately not applied.
+    if (plan === "album") {
+      if (!albumId || typeof albumId !== "string") {
+        return NextResponse.json({ error: "albumId is required for album" }, { status: 400 });
+      }
+      const { data: album, error: albumErr } = await supabase
+        .from("gfs_albums")
+        .select("id, artist_slug, title, working_title, status")
+        .eq("id", albumId)
+        .maybeSingle();
+      if (albumErr || !album) {
+        return NextResponse.json({ error: "Album not found" }, { status: 404 });
+      }
+      const { data: artistRow } = await supabase
+        .from("gfs_artists")
+        .select("name")
+        .eq("slug", album.artist_slug)
+        .maybeSingle();
+
+      const isPreorder = album.status !== "released";
+      const albumName = album.title ?? album.working_title;
+      const artistName = (artistRow as { name?: string } | null)?.name ?? album.artist_slug;
+
+      const origin = req.headers.get("origin") || "https://geekfon.ai";
+      const successUrl = returnUrl
+        ? `${origin}${returnUrl}?checkout=success&plan=album&album=${encodeURIComponent(album.id)}`
+        : `${origin}/dashboard?checkout=success&plan=album`;
+      const cancelUrl = returnUrl
+        ? `${origin}${returnUrl}?checkout=cancelled`
+        : `${origin}/${album.artist_slug}?checkout=cancelled`;
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [{
+          price_data: {
+            currency: "usd",
+            unit_amount: 1100,
+            product_data: {
+              name: `${artistName} - ${albumName}${isPreorder ? " (Pre-order)" : ""}`,
+              description: isPreorder
+                ? `Pre-order ${albumName}. Hear every track the moment it's finished, months before it's released anywhere else, plus ${artistName}'s full world on GeekFon. Founding Fan badge included.`
+                : `Own ${albumName}, remixes included, plus ${artistName}'s full world on GeekFon.`,
+            },
+          },
+          quantity: 1,
+        }],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: {
+          user_id: userId || "",
+          plan,
+          album_id: album.id,
+          artist_slug: album.artist_slug,
+          preorder: isPreorder ? "true" : "false",
+        },
+        ...(userId && { client_reference_id: userId }),
+      });
+
+      return NextResponse.json({ url: session.url });
+    }
 
     // Season Pass (added 2026-07-30, Sean-approved rebuild): replaces the flat
     // artist-unlock model above for now. artist-unlock is left in place, not
