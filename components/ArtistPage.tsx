@@ -1628,6 +1628,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               onMode={setStoreMode}
               platformLinks={c.platformLinks}
               chat={chatPreview}
+              group={(c.members?.length ?? 0) > 1}
             />
             </div>
           )}
