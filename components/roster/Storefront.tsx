@@ -20,6 +20,7 @@ import type { RadioStation } from "@/lib/server/radio";
 import type { RosterAccess } from "./useRosterAccess";
 import { startSupportCheckout } from "./checkout";
 import { PLATFORM_ICONS } from "@/lib/platformIcons";
+import { AlbumScreen, FeedScreen, GalleryScreen, ChatScreen, RadioScreen, StoryScreen } from "./TourMockups";
 import "./storefront.css";
 
 const PREVIEW_SECONDS = 30;
@@ -136,7 +137,8 @@ export default function Storefront(p: Props) {
       <div className="sf-right">
         {p.mode === "music" ? (
           <>
-            <h1 className="sf-name sf-name-compact">{p.artistName}</h1>
+            {/* Same element and style as the Support page title (Sean, 2026-10-04). */}
+            <div className="tour-name sf-title" role="heading" aria-level={1}>{p.artistName}</div>
             <div className="sf-kicker">{p.kicker}</div>
             {p.tagline && <div className="sf-tagline">{p.tagline}</div>}
             {p.blurb && <p className="sf-blurb">{p.blurb}</p>}
@@ -181,6 +183,14 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
     setCur(i);
     setTime(0);
     a.play().catch(() => setPlaying(false));
+  }
+
+  function closePlayer() {
+    const a = audioRef.current;
+    if (a) { a.pause(); a.removeAttribute("src"); a.load(); }
+    setCur(null);
+    setPlaying(false);
+    setTime(0);
   }
 
   function next(dir = 1) {
@@ -285,6 +295,9 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
           {capped && !p.supporter && (
             <button className="sf-btn sf-btn-go am-p-cta" onClick={() => p.onMode("tour")}>Hear it all</button>
           )}
+          <button className="am-p-btn am-p-close" onClick={closePlayer} aria-label="Close player">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
         </div>
       )}
 
@@ -309,7 +322,6 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
   const mains = albumSongs.filter(s => !s.isRemix);
   const remixes = albumSongs.filter(s => s.isRemix);
   const covers = p.list.map(s => s.coverUrl).filter((u): u is string => !!u);
-  const post = p.posts.find(x => x.text || x.title) || null;
 
   async function buy() {
     setBusy(true);
@@ -317,112 +329,70 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
     setBusy(false);
   }
 
+  const single = p.list.find(x => x.access === "single" && !x.isRemix) ?? p.list[0];
+  const images = Array.from(new Set([p.portraitUrl, p.tourPortraitUrl, ...covers].filter((u): u is string => !!u)));
+  const stationWithArtist = p.stations.find(st => st.slug !== "main")?.slug || "main";
+
   const stops: { key: string; title: string; text: string; visual: React.ReactNode }[] = [
     {
       key: "album",
       title: `${p.album.title}, in full`,
       text: `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full${p.album.out ? " with downloads" : ", before the album is out everywhere"}.`,
-      visual: (
-        <div className="tv-album">
-          {p.album.coverUrl && <img className="tv-album-cover" src={p.album.coverUrl} alt="" />}
-          <ol className="tv-album-list">
-            {mains.slice(0, 7).map(s => <li key={s.id}><span>{s.title}</span><span className="tv-check">✓ Full</span></li>)}
-          </ol>
-        </div>
-      ),
+      visual: <AlbumScreen artist={p.artistName} slug={p.slug} album={p.album} songs={mains} />,
     },
     {
       key: "pulse",
       title: "Pulse and Social",
       text: `${p.artistName}'s posts, news and behind-the-scenes, as they land.`,
-      visual: (
-        <div className="tv-post">
-          <div className="tv-post-head">
-            {p.portraitUrl && <img src={p.portraitUrl} alt="" />}
-            <div><strong>{p.artistName}</strong><span>{post?.date || "Pulse"}</span></div>
-          </div>
-          {post?.thumb && <img className="tv-post-img" src={post.thumb} alt="" />}
-          <p>{(post?.title || post?.text || `New from ${p.artistName}.`).slice(0, 160)}</p>
-        </div>
-      ),
+      visual: <FeedScreen artist={p.artistName} avatar={p.portraitUrl} posts={p.posts} images={covers} />,
     },
     {
       key: "gallery",
       title: "The Gallery",
-      text: `Phone and desktop wallpapers and art made just for ${p.artistName}'s supporters${p.galleryCount ? ` (${p.galleryCount} so far)` : ""}, new ones as they're made.`,
-      visual: (
-        <div className="tv-gallery">
-          <div className="tv-phone">{p.tourPortraitUrl || p.portraitUrl ? <img src={(p.tourPortraitUrl || p.portraitUrl)!} alt="" /> : null}</div>
-          <div className="tv-grid">{covers.slice(0, 4).map((u, i) => <img key={i} src={u} alt="" />)}</div>
-          <span className="tv-preview">Preview</span>
-        </div>
-      ),
+      text: `Phone and desktop wallpapers and art made just for ${p.artistName}'s supporters${p.galleryCount ? ` (${p.galleryCount} so far)` : ""}, with new ones as they're made.`,
+      visual: <GalleryScreen slug={p.slug} images={images} wallpaper={p.tourPortraitUrl || p.portraitUrl} />,
     },
     {
       key: "chat",
       title: "Chat",
       text: `Read the artists' group chat every day, from ${p.artistName}'s side: how the crew talks, plans and teases each other. A new episode daily. Opening soon, and you're in from day one.`,
-      visual: (
-        p.chat ? (
-          <div className="tv-chat">
-            <div className="tv-chat-head"># {p.chat.room}<span>{p.artistName}&apos;s view</span></div>
-            <div className="tv-chat-body">
-              {p.chat.lines.map((ln, n) => {
-                const who = p.chat!.people[ln.from];
-                const me = ln.from === p.chat!.me;
-                return (
-                  <div key={n} className={"tv-msg" + (me ? " tv-msg-me" : "")}>
-                    {!me && (who?.avatar ? <img className="tv-av" src={who.avatar} alt="" /> : <span className="tv-av">{(who?.name || "?")[0]}</span>)}
-                    <div className="tv-bubble">
-                      {!me && <span className="tv-who">{who?.name || ln.from}</span>}
-                      <p>{ln.text}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <span className="tv-preview">Preview</span>
-          </div>
-        ) : (
-          <div className="tv-chat"><div className="tv-chat-head"># {p.artistName.toLowerCase()}-crew</div><p className="tv-chat-empty">The artists&apos; group chat opens here soon.</p></div>
-        )
-      ),
+      visual: p.chat
+        ? <ChatScreen artist={p.artistName} chat={p.chat} />
+        : <div className="tv-chat"><p className="tv-chat-empty">The artists&apos; group chat opens here soon.</p></div>,
     },
     {
       key: "radio",
       title: "Radio",
       text: `Every GeekFon station ${p.artistName} is on, playing live with everyone else listening.`,
-      visual: (
-        <div className="tv-radio">
-          <span className="tv-live"><i /> Live</span>
-          <div className="tv-radio-list">{p.stations.map(st => <span key={st.slug}>{st.name}</span>)}</div>
-        </div>
-      ),
+      visual: <RadioScreen artist={p.artistName} song={single?.title || p.album.title} stations={p.stations} active={stationWithArtist} />,
     },
     {
       key: "story",
       title: `${p.artistName}'s full story`,
       text: "The whole Bible behind the music, and the lyrics to every song.",
-      visual: (
-        <div className="tv-story">
-          {(p.storyLabels.length ? p.storyLabels.slice(0, 6) : ["Backstory", "Lore", "Lyrics"]).map(l => <span key={l}>{l}</span>)}
-        </div>
-      ),
+      visual: <StoryScreen artist={p.artistName} slug={p.slug} labels={p.storyLabels} portrait={p.tourPortraitUrl || p.portraitUrl} />,
     },
   ];
 
   const offer = (
-    <div className="tour-offer">
-      <div className="tour-offer-price">$11<span>one time</span></div>
-      <ul>
-        <li>{p.album.title} in full{p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
-        <li>Pulse, Social and Chat</li>
-        <li>The Gallery</li>
-        <li>Radio and {p.artistName}&apos;s full story</li>
-        {!p.album.out && <li>Counts as your pre-order, with a Founding Fan badge</li>}
-      </ul>
-      <button className="sf-btn sf-btn-go sf-btn-big" onClick={buy} disabled={busy}>{busy ? "Starting checkout..." : `Support ${p.artistName} · $11`}</button>
-      {error && <p className="tour-error">{error}</p>}
+    <div className="tour-offer2">
+      <div className="to-art">
+        {p.album.coverUrl && <img src={p.album.coverUrl} alt="" />}
+        {!p.album.out && <span className="to-badge">Founding Fan</span>}
+      </div>
+      <div className="to-copy">
+        <span className="tour-num">Support {p.artistName}</span>
+        <div className="tour-offer-price">$11<span>one time</span></div>
+        <ul>
+          <li><strong>{p.album.title}</strong> in full{p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
+          <li><strong>Pulse, Social and Chat</strong>, every day</li>
+          <li><strong>The Gallery</strong> of wallpapers and art</li>
+          <li><strong>Radio</strong> and {p.artistName}&apos;s <strong>full story</strong></li>
+          {!p.album.out && <li>Counts as your pre-order, with a <strong>Founding Fan</strong> badge</li>}
+        </ul>
+        <button className="sf-btn sf-btn-go sf-btn-big" onClick={buy} disabled={busy}>{busy ? "Starting checkout..." : `Support ${p.artistName} · $11`}</button>
+        {error && <p className="tour-error">{error}</p>}
+      </div>
     </div>
   );
   const total = stops.length + 1; // the stops, then the offer
