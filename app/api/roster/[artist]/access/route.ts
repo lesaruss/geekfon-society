@@ -17,6 +17,7 @@ import { loadArtistRows, accessOf } from "@/lib/server/depot";
 import { signStream } from "@/lib/server/depot";
 import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
 import { loadFanBible } from "@/lib/server/bible";
+import { loadGallery } from "@/lib/server/gallery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,10 +46,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   if (!viewer) return NextResponse.json({ signedIn: false, supporter: false, songs: {} }, { headers: noStore });
 
   const ent = await entitlementFor(viewer, artist);
-  const { rows, singleKeys } = await loadArtistRows(artist);
+  const { rows, rule } = await loadArtistRows(artist);
 
   const grantRows = rows.filter(r => {
-    if (!r.src_path || accessOf(r, singleKeys) === "single") return false;
+    if (!r.src_path || accessOf(r, rule) === "single") return false;
     return ent.supporter || ent.ownedTitles.has(r.title);
   });
 
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   if (ent.download) {
     await Promise.all(
       rows
-        .filter(r => r.src_path && accessOf(r, singleKeys) === "single")
+        .filter(r => r.src_path && accessOf(r, rule) === "single")
         .map(async r => {
           const d = await signStream(r.src_path!, STREAM_TTL_SECONDS, fileName(artist, r.title));
           if (d) downloads[r.id] = d;
@@ -84,7 +85,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
     );
   }
 
-  const bible = ent.supporter ? await loadFanBible(artist, { full: true }) : undefined;
+  const [bible, gallery] = await Promise.all([
+    ent.supporter ? loadFanBible(artist, { full: true }) : Promise.resolve(undefined),
+    // Signed-in non-supporters get only what the page already shows; no need to re-sign.
+    ent.supporter ? loadGallery(artist, ent.reason === "staff" ? "admin" : "supporter") : Promise.resolve(undefined),
+  ]);
 
   return NextResponse.json(
     {
@@ -95,7 +100,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
       download: ent.download,
       songs,
       downloads,
+      staff: ent.reason === "staff",
       ...(bible ? { bible } : {}),
+      ...(gallery ? { gallery } : {}),
     },
     { headers: noStore }
   );

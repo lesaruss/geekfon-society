@@ -19,10 +19,21 @@
 // open decision in the geekfon-launch playbook (radio ideas, V session).
 
 import { serviceClient } from "./supabaseAdmin";
-import { STREAM_BUCKET, publicStreamUrl, titleKey } from "./depot";
+import { STREAM_BUCKET, publicStreamUrl, titleKey, labelStates, type LabelState } from "./depot";
 import type { RadioTrack, ScheduleOverride } from "@/lib/radioSchedule";
 
 const SIGNED_TTL_SECONDS = 24 * 60 * 60;
+
+// Label-model artists (lib/server/depot.ts): radio plays only songs that are
+// announced (out, or on an album that is), and "single" means out now.
+function labelAllows(states: Map<string, LabelState>, artist: string, id: string): boolean {
+  const st = states.get(artist);
+  return !st || st.visibleIds.has(id);
+}
+function labelSingle(states: Map<string, LabelState>, artist: string, id: string): boolean | null {
+  const st = states.get(artist);
+  return st ? st.liveIds.has(id) : null;
+}
 
 type RtRow = { id: string; artist_slug: string; title: string; radio_order: number | null; sort_order: number | null };
 type PsRow = { id: string; title: string; primary_artist_slug: string; src_path: string | null; duration_seconds: number | null; source_radio_track_id: string };
@@ -68,8 +79,14 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
     for (const t of a.profile?.tracks ?? []) if (t.v === "public" && t.n) singles.add(`${a.slug}|${titleKey(t.n)}`);
   }
 
+  const states = await labelStates(((ps ?? []) as PsRow[]).map(p => p.primary_artist_slug));
   const songs = new Map<string, PsRow>(); // depot id -> row, for everything referenced
-  for (const p of (ps ?? []) as PsRow[]) songs.set(p.id, p);
+  for (const p of (ps ?? []) as PsRow[]) {
+    if (!labelAllows(states, p.primary_artist_slug, p.id)) { byRt.delete(p.source_radio_track_id); continue; }
+    songs.set(p.id, p);
+  }
+  const isSingleRow = (p: { id: string; primary_artist_slug: string; title: string }) =>
+    labelSingle(states, p.primary_artist_slug, p.id) ?? singles.has(`${p.primary_artist_slug}|${titleKey(p.title)}`);
 
   // Resolve each referenced song's playable URL once.
   const urlFor = new Map<string, string>();
@@ -77,7 +94,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
     const vault: PsRow[] = [];
     for (const p of songs.values()) {
       if (!p.src_path) continue;
-      if (singles.has(`${p.primary_artist_slug}|${titleKey(p.title)}`)) urlFor.set(p.id, publicStreamUrl(p.src_path));
+      if (isSingleRow(p)) urlFor.set(p.id, publicStreamUrl(p.src_path));
       else vault.push(p);
     }
     if (vault.length) {
@@ -186,7 +203,9 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
     sb.from("gfs_radio_stations").select("slug, song_ids").eq("active", true).eq("exclusive", true).neq("slug", slug),
   ]);
   const heldElsewhere = new Set(((exclusiveRows ?? []) as { song_ids: string[] | null }[]).flatMap(r => r.song_ids ?? []));
-  const songs = ((rawSongs ?? []) as StationSong[]).filter(s => !heldElsewhere.has(s.id));
+  const candidates = ((rawSongs ?? []) as StationSong[]).filter(s => !heldElsewhere.has(s.id));
+  const states = await labelStates(candidates.map(s => s.primary_artist_slug));
+  const songs = candidates.filter(s => labelAllows(states, s.primary_artist_slug, s.id));
 
   // Artist order: the lineup as listed, or for a song list, the order the
   // artists first appear in it.
@@ -215,7 +234,9 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
   }
 
   // Singles stream from their public path; everything else is a signed link.
-  const vault = ordered.filter(s => !singles.has(`${s.primary_artist_slug}|${titleKey(s.title)}`));
+  const isSingleRow = (s: StationSong) =>
+    labelSingle(states, s.primary_artist_slug, s.id) ?? singles.has(`${s.primary_artist_slug}|${titleKey(s.title)}`);
+  const vault = ordered.filter(s => !isSingleRow(s));
   const signedBy = new Map<string, string>();
   if (vault.length) {
     const { data: signed } = await sb.storage.from(STREAM_BUCKET).createSignedUrls(vault.map(v => v.src_path!), SIGNED_TTL_SECONDS);
@@ -224,9 +245,29 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
 
   const rotation: RadioTrack[] = [];
   for (const s of ordered) {
-    const path = signedBy.get(s.id) ?? (singles.has(`${s.primary_artist_slug}|${titleKey(s.title)}`) ? publicStreamUrl(s.src_path!) : undefined);
+    const path = signedBy.get(s.id) ?? (isSingleRow(s) ? publicStreamUrl(s.src_path!) : undefined);
     if (!path) continue;
     rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, title: s.title, path, durationSeconds: s.duration_seconds || 180 });
   }
   return { rotation, overrides: [] };
+}
+
+// Stations an artist can be heard on, for the "on GeekFon Radio" strip on
+// their page: GeekFon Radio itself, every lineup station that lists them,
+// and any song-list station (Holiday) holding one of their announced songs.
+export async function stationsFeaturing(artistSlug: string): Promise<RadioStation[]> {
+  const sb = serviceClient();
+  if (!sb) return [MAIN_STATION];
+  const [{ data: stations }, { data: songs }, states] = await Promise.all([
+    sb.from("gfs_radio_stations").select("slug, name, tagline, artist_slugs, song_ids").eq("active", true).order("sort_order", { ascending: true }),
+    sb.from("pulse_songs").select("id").eq("primary_artist_slug", artistSlug).is("retired_at", null),
+    labelStates([artistSlug]),
+  ]);
+  const st = states.get(artistSlug);
+  const mine = new Set(((songs ?? []) as { id: string }[]).map(s => s.id).filter(id => !st || st.visibleIds.has(id)));
+  type Row = RadioStation & { artist_slugs: string[] | null; song_ids: string[] | null };
+  const featured = ((stations ?? []) as Row[]).filter(s =>
+    (s.song_ids?.length ? s.song_ids.some(id => mine.has(id)) : (s.artist_slugs ?? []).includes(artistSlug))
+  );
+  return [MAIN_STATION, ...featured.map(({ slug, name, tagline }) => ({ slug, name, tagline }))];
 }

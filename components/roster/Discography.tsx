@@ -32,7 +32,7 @@ function albumLabel(a: PublicAlbum, count: number): string {
   return `In progress · ${count} of ${a.trackTarget}`;
 }
 
-type Section = { key: string; title: string; sub?: string; songs: PublicSong[]; inProgress?: boolean };
+type Section = { key: string; title: string; sub?: string; songs: PublicSong[]; inProgress?: boolean; album?: PublicAlbum; remixes?: PublicSong[] };
 
 export default function Discography({ artistName, songs, albums, access, onSupport }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -51,6 +51,11 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
       const list = a.tracks.map(t => byId.get(t.songId)).filter((s): s is PublicSong => !!s);
       if (!list.length) continue;
       list.forEach(s => placed.add(s.id));
+      if (a.label) {
+        // Label model: the album leads with its own tracks; its remixes follow.
+        out.push({ key: a.id, title: a.title, songs: list.filter(s => !s.isRemix), remixes: list.filter(s => s.isRemix), album: a });
+        continue;
+      }
       out.push({ key: a.id, title: a.title, sub: albumLabel(a, list.filter(s => !s.isRemix).length), songs: list, inProgress: a.status !== "released" });
     }
     const rest = songs.filter(s => !placed.has(s.id));
@@ -63,6 +68,8 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
 
   const singles = songs.filter(s => s.access === "single").length;
   const vault = songs.length - singles;
+  const labelAlbum = albums.find(a => a.label) ?? null;
+  const outNow = songs.filter(s => s.access === "single" && !s.isRemix);
 
   // Which URL a row plays, and whether it is capped, for THIS viewer.
   function sourceFor(s: PublicSong): { url: string; capped: boolean } {
@@ -132,52 +139,7 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
     return { en: s.lyricsEn, original: s.lyricsOriginal, lang: s.lyricsOriginalLang };
   }
 
-  if (!songs.length) {
-    return (
-      <section className="rs-wrap">
-        <p className="rs-empty">{artistName}&apos;s songs are on their way.</p>
-      </section>
-    );
-  }
-
-  return (
-    <section className="rs-wrap">
-      <audio
-        ref={audioRef}
-        preload="none"
-        onTimeUpdate={onTime}
-        onEnded={() => { setPlaying(false); setTime(0); }}
-        onPause={() => setPlaying(false)}
-        onPlay={() => setPlaying(true)}
-      />
-
-      <div className="rs-head">
-        <h2 className="rs-title">Discography</h2>
-        <span className="rs-count">{songs.length} songs · {singles} free {singles === 1 ? "single" : "singles"} · {vault} in the vault</span>
-      </div>
-
-      {access.supporter ? (
-        <div className="rs-banner rs-banner-on">
-          <strong>You&apos;re a supporter.</strong> Every {artistName} song is unlocked, including the vault{access.download ? ", with downloads" : ""}.
-        </div>
-      ) : (
-        <div className="rs-banner">
-          <div>
-            <strong>The vault is for supporters.</strong> Singles play free. Support {artistName} to hear every unreleased and
-            in-development song in full, read the lyrics and the full Bible, and get each new song as it lands.
-          </div>
-          <button className="rs-cta" onClick={onSupport}>Support {artistName}</button>
-        </div>
-      )}
-
-      {sections.map(sec => (
-        <div key={sec.key} className="rs-section">
-          <div className="rs-section-head">
-            <h3 className="rs-section-title">{sec.title}</h3>
-            {sec.sub && <span className={"rs-section-sub" + (sec.inProgress ? " rs-progress" : "")}>{sec.sub}</span>}
-          </div>
-          <div className="rs-rows">
-            {sec.songs.map(s => {
+  function renderRow(s: PublicSong) {
               const { capped } = sourceFor(s);
               const isCur = current === s.id;
               const max = capped ? Math.min(PREVIEW_SECONDS, s.durationSeconds || PREVIEW_SECONDS) : (s.durationSeconds || 0);
@@ -206,10 +168,10 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
                       <div className="rs-line">
                         <span className="rs-song">{s.title}</span>
                         {s.access === "single"
-                          ? <span className="rs-tag rs-tag-single">Single</span>
+                          ? <span className={"rs-tag " + (labelAlbum ? "rs-tag-out" : "rs-tag-single")}>{labelAlbum ? "Out now" : "Single"}</span>
                           : capped
                             ? <span className="rs-tag rs-tag-preview">Preview</span>
-                            : <span className="rs-tag rs-tag-vault">Vault</span>}
+                            : <span className="rs-tag rs-tag-vault">{labelAlbum ? "Unlocked" : "Vault"}</span>}
                       </div>
                       <div className="rs-scrub">
                         <span className="rs-time">{fmt(t)}</span>
@@ -254,10 +216,121 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
                   )}
                 </div>
               );
-            })}
+  }
+
+  if (!songs.length) {
+    return (
+      <section className="rs-wrap">
+        <p className="rs-empty">{artistName}&apos;s songs are on their way.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rs-wrap">
+      <audio
+        ref={audioRef}
+        preload="none"
+        onTimeUpdate={onTime}
+        onEnded={() => { setPlaying(false); setTime(0); }}
+        onPause={() => setPlaying(false)}
+        onPlay={() => setPlaying(true)}
+      />
+
+      <div className="rs-head">
+        <h2 className="rs-title">Discography</h2>
+        <span className="rs-count">
+          {labelAlbum
+            ? `${outNow.length} out now${labelAlbum.out ? "" : ` · ${labelAlbum.title} coming`}`
+            : `${songs.length} songs · ${singles} free ${singles === 1 ? "single" : "singles"} · ${vault} in the vault`}
+        </span>
+      </div>
+
+      {access.supporter ? (
+        <div className="rs-banner rs-banner-on">
+          <strong>You&apos;re a supporter.</strong>{" "}
+          {labelAlbum
+            ? `All of ${labelAlbum.title} is unlocked for you${labelAlbum.out ? "" : " ahead of release"}${access.download ? ", with downloads" : ""}, along with the Gallery, Chat and ${artistName}'s full Bible.`
+            : `Every ${artistName} song is unlocked, including the vault${access.download ? ", with downloads" : ""}.`}
+        </div>
+      ) : labelAlbum ? (
+        <div className="rs-banner">
+          <div>
+            <strong>Support {artistName}.</strong>{" "}
+            {labelAlbum.out
+              ? `Hear all of ${labelAlbum.title} in full`
+              : `Hear all of ${labelAlbum.title} in full before it's out everywhere`}
+            , plus the Gallery, Chat, lyrics and {artistName}&apos;s full story. Everything else plays as a 30-second preview.
           </div>
+          <button className="rs-cta" onClick={onSupport}>Support {artistName}</button>
+        </div>
+      ) : (
+        <div className="rs-banner">
+          <div>
+            <strong>The vault is for supporters.</strong> Singles play free. Support {artistName} to hear every unreleased and
+            in-development song in full, read the lyrics and the full Bible, and get each new song as it lands.
+          </div>
+          <button className="rs-cta" onClick={onSupport}>Support {artistName}</button>
+        </div>
+      )}
+
+      {sections.map(sec => (
+        <div key={sec.key} className="rs-section">
+          {sec.album ? (
+            <AlbumHero
+              album={sec.album}
+              songs={sec.songs}
+              playing={playing && !!current && sec.songs.some(x => x.id === current)}
+              onPlay={() => { const first = sec.songs.find(x => x.access === "single") ?? sec.songs[0]; if (first) toggle(first); }}
+            />
+          ) : (
+            <div className="rs-section-head">
+              <h3 className="rs-section-title">{sec.title}</h3>
+              {sec.sub && <span className={"rs-section-sub" + (sec.inProgress ? " rs-progress" : "")}>{sec.sub}</span>}
+            </div>
+          )}
+          <div className="rs-rows">
+            {sec.songs.map(renderRow)}
+          </div>
+          {sec.remixes && sec.remixes.length > 0 && (
+            <>
+              <h4 className="rs-subhead">Remixes · GeekFon exclusives</h4>
+              <div className="rs-rows">{sec.remixes.map(renderRow)}</div>
+            </>
+          )}
         </div>
       ))}
     </section>
+  );
+}
+
+// The album as a release: cover (tap to play the first single), where it
+// stands, and what is out now.
+function AlbumHero({ album, songs, playing, onPlay }: { album: PublicAlbum; songs: PublicSong[]; playing: boolean; onPlay: () => void }) {
+  const out = songs.filter(s => s.access === "single");
+  const year = (album.geekfonReleaseDate || "").slice(0, 4);
+  return (
+    <div className="rs-album">
+      <button className="rs-album-cover" onClick={onPlay} aria-label={`${playing ? "Pause" : "Play"} ${album.title}`}>
+        {album.coverUrl ? <img src={album.coverUrl} alt="" /> : <span className="rs-cover-blank" />}
+        <span className="rs-cover-icon" aria-hidden="true">
+          {playing
+            ? <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+            : <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>}
+        </span>
+      </button>
+      <div>
+        <div className="rs-album-kicker">{album.out ? "Album · Out now" : "Album · Coming soon"}</div>
+        <h3 className="rs-album-title">{album.title}</h3>
+        <p className="rs-album-meta">{songs.length} {songs.length === 1 ? "song" : "songs"}{year ? ` · ${year}` : ""}</p>
+        {!album.out && (
+          <p className="rs-album-out">
+            {out.length
+              ? <>Out now: <strong>{out.map(s => s.title).join(", ")}</strong>. The rest preview here until release day.</>
+              : <>Every song previews here until release day.</>}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

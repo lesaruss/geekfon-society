@@ -54,15 +54,30 @@ export default function SupportModal({ artistName, slug, albums, signedIn, onClo
     <div className="rs-modal-overlay" onClick={onClose}>
       <div className="rs-modal" role="dialog" aria-modal="true" aria-labelledby="rs-modal-title" onClick={e => e.stopPropagation()}>
         <h3 id="rs-modal-title" className="rs-modal-title">Support {artistName}</h3>
-        <ul className="rs-modal-list">
-          <li>Every song in the vault, streamed in full: unreleased and in development</li>
-          <li>Lyrics and the full Bible</li>
-          <li>New songs as they land, one or two a month</li>
-        </ul>
+        {album?.label ? (
+          <>
+            <p className="rs-modal-lead">One purchase opens up everything {artistName} has here:</p>
+            <ul className="rs-modal-list">
+              <li><strong>{album.title}</strong>, every song in full{album.out ? ", with downloads" : ", before it's out everywhere"}</li>
+              <li><strong>Gallery</strong>: wallpapers and art made for supporters</li>
+              <li><strong>Chat</strong> with {artistName} and other supporters (opening soon)</li>
+              <li><strong>Lyrics</strong> and {artistName}&apos;s full story</li>
+              <li><strong>Radio</strong>: every GeekFon station {artistName} is on</li>
+            </ul>
+          </>
+        ) : (
+          <ul className="rs-modal-list">
+            <li>Every song in the vault, streamed in full: unreleased and in development</li>
+            <li>Lyrics and the full Bible</li>
+            <li>New songs as they land, one or two a month</li>
+          </ul>
+        )}
         {album ? (
           <>
             <p className="rs-modal-note">
-              $11, one time.{album.status !== "released" ? ` Includes the ${album.title} pre-order and a Founding Fan badge.` : ` Includes ${album.title}.`}
+              $11, one time.{album.label
+                ? (album.out ? "" : ` Counts as your ${album.title} pre-order, with a Founding Fan badge.`)
+                : album.status !== "released" ? ` Includes the ${album.title} pre-order and a Founding Fan badge.` : ` Includes ${album.title}.`}
             </p>
             <button className="rs-cta rs-cta-wide" onClick={checkout} disabled={busy}>{busy ? "Starting checkout..." : "Support for $11"}</button>
           </>

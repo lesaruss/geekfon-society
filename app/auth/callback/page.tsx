@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { takeReturn } from "@/lib/postAuth";
 import { useRouter } from "next/navigation";
 import SiteChrome from "@/components/SiteChrome";
 import { supabase } from "@/lib/supabase";
@@ -30,7 +31,7 @@ export default function AuthCallbackPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Sign-in failed");
         if (cancelled) return;
-        router.replace(data.needsProfile ? "/complete-profile" : "/dashboard");
+        router.replace(data.needsProfile ? "/complete-profile" : (takeReturn() || "/dashboard"));
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Sign-in failed");
       }

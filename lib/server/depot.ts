@@ -23,6 +23,20 @@
 // live site already played in full, so this switch changes no one's access.
 // When the collapse lands, isSingle() reads the new column instead and
 // everything downstream stays the same.
+//
+// LABEL RELEASE MODEL (2026-10-04, Sean: "simulate it like it's a real record
+// label"). For artists in LABEL_ARTISTS, release state comes from HQ's
+// release pipeline, not the Song Manager tags:
+//   - a song is OUT (a public single) when its release brief
+//     (song_release_briefs, linked by pulse_songs.release_brief_id) is
+//     distrokid_status 'live', or 'submitted' with a release_date that has
+//     arrived. Setting the DistroKid date in HQ when a song is submitted makes
+//     it flip on that day with no deploy and no second step;
+//   - an album is VISIBLE when it is not in progress or already has a song
+//     out; nothing from an album still being made (or songs on no visible
+//     album) is shown to anyone outside HQ, radio included;
+//   - an album is OUT when every one of its tracks (remixes aside) is out.
+// Other artists keep the interim rule until they move onto the label model.
 
 import { serviceClient, SUPABASE_URL } from "./supabaseAdmin";
 
@@ -35,6 +49,16 @@ export const PREVIEW_SECONDS = 30;
 const PUBLIC_STREAM_BASE = `${SUPABASE_URL}/storage/v1/object/public/${STREAM_BUCKET}/`;
 
 export type SongAccess = "single" | "vault";
+
+// Artists whose public catalog follows the label release model (see top).
+export const LABEL_ARTISTS = new Set<string>(["roxanne"]);
+
+export type LabelState = {
+  liveIds: Set<string>;         // songs out now (public singles)
+  visibleIds: Set<string>;      // songs anyone outside HQ may see
+  visibleAlbumIds: Set<string>;
+  outAlbumIds: Set<string>;     // albums fully released
+};
 
 // What a browser may see for any song. Vault songs carry no stream path and
 // no lyrics here; supporters receive those from the access route.
@@ -61,6 +85,11 @@ export type PublicAlbum = {
   id: string;
   title: string;
   status: string; // released | in_progress | ...
+  // Label model: true once every track is out. Before that the album shows
+  // as "coming" with its singles out and the rest previewed.
+  out: boolean;
+  label: boolean;
+  coverUrl: string | null;
   trackTarget: number;
   geekfonReleaseDate: string | null;
   tracks: { songId: string; kind: string; position: number }[];
@@ -85,10 +114,11 @@ export type DepotRow = {
   lyrics_original: string | null;
   lyrics_original_lang: string | null;
   source_radio_track_id: string | null;
+  release_brief_id: string | null;
 };
 
 const ROW_COLUMNS =
-  "id, slug, title, primary_artist_slug, season, is_remix, duration_seconds, size_bytes, cover_art_path, thumb_path, release_date, sort_order, radio_order, src_path, lyrics_en, lyrics_original, lyrics_original_lang, source_radio_track_id";
+  "id, slug, title, primary_artist_slug, season, is_remix, duration_seconds, size_bytes, cover_art_path, thumb_path, release_date, sort_order, radio_order, src_path, lyrics_en, lyrics_original, lyrics_original_lang, source_radio_track_id, release_brief_id";
 
 // Riku is 'riku' in gfs_artists and pulse_songs but 'riku-hayasaka' in
 // radio_tracks, gfs_artist_bible and a few older tables. Everything on this
@@ -120,6 +150,49 @@ async function singleKeysFor(artistSlug: string): Promise<Set<string>> {
 
 function isSingle(row: DepotRow, singleKeys: Set<string>): boolean {
   return singleKeys.has(titleKey(row.title));
+}
+
+// Release state for label-model artists, keyed by depot slug. Artists not in
+// LABEL_ARTISTS are absent from the map (callers fall back to the interim
+// rule). One round trip per table regardless of how many artists.
+export async function labelStates(artistSlugs: string[]): Promise<Map<string, LabelState>> {
+  const out = new Map<string, LabelState>();
+  const slugs = Array.from(new Set(artistSlugs.map(depotSlug))).filter(a => LABEL_ARTISTS.has(a));
+  const sb = serviceClient();
+  if (!sb || !slugs.length) return out;
+  const [briefs, songs, albums] = await Promise.all([
+    sb.from("song_release_briefs").select("id, artist_slug, distrokid_status, release_date").in("artist_slug", slugs),
+    sb.from("pulse_songs").select("id, primary_artist_slug, release_brief_id").in("primary_artist_slug", slugs).is("retired_at", null),
+    sb.from("gfs_albums").select("id, artist_slug, status, gfs_album_tracks(song_id, kind)").in("artist_slug", slugs),
+  ]);
+  if (briefs.error || songs.error || albums.error) {
+    // Fail closed: with no release data, nothing is out and nothing is shown.
+    console.error("labelStates", briefs.error?.message, songs.error?.message, albums.error?.message);
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const liveBriefs = new Set(
+    ((briefs.data ?? []) as { id: string; distrokid_status: string | null; release_date: string | null }[])
+      .filter(b => b.distrokid_status === "live" || (b.distrokid_status === "submitted" && !!b.release_date && b.release_date.slice(0, 10) <= today))
+      .map(b => b.id)
+  );
+  for (const a of slugs) out.set(a, { liveIds: new Set(), visibleIds: new Set(), visibleAlbumIds: new Set(), outAlbumIds: new Set() });
+  for (const r of (songs.data ?? []) as { id: string; primary_artist_slug: string; release_brief_id: string | null }[]) {
+    const st = out.get(r.primary_artist_slug);
+    if (st && r.release_brief_id && liveBriefs.has(r.release_brief_id)) { st.liveIds.add(r.id); st.visibleIds.add(r.id); }
+  }
+  type AlbumRow = { id: string; artist_slug: string; status: string; gfs_album_tracks: { song_id: string; kind: string }[] | null };
+  for (const al of (albums.data ?? []) as AlbumRow[]) {
+    const st = out.get(al.artist_slug);
+    if (!st) continue;
+    const tracks = al.gfs_album_tracks ?? [];
+    const anyOut = tracks.some(t => st.liveIds.has(t.song_id));
+    if (al.status === "in_progress" && !anyOut) continue;
+    st.visibleAlbumIds.add(al.id);
+    tracks.forEach(t => st.visibleIds.add(t.song_id));
+    const mains = tracks.filter(t => t.kind !== "remix");
+    if (mains.length && mains.every(t => st.liveIds.has(t.song_id))) st.outAlbumIds.add(al.id);
+  }
+  return out;
 }
 
 export function publicStreamUrl(srcPath: string): string {
@@ -165,30 +238,41 @@ function orderRows(rows: DepotRow[]): DepotRow[] {
   });
 }
 
-export async function loadArtistRows(artistSlug: string): Promise<{ rows: DepotRow[]; singleKeys: Set<string> }> {
+// What decides a song's access for one artist: the label state when the
+// artist is on the label model, otherwise the interim Song Manager tags.
+export type ReleaseRule = { singleKeys: Set<string>; label: LabelState | null };
+
+// Rows for one artist. For label-model artists only the rows anyone outside
+// HQ may see are returned, so no caller can leak an unannounced song.
+export async function loadArtistRows(artistSlug: string): Promise<{ rows: DepotRow[]; rule: ReleaseRule }> {
   const sb = serviceClient();
-  if (!sb) return { rows: [], singleKeys: new Set() };
   const slug = depotSlug(artistSlug);
-  const [{ data, error }, singleKeys] = await Promise.all([
+  if (!sb) return { rows: [], rule: { singleKeys: new Set(), label: null } };
+  const [{ data, error }, singleKeys, states] = await Promise.all([
     sb.from("pulse_songs").select(ROW_COLUMNS).eq("primary_artist_slug", slug).is("retired_at", null),
     singleKeysFor(slug),
+    labelStates([slug]),
   ]);
+  const rule: ReleaseRule = { singleKeys, label: states.get(slug) ?? null };
   if (error) {
     console.error("depot rows", slug, error.message);
-    return { rows: [], singleKeys };
+    return { rows: [], rule };
   }
-  return { rows: orderRows((data ?? []) as DepotRow[]), singleKeys };
+  let rows = (data ?? []) as DepotRow[];
+  if (rule.label) rows = rows.filter(r => rule.label!.visibleIds.has(r.id));
+  return { rows: orderRows(rows), rule };
 }
 
-export function accessOf(row: DepotRow, singleKeys: Set<string>): SongAccess {
-  return isSingle(row, singleKeys) ? "single" : "vault";
+export function accessOf(row: DepotRow, rule: ReleaseRule): SongAccess {
+  if (rule.label) return rule.label.liveIds.has(row.id) ? "single" : "vault";
+  return isSingle(row, rule.singleKeys) ? "single" : "vault";
 }
 
 export async function loadArtistDepot(artistSlug: string): Promise<{ songs: PublicSong[]; albums: PublicAlbum[] }> {
   const sb = serviceClient();
   if (!sb) return { songs: [], albums: [] };
   const slug = depotSlug(artistSlug);
-  const [{ rows, singleKeys }, albumRes] = await Promise.all([
+  const [{ rows, rule }, albumRes] = await Promise.all([
     loadArtistRows(slug),
     sb
       .from("gfs_albums")
@@ -198,16 +282,22 @@ export async function loadArtistDepot(artistSlug: string): Promise<{ songs: Publ
   ]);
   if (albumRes.error) console.error("depot albums", slug, albumRes.error.message);
 
-  const songs = rows.map(r => toPublic(r, accessOf(r, singleKeys)));
+  const songs = rows.map(r => toPublic(r, accessOf(r, rule)));
   const ids = new Set(songs.map(s => s.id));
+  const byId = new Map(songs.map(s => [s.id, s]));
   type AlbumRow = {
     id: string; title: string | null; working_title: string | null; status: string; track_target: number | null;
     geekfon_release_date: string | null; gfs_album_tracks: { song_id: string; kind: string; position: number }[] | null;
   };
-  const albums: PublicAlbum[] = ((albumRes.error ? [] : albumRes.data ?? []) as AlbumRow[]).map(a => ({
+  const albumRows = ((albumRes.error ? [] : albumRes.data ?? []) as AlbumRow[])
+    .filter(a => !rule.label || rule.label.visibleAlbumIds.has(a.id));
+  const albums: PublicAlbum[] = albumRows.map(a => ({
     id: a.id,
     title: a.title || a.working_title || "Untitled album",
     status: a.status,
+    out: rule.label ? rule.label.outAlbumIds.has(a.id) : a.status === "released",
+    label: !!rule.label,
+    coverUrl: albumCover(a.title || a.working_title || "", a.gfs_album_tracks ?? [], byId),
     trackTarget: a.track_target ?? 7,
     geekfonReleaseDate: a.geekfon_release_date,
     tracks: [...(a.gfs_album_tracks ?? [])]
@@ -220,6 +310,15 @@ export async function loadArtistDepot(artistSlug: string): Promise<{ songs: Publ
   return { songs, albums };
 }
 
+// An album has no cover of its own yet: use its title track's cover, else
+// its first track's.
+function albumCover(title: string, tracks: { song_id: string; kind: string; position: number }[], byId: Map<string, PublicSong>): string | null {
+  const songs = [...tracks].sort((x, y) => x.position - y.position).map(t => byId.get(t.song_id)).filter((s): s is PublicSong => !!s);
+  const key = titleKey(title);
+  const titled = songs.find(s => !s.isRemix && titleKey(s.title) === key);
+  return (titled ?? songs.find(s => !s.isRemix) ?? songs[0])?.coverUrl ?? null;
+}
+
 // One song with everything the server needs to gate it.
 export async function loadSong(songId: string): Promise<{ row: DepotRow; access: SongAccess } | null> {
   const sb = serviceClient();
@@ -227,8 +326,11 @@ export async function loadSong(songId: string): Promise<{ row: DepotRow; access:
   const { data, error } = await sb.from("pulse_songs").select(ROW_COLUMNS).eq("id", songId).is("retired_at", null).maybeSingle();
   if (error || !data) return null;
   const row = data as DepotRow;
-  const singleKeys = await singleKeysFor(row.primary_artist_slug);
-  return { row, access: accessOf(row, singleKeys) };
+  const [singleKeys, states] = await Promise.all([singleKeysFor(row.primary_artist_slug), labelStates([row.primary_artist_slug])]);
+  const label = states.get(row.primary_artist_slug) ?? null;
+  // A label-model song nobody outside HQ may see does not exist publicly.
+  if (label && !label.visibleIds.has(row.id)) return null;
+  return { row, access: accessOf(row, { singleKeys, label }) };
 }
 
 export async function signStream(srcPath: string, ttlSeconds: number, downloadName?: string): Promise<string | null> {
