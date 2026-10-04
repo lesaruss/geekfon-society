@@ -1,10 +1,12 @@
 import ArtistPage from "@/components/ArtistPage";
 import { notFound } from "next/navigation";
-import type { ArtistContent, RosterDepot, RosterBible, RosterGallery } from "@/components/ArtistPage";
+import type { ArtistContent, RosterDepot, RosterBible, RosterGallery, ChatPreview } from "@/components/ArtistPage";
 import { loadArtistDepot, titleKey } from "@/lib/server/depot";
 import { loadFanBible, lockedBibleLabels } from "@/lib/server/bible";
 import { loadGallery } from "@/lib/server/gallery";
 import { stationsFeaturing } from "@/lib/server/radio";
+import { CHAT_PREVIEWS } from "@/lib/chatPreview";
+import { serviceClient } from "@/lib/server/supabaseAdmin";
 
 // 2026-07-24: forces this route out of Next.js's Full Route Cache. Without
 // this, the custom domain (geekfon.ai) has been observed serving a stale
@@ -352,8 +354,22 @@ export default async function ArtistPageRoute({ params }: Props) {
   const depot: RosterDepot = depotData;
   const bible: RosterBible = { free: bibleFree, locked: bibleLocked };
   const gallery: RosterGallery = galleryPublic;
+
+  // Group-chat preview for the storefront tour: the script plus each cast
+  // member's name and thumbnail.
+  let chatPreview: ChatPreview | undefined;
+  const script = CHAT_PREVIEWS[slug];
+  const sb = script ? serviceClient() : null;
+  if (script && sb) {
+    const { data } = await sb.from("gfs_artists").select("slug, name, profile").in("slug", [slug, ...script.cast]);
+    const people: ChatPreview["people"] = {};
+    for (const r of (data ?? []) as { slug: string; name: string | null; profile: { profileUrl?: string; heroUrl?: string } | null }[]) {
+      people[r.slug] = { name: r.name || r.slug, avatar: r.profile?.profileUrl || r.profile?.heroUrl || null };
+    }
+    chatPreview = { room: script.room, me: slug, people, lines: script.lines };
+  }
   const cityBg = ARTIST_CITY[slug] ?? null;
-  return <ArtistPage content={content} cityBg={cityBg} slug={slug} depot={depot} bible={bible} gallery={gallery} radioStations={radioStations} />;
+  return <ArtistPage content={content} cityBg={cityBg} slug={slug} depot={depot} bible={bible} gallery={gallery} radioStations={radioStations} chatPreview={chatPreview} />;
 }
 
 export async function generateMetadata({ params }: Props) {

@@ -150,6 +150,7 @@ const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolea
 export type RosterDepot = { songs: PublicSong[]; albums: PublicAlbum[] };
 export type RosterBible = { free: FanBibleModule[]; locked: string[] };
 export type RosterGallery = { items: GalleryItem[]; lockedCount: number };
+export type ChatPreview = { room: string; me: string; people: Record<string, { name: string; avatar: string | null }>; lines: { from: string; text: string }[] };
 
 // Artists with real, artist-voiced Pulse/News content built out. Everyone else's
 // Pulse/Social/Group tabs show a "Coming Soon" placeholder instead of content
@@ -597,7 +598,7 @@ function BiblePanel({
 // (see gfs_artist_unlocks.season); update this when Season 2 launches.
 const CURRENT_SEASON = "Season 1";
 
-export default function ArtistPage({ content, cityBg, activeArticle, slug, depot, bible, gallery, radioStations }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string; position?: string } | null; activeArticle?: News; slug?: string; depot?: RosterDepot; bible?: RosterBible; gallery?: RosterGallery; radioStations?: RadioStation[] }) {
+export default function ArtistPage({ content, cityBg, activeArticle, slug, depot, bible, gallery, radioStations, chatPreview }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string; position?: string } | null; activeArticle?: News; slug?: string; depot?: RosterDepot; bible?: RosterBible; gallery?: RosterGallery; radioStations?: RadioStation[]; chatPreview?: ChatPreview }) {
   const [tab, setTab] = useState(() => {
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("tab");
@@ -1532,6 +1533,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               mode={storeMode}
               onMode={setStoreMode}
               platformLinks={c.platformLinks}
+              chat={chatPreview}
             />
           )}
           {!heroCollapsed && !storefront && (
