@@ -1,8 +1,10 @@
 import ArtistPage from "@/components/ArtistPage";
 import { notFound } from "next/navigation";
-import type { ArtistContent, RosterDepot, RosterBible } from "@/components/ArtistPage";
+import type { ArtistContent, RosterDepot, RosterBible, RosterGallery } from "@/components/ArtistPage";
 import { loadArtistDepot } from "@/lib/server/depot";
 import { loadFanBible, lockedBibleLabels } from "@/lib/server/bible";
+import { loadGallery } from "@/lib/server/gallery";
+import { stationsFeaturing } from "@/lib/server/radio";
 
 // 2026-07-24: forces this route out of Next.js's Full Route Cache. Without
 // this, the custom domain (geekfon.ai) has been observed serving a stale
@@ -319,11 +321,13 @@ export default async function ArtistPageRoute({ params }: Props) {
   // singles with their public stream, vault songs with a preview URL and no
   // lyrics, and the Identity card of the Bible. Supporter content is fetched
   // per viewer from /api/roster/<artist>/access.
-  const [content, depotData, bibleFree, bibleLocked] = await Promise.all([
+  const [content, depotData, bibleFree, bibleLocked, galleryPublic, radioStations] = await Promise.all([
     getArtist(slug),
     loadArtistDepot(slug),
     loadFanBible(slug, { full: false }),
     lockedBibleLabels(slug),
+    loadGallery(slug, "public"),
+    stationsFeaturing(slug),
   ]);
   if (!content) notFound();
 
@@ -340,8 +344,9 @@ export default async function ArtistPageRoute({ params }: Props) {
 
   const depot: RosterDepot = depotData;
   const bible: RosterBible = { free: bibleFree, locked: bibleLocked };
+  const gallery: RosterGallery = galleryPublic;
   const cityBg = ARTIST_CITY[slug] ?? null;
-  return <ArtistPage content={content} cityBg={cityBg} slug={slug} depot={depot} bible={bible} />;
+  return <ArtistPage content={content} cityBg={cityBg} slug={slug} depot={depot} bible={bible} gallery={gallery} radioStations={radioStations} />;
 }
 
 export async function generateMetadata({ params }: Props) {

@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { FanBibleModule } from "@/lib/server/bible";
+import type { GalleryItem } from "@/lib/server/gallery";
 
 export type SongGrant = {
   stream: string;
@@ -24,9 +25,11 @@ export type RosterAccess = {
   songs: Record<string, SongGrant>;
   downloads: Record<string, string>;
   bible?: FanBibleModule[];
+  staff: boolean;
+  gallery?: { items: GalleryItem[]; lockedCount: number };
 };
 
-const EMPTY: RosterAccess = { loaded: false, signedIn: false, supporter: false, allArtists: false, download: false, songs: {}, downloads: {} };
+const EMPTY: RosterAccess = { loaded: false, signedIn: false, supporter: false, allArtists: false, download: false, songs: {}, downloads: {}, staff: false };
 
 export function useRosterAccess(slug: string, enabled = true): RosterAccess & { refresh: () => void } {
   const [access, setAccess] = useState<RosterAccess>(EMPTY);
@@ -50,6 +53,8 @@ export function useRosterAccess(slug: string, enabled = true): RosterAccess & { 
         songs: body.songs || {},
         downloads: body.downloads || {},
         bible: body.bible,
+        staff: !!body.staff,
+        gallery: body.gallery,
       });
     } catch {
       setAccess({ ...EMPTY, loaded: true });

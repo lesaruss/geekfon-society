@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import SiteChrome from '@/components/SiteChrome';
 import styles from './page.module.css';
 import { signInWithProvider } from '@/lib/socialAuth';
+import { rememberReturn, takeReturn } from '@/lib/postAuth';
 
 type State = 'form' | 'sending' | 'code-entry';
 type Tier = 'free' | 'passport' | 'all-access' | 'lifetime';
@@ -42,13 +43,16 @@ function RegisterPageInner() {
   };
 
 
+  // Came from an artist page: return there after signing up.
+  useEffect(() => { rememberReturn(searchParams?.get('redirect')); }, [searchParams]);
+
   // Check if already logged in
   useEffect(() => {
     const checkSession = async () => {
       try {
         const res = await fetch('/api/auth/session');
         if (res.ok) {
-          router.push('/dashboard');
+          router.push(takeReturn() || '/dashboard');
         }
       } catch (err) {
         // Not logged in, continue
@@ -195,7 +199,7 @@ function RegisterPageInner() {
         throw new Error(data.error || 'Invalid code');
       }
 
-      router.push('/welcome');
+      router.push(takeReturn() || '/welcome');
     } catch (err) {
       setCodeError(err instanceof Error ? err.message : 'Invalid code');
     } finally {

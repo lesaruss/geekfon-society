@@ -5,13 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import SiteChrome from '@/components/SiteChrome';
 import styles from './page.module.css';
 import { signInWithProvider } from '@/lib/socialAuth';
+import { rememberReturn, safeReturnPath } from '@/lib/postAuth';
 
 type State = 'form' | 'sending' | 'code-entry';
 
 function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams?.get('redirect') || '/dashboard';
+  const redirect = safeReturnPath(searchParams?.get('redirect')) || '/dashboard';
+  // Google/Apple sign-in returns via /auth/callback, which reads this back.
+  useEffect(() => { if (redirect !== '/dashboard') rememberReturn(redirect); }, [redirect]);
 
   const [state, setState] = useState<State>('form');
   const [email, setEmail] = useState('');

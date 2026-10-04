@@ -7,6 +7,11 @@ import { PostCard } from "@/components/SocialFeed";
 import Discography from "@/components/roster/Discography";
 import FanBible from "@/components/roster/FanBible";
 import SupportModal from "@/components/roster/SupportModal";
+import Gallery from "@/components/roster/Gallery";
+import RadioStrip from "@/components/roster/RadioStrip";
+import SignInGate from "@/components/roster/SignInGate";
+import type { GalleryItem } from "@/lib/server/gallery";
+import type { RadioStation } from "@/lib/server/radio";
 import { useRosterAccess } from "@/components/roster/useRosterAccess";
 import type { PublicAlbum, PublicSong } from "@/lib/server/depot";
 import type { FanBibleModule } from "@/lib/server/bible";
@@ -117,17 +122,25 @@ export type ArtistContent = {
 // roster tabs. Music became Discography (depot-backed: albums, cover art,
 // lyrics, free singles vs supporter vault) and the fan Bible was added.
 // ?tab=music links still land on Discography.
+// 2026-10-04 (Sean, second pass): run each page like a label's artist page.
+// Signed out, a visitor gets the storefront: Discography (the current album,
+// what's out now, 30-second previews) and the radio strip; every other tab
+// shows a sign-in prompt. Signed in, Pulse and Social open up as before.
+// Supporters also get the Gallery (new: wallpapers and art made for fans)
+// and Chat.
 const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolean }[] = [
   { key: "discography", label: "Discography" },
   { key: "pulse",    label: "Pulse" },
   { key: "social",   label: "Social" },
-  { key: "bible",    label: "Bible" },
+  { key: "gallery",  label: "Gallery" },
   { key: "chat",     label: "Chat" },
+  { key: "bible",    label: "Bible" },
   { key: "members",  label: "Members", needsMembers: true },
 ];
 
 export type RosterDepot = { songs: PublicSong[]; albums: PublicAlbum[] };
 export type RosterBible = { free: FanBibleModule[]; locked: string[] };
+export type RosterGallery = { items: GalleryItem[]; lockedCount: number };
 
 // Artists with real, artist-voiced Pulse/News content built out. Everyone else's
 // Pulse/Social/Group tabs show a "Coming Soon" placeholder instead of content
@@ -575,7 +588,7 @@ function BiblePanel({
 // (see gfs_artist_unlocks.season); update this when Season 2 launches.
 const CURRENT_SEASON = "Season 1";
 
-export default function ArtistPage({ content, cityBg, activeArticle, slug, depot, bible }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string; position?: string } | null; activeArticle?: News; slug?: string; depot?: RosterDepot; bible?: RosterBible }) {
+export default function ArtistPage({ content, cityBg, activeArticle, slug, depot, bible, gallery, radioStations }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string; position?: string } | null; activeArticle?: News; slug?: string; depot?: RosterDepot; bible?: RosterBible; gallery?: RosterGallery; radioStations?: RadioStation[] }) {
   const [tab, setTab] = useState(() => {
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("tab");
@@ -998,6 +1011,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   function isRegistered(): boolean {
     if (isSuperAdmin && viewAs === "real") return true;
     return !!effectiveTier;
+  }
+
+  // Supporter of THIS artist as the page is being shown: the server's answer
+  // for a real viewer; under the admin View As simulator, Plus or Pro.
+  function isSupporterView(): boolean {
+    if (isSuperAdmin && viewAs !== "real") return !!effectiveTier && (TIER_RANK[effectiveTier] || 0) >= 2;
+    return rosterAccess.supporter;
   }
 
   // 2026-07-26 per Sean, clarifying the real tier model (he said we'd gotten
@@ -1440,6 +1460,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // "View as: Visitor" still showed the real-admin content path everywhere
   // else. One shared value means there's only one place left to get this right.
   const canSeePulse = (isSuperAdmin && viewAs === "real") || (Array.isArray(c.pulse) && c.pulse.length > 0);
+  // Signed-out visitors on a depot-backed page get the storefront only: every
+  // tab but Discography shows the sign-in prompt (SignInGate).
+  const signedOutGate = !!depot && !activeArticle && tab !== "discography" && !isRegistered()
+    && !(viewAs === "real" && rosterAccess.signedIn);
   const publishedNews = (c.news || []).filter((n: News) => !n.draft);
   // 2026-07-26 (3rd pass) per Sean: this used to fall back to PLACEHOLDER_NEWS
   // (hardcoded, Roxanne-branded sample copy) whenever an artist had no real
@@ -1669,6 +1693,20 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   that used to sit under the "News" pill, moved up a level. */}
               {/* Defense in depth: also gate the actual content, not just the tab button,
                   since ?tab=pulse can set tab state directly from a deep link. */}
+              {signedOutGate && <SignInGate artistName={name || c.name || "this artist"} tab={tab} />}
+              {!signedOutGate && tab === "gallery" && depot && (
+                <Gallery
+                  artistName={name || ""}
+                  slug={slug || ""}
+                  publicItems={gallery?.items || []}
+                  lockedCount={gallery?.lockedCount || 0}
+                  supporterItems={rosterAccess.gallery?.items}
+                  supporter={isSupporterView()}
+                  staff={rosterAccess.staff && isSuperAdmin && viewAs === "real"}
+                  onSupport={() => setSupportOpen(true)}
+                  onChanged={rosterAccess.refresh}
+                />
+              )}
               {tab === "discography" && depot && (
                 <Discography
                   artistName={name || ""}
@@ -1678,7 +1716,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   onSupport={() => setSupportOpen(true)}
                 />
               )}
-              {tab === "bible" && depot && (
+              {tab === "discography" && depot && radioStations && (
+                <RadioStrip artistName={name || ""} stations={radioStations} />
+              )}
+              {!signedOutGate && tab === "bible" && depot && (
                 <FanBible
                   artistName={name || ""}
                   freeModules={bible?.free || []}
@@ -1696,12 +1737,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   onClose={() => setSupportOpen(false)}
                 />
               )}
-              {tab === "pulse" && !canSeePulse && (
+              {!signedOutGate && tab === "pulse" && !canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Pulse content for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
-              {tab === "pulse" && canSeePulse && (
+              {!signedOutGate && tab === "pulse" && canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-articles-grid">
                     {pulseArticles.map((n, i) => (
@@ -1739,12 +1780,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   benefit now, the $11 unlock is reserved for full unreleased songs.
                   Same population gate as Pulse (canSeePulse) since it's the same
                   c.pulse content, just relocated. */}
-              {tab === "social" && !canSeePulse && (
+              {!signedOutGate && tab === "social" && !canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Social for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
-              {tab === "social" && canSeePulse && (
+              {!signedOutGate && tab === "social" && canSeePulse && (
                 <section className="pulse-section">
                   {/* isRegistered() already bypasses for a REAL super admin (viewAs
                       "real"); deliberately NOT also checking bare isSuperAdmin here so
@@ -1953,12 +1994,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   message that used to live in the disabled Pulse pill; an unregistered
                   visitor sees the same register-gate pattern as Social (no icon, per
                   the same 2026-07-26 cleanup). */}
-              {tab === "chat" && !canSeePulse && (
+              {!signedOutGate && tab === "chat" && !canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Chat for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
-              {tab === "chat" && canSeePulse && (
+              {!signedOutGate && tab === "chat" && canSeePulse && (
                 <section className="pulse-section">
                   {!isRegistered() && (
                     <div className="locked-panel">
@@ -1972,17 +2013,25 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                       </a>
                     </div>
                   )}
-                  {isRegistered() && (
+                  {/* 2026-10-04 per Sean: Chat is a supporter benefit now. */}
+                  {isRegistered() && !isSupporterView() && depot && (
                     <div className="locked-panel">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                      <div className="lp-title">Chat is for {name}&apos;s supporters</div>
+                      <p className="lp-sub">Support {name} to join the chat with {name} and other supporters, along with the full album, the Gallery and more.</p>
+                      <button className="mp-btn-buy" onClick={() => setSupportOpen(true)}>Support {name}</button>
+                    </div>
+                  )}
+                  {isRegistered() && (isSupporterView() || !depot) && (
+                    <div className="locked-panel">
                       <div className="lp-title">Chat is coming soon</div>
-                      <p className="lp-sub">Live chat with {name} and other members lands here once Chat ships across GeekFon Society - free to join, no unlock required.</p>
+                      <p className="lp-sub">Live chat with {name} and other supporters opens here soon. You&apos;re in already.</p>
                     </div>
                   )}
                 </section>
               )}
 
-              {tab === "members" && (
+              {!signedOutGate && tab === "members" && (
                 <section className="members-section">
                   <div className="bsec">The Band</div>
                   <div className="member-grid">
