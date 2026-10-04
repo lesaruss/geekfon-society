@@ -560,3 +560,12 @@ html.artist-playing .gbody{padding-bottom:92px}
 .sf-soon-kicker{font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--rx,#e91e8c)}
 .sf-soon-title{margin:0;font-size:22px;font-weight:900;color:var(--ink)}
 .sf-soon-text{margin:0;font-size:15px;line-height:1.6;color:var(--muted)}
+
+/* Name row with the link back to the roster at the far right. The link takes
+   the complement of the artist's accent (hue + 180) where the browser
+   supports relative colors, the accent itself elsewhere. */
+.sf-title-row{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin:0 0 6px}
+.sf-title-row .tour-name.sf-title{margin:0;min-width:0}
+.sf-roster-link{flex-shrink:0;font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;white-space:nowrap;color:var(--rx,#e91e8c);color:hsl(from var(--rx,#e91e8c) calc(h + 180) s 36%)}
+.sf-roster-link:hover{text-decoration:underline;text-underline-offset:4px}
+@media(max-width:900px){.sf-roster-link{font-size:13px}}
