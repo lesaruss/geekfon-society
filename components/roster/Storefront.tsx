@@ -14,7 +14,7 @@
 // a guided tour of what $11 gets you, each stop with a visual of the feature
 // (mocked where the feature is not live yet, and labelled as a preview). A
 // Support now button stays in reach the whole way; the last stop is the offer.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { PublicAlbum, PublicSong } from "@/lib/server/depot";
 import type { RadioStation } from "@/lib/server/radio";
 import type { RosterAccess } from "./useRosterAccess";
@@ -72,8 +72,6 @@ export default function Storefront(p: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.songs, p.albums]);
 
-  const tourRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => { if (p.mode === "tour") tourRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, [p.mode]);
 
   return (
     <section className={"sf" + (p.mode === "tour" ? " sf-touring" : "")}>
@@ -84,17 +82,16 @@ export default function Storefront(p: Props) {
         </div>
       </div>
       <div className="sf-right">
-        <div className="sf-kicker">{p.kicker}</div>
-        <h1 className="sf-name">{p.artistName}</h1>
-        {p.tagline && <div className="sf-tagline">{p.tagline}</div>}
-        {p.blurb && <p className="sf-blurb">{p.blurb}</p>}
-
         {p.mode === "music" ? (
-          <Music {...p} list={list} albumOf={albumOf} album={album} />
+          <>
+            <h1 className="sf-name">{p.artistName}</h1>
+            <div className="sf-kicker">{p.kicker}</div>
+            {p.tagline && <div className="sf-tagline">{p.tagline}</div>}
+            {p.blurb && <p className="sf-blurb">{p.blurb}</p>}
+            <Music {...p} list={list} albumOf={albumOf} album={album} />
+          </>
         ) : (
-          <div ref={tourRef}>
-            {album && <Tour {...p} album={album} list={list} />}
-          </div>
+          album && <Tour {...p} album={album} list={list} />
         )}
       </div>
     </section>
@@ -172,6 +169,7 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
           <span role="columnheader" className="am-c-album">Album</span>
           <span role="columnheader" className="am-c-time">Time</span>
         </div>
+        <div className="am-scroll">
         {p.list.map((s, i) => {
           const isCur = cur === i;
           const full = !source(s).capped;
@@ -202,19 +200,20 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
             </button>
           );
         })}
-      </div>
+          {!p.supporter && (
+            <div className="sf-cta">
+              <div>
+                <div className="sf-cta-title">Want to hear all of it?</div>
+                <p className="sf-cta-sub">
+                  Support {p.artistName} for $11 and get {p.album ? <><em>{p.album.title}</em> in full</> : "every song in full"}, the Gallery, Chat, and the full story.
+                </p>
+              </div>
+              <button className="sf-btn sf-btn-go" onClick={() => p.onMode("tour")}>Support {p.artistName}</button>
+            </div>
+          )}
 
-      {!p.supporter && (
-        <div className="sf-cta">
-          <div>
-            <div className="sf-cta-title">Want to hear all of it?</div>
-            <p className="sf-cta-sub">
-              Support {p.artistName} for $11 and get {p.album ? <><em>{p.album.title}</em> in full</> : "every song in full"}, the Gallery, Chat, and the full story.
-            </p>
-          </div>
-          <button className="sf-btn sf-btn-go" onClick={() => p.onMode("tour")}>Support {p.artistName}</button>
         </div>
-      )}
+      </div>
 
       {song && (
         <div className="am-player" role="region" aria-label="Player">
@@ -343,36 +342,59 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
     },
   ];
 
+  const offer = (
+    <div className="tour-offer">
+      <div className="tour-offer-price">$11<span>one time</span></div>
+      <ul>
+        <li>{p.album.title} in full{p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
+        <li>Pulse, Social and Chat</li>
+        <li>The Gallery</li>
+        <li>Radio and {p.artistName}&apos;s full story</li>
+        {!p.album.out && <li>Counts as your pre-order, with a Founding Fan badge</li>}
+      </ul>
+      <button className="sf-btn sf-btn-go sf-btn-big" onClick={buy} disabled={busy}>{busy ? "Starting checkout..." : `Support ${p.artistName} · $11`}</button>
+      {error && <p className="tour-error">{error}</p>}
+    </div>
+  );
+  const steps = [...stops.map(st => ({ key: st.key, label: st.title })), { key: "offer", label: "Support" }];
+  const [i, setI] = useState(0);
+  const last = steps.length - 1;
+  const stop = stops[i];
+
   return (
     <div className="tour">
-      <div className="tour-bar">
-        <button className="tour-back" onClick={() => p.onMode("music")}>← Back to the music</button>
-        <button className="sf-btn sf-btn-go" onClick={buy} disabled={busy}>{busy ? "Starting..." : `Support now · $11`}</button>
+      <div className="tour-top">
+        <div className="tour-name">{p.artistName}</div>
+        <div className="tour-top-actions">
+          <button className="tour-back" onClick={() => p.onMode("music")}>← Back to the music</button>
+          <button className="sf-btn sf-btn-go" onClick={buy} disabled={busy}>{busy ? "Starting..." : "Support now · $11"}</button>
+        </div>
       </div>
       <h2 className="tour-title">What you get when you support {p.artistName}</h2>
-      <ol className="tour-stops">
-        {stops.map((st, i) => (
-          <li key={st.key} className="tour-stop">
-            <div className="tour-copy">
-              <span className="tour-num">{String(i + 1).padStart(2, "0")}</span>
-              <h3>{st.title}</h3>
-              <p>{st.text}</p>
-            </div>
-            <div className="tour-visual">{st.visual}</div>
-          </li>
+      <div className="tour-steps" role="tablist" aria-label="What you get">
+        {steps.map((st, n) => (
+          <button key={st.key} role="tab" aria-selected={n === i} className={"tour-step" + (n === i ? " on" : "") + (n === last ? " offer" : "")} onClick={() => setI(n)}>
+            <span>{String(n + 1).padStart(2, "0")}</span>{n === last ? "Support" : st.label.replace(`${p.album.title}, in full`, "The album").replace(`${p.artistName}'s full story`, "Her story")}
+          </button>
         ))}
-      </ol>
-      <div className="tour-offer">
-        <div className="tour-offer-price">$11<span>one time</span></div>
-        <ul>
-          <li>{p.album.title} in full{p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
-          <li>Pulse, Social and Chat</li>
-          <li>The Gallery</li>
-          <li>Radio and {p.artistName}&apos;s full story</li>
-          {!p.album.out && <li>Counts as your pre-order, with a Founding Fan badge</li>}
-        </ul>
-        <button className="sf-btn sf-btn-go sf-btn-big" onClick={buy} disabled={busy}>{busy ? "Starting checkout..." : `Support ${p.artistName} · $11`}</button>
-        {error && <p className="tour-error">{error}</p>}
+      </div>
+      <div className="tour-panel" role="tabpanel">
+        {i < last && stop ? (
+          <div className="tour-stop">
+            <div className="tour-copy">
+              <span className="tour-num">{String(i + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}</span>
+              <h3>{stop.title}</h3>
+              <p>{stop.text}</p>
+            </div>
+            <div className="tour-visual">{stop.visual}</div>
+          </div>
+        ) : offer}
+      </div>
+      <div className="tour-nav">
+        <button className="sf-btn" onClick={() => setI(Math.max(0, i - 1))} disabled={i === 0}>Back</button>
+        {i < last
+          ? <button className="sf-btn" onClick={() => setI(i + 1)}>Next: {steps[i + 1].key === "offer" ? "Support" : steps[i + 1].label.replace(`${p.album.title}, in full`, "The album")}</button>
+          : <button className="sf-btn" onClick={() => setI(0)}>Start over</button>}
       </div>
     </div>
   );
