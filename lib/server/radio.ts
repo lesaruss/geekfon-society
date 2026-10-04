@@ -127,3 +127,94 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
 
   return { rotation, overrides };
 }
+
+// ---------------------------------------------------------------------------
+// Genre stations (Sean, 2026-10-04): "having just one radio station that
+// plays every song may not be appealing, especially if people don't like
+// J-pop." Each station in public.gfs_radio_stations names its ARTISTS, and
+// plays every non-remix depot song by them, so a newly imported song joins its
+// artist's station with no manual step. Unreleased songs play in full here
+// too: Sean, same day, "everything minus the remixes... fair game."
+//
+// Order is a stable round-robin across the station's artists (each artist's
+// songs by sort_order, then title), so listeners hear a mix instead of one
+// artist's whole catalog in a row, and every listener's synced clock agrees.
+
+export type RadioStation = { slug: string; name: string; tagline: string | null };
+
+export const MAIN_STATION: RadioStation = { slug: "main", name: "GeekFon Radio", tagline: "The whole roster" };
+
+export async function listStations(): Promise<RadioStation[]> {
+  const sb = serviceClient();
+  if (!sb) return [MAIN_STATION];
+  const { data } = await sb
+    .from("gfs_radio_stations")
+    .select("slug, name, tagline")
+    .eq("active", true)
+    .order("sort_order", { ascending: true });
+  return [MAIN_STATION, ...((data ?? []) as RadioStation[])];
+}
+
+type StationSong = PsRow & { is_remix: boolean | null; sort_order: number | null };
+
+export async function buildStationSchedule(slug: string): Promise<{ rotation: RadioTrack[]; overrides: ScheduleOverride[] } | null> {
+  if (slug === MAIN_STATION.slug) return buildRadioSchedule("urls");
+  const sb = serviceClient();
+  if (!sb) return null;
+
+  const { data: station } = await sb
+    .from("gfs_radio_stations")
+    .select("slug, artist_slugs, include_remixes")
+    .eq("slug", slug)
+    .eq("active", true)
+    .maybeSingle();
+  if (!station) return null;
+  const artists = (station.artist_slugs ?? []) as string[];
+
+  let q = sb
+    .from("pulse_songs")
+    .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id, is_remix, sort_order")
+    .in("primary_artist_slug", artists)
+    .is("retired_at", null)
+    .not("src_path", "is", null);
+  if (!station.include_remixes) q = q.eq("is_remix", false);
+  const [{ data: songs }, { data: artistRows }] = await Promise.all([
+    q,
+    sb.from("gfs_artists").select("slug, name, profile").in("slug", artists),
+  ]);
+
+  type ArtistRow = { slug: string; name: string | null; profile: { tracks?: { n?: string; v?: string }[] } | null };
+  const names = new Map<string, string>();
+  const singles = new Set<string>();
+  for (const a of (artistRows ?? []) as ArtistRow[]) {
+    if (a.name) names.set(a.slug, a.name);
+    for (const t of a.profile?.tracks ?? []) if (t.v === "public" && t.n) singles.add(`${a.slug}|${titleKey(t.n)}`);
+  }
+
+  // Per-artist queues in a stable order, then interleave.
+  const queues = artists.map(a =>
+    ((songs ?? []) as StationSong[])
+      .filter(s => s.primary_artist_slug === a)
+      .sort((x, y) => (x.sort_order ?? 9999) - (y.sort_order ?? 9999) || x.title.localeCompare(y.title))
+  );
+  const ordered: StationSong[] = [];
+  for (let i = 0; queues.some(qu => i < qu.length); i++) {
+    for (const qu of queues) if (i < qu.length) ordered.push(qu[i]);
+  }
+
+  // Singles stream from their public path; everything else is a signed link.
+  const vault = ordered.filter(s => !singles.has(`${s.primary_artist_slug}|${titleKey(s.title)}`));
+  const signedBy = new Map<string, string>();
+  if (vault.length) {
+    const { data: signed } = await sb.storage.from(STREAM_BUCKET).createSignedUrls(vault.map(v => v.src_path!), SIGNED_TTL_SECONDS);
+    (signed ?? []).forEach((s, i) => { if (s.signedUrl) signedBy.set(vault[i].id, s.signedUrl); });
+  }
+
+  const rotation: RadioTrack[] = [];
+  for (const s of ordered) {
+    const path = signedBy.get(s.id) ?? (singles.has(`${s.primary_artist_slug}|${titleKey(s.title)}`) ? publicStreamUrl(s.src_path!) : undefined);
+    if (!path) continue;
+    rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, title: s.title, path, durationSeconds: s.duration_seconds || 180 });
+  }
+  return { rotation, overrides: [] };
+}

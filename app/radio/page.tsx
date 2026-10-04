@@ -74,6 +74,14 @@ export default function RadioPage() {
   const rotationRef = useRef<ScheduleTrack[]>([]);
   const overridesRef = useRef<ScheduleOverride[]>([]);
   const currentPathRef = useRef<string | null>(null);
+  // Genre stations (2026-10-04, Sean): Anime Radio and Hip Hop Radio alongside
+  // the main GeekFon Radio. ?station=<slug> deep-links to one.
+  type Station = { slug: string; name: string; tagline: string | null };
+  const [stations, setStations] = useState<Station[]>([]);
+  const [station, setStation] = useState<string>(() =>
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("station") || "main" : "main"
+  );
+  const resumeAfterSwitchRef = useRef(false);
 
   // 2026-07-27 per Sean: "can we tell how many people are actively listening to
   // GeekFon Radio, even if they're not logged in?" No login required to listen
@@ -107,11 +115,12 @@ export default function RadioPage() {
       let fixed: ScheduleTrack[] = [];
       let mapped: ScheduleOverride[] = [];
       try {
-        const res = await fetch("/api/radio/rotation");
+        const res = await fetch(`/api/radio/rotation?station=${encodeURIComponent(station)}`);
         if (res.ok) {
-          const body = await res.json() as { rotation?: ScheduleTrack[]; overrides?: ScheduleOverride[] };
+          const body = await res.json() as { rotation?: ScheduleTrack[]; overrides?: ScheduleOverride[]; stations?: Station[] };
           fixed = body.rotation || [];
           mapped = body.overrides || [];
+          if (body.stations) setStations(body.stations);
         }
       } catch { /* empty rotation renders the loading state */ }
       if (cancelled) return;
@@ -123,7 +132,26 @@ export default function RadioPage() {
     }
     loadSchedule();
     return () => { cancelled = true; };
-  }, [authChecked, isMember]);
+  }, [authChecked, isMember, station]);
+
+  // Switching stations: stop the current stream, load the new rotation, and
+  // keep playing if the listener was already listening.
+  function switchStation(next: string) {
+    if (next === station) return;
+    resumeAfterSwitchRef.current = playing;
+    audioRef.current?.pause();
+    currentPathRef.current = null;
+    if (resyncTimerRef.current) { clearInterval(resyncTimerRef.current); resyncTimerRef.current = null; }
+    setPlaying(false);
+    setNowPlaying(null);
+    setLoadingPlaylist(true);
+    setStation(next);
+    try {
+      const url = new URL(window.location.href);
+      if (next === "main") url.searchParams.delete("station"); else url.searchParams.set("station", next);
+      window.history.replaceState({}, "", url.toString());
+    } catch { /* ignore */ }
+  }
 
   const goCity = useCallback((next: number) => {
     const prev = cityRef.current;
@@ -229,6 +257,13 @@ export default function RadioPage() {
     return () => clearInterval(id);
   }, [loadingPlaylist, playing]);
 
+  useEffect(() => {
+    if (loadingPlaylist || !resumeAfterSwitchRef.current || rotationRef.current.length === 0) return;
+    resumeAfterSwitchRef.current = false;
+    toggle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingPlaylist]);
+
   function toggle() {
     if (rotationRef.current.length === 0) return;
     if (!playing) {
@@ -279,12 +314,28 @@ export default function RadioPage() {
       </div>
 
       <div className="rd-main">
+        {stations.length > 1 && (
+          <div className="rd-stations" role="tablist" aria-label="Choose a station">
+            {stations.map(st => (
+              <button
+                key={st.slug}
+                role="tab"
+                aria-selected={st.slug === station}
+                className={"rd-station" + (st.slug === station ? " active" : "")}
+                onClick={() => switchStation(st.slug)}
+                title={st.tagline || undefined}
+              >
+                {st.name}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="rd-logo-wrap">
           <button
             className={"rd-play-btn" + (playing ? " playing" : "")}
             onClick={toggle}
             disabled={loadingPlaylist || rotation.length === 0}
-            aria-label={playing ? "Pause GeekFon Radio" : "Play GeekFon Radio"}
+            aria-label={(playing ? "Pause " : "Play ") + (stations.find(st => st.slug === station)?.name || "GeekFon Radio")}
           >
             <img src="/geekfon-logo.png" alt="" aria-hidden="true" className="rd-logo-img" />
             <div className="rd-play-icon">
@@ -366,6 +417,11 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
    within the box without touching the header-clearance math at all. */
 .rd-main { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 60px); overflow: hidden; gap: 24px; padding: 24px 24px calc(24px + 6vh) 24px; box-sizing: border-box; }
 
+.rd-stations { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; flex-shrink: 0; }
+.rd-station { appearance: none; font-family: inherit; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.7); background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 9px 16px; cursor: pointer; backdrop-filter: blur(12px); transition: background .2s, border-color .2s, color .2s; }
+.rd-station:hover { color: #fff; border-color: rgba(255,255,255,.4); }
+.rd-station.active { color: #04140a; background: #00B4FF; border-color: #00B4FF; }
+.rd-station:focus-visible { outline: 2px solid #00B4FF; outline-offset: 3px; }
 .rd-logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; flex-shrink: 0; }
 
 .rd-play-btn {
