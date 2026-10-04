@@ -314,22 +314,6 @@ export default function RadioPage() {
       </div>
 
       <div className="rd-main">
-        {stations.length > 1 && (
-          <div className="rd-stations" role="tablist" aria-label="Choose a station">
-            {stations.map(st => (
-              <button
-                key={st.slug}
-                role="tab"
-                aria-selected={st.slug === station}
-                className={"rd-station" + (st.slug === station ? " active" : "")}
-                onClick={() => switchStation(st.slug)}
-                title={st.tagline || undefined}
-              >
-                {st.name}
-              </button>
-            ))}
-          </div>
-        )}
         <div className="rd-logo-wrap">
           <button
             className={"rd-play-btn" + (playing ? " playing" : "")}
@@ -378,6 +362,38 @@ export default function RadioPage() {
         {!playing && !loadingPlaylist && rotation.length > 0 && (
           <p className="rd-hint">Tap the logo to tune in - everyone hears the same moment, live</p>
         )}
+        {stations.length > 1 && (
+          <div className="rd-station-picker">
+            <div className="rd-stations" role="tablist" aria-label="Choose a station">
+              {stations.map(st => (
+                <button
+                  key={st.slug}
+                  role="tab"
+                  aria-selected={st.slug === station}
+                  className={"rd-station" + (st.slug === station ? " active" : "")}
+                  onClick={() => switchStation(st.slug)}
+                  title={st.tagline || undefined}
+                >
+                  {st.name}
+                </button>
+              ))}
+            </div>
+            {/* Phones get a dropdown instead of the button row. */}
+            <label className="rd-station-select-wrap">
+              <span className="rd-station-select-label">Station</span>
+              <select
+                className="rd-station-select"
+                value={station}
+                onChange={e => switchStation(e.target.value)}
+                aria-label="Choose a station"
+              >
+                {stations.map(st => (
+                  <option key={st.slug} value={st.slug}>{st.name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
       </div>
     </SiteChrome>
   );
@@ -422,6 +438,16 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 .rd-station:hover { color: #fff; border-color: rgba(255,255,255,.4); }
 .rd-station.active { color: #04140a; background: #00B4FF; border-color: #00B4FF; }
 .rd-station:focus-visible { outline: 2px solid #00B4FF; outline-offset: 3px; }
+.rd-station-picker { flex-shrink: 0; display: flex; justify-content: center; }
+.rd-station-select-wrap { display: none; position: relative; align-items: center; gap: 10px; }
+.rd-station-select-label { font-size: 10px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.45); }
+.rd-station-select { appearance: none; -webkit-appearance: none; font-family: inherit; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #fff; background: rgba(0,0,0,.45) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2300B4FF' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 14px center; border: 1px solid #00B4FF; border-radius: 999px; padding: 11px 38px 11px 18px; min-width: 200px; backdrop-filter: blur(12px); cursor: pointer; }
+.rd-station-select:focus-visible { outline: 2px solid #00B4FF; outline-offset: 3px; }
+.rd-station-select option { color: #000; background: #fff; }
+@media(max-width:640px) {
+  .rd-stations { display: none; }
+  .rd-station-select-wrap { display: flex; }
+}
 .rd-logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; flex-shrink: 0; }
 
 .rd-play-btn {
