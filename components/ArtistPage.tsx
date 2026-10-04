@@ -637,7 +637,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // tour) in place of the header and Discography: first label artists
   // (2026-10-04, Sean), then every artist ("the whole style that we created
   // for Roxanne needs to be applied to every artist", same day).
-  const storefront = !!depot && depot.songs.length > 0 && !activeArticle;
+  // With nothing released yet the storefront shows a coming-soon state.
+  const storefront = !!depot && !activeArticle;
   const router = useRouter();
   const player = useArtistPlayer();
   const [storeMode, setStoreMode] = useState<"music" | "tour">("music");

@@ -554,3 +554,9 @@
 html.artist-playing .gw-body{padding-bottom:92px}
 html.artist-playing .gbody{padding-bottom:92px}
 @media(max-width:900px){.am-player{border-radius:18px}}
+
+/* Nothing released yet (HQ release state). */
+.sf-soon{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;min-height:180px;padding:28px;border:1px dashed var(--line);border-radius:4px;background:#fbfbfb}
+.sf-soon-kicker{font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--rx,#e91e8c)}
+.sf-soon-title{margin:0;font-size:22px;font-weight:900;color:var(--ink)}
+.sf-soon-text{margin:0;font-size:15px;line-height:1.6;color:var(--muted)}

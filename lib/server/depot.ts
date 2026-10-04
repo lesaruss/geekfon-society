@@ -36,7 +36,11 @@
 //     out; nothing from an album still being made (or songs on no visible
 //     album) is shown to anyone outside HQ, radio included;
 //   - an album is OUT when every one of its tracks (remixes aside) is out.
-// Other artists keep the interim rule until they move onto the label model.
+// Other artists keep the interim rule for radio until they move onto the
+// label model, but their ARTIST PAGES follow HQ release state too
+// (2026-10-04, Sean: "Roxanne is the only one that has songs listed
+// publicly... we shouldn't have it on the other artists until that has been
+// notated in the HQ"): loadArtistDepot only lists songs HQ marks out.
 
 import { serviceClient, SUPABASE_URL } from "./supabaseAdmin";
 
@@ -155,9 +159,9 @@ function isSingle(row: DepotRow, singleKeys: Set<string>): boolean {
 // Release state for label-model artists, keyed by depot slug. Artists not in
 // LABEL_ARTISTS are absent from the map (callers fall back to the interim
 // rule). One round trip per table regardless of how many artists.
-export async function labelStates(artistSlugs: string[]): Promise<Map<string, LabelState>> {
+export async function labelStates(artistSlugs: string[], anyArtist = false): Promise<Map<string, LabelState>> {
   const out = new Map<string, LabelState>();
-  const slugs = Array.from(new Set(artistSlugs.map(depotSlug))).filter(a => LABEL_ARTISTS.has(a));
+  const slugs = Array.from(new Set(artistSlugs.map(depotSlug))).filter(a => anyArtist || LABEL_ARTISTS.has(a));
   const sb = serviceClient();
   if (!sb || !slugs.length) return out;
   const [briefs, songs, albums] = await Promise.all([
@@ -244,14 +248,16 @@ export type ReleaseRule = { singleKeys: Set<string>; label: LabelState | null };
 
 // Rows for one artist. For label-model artists only the rows anyone outside
 // HQ may see are returned, so no caller can leak an unannounced song.
-export async function loadArtistRows(artistSlug: string): Promise<{ rows: DepotRow[]; rule: ReleaseRule }> {
+// pageGate: apply HQ release state to any artist (artist pages), not only
+// LABEL_ARTISTS (which radio and the stream gate key off).
+export async function loadArtistRows(artistSlug: string, pageGate = false): Promise<{ rows: DepotRow[]; rule: ReleaseRule }> {
   const sb = serviceClient();
   const slug = depotSlug(artistSlug);
   if (!sb) return { rows: [], rule: { singleKeys: new Set(), label: null } };
   const [{ data, error }, singleKeys, states] = await Promise.all([
     sb.from("pulse_songs").select(ROW_COLUMNS).eq("primary_artist_slug", slug).is("retired_at", null),
     singleKeysFor(slug),
-    labelStates([slug]),
+    labelStates([slug], pageGate),
   ]);
   const rule: ReleaseRule = { singleKeys, label: states.get(slug) ?? null };
   if (error) {
@@ -273,7 +279,7 @@ export async function loadArtistDepot(artistSlug: string): Promise<{ songs: Publ
   if (!sb) return { songs: [], albums: [] };
   const slug = depotSlug(artistSlug);
   const [{ rows, rule }, albumRes] = await Promise.all([
-    loadArtistRows(slug),
+    loadArtistRows(slug, true),
     sb
       .from("gfs_albums")
       .select("id, title, working_title, status, track_target, sort_order, geekfon_release_date, gfs_album_tracks(song_id, kind, position)")
