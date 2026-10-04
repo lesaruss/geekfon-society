@@ -996,5 +996,5 @@
   .af-tab.on::after { left: 6px; right: 6px; }
 }
 @media (max-width: 760px) {
-  .af-root .am-player { bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+  .gw-body .am-player { bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
 }

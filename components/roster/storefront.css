@@ -545,3 +545,12 @@
 }
 @media(prefers-reduced-motion:reduce){.sf-img{transition:none}}
 @media(min-width:901px) and (max-width:1200px){.sf-listen-btn span{display:none}.sf-listen-btn{padding:7px}}
+
+/* The player lives in the artist layout now (ArtistPlayer, 2026-10-04 Sean:
+   "stay on the page until you click the X"), so it is always a bar fixed to
+   the bottom of the window, over every section, never docked in the song
+   list. While it plays, the page keeps room for it at the bottom. */
+.am-player{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:min(860px,calc(100% - 24px));margin:0;border-radius:999px}
+html.artist-playing .gw-body{padding-bottom:92px}
+html.artist-playing .gbody{padding-bottom:92px}
+@media(max-width:900px){.am-player{border-radius:18px}}

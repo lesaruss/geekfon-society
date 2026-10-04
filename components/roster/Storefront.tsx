@@ -14,7 +14,8 @@
 // a guided tour of what $11 gets you, each stop with a visual of the feature
 // (mocked where the feature is not live yet, and labelled as a preview). A
 // Support now button stays in reach the whole way; the last stop is the offer.
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useArtistPlayer, type PlayerTrack } from "./ArtistPlayer";
 import type { PublicAlbum, PublicSong } from "@/lib/server/depot";
 import type { RadioStation } from "@/lib/server/radio";
 import type { RosterAccess } from "./useRosterAccess";
@@ -22,8 +23,6 @@ import { startSupportCheckout } from "./checkout";
 import { PLATFORM_ICONS } from "@/lib/platformIcons";
 import { AlbumScreen, FeedScreen, GalleryScreen, ChatScreen, RadioScreen, PressScreen } from "./TourMockups";
 import "./storefront.css";
-
-const PREVIEW_SECONDS = 30;
 
 export type StorefrontPost = { text?: string; title?: string; thumb?: string; media?: string; date?: string };
 
@@ -107,7 +106,9 @@ function fmt(s: number | null | undefined): string {
 }
 
 export default function Storefront(p: Props) {
-  const labelAlbums = p.albums.filter(a => a.label);
+  // Label artists sell their current album; other artists sell any album
+  // they have, and with none the Support tour sells the artist's season pass.
+  const labelAlbums = p.albums.filter(a => a.label).length ? p.albums.filter(a => a.label) : p.albums;
   const album = labelAlbums.find(a => !a.out) ?? labelAlbums[labelAlbums.length - 1] ?? null;
   const albumOf = useMemo(() => {
     const m = new Map<string, string>();
@@ -151,7 +152,7 @@ export default function Storefront(p: Props) {
             <Music {...p} list={list} albumOf={albumOf} album={album} />
           </>
         ) : (
-          album && <Tour {...p} album={album} list={list} />
+          <Tour {...p} album={album} list={list} />
         )}
       </div>
     </section>
@@ -161,69 +162,31 @@ export default function Storefront(p: Props) {
 // ---------------------------------------------------------------- music ---
 
 function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; album: PublicAlbum | null }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [cur, setCur] = useState<number | null>(null); // index in list
-  const [playing, setPlaying] = useState(false);
-  const [time, setTime] = useState(0);
-  const song = cur !== null ? p.list[cur] : null;
+  // The player itself lives in the artist layout (ArtistPlayer), so it keeps
+  // playing across sections; this list only feeds it.
+  const player = useArtistPlayer();
+  const { onMode } = p;
+  useEffect(() => {
+    player?.setHearAll(() => onMode("tour"));
+    return () => player?.setHearAll(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [player?.setHearAll, onMode]);
 
   function source(s: PublicSong): { url: string; capped: boolean } {
     if (s.access === "single") return { url: s.playUrl, capped: false };
     const g = p.access.songs[s.id];
     return g ? { url: g.stream, capped: false } : { url: s.playUrl, capped: true };
   }
-
-  function playAt(i: number) {
-    const a = audioRef.current;
-    const s = p.list[i];
-    if (!a || !s) return;
-    if (cur === i) {
-      if (a.paused) a.play().catch(() => setPlaying(false)); else a.pause();
-      return;
-    }
-    document.querySelectorAll("audio").forEach(el => { if (el !== a) el.pause(); });
-    a.src = source(s).url;
-    setCur(i);
-    setTime(0);
-    a.play().catch(() => setPlaying(false));
-  }
-
-  function closePlayer() {
-    const a = audioRef.current;
-    if (a) { a.pause(); a.removeAttribute("src"); a.load(); }
-    setCur(null);
-    setPlaying(false);
-    setTime(0);
-  }
-
-  function next(dir = 1) {
-    if (cur === null) return;
-    const n = cur + dir;
-    if (n >= 0 && n < p.list.length) playAt(n);
-    else { audioRef.current?.pause(); }
-  }
-
-  function onTime() {
-    const a = audioRef.current;
-    if (!a || !song) return;
-    if (source(song).capped && a.currentTime >= PREVIEW_SECONDS) { next(); return; }
-    setTime(a.currentTime);
-  }
-
-  const capped = song ? source(song).capped : false;
-  const max = song ? (capped ? Math.min(PREVIEW_SECONDS, song.durationSeconds || PREVIEW_SECONDS) : (song.durationSeconds || 0)) : 0;
+  const queue: PlayerTrack[] = p.list.map(s => {
+    const src = source(s);
+    return { id: s.id, title: s.title, artist: p.artistName, coverUrl: s.coverUrl, url: src.url, capped: src.capped, durationSeconds: s.durationSeconds };
+  });
+  const curId = player?.current?.id ?? null;
+  const playing = !!player?.playing;
   const outCount = p.list.filter(s => s.access === "single").length;
 
   return (
     <div className="sf-music">
-      <audio
-        ref={audioRef}
-        preload="none"
-        onTimeUpdate={onTime}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => next()}
-      />
       <div className="sf-music-note">
         {p.supporter
           ? "You're a supporter. Every song plays in full."
@@ -239,10 +202,10 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
         </div>
         <div className="am-scroll">
         {p.list.map((s, i) => {
-          const isCur = cur === i;
-          const full = !source(s).capped;
+          const isCur = curId === s.id;
+          const full = !queue[i].capped;
           return (
-            <button key={s.id} role="row" className={"am-row" + (isCur ? " cur" : "")} onClick={() => playAt(i)} aria-label={`${isCur && playing ? "Pause" : "Play"} ${s.title}${full ? "" : " (30-second preview)"}`}>
+            <button key={s.id} role="row" className={"am-row" + (isCur ? " cur" : "")} onClick={() => player?.playQueue(queue, i)} aria-label={`${isCur && playing ? "Pause" : "Play"} ${s.title}${full ? "" : " (30-second preview)"}`}>
               <span className="am-c-song" role="cell">
                 <span className="am-thumb">
                   {s.coverUrl ? <img src={s.coverUrl} alt="" loading="lazy" /> : null}
@@ -272,38 +235,6 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
         </div>
       </div>
 
-      {song && (
-        <div className="am-player" role="region" aria-label="Player">
-          <div className="am-p-controls">
-            <button className="am-p-btn" onClick={() => next(-1)} aria-label="Previous" disabled={cur === 0}>
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11 6v12L2.5 12zM21 6v12l-8.5-6z" /></svg>
-            </button>
-            <button className="am-p-btn am-p-main" onClick={() => cur !== null && playAt(cur)} aria-label={playing ? "Pause" : "Play"}>
-              {playing
-                ? <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
-                : <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>}
-            </button>
-            <button className="am-p-btn" onClick={() => next(1)} aria-label="Next" disabled={cur === p.list.length - 1}>
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M13 6v12l8.5-6zM3 6v12l8.5-6z" /></svg>
-            </button>
-          </div>
-          <div className="am-p-now">
-            {song.coverUrl ? <img src={song.coverUrl} alt="" /> : <span className="am-p-blank" />}
-            <div className="am-p-meta">
-              <div className="am-p-title">{song.title}</div>
-              <div className="am-p-artist">{p.artistName}{capped ? " · 30-second preview" : ""}</div>
-              <div className="am-p-bar"><div style={{ width: `${max ? Math.min(100, (time / max) * 100) : 0}%` }} /></div>
-            </div>
-          </div>
-          {capped && !p.supporter && (
-            <button className="sf-btn sf-btn-go am-p-cta" onClick={() => p.onMode("tour")}>Hear it all</button>
-          )}
-          <button className="am-p-btn am-p-close" onClick={closePlayer} aria-label="Close player">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-        </div>
-      )}
-
       {!p.supporter && (
         <div className="sf-cta-bar">
           <p>
@@ -318,9 +249,20 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
 
 // ----------------------------------------------------------------- tour ---
 
-function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
+function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // No album yet: the tour sells the whole catalog through the season pass,
+  // shown as one collection of every song.
+  const realAlbum = props.album;
+  const p = {
+    ...props,
+    album: realAlbum ?? ({
+      id: "", title: `Every ${props.artistName} song`, status: "released", out: true, label: false,
+      coverUrl: props.list.find(s => s.coverUrl)?.coverUrl ?? null, trackTarget: props.list.length, geekfonReleaseDate: null,
+      tracks: props.list.map((s, i) => ({ songId: s.id, kind: s.isRemix ? "remix" : "track", position: i + 1 })),
+    } as unknown as PublicAlbum),
+  };
   const albumSongs = p.list.filter(s => p.album.tracks.some(t => t.songId === s.id));
   const mains = albumSongs.filter(s => !s.isRemix);
   const remixes = albumSongs.filter(s => s.isRemix);
@@ -328,7 +270,7 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
 
   async function buy() {
     setBusy(true);
-    setError(await startSupportCheckout(p.album.id, p.slug));
+    setError(await startSupportCheckout(realAlbum ? realAlbum.id : null, p.slug));
     setBusy(false);
   }
 
@@ -340,7 +282,9 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
     {
       key: "album",
       title: `${p.album.title}, in full`,
-      text: `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full${p.album.out ? " with downloads" : ", before the album is out everywhere"}.`,
+      text: realAlbum
+        ? `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full${p.album.out ? " with downloads" : ", before the album is out everywhere"}.`
+        : `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full, plus every new song as it lands.`,
       visual: <AlbumScreen artist={p.artistName} slug={p.slug} album={p.album} songs={mains} />,
     },
     {
@@ -395,7 +339,7 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
           )}
         </div>
         <ul>
-          <li><strong>{p.album.title}</strong> in full{p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
+          <li><strong>{p.album.title}</strong> in full{!realAlbum ? ", and every new one as it lands" : p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
           <li><strong>Social feed, Press and Chat</strong>, every day</li>
           <li><strong>The Gallery</strong> of wallpapers and art</li>
           <li><strong>Radio</strong>: every station {p.artistName} is on</li>

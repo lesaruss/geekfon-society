@@ -32,7 +32,7 @@ export function AlbumScreen({ artist, slug, album, songs }: { artist: string; sl
       <div className="mk-album">
         <div className="mk-album-art">
           {album.coverUrl && <img src={album.coverUrl} alt="" />}
-          <div className="mk-album-meta"><span>Album</span><strong>{album.title}</strong><em>{artist}</em></div>
+          <div className="mk-album-meta"><span>{album.id ? "Album" : "Every song"}</span><strong>{album.title}</strong><em>{artist}</em></div>
         </div>
         <ol className="mk-tracks">
           {songs.slice(0, 7).map((s, i) => (
