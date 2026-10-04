@@ -148,7 +148,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (loading)
     return (
-      <SiteChrome>
+      <SiteChrome publicOnly>
         <style>{LAYOUT_CSS}</style>
         <Aurora />
         <div className="dl-loading">
@@ -159,7 +159,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (!userId)
     return (
-      <SiteChrome>
+      <SiteChrome publicOnly>
         <style>{LAYOUT_CSS}</style>
         <Aurora />
         <div className="dl-gate">

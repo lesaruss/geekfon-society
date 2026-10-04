@@ -1,14 +1,7 @@
-import ArtistChrome from "@/components/roster/ArtistChrome";
-import { LABEL_ARTISTS } from "@/lib/server/depot";
+import SiteChrome from "@/components/SiteChrome";
 
-// Label artists open inside the universal frame once signed in; everyone
-// else (and every signed-out visitor) keeps the public SiteChrome.
-export default async function RosterLayout({ children, params }: { children: React.ReactNode; params: Promise<{ artist: string }> }) {
-  const { artist } = await params;
-  const title = artist.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-  return (
-    <ArtistChrome framed={LABEL_ARTISTS.has(artist)} title={title}>
-      {children}
-    </ArtistChrome>
-  );
+// SiteChrome frames the page in the universal shell once signed in; artist
+// pages then swap their header and tabs for a section nav (ArtistPage).
+export default function RosterLayout({ children }: { children: React.ReactNode }) {
+  return <SiteChrome>{children}</SiteChrome>;
 }

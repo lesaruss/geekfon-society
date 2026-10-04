@@ -22,12 +22,18 @@
 // (components/roster/ArtistChrome.tsx, 2026-10-04 Sean: "when they're logged
 // in, they should be using the universal framing"). Signed-out visitors keep
 // SiteChrome, because they get the art-led storefront.
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { navForTier, parseTier, type Tier } from "@/lib/gfsNav";
+import { navForTier, parseTier, splitTools, type Tier } from "@/lib/gfsNav";
 
 const ADMIN_EMAIL = "contact@lesaruss.com";
+
+// True for anything rendered inside the frame, so a page can drop its own
+// public-chrome furniture (artist pages swap their header and tabs for a
+// section nav).
+const FramedContext = createContext(false);
+export function useFramed(): boolean { return useContext(FramedContext); }
 const WINDOW_MODE_KEY = "gfs-window-mode";
 const BAR_SRC = "https://hq.lesaruss.ai/shell/universal-bar.js";
 const CURRENT_SLUG = "geekfon-society";
@@ -150,7 +156,19 @@ export default function GfsShell({ children, email, rawTier, fallbackName, title
   const nav = navForTier(effectiveTier, adminView, adminView, adminView, adminView, adminView, adminView);
   const current = nav.find(n => n.href === pathname) ?? nav.find(n => n.href !== "/dashboard" && pathname.startsWith(n.href))
     ?? (activeHref ? nav.find(n => n.href === activeHref) : undefined);
-  const pageTitle = title ?? current?.label ?? "Dashboard";
+  const pageTitle = title ?? current?.label ?? (pathname === "/" ? "Home" : "Dashboard");
+  const { main, tools } = splitTools(nav);
+  const toolCurrent = tools.find(t => t.href === current?.href);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!toolsOpen) return;
+    const close = (e: MouseEvent) => { if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) setToolsOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setToolsOpen(false); };
+    document.addEventListener("mousedown", close);
+    window.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", close); window.removeEventListener("keydown", esc); };
+  }, [toolsOpen]);
 
   function chooseViewAs(t: Tier | null) {
     setViewAs(t);
@@ -195,16 +213,37 @@ export default function GfsShell({ children, email, rawTier, fallbackName, title
               <span><span className="gw-geek">GEEK</span><span className="gw-fon">FON</span></span>
             </a>
             <div className="gw-links">
-              {nav.map(n => (
+              {main.map(n => (
                 <a key={n.href} href={n.href} className={"gw-link" + (current?.href === n.href ? " active" : "")} aria-current={current?.href === n.href ? "page" : undefined}>
                   {n.label}
                 </a>
               ))}
             </div>
+            {tools.length > 0 && (
+              <div className="gw-tools" ref={toolsRef}>
+                <button type="button" className={"gw-link gw-tools-btn" + (toolCurrent ? " active" : "")} aria-haspopup="menu" aria-expanded={toolsOpen} onClick={() => { setAccountOpen(false); setToolsOpen(o => !o); }}>
+                  Tools
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                </button>
+                {toolsOpen && (
+                  <div className="gw-menu gw-tools-menu" role="menu">
+                    <div className="gw-menu-label">Admin tools</div>
+                    {tools.map(t => (
+                      <a key={t.href} href={t.href} role="menuitem" className={"gw-menu-item" + (toolCurrent?.href === t.href ? " on" : "")}>{t.label}</a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <select className="gw-select" aria-label="Go to section" value={current?.href ?? ""} onChange={e => { if (e.target.value) window.location.href = e.target.value; }}>
-            {!current && <option value="">Dashboard</option>}
-            {nav.map(n => <option key={n.href} value={n.href}>{n.label}</option>)}
+            {!current && <option value="">{pageTitle}</option>}
+            {main.map(n => <option key={n.href} value={n.href}>{n.label}</option>)}
+            {tools.length > 0 && (
+              <optgroup label="Tools">
+                {tools.map(n => <option key={n.href} value={n.href}>{n.label}</option>)}
+              </optgroup>
+            )}
           </select>
           <div className="gw-right">
             {member?.points != null && <span className="gw-points" title="Your LESARs">{member.points.toLocaleString()} <small>LESARs</small></span>}
@@ -242,7 +281,7 @@ export default function GfsShell({ children, email, rawTier, fallbackName, title
           </div>
         </nav>
 
-        <div className="gw-body">{children}</div>
+        <div className="gw-body"><FramedContext.Provider value={true}>{children}</FramedContext.Provider></div>
       </div>
       <div ref={barRef} className="gw-bar-mount" />
     </div>
@@ -260,7 +299,7 @@ const CSS = `
   border: 1px solid rgba(255,255,255,.08); border-radius: 18px; overflow: hidden;
   box-shadow: 0 30px 90px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.3);
 }
-.gw-titlebar { display: flex; align-items: center; gap: 10px; flex-shrink: 0; padding: 13px 18px; background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.07); }
+.gw-titlebar { position: relative; z-index: 30; display: flex; align-items: center; gap: 10px; flex-shrink: 0; padding: 13px 18px; background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.07); }
 .gw-dots { display: flex; gap: 6px; flex-shrink: 0; }
 .gw-light { position: relative; width: 11px; height: 11px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: none; cursor: pointer; flex-shrink: 0; }
 .gw-light::before { content: ''; position: absolute; inset: -5px -3px; }
@@ -273,7 +312,7 @@ const CSS = `
 .gw-title { flex: 1; min-width: 0; text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gw-spacer { width: 45px; flex-shrink: 0; }
 
-.gw-topnav { position: relative; z-index: 20; flex-shrink: 0; min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,.07); background: rgba(2,12,10,.6); }
+.gw-topnav { position: relative; z-index: 30; flex-shrink: 0; min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,.07); background: rgba(2,12,10,.6); }
 .gw-left { display: flex; align-items: center; gap: 22px; min-width: 0; }
 .gw-logo { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; font-size: 18px; font-weight: 900; letter-spacing: -.01em; flex-shrink: 0; }
 .gw-logo img { width: 26px; height: 26px; object-fit: contain; }
@@ -286,6 +325,12 @@ const CSS = `
 .gw-link:hover { color: #fff; background: rgba(255,255,255,.06); }
 .gw-link.active { color: #fff; background: rgba(255,255,255,.1); }
 .gw-select { display: none; }
+.gw-tools { position: relative; flex-shrink: 0; margin-left: -18px; }
+.gw-tools-btn { display: inline-flex; align-items: center; gap: 5px; border: none; background: none; font: inherit; font-size: 12px; cursor: pointer; }
+.gw-tools-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.gw-tools-btn:focus:not(:focus-visible) { outline: none; }
+.gw-tools-btn.active { background: rgba(255,255,255,.1); color: #fff; }
+.gw-tools-menu { left: 0; right: auto; }
 .gw-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .gw-points { font-size: 13px; font-weight: 900; color: #fff; }
 .gw-points small { font-size: 9px; font-weight: 800; letter-spacing: .14em; color: #F69820; }
@@ -303,7 +348,10 @@ const CSS = `
 .gw-menu-item { display: block; width: 100%; text-align: left; background: none; border: none; color: rgba(255,255,255,.8); font: inherit; font-size: 12px; font-weight: 700; padding: 8px; border-radius: 8px; text-decoration: none; cursor: pointer; }
 .gw-menu-item:hover, .gw-menu-item.on { background: rgba(255,255,255,.08); color: #fff; }
 
-.gw-body { flex: 1; min-height: 0; overflow-y: auto; }
+/* The page's own stacking context, under the title bar and nav: art-led pages
+   (home, radio, roster) paint full-window fixed layers that should sit
+   behind the glass chrome, never over it. */
+.gw-body { position: relative; z-index: 1; flex: 1; min-height: 0; overflow-y: auto; }
 
 @media (min-width: 761px) {
   .gw-window.is-fullscreen { top: 0; width: 100%; height: 100vh; min-height: 0; border-radius: 0; border: none; box-shadow: none; }
@@ -311,7 +359,7 @@ const CSS = `
 }
 @media (max-width: 900px) {
   .gw-topnav { flex-wrap: wrap; padding: 10px 14px; row-gap: 10px; }
-  .gw-links { display: none; }
+  .gw-links, .gw-tools { display: none; }
   .gw-select { display: block; order: 3; flex: 0 0 100%; height: 40px; border-radius: 10px; background: rgba(255,255,255,.06); color: #fff; border: 1px solid rgba(255,255,255,.14); font: inherit; font-size: 13px; font-weight: 700; padding: 0 10px; }
   .gw-select option { color: #111; }
   .gw-apps-label, .gw-points { display: none; }
@@ -319,7 +367,10 @@ const CSS = `
 }
 @media (max-width: 760px) {
   .gw-shell { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
-  .gw-window { position: static; display: block; overflow: clip; width: auto; max-width: 100%; height: auto; min-height: 0; margin: 12px; border-radius: 14px; }
+  /* No backdrop-filter on phones: it makes the window the containing block
+     for fixed children, and here the window scrolls with the page, so docked
+     players would land at the end of the page instead of the screen. */
+  .gw-window { position: static; display: block; overflow: clip; width: auto; max-width: 100%; height: auto; min-height: 0; margin: 12px; border-radius: 14px; backdrop-filter: none; -webkit-backdrop-filter: none; background: #0b1513; }
   .gw-titlebar { display: none; }
   .gw-body { overflow: visible; }
   .gw-topnav { position: sticky; top: 0; }

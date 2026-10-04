@@ -11,7 +11,7 @@ import Gallery from "@/components/roster/Gallery";
 import RadioStrip from "@/components/roster/RadioStrip";
 import SignInGate from "@/components/roster/SignInGate";
 import Storefront from "@/components/roster/Storefront";
-import { useArtistFramed } from "@/components/roster/ArtistChrome";
+import { useFramed } from "@/components/shell/GfsShell";
 import type { GalleryItem } from "@/lib/server/gallery";
 import type { RadioStation } from "@/lib/server/radio";
 import { useRosterAccess } from "@/components/roster/useRosterAccess";
@@ -637,13 +637,14 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // Signed in, a label artist page sits inside the universal frame and its
   // sections (Music, Press, Social, Gallery, Chat) open inside it
   // (2026-10-04, Sean). Music is the storefront; the rest are the tabs.
-  const framed = useArtistFramed();
+  const framed = useFramed();
   const [section, setSection] = useState<string>(() => {
     if (activeArticle) return "pulse";
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("tab");
       if (p === "news") return "pulse";
       if (p && FRAME_SECTIONS.some(f => f.key === p && f.key !== "music")) return p;
+      if (p && !["music", "discography"].includes(p)) return p;
     }
     return "music";
   });
@@ -1539,7 +1540,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
       return;
     }
     setSection(key);
-    if (key === "music") setStoreMode("music"); else setTab(key);
+    // Music is the storefront on label artist pages, Discography elsewhere.
+    if (key === "music") { setStoreMode("music"); if (!storefront) setTab(depot ? "discography" : "music"); }
+    else setTab(key);
     try { window.history.replaceState(null, "", key === "music" ? base : `${base}?tab=${key}`); } catch { /* ignore */ }
   }
   const frameMusic = framed && storefront && section === "music";
@@ -1569,9 +1572,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                 <span>{name}</span>
               </div>
               <div className="af-tabs" role="tablist">
-                {FRAME_SECTIONS.filter(f => (f.key !== "music" || storefront || !!activeArticle) && (!f.needsMembers || (c.members && c.members.length > 0))).map(f => {
+                {FRAME_SECTIONS.filter(f => (!f.needsMembers || (c.members && c.members.length > 0))).map(f => {
                   const locked = !!f.supporters && sectionsLocked;
-                  const on = (activeArticle ? "pulse" : (storefront ? section : tab)) === f.key;
+                  const on = (activeArticle ? "pulse" : section) === f.key;
                   return (
                     <button key={f.key} type="button" role="tab" aria-selected={on} className={"af-tab" + (on ? " on" : "") + (locked ? " locked" : "")}
                       title={locked ? `For ${name} supporters` : undefined} onClick={() => goSection(f.key)}>

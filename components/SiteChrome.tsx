@@ -3,6 +3,15 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAIL } from "@/app/dashboard/context";
 import { navForTier, parseTier, type Tier, type NavItem } from "@/lib/gfsNav";
+import GfsShell from "@/components/shell/GfsShell";
+
+// Every page opens inside the universal frame once signed in (2026-10-04,
+// Sean: "let's make sure all of the pages are in the frame"). The server
+// render is always the public chrome; this pre-paint check hides it when a
+// Supabase session is stored, so a signed-in member does not see the public
+// header flash before the frame mounts. It is shown again if the session
+// turns out to be gone.
+const PREPAINT = `try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&/^sb-.+-auth-token$/.test(k)){document.documentElement.classList.add('gfs-authed');break}}}catch(e){}`;
 
 const TIER_ACCENT: Record<Tier, string> = {
   public:   "#E91E8C",
@@ -41,12 +50,17 @@ export default function SiteChrome({
   children,
   crumb,
   member,
+  publicOnly = false,
 }: {
   children: React.ReactNode;
   crumb?: Crumb[];
   member?: MemberOverride;
+  /** Keep the public chrome even when signed in (the dashboard's own loading and gate states). */
+  publicOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  // Signed-in member to frame: email, raw tier and display name for GfsShell.
+  const [framed, setFramed] = useState<{ email: string | null; rawTier: string | null; name: string } | null>(null);
   const [auth, setAuth] = useState<AuthState>({
     loading: !member,
     tier: "public",
@@ -139,6 +153,7 @@ export default function SiteChrome({
         const { data: { session } } = await supabase.auth.getSession();
         if (cancelled) return;
         if (!session?.user) {
+          document.documentElement.classList.remove("gfs-authed");
           setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0, isAdmin: false, email: null });
           return;
         }
@@ -159,6 +174,8 @@ export default function SiteChrome({
         const displayName = data?.name || u.email || "Member";
         const tier = parseTier(data?.tier || "passport");
         const isAdmin = data?.role === "admin" || data?.role === "super_admin";
+        if (!publicOnly) setFramed({ email: u.email ?? null, rawTier: data?.tier ?? null, name: displayName });
+        document.documentElement.classList.remove("gfs-authed");
         setAuth({
           loading: false,
           tier,
@@ -169,12 +186,13 @@ export default function SiteChrome({
           email: u.email ?? null,
         });
       } catch {
+        document.documentElement.classList.remove("gfs-authed");
         if (!cancelled) setAuth({ loading: false, tier: "public", name: "", initial: "", balance: 0, isAdmin: false, email: null });
       }
     }
     loadAuth();
     return () => { cancelled = true; };
-  }, [member]);
+  }, [member, publicOnly]);
 
   const effectiveTier: Tier = (auth.isAdmin && viewAs) ? viewAs : auth.tier;
   // Real-account gate for Release Schedule: Sean's account only, never derived from
@@ -197,9 +215,21 @@ export default function SiteChrome({
   const viewAsDisplayLabel = isRealAdminView ? "Super Admin" : TIER_LABEL[effectiveTier];
   const viewAsDisplayColor = isRealAdminView ? "#fff" : TIER_ACCENT[effectiveTier];
 
+  if (framed) {
+    return (
+      <>
+        <style>{FRAME_BG_CSS}</style>
+        <div className="gfs-frame-bg" aria-hidden="true" />
+        <GfsShell email={framed.email} rawTier={framed.rawTier} fallbackName={framed.name}>{children}</GfsShell>
+      </>
+    );
+  }
+
   return (
-    <>
+    <div className="gfs-public">
+      {!publicOnly && auth.loading && <script dangerouslySetInnerHTML={{ __html: PREPAINT }} />}
       <style>{CHROME_CSS}</style>
+      {!publicOnly && <style>{`html.gfs-authed .gfs-public{visibility:hidden}`}</style>}
 
       <header className="gtop">
         <a href="/" className="glogo" aria-label="GeekFon Society home">
@@ -316,11 +346,22 @@ export default function SiteChrome({
       </aside>
 
       <div className="gbody">{children}</div>
-    </>
+    </div>
   );
 }
 
+const FRAME_BG_CSS = `
+body { background: #020c0a; }
+.gfs-frame-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(60vw 40vh at 20% -6%, rgba(0,215,95,.20), transparent 70%),
+    radial-gradient(50vw 36vh at 92% 0%, rgba(0,155,255,.16), transparent 70%),
+    radial-gradient(44vw 30vh at 50% 8%, rgba(120,0,255,.12), transparent 70%),
+    #020c0a; }
+`;
+
 const CHROME_CSS = `
+.gfs-public { display: contents; }
 /* Fixed 2026-07-26 per Sean (on his phone): position:sticky let the header
    detach from the top edge during iOS rubber-band overscroll - pulling down
    revealed a gray gap above it (the page background showing through, since

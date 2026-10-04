@@ -951,3 +951,50 @@
   .crumb-bar{padding:8px 16px}
 }
 .head-art{animation:headArtIn .35s ease}@keyframes headArtIn{from{opacity:.4}to{opacity:1}}@media(prefers-reduced-motion:reduce){.head-art{animation:none}}
+
+/* Inside the universal frame (signed in, 2026-10-04): artist section nav
+   and the window-sized storefront. */
+/* Artist pages are white inside the dark window, like the storefront. */
+.gw-body:has(.af-root) { background: #fff; color: #141414; }
+
+/* Section nav: the artist's own nav inside the frame (Music, Press, Social,
+   Gallery, Chat), under the GeekFon nav. */
+.af-sections { position: relative; z-index: 6; display: flex; align-items: center; gap: 22px; min-height: 54px; padding: 0 28px; background: #fff; border-bottom: 1px solid rgba(20,20,20,.1); }
+.af-artist { display: flex; align-items: center; gap: 10px; flex-shrink: 0; font-size: 13px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: #141414; }
+.af-artist img, .af-artist-ph { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; object-position: 50% 0; border: 2px solid var(--rx, #e91e8c); background: #f4f4f4; }
+.af-artist-ph { display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+.af-tabs { display: flex; align-items: stretch; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; align-self: stretch; }
+.af-tabs::-webkit-scrollbar { display: none; }
+.af-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: none; background: none; font: inherit; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(20,20,20,.55); cursor: pointer; white-space: nowrap; }
+.af-tab:hover { color: #141414; }
+.af-tab.on { color: #141414; }
+.af-tab.on::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--rx, #e91e8c); }
+.af-tab:focus:not(:focus-visible) { outline: none; }
+.af-tab:focus-visible { outline: 2px solid var(--rx, #e91e8c); outline-offset: -4px; border-radius: 6px; }
+.af-lock { display: inline-flex; width: 12px; height: 12px; color: rgba(20,20,20,.4); }
+.af-lock svg { width: 12px; height: 12px; }
+
+/* Music fills the window under the section nav, as the storefront fills the
+   screen under the public bar: only the song list scrolls. */
+.af-root .apg { padding-bottom: 40px; }
+@media (min-width: 901px) {
+  .af-root.is-music, .af-root.is-music > .apg { height: 100%; }
+  .af-root.is-music > .apg { display: flex; flex-direction: column; padding-bottom: 0; }
+  .af-root.is-music .af-stage { flex: 1; min-height: 0; container-type: size; }
+  .af-stage .sf { height: 100cqh; min-height: 0; grid-template-columns: minmax(0, min(46%, calc((100cqh - 48px) * .743))) minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .af-sections { padding: 0 12px; gap: 12px; }
+  .af-artist span { display: none; }
+  .af-tab { padding: 0 9px; font-size: 11px; letter-spacing: .08em; }
+  .af-tab.on::after { left: 9px; right: 9px; }
+}
+@media (max-width: 420px) {
+  .af-artist { display: none; }
+  .af-tabs { flex: 1; justify-content: space-between; }
+  .af-tab { padding: 0 6px; font-size: 10.5px; letter-spacing: .06em; }
+  .af-tab.on::after { left: 6px; right: 6px; }
+}
+@media (max-width: 760px) {
+  .af-root .am-player { bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+}
