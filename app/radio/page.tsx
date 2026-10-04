@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import SiteChrome from "@/components/SiteChrome";
 import { supabase } from "@/lib/supabase";
+import { announcePlay, onOtherTabPlay } from "@/lib/audioFocus";
 import { resolvePlayhead, RadioTrack as ScheduleTrack, ScheduleOverride, ResolvedPlayhead } from "@/lib/radioSchedule";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
@@ -22,6 +23,15 @@ const ARTIST_NAMES: Record<string, string> = {
   "shamanic-resin": "Shamanic Resin",
   "straight-and-narrow": "Straight and Narrow",
 };
+
+// Artist page for a display name, so Now Playing can link to the roster page
+// (radio_tracks slugs differ from page slugs for Riku).
+const PAGE_SLUG: Record<string, string> = { "riku-hayasaka": "riku" };
+function artistPageFor(name: string): string | null {
+  const slug = Object.keys(ARTIST_NAMES).find(k => ARTIST_NAMES[k] === name)
+    ?? (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "");
+  return slug ? `/${PAGE_SLUG[slug] || slug}` : null;
+}
 
 function artistName(slug: string): string {
   return ARTIST_NAMES[slug] || slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -239,7 +249,7 @@ export default function RadioPage() {
     // (changedTrack is false) and was the case that silently never called
     // play() again, which is why it "didn't always play."
     if (autoplay && a.paused) {
-      a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      a.play().then(() => { setPlaying(true); announcePlay(); }).catch(() => setPlaying(false));
     }
   }, []);
 
@@ -280,6 +290,15 @@ export default function RadioPage() {
   useEffect(() => {
     return () => { if (resyncTimerRef.current) clearInterval(resyncTimerRef.current); };
   }, []);
+
+  // Another geekfon.ai tab started playing (an artist page opened from Now
+  // Playing): pause here instead of playing over it. The resync timer would
+  // otherwise restart playback within seconds, so it stops too.
+  useEffect(() => onOtherTabPlay(() => {
+    audioRef.current?.pause();
+    setPlaying(false);
+    if (resyncTimerRef.current) { clearInterval(resyncTimerRef.current); resyncTimerRef.current = null; }
+  }), []);
 
   function fmt(s: number) {
     if (!s || isNaN(s)) return "0:00";
@@ -346,7 +365,13 @@ export default function RadioPage() {
               : playing ? "NOW PLAYING - LIVE WORLDWIDE" : "READY TO TUNE IN"}
           </div>
           <div className="rd-np-title">{nowPlaying ? nowPlaying.title : loadingPlaylist ? "Loading Season 1..." : "No tracks available"}</div>
-          {nowPlaying && <div className="rd-np-artist">{nowPlaying.artist}</div>}
+          {nowPlaying && (() => {
+            // Opens in a new tab so the radio keeps playing (Sean, 2026-10-04).
+            const href = nowPlaying.type === "ad" ? null : artistPageFor(nowPlaying.artist);
+            return href
+              ? <a className="rd-np-artist rd-np-artist-link" href={href} target="_blank" rel="noopener" title={`Open ${nowPlaying.artist}'s page in a new tab`}>{nowPlaying.artist} <span aria-hidden="true">↗</span></a>
+              : <div className="rd-np-artist">{nowPlaying.artist}</div>;
+          })()}
 
           {playing && duration > 0 && (
             <div className="rd-progress">
@@ -512,6 +537,8 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
   font-size: clamp(20px, 4vw, 32px); font-weight: 900; color: #fff; letter-spacing: -0.01em; margin-bottom: 6px;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
+.rd-np-artist-link { display: inline-block; text-decoration: none; pointer-events: auto; border-bottom: 1px solid rgba(255,255,255,.2); }
+.rd-np-artist-link:hover { color: #fff; border-bottom-color: #fff; }
 .rd-np-artist { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.05em; }
 
 .rd-progress { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
