@@ -356,10 +356,11 @@ export async function signStreams(srcPaths: string[], ttlSeconds: number): Promi
     console.error("signStreams", paths.length, error?.message);
     return out;
   }
-  for (const d of data) {
-    if (d.path && d.signedUrl && !d.error) out.set(d.path, d.signedUrl);
-    else if (d.error) console.error("signStreams", d.path, d.error);
-  }
+  // Results come back in request order (the Gallery relies on the same).
+  data.forEach((d, i) => {
+    if (d.signedUrl && !d.error) out.set(paths[i], d.signedUrl);
+    else console.error("signStreams", paths[i], d.error);
+  });
   return out;
 }
 
