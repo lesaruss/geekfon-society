@@ -18,8 +18,10 @@
 //   bar          https://hq.lesaruss.ai/shell/universal-bar.js, fed by
 //                geekfon.ai's own /api/shell routes (same contract as HQ)
 //
-// Scope: the signed-in /dashboard tree only. Public pages keep SiteChrome,
-// because they are the art-led storefront (playbook decision, 2026-09-15).
+// Scope: the signed-in /dashboard tree, and signed-in label artist pages
+// (components/roster/ArtistChrome.tsx, 2026-10-04 Sean: "when they're logged
+// in, they should be using the universal framing"). Signed-out visitors keep
+// SiteChrome, because they get the art-led storefront.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -59,11 +61,15 @@ function loadBarScript(): Promise<BarApi | null> {
   });
 }
 
-export default function GfsShell({ children, email, rawTier, fallbackName }: {
+export default function GfsShell({ children, email, rawTier, fallbackName, title, activeHref }: {
   children: React.ReactNode;
   email: string | null;
   rawTier: string | null;
   fallbackName: string;
+  /** Window title after "GeekFon Society ·"; defaults to the nav item's label. */
+  title?: string;
+  /** Nav item to mark current when the path itself is not in the nav (artist pages mark Roster). */
+  activeHref?: string;
 }) {
   const pathname = usePathname() || "/dashboard";
   const isAdmin = email === ADMIN_EMAIL;
@@ -142,8 +148,9 @@ export default function GfsShell({ children, email, rawTier, fallbackName }: {
   const effectiveTier: Tier = isAdmin && viewAs ? viewAs : realTier;
   const adminView = isAdmin && !viewAs;
   const nav = navForTier(effectiveTier, adminView, adminView, adminView, adminView, adminView, adminView);
-  const current = nav.find(n => n.href === pathname) ?? nav.find(n => n.href !== "/dashboard" && pathname.startsWith(n.href));
-  const pageTitle = current?.label ?? "Dashboard";
+  const current = nav.find(n => n.href === pathname) ?? nav.find(n => n.href !== "/dashboard" && pathname.startsWith(n.href))
+    ?? (activeHref ? nav.find(n => n.href === activeHref) : undefined);
+  const pageTitle = title ?? current?.label ?? "Dashboard";
 
   function chooseViewAs(t: Tier | null) {
     setViewAs(t);

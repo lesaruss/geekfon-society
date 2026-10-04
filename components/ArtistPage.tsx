@@ -11,6 +11,7 @@ import Gallery from "@/components/roster/Gallery";
 import RadioStrip from "@/components/roster/RadioStrip";
 import SignInGate from "@/components/roster/SignInGate";
 import Storefront from "@/components/roster/Storefront";
+import { useArtistFramed } from "@/components/roster/ArtistChrome";
 import type { GalleryItem } from "@/lib/server/gallery";
 import type { RadioStation } from "@/lib/server/radio";
 import { useRosterAccess } from "@/components/roster/useRosterAccess";
@@ -149,6 +150,17 @@ const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolea
   { key: "gallery",  label: "Gallery" },
   { key: "chat",     label: "Chat" },
   { key: "members",  label: "Members", needsMembers: true },
+];
+
+// Sections inside the universal frame (signed in, label artists). Gallery and
+// Chat are supporter sections: for everyone else they open the Support tour.
+const FRAME_SECTIONS: { key: string; label: string; supporters?: boolean; needsMembers?: boolean }[] = [
+  { key: "music",   label: "Music" },
+  { key: "pulse",   label: "Press" },
+  { key: "social",  label: "Social" },
+  { key: "gallery", label: "Gallery", supporters: true },
+  { key: "chat",    label: "Chat", supporters: true },
+  { key: "members", label: "Members", needsMembers: true },
 ];
 
 export type RosterDepot = { songs: PublicSong[]; albums: PublicAlbum[] };
@@ -622,8 +634,22 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // in place of the header and Discography (2026-10-04, Sean).
   const storefront = !!depot && depot.albums.some(a => a.label) && !activeArticle;
   const [storeMode, setStoreMode] = useState<"music" | "tour">("music");
+  // Signed in, a label artist page sits inside the universal frame and its
+  // sections (Music, Press, Social, Gallery, Chat) open inside it
+  // (2026-10-04, Sean). Music is the storefront; the rest are the tabs.
+  const framed = useArtistFramed();
+  const [section, setSection] = useState<string>(() => {
+    if (activeArticle) return "pulse";
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("tab");
+      if (p === "news") return "pulse";
+      if (p && FRAME_SECTIONS.some(f => f.key === p && f.key !== "music")) return p;
+    }
+    return "music";
+  });
   function openSupport() {
     if (storefront) {
+      if (framed) setSection("music");
       setStoreMode("tour");
       if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
@@ -1482,11 +1508,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   const canSeePulse = (isSuperAdmin && viewAs === "real") || (Array.isArray(c.pulse) && c.pulse.length > 0);
   // Signed-out visitors on a depot-backed page get the storefront only: every
   // tab but Discography shows the sign-in prompt (SignInGate).
+  // Inside the frame the viewer is signed in by definition (the frame only
+  // mounts with a session), so nothing waits on the tier or access fetch.
   const signedOutGate = !!depot && !activeArticle && tab !== "discography" && !isRegistered()
-    && !(viewAs === "real" && rosterAccess.signedIn);
+    && !(viewAs === "real" && (rosterAccess.signedIn || framed));
   // Storefront pages: a signed-out visitor gets the storefront alone; the tabs
   // (Pulse, Social, Gallery, Chat, Bible) appear below it once signed in.
-  const hideBelow = storefront && !isRegistered() && !(viewAs === "real" && rosterAccess.signedIn);
+  const hideBelow = storefront && !isRegistered() && !(viewAs === "real" && (rosterAccess.signedIn || framed));
   const publishedNews = (c.news || []).filter((n: News) => !n.draft);
   // 2026-07-26 (3rd pass) per Sean: this used to fall back to PLACEHOLDER_NEWS
   // (hardcoded, Roxanne-branded sample copy) whenever an artist had no real
@@ -1499,9 +1527,26 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // someone else's content.
   const pulseArticles = publishedNews;
 
+  // Frame section nav. Locks only show once the depot (and so the supporter
+  // check) is loaded; article pages navigate back to the artist page.
+  const sectionsLocked = !!depot && !isSupporterView();
+  function goSection(key: string) {
+    const base = `/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`;
+    if (activeArticle) { window.location.href = key === "music" ? base : `${base}?tab=${key}`; return; }
+    if (sectionsLocked && FRAME_SECTIONS.find(f => f.key === key)?.supporters) {
+      openSupport();
+      try { window.history.replaceState(null, "", base); } catch { /* ignore */ }
+      return;
+    }
+    setSection(key);
+    if (key === "music") setStoreMode("music"); else setTab(key);
+    try { window.history.replaceState(null, "", key === "music" ? base : `${base}?tab=${key}`); } catch { /* ignore */ }
+  }
+  const frameMusic = framed && storefront && section === "music";
+
   return (
 
-      <div style={vars}>
+      <div style={vars} className={framed ? "af-root" + (frameMusic ? " is-music" : "") : undefined}>
         <audio ref={audioRef} onEnded={() => { setPlaying(null); setPlayingV(null); currentUrlRef.current = null; }} onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} />
         <div className={"apg" + (cityBg ? " has-city-bg" : "")}>
 
@@ -1517,7 +1562,28 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
           {/* Decorative hero - collapses/expands via the toggle in the bar
               below it (starts collapsed on an article drill-down page,
               expanded otherwise) */}
-          {storefront && depot && (
+          {framed && (
+            <nav className="af-sections" aria-label={`${name} sections`}>
+              <div className="af-artist">
+                {(c.profileUrl || c.heroUrl) ? <img src={c.profileUrl || c.heroUrl} alt="" aria-hidden="true" /> : <span className="af-artist-ph">{c.initial || name.charAt(0)}</span>}
+                <span>{name}</span>
+              </div>
+              <div className="af-tabs" role="tablist">
+                {FRAME_SECTIONS.filter(f => (f.key !== "music" || storefront || !!activeArticle) && (!f.needsMembers || (c.members && c.members.length > 0))).map(f => {
+                  const locked = !!f.supporters && sectionsLocked;
+                  const on = (activeArticle ? "pulse" : (storefront ? section : tab)) === f.key;
+                  return (
+                    <button key={f.key} type="button" role="tab" aria-selected={on} className={"af-tab" + (on ? " on" : "") + (locked ? " locked" : "")}
+                      title={locked ? `For ${name} supporters` : undefined} onClick={() => goSection(f.key)}>
+                      {f.label}{locked && <span className="af-lock" aria-label="supporters only">{LOCK}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </nav>
+          )}
+          {storefront && depot && (!framed || section === "music") && (
+            <div className={framed ? "af-stage" : undefined}>
             <Storefront
               slug={slug || ""}
               artistName={name}
@@ -1540,6 +1606,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               platformLinks={c.platformLinks}
               chat={chatPreview}
             />
+            </div>
           )}
           {!heroCollapsed && !storefront && (
           <div className="bible-head">
@@ -1597,7 +1664,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
           </div>
           )}
 
-          {!hideBelow && (<>
+          {!hideBelow && !frameMusic && (<>
           {/* 2026-08-14 fix: .crumb-bar and .tabbar below used to each be
               independently position:sticky with hardcoded pixel offsets
               (crumb-bar @60px, tabbar @102px assuming crumb-bar renders at
@@ -1605,6 +1672,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               which desynced them during scroll. Wrapped together in a single
               .nav-stack sticky container (top:60px, matching .gtop's fixed
               height) instead - see components/ArtistPage.css. */}
+          {!framed && (
           <div className="nav-stack">
 
           {/* Persistent dark bar (Collapse/Expand pill + breadcrumb) - stays
@@ -1683,6 +1751,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
           })()}
 
           </div>
+          )}
 
           {/* Two-column body: content + billboard */}
           <div className="body-layout">
