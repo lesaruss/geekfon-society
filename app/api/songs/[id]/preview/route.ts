@@ -15,9 +15,28 @@ import { loadSong, publicStreamUrl, signStream, PREVIEW_SECONDS } from "@/lib/se
 export const runtime = "nodejs";
 
 // Headroom over 30s so the client's own 30s cap, not the byte cut, ends
-// playback; plus room for an ID3 tag (embedded cover art) at the front.
+// playback. The ID3 tag at the front is measured, not guessed: the depot's
+// streams carry ~250-byte tags, but one with embedded cover art could be
+// hundreds of KB, which a fixed allowance would either cut into or overpay.
 const PREVIEW_PAD_SECONDS = 2;
-const HEADER_ALLOWANCE = 256 * 1024;
+const FIRST_READ_ALLOWANCE = 16 * 1024;
+
+// Size of a leading ID3v2 tag (header + body + optional footer), else 0.
+function id3Length(b: Uint8Array): number {
+  if (b.length < 10 || b[0] !== 0x49 || b[1] !== 0x44 || b[2] !== 0x33) return 0;
+  const size = ((b[6] & 0x7f) << 21) | ((b[7] & 0x7f) << 14) | ((b[8] & 0x7f) << 7) | (b[9] & 0x7f);
+  const footer = b[5] & 0x10 ? 10 : 0;
+  return 10 + size + footer;
+}
+
+async function readHead(url: string, bytes: number): Promise<Uint8Array | null> {
+  const res = await fetch(url, { headers: { Range: `bytes=0-${bytes - 1}` }, cache: "no-store" });
+  if (!res.ok && res.status !== 206) return null;
+  const buf = new Uint8Array(await res.arrayBuffer());
+  // Never hand out more than asked for, even if storage ignored the Range.
+  return buf.byteLength > bytes ? buf.subarray(0, bytes) : buf;
+}
+
 // Fallback when a row is missing size or duration: 192 kbps.
 const FALLBACK_BYTES_PER_SECOND = 24_000;
 
@@ -34,17 +53,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { size_bytes: size, duration_seconds: duration } = song.row;
   const bytesPerSecond = size && duration ? size / duration : FALLBACK_BYTES_PER_SECOND;
-  let cut = Math.ceil(bytesPerSecond * (PREVIEW_SECONDS + PREVIEW_PAD_SECONDS)) + HEADER_ALLOWANCE;
-  if (size) cut = Math.min(cut, size);
+  const audioBytes = Math.ceil(bytesPerSecond * (PREVIEW_SECONDS + PREVIEW_PAD_SECONDS));
+  const clamp = (n: number) => (size ? Math.min(n, size) : n);
 
   const signed = await signStream(song.row.src_path, 60);
   if (!signed) return new NextResponse("Unavailable", { status: 503 });
 
-  const upstream = await fetch(signed, { headers: { Range: `bytes=0-${cut - 1}` }, cache: "no-store" });
-  if (!upstream.ok && upstream.status !== 206) return new NextResponse("Unavailable", { status: 502 });
-  // Read at most `cut` bytes even if storage ignored the Range header.
-  const full = new Uint8Array(await upstream.arrayBuffer());
-  const body = full.byteLength > cut ? full.subarray(0, cut) : full;
+  let body = await readHead(signed, clamp(audioBytes + FIRST_READ_ALLOWANCE));
+  if (!body) return new NextResponse("Unavailable", { status: 502 });
+  const tag = id3Length(body);
+  const cut = clamp(tag + audioBytes);
+  if (cut > body.byteLength) {
+    body = await readHead(signed, cut);
+    if (!body) return new NextResponse("Unavailable", { status: 502 });
+  }
+  body = body.subarray(0, cut);
   const total = body.byteLength;
 
   const headers: Record<string, string> = {
@@ -73,5 +96,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     });
   }
 
-  return new NextResponse(body, { status: 200, headers: { ...headers, "Content-Length": String(total) } });
+  return new NextResponse(body.slice(), { status: 200, headers: { ...headers, "Content-Length": String(total) } });
 }
