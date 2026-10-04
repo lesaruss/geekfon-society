@@ -10,7 +10,7 @@ import SupportModal from "@/components/roster/SupportModal";
 import Gallery from "@/components/roster/Gallery";
 import RadioStrip from "@/components/roster/RadioStrip";
 import SignInGate from "@/components/roster/SignInGate";
-import ReleaseHero from "@/components/roster/ReleaseHero";
+import Storefront from "@/components/roster/Storefront";
 import type { GalleryItem } from "@/lib/server/gallery";
 import type { RadioStation } from "@/lib/server/radio";
 import { useRosterAccess } from "@/components/roster/useRosterAccess";
@@ -100,6 +100,8 @@ export type ArtistContent = {
   // (profile.tabPortraits = { discography: url, pulse: url, ... }). Any tab
   // without one shows heroUrl.
   tabPortraits?: Record<string, string>;
+  // Short bio shown on the storefront, same copy as lesaruss.com.
+  shortBio?: string; location?: string;
   crumb?: { label: string; href?: string }[]; pills?: Pill[];
   message?: { ja?: string; en?: string; audio?: string; audioEn?: string; audioJa?: string };
   quote?: string; bio?: string[]; stats?: Stat[]; tracks?: Track[]; news?: News[];
@@ -600,14 +602,27 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
       // "news" used to be its own top-level tab; it now lives inside Pulse as a channel.
       if (p === "news") return "pulse";
       // Music is now Discography wherever the depot is loaded.
+      if ((p === "music" || p === "discography") && depot?.albums.some(a => a.label)) return "pulse";
       if (p === "music" && depot) return "discography";
       if (p) return p;
     }
-    return depot ? "discography" : "music";
+    return depot ? (depot.albums.some(a => a.label) ? "pulse" : "discography") : "music";
   });
   // Server-decided supporter access for this artist (streams, lyrics, Bible).
   const rosterAccess = useRosterAccess(slug || "", !!depot);
   const [supportOpen, setSupportOpen] = useState(false);
+  // Label-model artists get the storefront (portrait + music + support tour)
+  // in place of the header and Discography (2026-10-04, Sean).
+  const storefront = !!depot && depot.albums.some(a => a.label) && !activeArticle;
+  const [storeMode, setStoreMode] = useState<"music" | "tour">("music");
+  function openSupport() {
+    if (storefront) {
+      setStoreMode("tour");
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      setSupportOpen(true);
+    }
+  }
   // 2026-07-31 per Sean: match the Vegans Explore SoFlo community-hub pattern
   // exactly - a dark persistent bar (toggle + breadcrumb) that stays put while
   // just the decorative hero above it collapses/expands. On an article
@@ -1462,6 +1477,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // tab but Discography shows the sign-in prompt (SignInGate).
   const signedOutGate = !!depot && !activeArticle && tab !== "discography" && !isRegistered()
     && !(viewAs === "real" && rosterAccess.signedIn);
+  // Storefront pages: a signed-out visitor gets the storefront alone; the tabs
+  // (Pulse, Social, Gallery, Chat, Bible) appear below it once signed in.
+  const hideBelow = storefront && !isRegistered() && !(viewAs === "real" && rosterAccess.signedIn);
   const publishedNews = (c.news || []).filter((n: News) => !n.draft);
   // 2026-07-26 (3rd pass) per Sean: this used to fall back to PLACEHOLDER_NEWS
   // (hardcoded, Roxanne-branded sample copy) whenever an artist had no real
@@ -1492,7 +1510,28 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
           {/* Decorative hero - collapses/expands via the toggle in the bar
               below it (starts collapsed on an article drill-down page,
               expanded otherwise) */}
-          {!heroCollapsed && (
+          {storefront && depot && (
+            <Storefront
+              slug={slug || ""}
+              artistName={name}
+              kicker={[c.genre || c.sonic?.primaryGenre, c.location].filter(Boolean).join(" · ")}
+              tagline={c.tagline ? c.tagline.replace(/\s+-\s+/g, ", ") : null}
+              blurb={c.shortBio || (c.bio || [])[0] || null}
+              portraitUrl={c.tabPortraits?.music || c.heroUrl || null}
+              tourPortraitUrl={c.tabPortraits?.support || c.profileUrl || c.heroUrl || null}
+              songs={depot.songs}
+              albums={depot.albums}
+              access={rosterAccess}
+              supporter={isSupporterView()}
+              stations={radioStations || []}
+              storyLabels={bible?.locked || []}
+              posts={(c.pulse || []).map(pp => ({ text: pp.text || pp.caption, title: pp.title, thumb: pp.thumb, date: pp.date }))}
+              galleryCount={rosterAccess.gallery?.items.length ?? gallery?.lockedCount ?? 0}
+              mode={storeMode}
+              onMode={setStoreMode}
+            />
+          )}
+          {!heroCollapsed && !storefront && (
           <div className="bible-head">
 
             {/* City background layers - absolute, behind all content */}
@@ -1526,46 +1565,21 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               )}
               <div className="head-meta">
                 <div className="head-name">{name}</div>
+                <p className="head-tagline">{c.tagline}</p>
                 {(() => {
+                  // Exactly 2 pills, fixed order: Genre, Season.
                   const rawPills = (c.pills || []).filter(p => p.label !== "Original");
                   const seasonPill = rawPills.find(p => /season/i.test(p.label));
                   const genrePill = rawPills.find(p => p !== seasonPill && !/^original(\s+artist)?$/i.test(p.label));
-                  const genreLabel = genrePill?.label || c.sonic?.primaryGenre || c.genre || null;
-                  // Label-model artists: the release itself, up top (ReleaseHero).
-                  const labelAlbums = (depot?.albums || []).filter(a => a.label);
-                  const heroAlbum = labelAlbums.find(a => !a.out) ?? labelAlbums[labelAlbums.length - 1] ?? null;
-                  if (heroAlbum && depot) {
-                    const byId = new Map(depot.songs.map(sg => [sg.id, sg]));
-                    const albumSongs = heroAlbum.tracks
-                      .map(t => byId.get(t.songId))
-                      .filter((sg): sg is NonNullable<typeof sg> => !!sg && !sg.isRemix);
-                    return (
-                      <ReleaseHero
-                        artistName={name}
-                        genre={genreLabel}
-                        album={heroAlbum}
-                        debut={!labelAlbums.some(a => a.out && a.id !== heroAlbum.id)}
-                        songs={albumSongs}
-                        supporter={isSupporterView()}
-                        onSupport={() => setSupportOpen(true)}
-                        onOpenAlbum={() => {
-                          setTab("discography");
-                          setTimeout(() => document.querySelector(".rs-album")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-                        }}
-                      />
-                    );
-                  }
+                  const genreLabel = genrePill?.label || c.sonic?.primaryGenre || c.genre;
                   const seasonLabel = seasonPill?.label || c.tracks?.[0]?.m || "Season 1";
                   return (
-                    <>
-                      <p className="head-tagline">{c.tagline}</p>
-                      {/* 2026-07-26 per Sean: the old "Vote" pill is replaced by a
-                          heart button on each song row - liking a song IS the vote now. */}
-                      <div className="pill-row">
-                        {genreLabel && <span className={"pill" + (genrePill?.accent ? " accent" : "")}>{genreLabel}</span>}
-                        <span className="pill">{seasonLabel}</span>
-                      </div>
-                    </>
+                    // 2026-07-26 per Sean: the old "Vote" pill is replaced by a heart
+                    // button on each song row - liking a song IS the vote now.
+                    <div className="pill-row">
+                      {genreLabel && <span className={"pill" + (genrePill?.accent ? " accent" : "")}>{genreLabel}</span>}
+                      <span className="pill">{seasonLabel}</span>
+                    </div>
                   );
                 })()}
               </div>
@@ -1573,6 +1587,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
           </div>
           )}
 
+          {!hideBelow && (<>
           {/* 2026-08-14 fix: .crumb-bar and .tabbar below used to each be
               independently position:sticky with hardcoded pixel offsets
               (crumb-bar @60px, tabbar @102px assuming crumb-bar renders at
@@ -1635,6 +1650,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
             // the CONTENT inside Pulse/Social/Group (real posts vs. "Coming Soon"), it
             // just no longer removes the tab buttons themselves.
             const visibleTabs = TABS.filter(t =>
+              !(storefront && t.key === "discography") &&
               (!t.admin || canSeeBrief) &&
               (!t.needsMembers || (c.members && c.members.length > 0))
             );
@@ -1711,7 +1727,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   supporterItems={rosterAccess.gallery?.items}
                   supporter={isSupporterView()}
                   staff={rosterAccess.staff && isSuperAdmin && viewAs === "real"}
-                  onSupport={() => setSupportOpen(true)}
+                  onSupport={() => openSupport()}
                   onChanged={rosterAccess.refresh}
                 />
               )}
@@ -1721,7 +1737,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   songs={depot.songs}
                   albums={depot.albums}
                   access={rosterAccess}
-                  onSupport={() => setSupportOpen(true)}
+                  onSupport={() => openSupport()}
                 />
               )}
               {tab === "discography" && depot && radioStations && (
@@ -1733,7 +1749,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   freeModules={bible?.free || []}
                   lockedLabels={bible?.locked || []}
                   fullModules={rosterAccess.supporter ? rosterAccess.bible : undefined}
-                  onSupport={() => setSupportOpen(true)}
+                  onSupport={() => openSupport()}
                 />
               )}
               {supportOpen && depot && (
@@ -2034,7 +2050,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
                       <div className="lp-title">Chat is for {name}&apos;s supporters</div>
                       <p className="lp-sub">Support {name} to join the chat with {name} and other supporters, along with the full album, the Gallery and more.</p>
-                      <button className="mp-btn-buy" onClick={() => setSupportOpen(true)}>Support {name}</button>
+                      <button className="mp-btn-buy" onClick={() => openSupport()}>Support {name}</button>
                     </div>
                   )}
                   {isRegistered() && (isSupporterView() || !depot) && (
@@ -3052,6 +3068,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
             </aside>
 
           </div>
+          </>)}
 
       </div>
 
