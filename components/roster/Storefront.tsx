@@ -20,7 +20,7 @@ import type { RadioStation } from "@/lib/server/radio";
 import type { RosterAccess } from "./useRosterAccess";
 import { startSupportCheckout } from "./checkout";
 import { PLATFORM_ICONS } from "@/lib/platformIcons";
-import { AlbumScreen, FeedScreen, GalleryScreen, ChatScreen, RadioScreen, StoryScreen } from "./TourMockups";
+import { AlbumScreen, FeedScreen, GalleryScreen, ChatScreen, RadioScreen, PressScreen } from "./TourMockups";
 import "./storefront.css";
 
 const PREVIEW_SECONDS = 30;
@@ -40,7 +40,10 @@ type Props = {
   access: RosterAccess;
   supporter: boolean;
   stations: RadioStation[];
-  storyLabels: string[];
+  // Articles featuring the artist (what Pulse used to be; Sean 2026-10-04).
+  press: { title?: string; blurb?: string; thumb?: string; tag?: string; date?: string; href?: string }[];
+  // Founding Fan badge art (profile.badgeUrl), shown on the offer slide.
+  badgeUrl?: string | null;
   posts: StorefrontPost[];
   galleryCount: number;
   mode: "music" | "tour";
@@ -304,7 +307,7 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
       {!p.supporter && (
         <div className="sf-cta-bar">
           <p>
-            <strong>Want to hear all of it?</strong> Support {p.artistName} for $11: {p.album ? <em>{p.album.title}</em> : "every song"} in full, plus the Gallery, Chat and her story.
+            <strong>Want to hear all of it?</strong> Support {p.artistName} for $11: {p.album ? <em>{p.album.title}</em> : "every song"} in full, plus the Gallery, Chat and Press.
           </p>
           <button className="sf-btn sf-btn-go" onClick={() => p.onMode("tour")}>Support {p.artistName}</button>
         </div>
@@ -341,9 +344,9 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
       visual: <AlbumScreen artist={p.artistName} slug={p.slug} album={p.album} songs={mains} />,
     },
     {
-      key: "pulse",
-      title: "Pulse and Social",
-      text: `${p.artistName}'s posts, news and behind-the-scenes, as they land.`,
+      key: "social",
+      title: "Social feed",
+      text: `${p.artistName}'s posts, photos and behind-the-scenes, as they land.`,
       visual: <FeedScreen artist={p.artistName} avatar={p.portraitUrl} posts={p.posts} images={covers} />,
     },
     {
@@ -367,10 +370,10 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
       visual: <RadioScreen artist={p.artistName} song={single?.title || p.album.title} stations={p.stations} active={stationWithArtist} />,
     },
     {
-      key: "story",
-      title: `${p.artistName}'s full story`,
-      text: "The whole Bible behind the music, and the lyrics to every song.",
-      visual: <StoryScreen artist={p.artistName} slug={p.slug} labels={p.storyLabels} portrait={p.tourPortraitUrl || p.portraitUrl} />,
+      key: "press",
+      title: "Press",
+      text: `Every article featuring ${p.artistName}: features, interviews and news, as they're published.`,
+      visual: <PressScreen artist={p.artistName} slug={p.slug} articles={p.press} images={covers} />,
     },
   ];
 
@@ -378,16 +381,24 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
     <div className="tour-offer2">
       <div className="to-art">
         {p.album.coverUrl && <img src={p.album.coverUrl} alt="" />}
-        {!p.album.out && <span className="to-badge">Founding Fan</span>}
+
       </div>
       <div className="to-copy">
         <span className="tour-num">Support {p.artistName}</span>
-        <div className="tour-offer-price">$11<span>one time</span></div>
+        <div className="to-price-row">
+          <div className="tour-offer-price">$11<span>one time</span></div>
+          {!p.album.out && (
+            <div className="to-badge2">
+              {p.badgeUrl && <img src={p.badgeUrl} alt="Founding Fan badge" />}
+              <span>Founding Fan</span>
+            </div>
+          )}
+        </div>
         <ul>
           <li><strong>{p.album.title}</strong> in full{p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
-          <li><strong>Pulse, Social and Chat</strong>, every day</li>
+          <li><strong>Social feed, Press and Chat</strong>, every day</li>
           <li><strong>The Gallery</strong> of wallpapers and art</li>
-          <li><strong>Radio</strong> and {p.artistName}&apos;s <strong>full story</strong></li>
+          <li><strong>Radio</strong>: every station {p.artistName} is on</li>
           {!p.album.out && <li>Counts as your pre-order, with a <strong>Founding Fan</strong> badge</li>}
         </ul>
         <button className="sf-btn sf-btn-go sf-btn-big" onClick={buy} disabled={busy}>{busy ? "Starting checkout..." : `Support ${p.artistName} · $11`}</button>

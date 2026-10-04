@@ -104,6 +104,8 @@ export type ArtistContent = {
   shortBio?: string; location?: string;
   // Direct streaming links when known: { spotify: url, "apple-music": url, ... }
   platformLinks?: Record<string, string>;
+  // Founding Fan badge art for the Support tour.
+  badgeUrl?: string;
   crumb?: { label: string; href?: string }[]; pills?: Pill[];
   message?: { ja?: string; en?: string; audio?: string; audioEn?: string; audioJa?: string };
   quote?: string; bio?: string[]; stats?: Stat[]; tracks?: Track[]; news?: News[];
@@ -127,6 +129,9 @@ export type ArtistContent = {
 // until V decides where it relocates to - deleting the whole read-only
 // release-brief admin view outright felt premature for a nav-only ask.
 // Group renamed to Chat per the same conversation.
+// 2026-10-04 per Sean: the Bible is retired as a public reference (it's how
+// the team directs the artist's voice, not fan content), so its tab is gone;
+// Pulse is renamed Press (every article featuring the artist).
 // 2026-10-04 (playbook geekfon-launch): the public roster mirrors the HQ
 // roster tabs. Music became Discography (depot-backed: albums, cover art,
 // lyrics, free singles vs supporter vault) and the fan Bible was added.
@@ -139,11 +144,10 @@ export type ArtistContent = {
 // and Chat.
 const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolean }[] = [
   { key: "discography", label: "Discography" },
-  { key: "pulse",    label: "Pulse" },
+  { key: "pulse",    label: "Press" },
   { key: "social",   label: "Social" },
   { key: "gallery",  label: "Gallery" },
   { key: "chat",     label: "Chat" },
-  { key: "bible",    label: "Bible" },
   { key: "members",  label: "Members", needsMembers: true },
 ];
 
@@ -1527,7 +1531,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               access={rosterAccess}
               supporter={isSupporterView()}
               stations={radioStations || []}
-              storyLabels={bible?.locked || []}
+              press={pulseArticles.map(n => ({ title: n.title, blurb: n.blurb, thumb: n.thumb, tag: n.tag, date: n.date, href: n.href }))}
+              badgeUrl={c.badgeUrl || null}
               posts={(c.pulse || []).map(pp => ({ text: pp.text || pp.caption, title: pp.title, thumb: pp.thumb, date: pp.date }))}
               galleryCount={rosterAccess.gallery?.items.length ?? gallery?.lockedCount ?? 0}
               mode={storeMode}

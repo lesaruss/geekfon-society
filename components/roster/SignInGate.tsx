@@ -4,7 +4,7 @@
 import "./roster.css";
 
 const COPY: Record<string, string> = {
-  pulse: "news and stories",
+  pulse: "press",
   social: "posts",
   gallery: "wallpapers and art",
   chat: "chat",
@@ -18,7 +18,7 @@ export default function SignInGate({ artistName, tab }: { artistName: string; ta
     <section className="rs-gate">
       <div className="rs-gate-title">Sign in to step into {artistName}&apos;s world</div>
       <p className="rs-gate-sub">
-        {artistName}&apos;s {COPY[tab] || "page"} {tab === "chat" || tab === "gallery" ? "opens" : "open"} up with a free GeekFon account.
+        {artistName}&apos;s {COPY[tab] || "page"} {["chat", "gallery", "pulse"].includes(tab) ? "opens" : "open"} up with a free GeekFon account.
         The music is right here in the Discography, free to preview.
       </p>
       <div className="rs-gate-actions">

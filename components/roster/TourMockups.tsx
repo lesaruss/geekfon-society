@@ -64,7 +64,7 @@ export function FeedScreen({ artist, avatar, posts, images }: { artist: string; 
     <div className="mk-feed-wrap">
       <PhoneFrame>
         <div className="mk-feed">
-          <div className="mk-feed-head">Pulse</div>
+          <div className="mk-feed-head">Social</div>
           {cards.slice(0, 2).map((c, i) => (
             <div key={i} className="mk-post">
               <div className="mk-post-who">{avatar && <img src={avatar} alt="" />}<div><strong>{artist}</strong><span>{c.date}</span></div></div>
@@ -157,23 +157,39 @@ export function RadioScreen({ artist, song, stations, active }: { artist: string
   );
 }
 
-export function StoryScreen({ artist, slug, labels, portrait }: { artist: string; slug: string; labels: string[]; portrait: string | null }) {
-  const cards = (labels.length ? labels : ["Backstory", "Lore", "Relationships", "Timeline", "Voice", "Visual identity"]).slice(0, 6);
+export type MockArticle = { title?: string; blurb?: string; thumb?: string; tag?: string; date?: string };
+
+export function PressScreen({ artist, slug, articles, images }: { artist: string; slug: string; articles: MockArticle[]; images: string[] }) {
+  const list = articles.filter(a => a.title).slice(0, 4);
+  const lead = list[0];
+  const rest = list.slice(1, 4);
   return (
-    <BrowserFrame url={`geekfon.ai/${slug}?tab=bible`}>
-      <div className="mk-story">
-        <div className="mk-story-head">
-          {portrait && <img src={portrait} alt="" />}
-          <div><span>The Bible</span><strong>{artist}</strong><em>Every chapter of her story, unlocked</em></div>
-        </div>
-        <div className="mk-story-grid">
-          {cards.map((l, i) => (
-            <div key={l} className={"mk-story-card" + (i === 0 ? " open" : "")}>
-              <strong>{l}<span>{i === 0 ? "Reading" : "🔓"}</span></strong>
-              <i /><i /><i style={{ width: "86%" }} /><i /><i style={{ width: "72%" }} /><i style={{ width: "40%" }} />
+    <BrowserFrame url={`geekfon.ai/${slug}?tab=press`}>
+      <div className="mk-press">
+        <div className="mk-press-head"><span>Press</span><strong>{artist} in the news</strong></div>
+        {lead ? (
+          <div className="mk-press-grid">
+            <article className="mk-press-lead">
+              {(lead.thumb || images[0]) && <img src={lead.thumb || images[0]} alt="" />}
+              <div>
+                {lead.tag && <span className="mk-press-tag">{lead.tag}</span>}
+                <strong>{lead.title}</strong>
+                {lead.blurb && <p>{lead.blurb.slice(0, 140)}</p>}
+                {lead.date && <em>{lead.date}</em>}
+              </div>
+            </article>
+            <div className="mk-press-side">
+              {rest.map((a, i) => (
+                <article key={i}>
+                  {(a.thumb || images[i + 1]) && <img src={a.thumb || images[i + 1]} alt="" />}
+                  <div>{a.tag && <span className="mk-press-tag">{a.tag}</span>}<strong>{a.title}</strong>{a.date && <em>{a.date}</em>}</div>
+                </article>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <p className="mk-press-empty">Features and interviews with {artist} land here as they&apos;re published.</p>
+        )}
       </div>
     </BrowserFrame>
   );
