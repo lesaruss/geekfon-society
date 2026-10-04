@@ -28,8 +28,9 @@ const ARTIST_NAMES: Record<string, string> = {
 // (radio_tracks slugs differ from page slugs for Riku).
 const PAGE_SLUG: Record<string, string> = { "riku-hayasaka": "riku" };
 function artistPageFor(name: string): string | null {
-  const slug = Object.keys(ARTIST_NAMES).find(k => ARTIST_NAMES[k] === name)
-    ?? (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "");
+  const norm = (v: string) => v.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const key = norm(name || "");
+  const slug = Object.keys(ARTIST_NAMES).find(k => norm(ARTIST_NAMES[k]) === key) ?? key;
   return slug ? `/${PAGE_SLUG[slug] || slug}` : null;
 }
 
