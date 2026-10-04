@@ -19,6 +19,7 @@ import type { PublicAlbum, PublicSong } from "@/lib/server/depot";
 import type { RadioStation } from "@/lib/server/radio";
 import type { RosterAccess } from "./useRosterAccess";
 import { startSupportCheckout } from "./checkout";
+import { PLATFORM_ICONS } from "@/lib/platformIcons";
 import "./storefront.css";
 
 const PREVIEW_SECONDS = 30;
@@ -43,7 +44,54 @@ type Props = {
   galleryCount: number;
   mode: "music" | "tour";
   onMode: (m: "music" | "tour") => void;
+  // Direct profile links per platform when known (profile.platformLinks);
+  // otherwise each platform opens a search for the artist and latest single.
+  platformLinks?: Record<string, string>;
 };
+
+// Where the artist can be found. DistroKid gives no per-store links, so
+// unless a direct link is stored the button opens that store's search.
+const PLATFORMS: { key: string; title: string; search: (q: string) => string; primary?: boolean }[] = [
+  { key: "spotify", title: "Spotify", search: q => `https://open.spotify.com/search/${q}`, primary: true },
+  { key: "apple-music", title: "Apple Music", search: q => `https://music.apple.com/us/search?term=${q}`, primary: true },
+  { key: "youtube-music", title: "YouTube Music", search: q => `https://music.youtube.com/search?q=${q}`, primary: true },
+  { key: "amazon-music", title: "Amazon Music", search: q => `https://music.amazon.com/search/${q}` },
+  { key: "tidal", title: "TIDAL", search: q => `https://listen.tidal.com/search?q=${q}` },
+  { key: "deezer", title: "Deezer", search: q => `https://www.deezer.com/search/${q}` },
+  { key: "pandora", title: "Pandora", search: q => `https://www.pandora.com/search/${q}/all` },
+  { key: "iheartradio", title: "iHeartRadio", search: q => `https://www.iheart.com/search/?q=${q}` },
+];
+
+function PlatformIcon({ k }: { k: string }) {
+  const ic = PLATFORM_ICONS[k];
+  if (!ic) return null;
+  return <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d={ic.path} fill={ic.hex === "#000000" ? "currentColor" : ic.hex} /></svg>;
+}
+
+function ListenOn({ artistName, single, links }: { artistName: string; single: string | null; links?: Record<string, string> }) {
+  const q = encodeURIComponent(single ? `${artistName} ${single}` : artistName);
+  const href = (pl: (typeof PLATFORMS)[number]) => links?.[pl.key] || pl.search(q);
+  return (
+    <div className="sf-listen">
+      <span className="sf-listen-label">Listen on</span>
+      {PLATFORMS.filter(pl => pl.primary).map(pl => (
+        <a key={pl.key} className="sf-listen-btn" href={href(pl)} target="_blank" rel="noopener noreferrer" aria-label={`${artistName} on ${pl.title}`}>
+          <PlatformIcon k={pl.key} /><span>{pl.title}</span>
+        </a>
+      ))}
+      <details className="sf-listen-more">
+        <summary>More</summary>
+        <div className="sf-listen-menu">
+          {PLATFORMS.filter(pl => !pl.primary).map(pl => (
+            <a key={pl.key} href={href(pl)} target="_blank" rel="noopener noreferrer">
+              <PlatformIcon k={pl.key} />{pl.title}
+            </a>
+          ))}
+        </div>
+      </details>
+    </div>
+  );
+}
 
 function fmt(s: number | null | undefined): string {
   if (!s || !isFinite(s)) return "--:--";
@@ -88,6 +136,9 @@ export default function Storefront(p: Props) {
             <div className="sf-kicker">{p.kicker}</div>
             {p.tagline && <div className="sf-tagline">{p.tagline}</div>}
             {p.blurb && <p className="sf-blurb">{p.blurb}</p>}
+            {list.some(x => x.access === "single") && (
+              <ListenOn artistName={p.artistName} single={[...list].reverse().find(x => x.access === "single" && !x.isRemix)?.title ?? null} links={p.platformLinks} />
+            )}
             <Music {...p} list={list} albumOf={albumOf} album={album} />
           </>
         ) : (
@@ -356,10 +407,11 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
       {error && <p className="tour-error">{error}</p>}
     </div>
   );
-  const steps = [...stops.map(st => ({ key: st.key, label: st.title })), { key: "offer", label: "Support" }];
+  const total = stops.length + 1; // the stops, then the offer
   const [i, setI] = useState(0);
-  const last = steps.length - 1;
+  const last = total - 1;
   const stop = stops[i];
+  const nextLabel = i + 1 < stops.length ? stops[i + 1].title : "Support";
 
   return (
     <div className="tour">
@@ -370,30 +422,27 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
           <button className="sf-btn sf-btn-go" onClick={buy} disabled={busy}>{busy ? "Starting..." : "Support now · $11"}</button>
         </div>
       </div>
-      <h2 className="tour-title">What you get when you support {p.artistName}</h2>
-      <div className="tour-steps" role="tablist" aria-label="What you get">
-        {steps.map((st, n) => (
-          <button key={st.key} role="tab" aria-selected={n === i} className={"tour-step" + (n === i ? " on" : "") + (n === last ? " offer" : "")} onClick={() => setI(n)}>
-            <span>{String(n + 1).padStart(2, "0")}</span>{n === last ? "Support" : st.label.replace(`${p.album.title}, in full`, "The album").replace(`${p.artistName}'s full story`, "Her story")}
-          </button>
-        ))}
-      </div>
-      <div className="tour-panel" role="tabpanel">
+      <div className="tour-panel" aria-live="polite">
         {i < last && stop ? (
-          <div className="tour-stop">
+          <div className="tour-slide">
+            <div className="tour-visual">{stop.visual}</div>
             <div className="tour-copy">
-              <span className="tour-num">{String(i + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}</span>
+              <span className="tour-num">What you get · {i + 1} of {total}</span>
               <h3>{stop.title}</h3>
               <p>{stop.text}</p>
             </div>
-            <div className="tour-visual">{stop.visual}</div>
           </div>
         ) : offer}
       </div>
       <div className="tour-nav">
-        <button className="sf-btn" onClick={() => setI(Math.max(0, i - 1))} disabled={i === 0}>Back</button>
+        <button className="sf-btn" onClick={() => setI(Math.max(0, i - 1))} disabled={i === 0} aria-label="Previous">← Back</button>
+        <div className="tour-dots" role="tablist" aria-label="Steps">
+          {Array.from({ length: total }, (_, n) => (
+            <button key={n} role="tab" aria-selected={n === i} aria-label={n === last ? "Support" : stops[n].title} className={"tour-dot" + (n === i ? " on" : "")} onClick={() => setI(n)} />
+          ))}
+        </div>
         {i < last
-          ? <button className="sf-btn" onClick={() => setI(i + 1)}>Next: {steps[i + 1].key === "offer" ? "Support" : steps[i + 1].label.replace(`${p.album.title}, in full`, "The album")}</button>
+          ? <button className="sf-btn sf-btn-dark" onClick={() => setI(i + 1)}>Next: {nextLabel} →</button>
           : <button className="sf-btn" onClick={() => setI(0)}>Start over</button>}
       </div>
     </div>

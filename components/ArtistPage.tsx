@@ -102,6 +102,8 @@ export type ArtistContent = {
   tabPortraits?: Record<string, string>;
   // Short bio shown on the storefront, same copy as lesaruss.com.
   shortBio?: string; location?: string;
+  // Direct streaming links when known: { spotify: url, "apple-music": url, ... }
+  platformLinks?: Record<string, string>;
   crumb?: { label: string; href?: string }[]; pills?: Pill[];
   message?: { ja?: string; en?: string; audio?: string; audioEn?: string; audioJa?: string };
   quote?: string; bio?: string[]; stats?: Stat[]; tracks?: Track[]; news?: News[];
@@ -1529,6 +1531,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               galleryCount={rosterAccess.gallery?.items.length ?? gallery?.lockedCount ?? 0}
               mode={storeMode}
               onMode={setStoreMode}
+              platformLinks={c.platformLinks}
             />
           )}
           {!heroCollapsed && !storefront && (
