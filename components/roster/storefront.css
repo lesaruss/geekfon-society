@@ -569,3 +569,8 @@ html.artist-playing .gbody{padding-bottom:92px}
 .sf-roster-link{flex-shrink:0;font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;white-space:nowrap;color:var(--rx,#e91e8c);color:hsl(from var(--rx,#e91e8c) calc(h + 180) s 36%)}
 .sf-roster-link:hover{text-decoration:underline;text-underline-offset:4px}
 @media(max-width:900px){.sf-roster-link{font-size:13px}}
+
+/* Bands (2026-10-04, Sean: Shamanic Resin's portrait was cut off): a group
+   shot is shown whole, on any frame shape, instead of zoomed to one person. */
+.sf-portrait-group .sf-img,.sf-portrait-group .sf-img.on{object-fit:contain;object-position:50% 100%;transform:none}
+@media(max-width:900px){.sf-portrait-group{aspect-ratio:3/4;max-height:70vh}}

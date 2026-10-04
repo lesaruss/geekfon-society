@@ -52,6 +52,9 @@ type Props = {
   platformLinks?: Record<string, string>;
   // Scripted group-chat preview (lib/chatPreview.ts) with the cast's thumbnails.
   chat?: StoreChat;
+  // Group shot (bands): show the whole image, never zoom or crop it, so no
+  // member is cut off. Solo portraits keep the head-to-hip zoom.
+  group?: boolean;
 };
 
 export type StoreChat = { room: string; me: string; people: Record<string, { name: string; avatar: string | null }>; lines: { from: string; text: string }[] };
@@ -133,7 +136,7 @@ export default function Storefront(p: Props) {
   return (
     <section className={"sf" + (p.mode === "tour" ? " sf-touring" : "")}>
       <div className="sf-left">
-        <div className="sf-portrait">
+        <div className={"sf-portrait" + (p.group ? " sf-portrait-group" : "")}>
           {p.portraitUrl && <img key="music" className={"sf-img" + (p.mode === "music" ? " on" : "")} src={p.portraitUrl} alt={`${p.artistName}`} />}
           {p.tourPortraitUrl && <img key="tour" className={"sf-img" + (p.mode === "tour" ? " on" : "")} src={p.tourPortraitUrl} alt="" aria-hidden={p.mode !== "tour"} />}
         </div>
