@@ -69,13 +69,3 @@ export async function entitlementFor(viewer: Viewer | null, artistSlug: string):
   }
   return { ...none, ownedTitles };
 }
-
-// Staff = the super-admin account or a member with role super_admin.
-export async function isStaff(viewer: Viewer | null): Promise<boolean> {
-  if (!viewer) return false;
-  if (viewer.email === ADMIN_EMAIL) return true;
-  const sb = serviceClient();
-  if (!sb) return false;
-  const { data } = await sb.from("gfs_members").select("role").eq("user_id", viewer.id).maybeSingle();
-  return data?.role === "super_admin";
-}
