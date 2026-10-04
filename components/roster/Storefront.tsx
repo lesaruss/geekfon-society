@@ -142,7 +142,12 @@ export default function Storefront(p: Props) {
         {p.mode === "music" ? (
           <>
             {/* Same element and style as the Support page title (Sean, 2026-10-04). */}
-            <div className="tour-name sf-title" role="heading" aria-level={1}>{p.artistName}</div>
+            <div className="sf-title-row">
+              <div className="tour-name sf-title" role="heading" aria-level={1}>{p.artistName}</div>
+              {/* Back to the roster (Sean, 2026-10-04): far right of the name row,
+                  a step smaller, in the accent's complementary color. */}
+              <a className="sf-roster-link" href="/roster">← Roster</a>
+            </div>
             <div className="sf-kicker">{p.kicker}</div>
             {p.tagline && <div className="sf-tagline">{p.tagline}</div>}
             {p.blurb && <p className="sf-blurb">{p.blurb}</p>}
