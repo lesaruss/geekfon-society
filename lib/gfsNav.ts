@@ -90,6 +90,22 @@ export function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = 
 }
 
 
+// Admin tools (2026-10-04, Sean: "a lot of these can be under a tool
+// section, especially for super admins... so they're not on the main
+// navigation"). The universal shell shows these under a Tools menu instead of
+// in the top nav; the public drawer lists them after the main items.
+const TOOL_HREFS = new Set([
+  "/dashboard/release-schedule",
+  "/dashboard/radio-schedule",
+  "/dashboard/members",
+  "/dashboard/outreach",
+  "/dashboard/pro-applications",
+]);
+
+export function splitTools(nav: NavItem[]): { main: NavItem[]; tools: NavItem[] } {
+  return { main: nav.filter(n => !TOOL_HREFS.has(n.href)), tools: nav.filter(n => TOOL_HREFS.has(n.href)) };
+}
+
 export function parseTier(raw: string): Tier {
   const r = (raw || "").toLowerCase();
   if (r === "all-access") return "plus";

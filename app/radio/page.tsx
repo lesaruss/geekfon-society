@@ -433,6 +433,10 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
    within the box without touching the header-clearance math at all. */
 .rd-main { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 60px); overflow: hidden; gap: 24px; padding: 24px 24px calc(24px + 6vh) 24px; box-sizing: border-box; }
 
+/* Inside the universal frame (signed in) the stage is the window body. */
+.gw-body .rd-main { height: 100%; }
+@media (max-width: 760px) { .gw-body .rd-main { height: auto; min-height: calc(100dvh - 210px); } }
+
 .rd-stations { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; flex-shrink: 0; }
 .rd-station { appearance: none; font-family: inherit; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.7); background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 9px 16px; cursor: pointer; backdrop-filter: blur(12px); transition: background .2s, border-color .2s, color .2s; }
 .rd-station:hover { color: #fff; border-color: rgba(255,255,255,.4); }
