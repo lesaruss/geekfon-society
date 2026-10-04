@@ -24,12 +24,11 @@ import type { RadioTrack, ScheduleOverride } from "@/lib/radioSchedule";
 
 const SIGNED_TTL_SECONDS = 24 * 60 * 60;
 
-// Label-model artists (lib/server/depot.ts): radio plays only songs that are
-// announced (out, or on an album that is), and "single" means out now.
-function labelAllows(states: Map<string, LabelState>, artist: string, id: string): boolean {
-  const st = states.get(artist);
-  return !st || st.visibleIds.has(id);
-}
+// Radio plays every song in the catalog, released or not, for discovery:
+// listeners can't pick or see what's next (Sean, 2026-10-04). The Radio
+// Schedule's per-track on/off is the way to hold a song back. Release state
+// only decides whether a song streams from its public path (out now) or a
+// signed link (everything else).
 function labelSingle(states: Map<string, LabelState>, artist: string, id: string): boolean | null {
   const st = states.get(artist);
   return st ? st.liveIds.has(id) : null;
@@ -82,7 +81,6 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
   const states = await labelStates(((ps ?? []) as PsRow[]).map(p => p.primary_artist_slug));
   const songs = new Map<string, PsRow>(); // depot id -> row, for everything referenced
   for (const p of (ps ?? []) as PsRow[]) {
-    if (!labelAllows(states, p.primary_artist_slug, p.id)) { byRt.delete(p.source_radio_track_id); continue; }
     songs.set(p.id, p);
   }
   const isSingleRow = (p: { id: string; primary_artist_slug: string; title: string }) =>
@@ -205,7 +203,7 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
   const heldElsewhere = new Set(((exclusiveRows ?? []) as { song_ids: string[] | null }[]).flatMap(r => r.song_ids ?? []));
   const candidates = ((rawSongs ?? []) as StationSong[]).filter(s => !heldElsewhere.has(s.id));
   const states = await labelStates(candidates.map(s => s.primary_artist_slug));
-  const songs = candidates.filter(s => labelAllows(states, s.primary_artist_slug, s.id));
+  const songs = candidates;
 
   // Artist order: the lineup as listed, or for a song list, the order the
   // artists first appear in it.
@@ -258,13 +256,11 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
 export async function stationsFeaturing(artistSlug: string): Promise<RadioStation[]> {
   const sb = serviceClient();
   if (!sb) return [MAIN_STATION];
-  const [{ data: stations }, { data: songs }, states] = await Promise.all([
+  const [{ data: stations }, { data: songs }] = await Promise.all([
     sb.from("gfs_radio_stations").select("slug, name, tagline, artist_slugs, song_ids").eq("active", true).order("sort_order", { ascending: true }),
     sb.from("pulse_songs").select("id").eq("primary_artist_slug", artistSlug).is("retired_at", null),
-    labelStates([artistSlug]),
   ]);
-  const st = states.get(artistSlug);
-  const mine = new Set(((songs ?? []) as { id: string }[]).map(s => s.id).filter(id => !st || st.visibleIds.has(id)));
+  const mine = new Set(((songs ?? []) as { id: string }[]).map(s => s.id));
   type Row = RadioStation & { artist_slugs: string[] | null; song_ids: string[] | null };
   const featured = ((stations ?? []) as Row[]).filter(s =>
     (s.song_ids?.length ? s.song_ids.some(id => mine.has(id)) : (s.artist_slugs ?? []).includes(artistSlug))

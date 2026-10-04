@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import RegisterSW from "../components/RegisterSW";
 import RevenueCatBootstrap from "../components/RevenueCatBootstrap";
+import AudioFocus from "../components/AudioFocus";
 
 export const metadata: Metadata = {
   title: "GeekFon Society",
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
         <RegisterSW />
         <RevenueCatBootstrap />
+        <AudioFocus />
         {children}
       </body>
     </html>
