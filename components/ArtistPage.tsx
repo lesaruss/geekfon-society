@@ -10,6 +10,7 @@ import SupportModal from "@/components/roster/SupportModal";
 import Gallery from "@/components/roster/Gallery";
 import RadioStrip from "@/components/roster/RadioStrip";
 import SignInGate from "@/components/roster/SignInGate";
+import ReleaseHero from "@/components/roster/ReleaseHero";
 import type { GalleryItem } from "@/lib/server/gallery";
 import type { RadioStation } from "@/lib/server/radio";
 import { useRosterAccess } from "@/components/roster/useRosterAccess";
@@ -95,6 +96,10 @@ type ReleaseBrief = {
 export type ArtistContent = {
   name?: string; genre?: string; accent?: string; accentText?: string; accentTint?: string;
   heroUrl?: string; profileUrl?: string; initial?: string; tagline?: string;
+  // 2026-10-04 per Sean: a different look of the artist on each tab
+  // (profile.tabPortraits = { discography: url, pulse: url, ... }). Any tab
+  // without one shows heroUrl.
+  tabPortraits?: Record<string, string>;
   crumb?: { label: string; href?: string }[]; pills?: Pill[];
   message?: { ja?: string; en?: string; audio?: string; audioEn?: string; audioJa?: string };
   quote?: string; bio?: string[]; stats?: Stat[]; tracks?: Track[]; news?: News[];
@@ -609,17 +614,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // drill-down page it starts collapsed (no room to read past a big header);
   // otherwise it starts expanded (default landing tab is Music). The toggle
   // itself is a real click handler in both cases, same as SoFlo's
-  // Collapse/Expand pill.
-  const [heroCollapsed, setHeroCollapsed] = useState<boolean>(!!activeArticle);
-  // 2026-07-31 (2nd pass) per Sean: the ONLY automatic collapse trigger is
-  // landing on/switching to the Pulse tab (it's content-dense, same reason
-  // an article drill-down starts collapsed). Moving to any other tab after
-  // that must NOT auto re-expand it - once collapsed, it stays collapsed
-  // until the user clicks Expand themselves or does a full page refresh
-  // (which remounts the component and re-runs this effect from scratch).
-  useEffect(() => {
-    if (tab === "pulse") setHeroCollapsed(true);
-  }, [tab]);
+  // 2026-10-04 per Sean: the header is compact now (everything above the
+  // fold), so the Collapse/Expand pill and the Pulse auto-collapse are gone.
+  // Article drill-downs still open without the header.
+  const heroCollapsed = !!activeArticle;
   const [lang, setLang] = useState<"ja" | "en">("ja");
   const [playing, setPlaying] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string | null>(null);
@@ -1521,29 +1519,53 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
 
             {/* Artist hero + meta */}
             <div className="head-grid">
-              {c.heroUrl ? (
-                <img className="head-art" src={c.heroUrl} alt={name + " portrait"} decoding="async" />
+              {(c.tabPortraits?.[tab] || c.heroUrl) ? (
+                <img key={c.tabPortraits?.[tab] ? tab : "hero"} className="head-art" src={c.tabPortraits?.[tab] || c.heroUrl} alt={name + " portrait"} decoding="async" />
               ) : (
                 <div className="head-art-fallback">{c.initial || name.charAt(0)}</div>
               )}
               <div className="head-meta">
                 <div className="head-name">{name}</div>
-                <p className="head-tagline">{c.tagline}</p>
                 {(() => {
-                  // Exactly 3 pills, fixed order: Vote, Genre, Season.
                   const rawPills = (c.pills || []).filter(p => p.label !== "Original");
                   const seasonPill = rawPills.find(p => /season/i.test(p.label));
                   const genrePill = rawPills.find(p => p !== seasonPill && !/^original(\s+artist)?$/i.test(p.label));
-                  const genreLabel = genrePill?.label || c.sonic?.primaryGenre || c.genre;
+                  const genreLabel = genrePill?.label || c.sonic?.primaryGenre || c.genre || null;
+                  // Label-model artists: the release itself, up top (ReleaseHero).
+                  const labelAlbums = (depot?.albums || []).filter(a => a.label);
+                  const heroAlbum = labelAlbums.find(a => !a.out) ?? labelAlbums[labelAlbums.length - 1] ?? null;
+                  if (heroAlbum && depot) {
+                    const byId = new Map(depot.songs.map(sg => [sg.id, sg]));
+                    const albumSongs = heroAlbum.tracks
+                      .map(t => byId.get(t.songId))
+                      .filter((sg): sg is NonNullable<typeof sg> => !!sg && !sg.isRemix);
+                    return (
+                      <ReleaseHero
+                        artistName={name}
+                        genre={genreLabel}
+                        album={heroAlbum}
+                        debut={!labelAlbums.some(a => a.out && a.id !== heroAlbum.id)}
+                        songs={albumSongs}
+                        supporter={isSupporterView()}
+                        onSupport={() => setSupportOpen(true)}
+                        onOpenAlbum={() => {
+                          setTab("discography");
+                          setTimeout(() => document.querySelector(".rs-album")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                        }}
+                      />
+                    );
+                  }
                   const seasonLabel = seasonPill?.label || c.tracks?.[0]?.m || "Season 1";
                   return (
-                    // 2026-07-26 per Sean: the old "Vote" pill (membership-gated,
-                    // artist-level) is replaced by a heart button on each song row
-                    // in the Music tab below - liking a song IS the vote now.
-                    <div className="pill-row">
-                      {genreLabel && <span className={"pill" + (genrePill?.accent ? " accent" : "")}>{genreLabel}</span>}
-                      <span className="pill">{seasonLabel}</span>
-                    </div>
+                    <>
+                      <p className="head-tagline">{c.tagline}</p>
+                      {/* 2026-07-26 per Sean: the old "Vote" pill is replaced by a
+                          heart button on each song row - liking a song IS the vote now. */}
+                      <div className="pill-row">
+                        {genreLabel && <span className={"pill" + (genrePill?.accent ? " accent" : "")}>{genreLabel}</span>}
+                        <span className="pill">{seasonLabel}</span>
+                      </div>
+                    </>
                   );
                 })()}
               </div>
@@ -1568,20 +1590,6 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               just keeps the existing superadmin viewAs indicator when
               present. */}
           <div className="crumb-bar">
-            <button
-              type="button"
-              className="crumb-toggle"
-              onClick={() => setHeroCollapsed(v => !v)}
-              aria-expanded={!heroCollapsed}
-            >
-              {/* Matches SoFlo exactly: chevron-up next to "Collapse" (expanded
-                  state, click to collapse), chevron-down next to "Expand"
-                  (collapsed state, click to expand). */}
-              <svg viewBox="0 0 12 12" fill="none" style={{ transform: heroCollapsed ? "none" : "rotate(180deg)" }}>
-                <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {heroCollapsed ? "Expand" : "Collapse"}
-            </button>
             <nav className="art-crumb" aria-label="Breadcrumb">
               {/* 2026-07-31 per Sean: "GeekFon Society" was wrapping the
                   crumb-bar to two rows once the Collapse/Expand pill sat
@@ -1735,6 +1743,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   albums={depot.albums}
                   signedIn={rosterAccess.signedIn}
                   onClose={() => setSupportOpen(false)}
+                  showcase={{
+                    heroUrl: c.heroUrl,
+                    songs: depot.songs,
+                    stations: radioStations || [],
+                    bibleLabels: bible?.locked || [],
+                    galleryCount: rosterAccess.gallery?.items.length ?? gallery?.lockedCount ?? 0,
+                  }}
                 />
               )}
               {!signedOutGate && tab === "pulse" && !canSeePulse && (

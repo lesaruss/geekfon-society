@@ -935,3 +935,19 @@
 .mp-row-lesars-buy:disabled{opacity:.6;cursor:default}
 .mp-row-owned-action{font-size:10px;font-weight:800;letter-spacing:.03em;padding:5px 10px;border-radius:20px;border:1px solid rgba(0,0,0,0.12);color:#16a34a;background:#dcfce7;cursor:pointer;white-space:nowrap;text-decoration:none;margin-left:4px}
 .mp-row-owned-action:disabled{opacity:.6;cursor:default}
+
+/* 2026-10-04 per Sean: compact header, everything above the fold. The
+   portrait scales with viewport height as well as width so a laptop screen
+   shows the header, the tabs and the start of the album without scrolling. */
+.bible-head{padding:20px 0}
+.head-grid{align-items:center}
+.head-art,.head-art-fallback{width:clamp(160px,min(24vw,34vh),300px)}
+.head-name{font-size:clamp(30px,4.2vw,46px)}
+.crumb-bar{padding:8px 40px}
+@media(max-width:900px){
+  .bible-head{padding:14px 0}
+  .head-grid{align-items:flex-start}
+  .head-art,.head-art-fallback{width:96px;height:96px}
+  .crumb-bar{padding:8px 16px}
+}
+.head-art{animation:headArtIn .35s ease}@keyframes headArtIn{from{opacity:.4}to{opacity:1}}@media(prefers-reduced-motion:reduce){.head-art{animation:none}}

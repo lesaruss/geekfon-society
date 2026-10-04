@@ -10,7 +10,8 @@
 // Commerce items in the geekfon-launch playbook.
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import type { PublicAlbum } from "@/lib/server/depot";
+import type { PublicAlbum, PublicSong } from "@/lib/server/depot";
+import type { RadioStation } from "@/lib/server/radio";
 import "./roster.css";
 
 type Props = {
@@ -19,14 +20,20 @@ type Props = {
   albums: PublicAlbum[];
   signedIn: boolean;
   onClose: () => void;
+  // Label-model artists: what to show in the "what you get" showcase.
+  showcase?: { heroUrl?: string; songs: PublicSong[]; stations: RadioStation[]; bibleLabels: string[]; galleryCount: number };
 };
 
-export default function SupportModal({ artistName, slug, albums, signedIn, onClose }: Props) {
+export default function SupportModal({ artistName, slug, albums, signedIn, onClose, showcase }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Sell the album that is building now if there is one (a pre-order makes
   // the buyer a Founding Fan), otherwise the newest released album.
-  const album = albums.find(a => a.status !== "released") ?? [...albums].reverse().find(a => a.status === "released") ?? null;
+  // Label-model artists sell the album that is coming (or the latest out).
+  const labelAlbums = albums.filter(a => a.label);
+  const album = labelAlbums.length
+    ? labelAlbums.find(a => !a.out) ?? labelAlbums[labelAlbums.length - 1]
+    : albums.find(a => a.status !== "released") ?? [...albums].reverse().find(a => a.status === "released") ?? null;
 
   async function checkout() {
     if (!album) return;
@@ -52,20 +59,10 @@ export default function SupportModal({ artistName, slug, albums, signedIn, onClo
 
   return (
     <div className="rs-modal-overlay" onClick={onClose}>
-      <div className="rs-modal" role="dialog" aria-modal="true" aria-labelledby="rs-modal-title" onClick={e => e.stopPropagation()}>
+      <div className={"rs-modal" + (album?.label ? " rs-modal-wide" : "")} role="dialog" aria-modal="true" aria-labelledby="rs-modal-title" onClick={e => e.stopPropagation()}>
         <h3 id="rs-modal-title" className="rs-modal-title">Support {artistName}</h3>
         {album?.label ? (
-          <>
-            <p className="rs-modal-lead">One purchase opens up everything {artistName} has here:</p>
-            <ul className="rs-modal-list">
-              <li><strong>{album.title}</strong>, every song in full{album.out ? ", with downloads" : ", before it's out everywhere"}</li>
-              <li><strong>Gallery</strong>: wallpapers and art made for supporters</li>
-              <li><strong>Chat</strong> with {artistName} and other supporters (opening soon)</li>
-              <li><strong>Lyrics</strong> and {artistName}&apos;s full story</li>
-              <li><strong>Radio</strong>: every GeekFon station {artistName} is on</li>
-            </ul>
-          </>
-        ) : (
+          <Showcase artistName={artistName} album={album} showcase={showcase} />        ) : (
           <ul className="rs-modal-list">
             <li>Every song in the vault, streamed in full: unreleased and in development</li>
             <li>Lyrics and the full Bible</li>
@@ -91,5 +88,71 @@ export default function SupportModal({ artistName, slug, albums, signedIn, onClo
         <button className="rs-dismiss" onClick={onClose}>Not now</button>
       </div>
     </div>
+  );
+}
+
+// "What you get", as things to look at rather than a list (2026-10-04, Sean:
+// Support Roxanne should preview everything that comes with the album).
+function Showcase({ artistName, album, showcase }: { artistName: string; album: PublicAlbum; showcase?: Props["showcase"] }) {
+  const ids = new Set(album.tracks.map(t => t.songId));
+  const songs = (showcase?.songs || []).filter(s => ids.has(s.id));
+  const mains = songs.filter(s => !s.isRemix).length;
+  const remixes = songs.filter(s => s.isRemix).length;
+  const stations = showcase?.stations || [];
+  const labels = (showcase?.bibleLabels || []).slice(0, 4);
+  const gallery = showcase?.galleryCount || 0;
+  return (
+    <>
+      <p className="rs-modal-lead">One purchase opens up everything {artistName} has here.</p>
+      <div className="rs-show">
+        <div className="rs-show-tile rs-show-album">
+          <div className="rs-show-art">{album.coverUrl ? <img src={album.coverUrl} alt="" /> : null}</div>
+          <div className="rs-show-cap">
+            <strong>{album.title}</strong>
+            <span>
+              {mains} {mains === 1 ? "song" : "songs"}{remixes ? ` + ${remixes} remixes` : ""}, in full
+              {album.out ? ", with downloads" : ", before it's out everywhere"}
+            </span>
+          </div>
+        </div>
+        <div className="rs-show-tile">
+          <div className="rs-show-art rs-show-blur">
+            {showcase?.heroUrl ? <img src={showcase.heroUrl} alt="" /> : null}
+            <span className="rs-show-lock" aria-hidden="true">🔒</span>
+          </div>
+          <div className="rs-show-cap">
+            <strong>Gallery</strong>
+            <span>{gallery ? `${gallery} wallpapers and art pieces` : "Wallpapers and art"} made for supporters</span>
+          </div>
+        </div>
+        <div className="rs-show-tile">
+          <div className="rs-show-art rs-show-chat" aria-hidden="true">
+            <span className="b1" /><span className="b2" /><span className="b3" />
+          </div>
+          <div className="rs-show-cap">
+            <strong>Chat</strong>
+            <span>With {artistName} and other supporters (opening soon)</span>
+          </div>
+        </div>
+        <div className="rs-show-tile">
+          <div className="rs-show-art rs-show-radio">
+            {stations.slice(0, 3).map(st => <span key={st.slug}>{st.name}</span>)}
+          </div>
+          <div className="rs-show-cap">
+            <strong>Radio</strong>
+            <span>Every GeekFon station {artistName} is on</span>
+          </div>
+        </div>
+        <div className="rs-show-tile">
+          <div className="rs-show-art rs-show-story">
+            {labels.length ? labels.map(l => <span key={l}>{l}</span>) : <span>Her story</span>}
+          </div>
+          <div className="rs-show-cap">
+            <strong>{artistName}&apos;s full story</strong>
+            <span>The whole Bible, plus the lyrics to every song</span>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

@@ -69,7 +69,6 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
   const singles = songs.filter(s => s.access === "single").length;
   const vault = songs.length - singles;
   const labelAlbum = albums.find(a => a.label) ?? null;
-  const outNow = songs.filter(s => s.access === "single" && !s.isRemix);
 
   // Which URL a row plays, and whether it is capped, for THIS viewer.
   function sourceFor(s: PublicSong): { url: string; capped: boolean } {
@@ -241,7 +240,7 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
         <h2 className="rs-title">Discography</h2>
         <span className="rs-count">
           {labelAlbum
-            ? `${outNow.length} out now${labelAlbum.out ? "" : ` · ${labelAlbum.title} coming`}`
+            ? null /* the header carries the release status now */
             : `${songs.length} songs · ${singles} free ${singles === 1 ? "single" : "singles"} · ${vault} in the vault`}
         </span>
       </div>
