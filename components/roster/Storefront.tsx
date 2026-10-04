@@ -47,7 +47,11 @@ type Props = {
   // Direct profile links per platform when known (profile.platformLinks);
   // otherwise each platform opens a search for the artist and latest single.
   platformLinks?: Record<string, string>;
+  // Scripted group-chat preview (lib/chatPreview.ts) with the cast's thumbnails.
+  chat?: StoreChat;
 };
+
+export type StoreChat = { room: string; me: string; people: Record<string, { name: string; avatar: string | null }>; lines: { from: string; text: string }[] };
 
 // Where the artist can be found. DistroKid gives no per-store links, so
 // unless a direct link is stored the button opens that store's search.
@@ -132,7 +136,7 @@ export default function Storefront(p: Props) {
       <div className="sf-right">
         {p.mode === "music" ? (
           <>
-            <h1 className="sf-name">{p.artistName}</h1>
+            <h1 className="sf-name sf-name-compact">{p.artistName}</h1>
             <div className="sf-kicker">{p.kicker}</div>
             {p.tagline && <div className="sf-tagline">{p.tagline}</div>}
             {p.blurb && <p className="sf-blurb">{p.blurb}</p>}
@@ -251,17 +255,6 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
             </button>
           );
         })}
-          {!p.supporter && (
-            <div className="sf-cta">
-              <div>
-                <div className="sf-cta-title">Want to hear all of it?</div>
-                <p className="sf-cta-sub">
-                  Support {p.artistName} for $11 and get {p.album ? <><em>{p.album.title}</em> in full</> : "every song in full"}, the Gallery, Chat, and the full story.
-                </p>
-              </div>
-              <button className="sf-btn sf-btn-go" onClick={() => p.onMode("tour")}>Support {p.artistName}</button>
-            </div>
-          )}
 
         </div>
       </div>
@@ -292,6 +285,15 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
           {capped && !p.supporter && (
             <button className="sf-btn sf-btn-go am-p-cta" onClick={() => p.onMode("tour")}>Hear it all</button>
           )}
+        </div>
+      )}
+
+      {!p.supporter && (
+        <div className="sf-cta-bar">
+          <p>
+            <strong>Want to hear all of it?</strong> Support {p.artistName} for $11: {p.album ? <em>{p.album.title}</em> : "every song"} in full, plus the Gallery, Chat and her story.
+          </p>
+          <button className="sf-btn sf-btn-go" onClick={() => p.onMode("tour")}>Support {p.artistName}</button>
         </div>
       )}
     </div>
@@ -359,15 +361,31 @@ function Tour(p: Props & { album: PublicAlbum; list: PublicSong[] }) {
     {
       key: "chat",
       title: "Chat",
-      text: `Hang out with ${p.artistName} and other supporters. Opening soon, and you're in from day one.`,
+      text: `Read the artists' group chat every day, from ${p.artistName}'s side: how the crew talks, plans and teases each other. A new episode daily. Opening soon, and you're in from day one.`,
       visual: (
-        <div className="tv-chat">
-          <div className="tv-chat-head"># {p.artistName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-supporters</div>
-          <div className="tv-msg"><span className="tv-av" style={{ background: "#7c3aed" }}>M</span><p>first listen of the full album... wow</p></div>
-          <div className="tv-msg"><span className="tv-av" style={{ background: "#0ea5e9" }}>K</span><p>track 4 is my favourite so far</p></div>
-          <div className="tv-msg tv-msg-me"><p>same!! can&apos;t stop playing it</p></div>
-          <span className="tv-preview">Preview</span>
-        </div>
+        p.chat ? (
+          <div className="tv-chat">
+            <div className="tv-chat-head"># {p.chat.room}<span>{p.artistName}&apos;s view</span></div>
+            <div className="tv-chat-body">
+              {p.chat.lines.map((ln, n) => {
+                const who = p.chat!.people[ln.from];
+                const me = ln.from === p.chat!.me;
+                return (
+                  <div key={n} className={"tv-msg" + (me ? " tv-msg-me" : "")}>
+                    {!me && (who?.avatar ? <img className="tv-av" src={who.avatar} alt="" /> : <span className="tv-av">{(who?.name || "?")[0]}</span>)}
+                    <div className="tv-bubble">
+                      {!me && <span className="tv-who">{who?.name || ln.from}</span>}
+                      <p>{ln.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <span className="tv-preview">Preview</span>
+          </div>
+        ) : (
+          <div className="tv-chat"><div className="tv-chat-head"># {p.artistName.toLowerCase()}-crew</div><p className="tv-chat-empty">The artists&apos; group chat opens here soon.</p></div>
+        )
       ),
     },
     {
