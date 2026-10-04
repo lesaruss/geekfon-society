@@ -342,6 +342,33 @@ export async function loadSong(songId: string): Promise<{ row: DepotRow; access:
   return { row, access: accessOf(row, { singleKeys, label }) };
 }
 
+// Signs many vault paths in one storage request. One call per song (as the
+// access route used to make) opened a burst of storage connections on every
+// page view and exhausted the database's connection slots on 2026-10-04.
+export async function signStreams(srcPaths: string[], ttlSeconds: number): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const paths = [...new Set(srcPaths.filter(Boolean))];
+  if (paths.length === 0) return out;
+  const sb = serviceClient();
+  if (!sb) return out;
+  const { data, error } = await sb.storage.from(STREAM_BUCKET).createSignedUrls(paths, ttlSeconds);
+  if (error || !data) {
+    console.error("signStreams", paths.length, error?.message);
+    return out;
+  }
+  for (const d of data) {
+    if (d.path && d.signedUrl && !d.error) out.set(d.path, d.signedUrl);
+    else if (d.error) console.error("signStreams", d.path, d.error);
+  }
+  return out;
+}
+
+// A signed stream URL that downloads under a file name. The download name is
+// not part of the signature; this matches what createSignedUrl appends.
+export function asDownload(signedUrl: string, fileName: string): string {
+  return `${signedUrl}&${encodeURI(new URLSearchParams({ download: fileName }).toString())}`;
+}
+
 export async function signStream(srcPath: string, ttlSeconds: number, downloadName?: string): Promise<string | null> {
   const sb = serviceClient();
   if (!sb) return null;

@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { loadArtistRows, accessOf } from "@/lib/server/depot";
-import { signStream } from "@/lib/server/depot";
+import { signStreams, asDownload } from "@/lib/server/depot";
 import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
 import { loadFanBible } from "@/lib/server/bible";
 import { loadGallery } from "@/lib/server/gallery";
@@ -53,36 +53,29 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
     return ent.supporter || ent.ownedTitles.has(r.title);
   });
 
-  const songs: Record<string, SongGrant> = {};
-  await Promise.all(
-    grantRows.map(async r => {
-      const owned = ent.ownedTitles.has(r.title);
-      const [stream, download] = await Promise.all([
-        signStream(r.src_path!, STREAM_TTL_SECONDS),
-        ent.download || owned ? signStream(r.src_path!, STREAM_TTL_SECONDS, fileName(artist, r.title)) : Promise.resolve(null),
-      ]);
-      if (!stream) return;
-      songs[r.id] = {
-        stream,
-        ...(download ? { download } : {}),
-        lyricsEn: r.lyrics_en,
-        lyricsOriginal: r.lyrics_original,
-        lyricsOriginalLang: r.lyrics_original_lang,
-      };
-    })
-  );
-
   // Downloads of public singles for supporters with download rights.
+  const singleRows = ent.download ? rows.filter(r => r.src_path && accessOf(r, rule) === "single") : [];
+  // Every URL this viewer gets, signed in one storage request.
+  const signed = await signStreams([...grantRows, ...singleRows].map(r => r.src_path!), STREAM_TTL_SECONDS);
+
+  const songs: Record<string, SongGrant> = {};
+  for (const r of grantRows) {
+    const stream = signed.get(r.src_path!);
+    if (!stream) continue;
+    const owned = ent.ownedTitles.has(r.title);
+    songs[r.id] = {
+      stream,
+      ...(ent.download || owned ? { download: asDownload(stream, fileName(artist, r.title)) } : {}),
+      lyricsEn: r.lyrics_en,
+      lyricsOriginal: r.lyrics_original,
+      lyricsOriginalLang: r.lyrics_original_lang,
+    };
+  }
+
   const downloads: Record<string, string> = {};
-  if (ent.download) {
-    await Promise.all(
-      rows
-        .filter(r => r.src_path && accessOf(r, rule) === "single")
-        .map(async r => {
-          const d = await signStream(r.src_path!, STREAM_TTL_SECONDS, fileName(artist, r.title));
-          if (d) downloads[r.id] = d;
-        })
-    );
+  for (const r of singleRows) {
+    const url = signed.get(r.src_path!);
+    if (url) downloads[r.id] = asDownload(url, fileName(artist, r.title));
   }
 
   const [bible, gallery] = await Promise.all([

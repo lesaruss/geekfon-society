@@ -1540,7 +1540,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
 
   // Frame section nav. Locks only show once the depot (and so the supporter
   // check) is loaded; article pages navigate back to the artist page.
-  const sectionsLocked = !!depot && !isSupporterView();
+  // Until the server says what this viewer has, show no locks or Support
+  // asks: a supporter (or staff) briefly saw Gallery and Chat locked and the
+  // Support bar on every page load (Sean, 2026-10-04).
+  const accessPending = framed && !!depot && !rosterAccess.loaded && !(isSuperAdmin && viewAs !== "real");
+  const sectionsLocked = !!depot && !accessPending && !isSupporterView();
   function goSection(key: string) {
     const base = `/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`;
     // Client-side, so the artist player keeps playing (it lives in the layout).
@@ -1619,6 +1623,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               albums={depot.albums}
               access={rosterAccess}
               supporter={isSupporterView()}
+              pending={accessPending}
               stations={radioStations || []}
               press={pulseArticles.map(n => ({ title: n.title, blurb: n.blurb, thumb: n.thumb, tag: n.tag, date: n.date, href: n.href }))}
               badgeUrl={c.badgeUrl || null}
