@@ -4,6 +4,7 @@ import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { DashboardContext, DashboardCtx, TIER_LABEL, ADMIN_EMAIL } from "./context";
 import SiteChrome from "@/components/SiteChrome";
+import GfsShell from "@/components/shell/GfsShell";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [ctx, setCtx] = useState<DashboardCtx>({
@@ -200,11 +201,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <DashboardContext.Provider value={ctx}>
-      <SiteChrome member={memberProp}>
-        <style>{LAYOUT_CSS}</style>
-        <Aurora />
+      {/* Universal dashboard frame (2026-10-04, Sean): window chrome, the
+          tier-aware top nav and the shared LESARUSS universal bar, the same
+          system as HQ and the other brand dashboards. The aurora stays as the
+          backdrop behind the window. SiteChrome still frames the signed-out
+          and loading states above, and every public page. */}
+      <style>{LAYOUT_CSS}</style>
+      <Aurora />
+      <GfsShell email={userEmail} rawTier={member?.tier ?? null} fallbackName={displayName}>
         <div className="dl-main">{children}</div>
-      </SiteChrome>
+      </GfsShell>
     </DashboardContext.Provider>
   );
 }
