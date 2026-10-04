@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import ChangesPanel from "@/components/ChangesPanel";
 
 type Analytics = {
   memberCount: number;
@@ -139,6 +140,10 @@ export default function AdminCommandCenter({ displayName }: { displayName: strin
           <div className="cc-stat-sub">+{analytics?.likes7d ?? 0} last 7d</div>
         </div>
       </div>
+
+      {/* What shipped, what is on a preview awaiting Sean, and decisions
+          waiting on him (2026-10-04). Full width, above the widgets. */}
+      <ChangesPanel />
 
       <div className="cc-grid">
         {/* Health Report */}
