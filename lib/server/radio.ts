@@ -164,24 +164,36 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
 
   const { data: station } = await sb
     .from("gfs_radio_stations")
-    .select("slug, artist_slugs, include_remixes")
+    .select("slug, artist_slugs, song_ids, include_remixes")
     .eq("slug", slug)
     .eq("active", true)
     .maybeSingle();
   if (!station) return null;
-  const artists = (station.artist_slugs ?? []) as string[];
+  const songIds = (station.song_ids ?? []) as string[];
 
+  // Two kinds of station (2026-10-04): an artist lineup (genre stations), or
+  // a hand-picked song list from any artist (Holiday Radio). Songs held by an
+  // `exclusive` station (seasonal ones) stay off every other station.
   let q = sb
     .from("pulse_songs")
     .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id, is_remix, sort_order")
-    .in("primary_artist_slug", artists)
     .is("retired_at", null)
     .not("src_path", "is", null);
+  q = songIds.length ? q.in("id", songIds) : q.in("primary_artist_slug", (station.artist_slugs ?? []) as string[]);
   if (!station.include_remixes) q = q.eq("is_remix", false);
-  const [{ data: songs }, { data: artistRows }] = await Promise.all([
+  const [{ data: rawSongs }, { data: exclusiveRows }] = await Promise.all([
     q,
-    sb.from("gfs_artists").select("slug, name, profile").in("slug", artists),
+    sb.from("gfs_radio_stations").select("slug, song_ids").eq("active", true).eq("exclusive", true).neq("slug", slug),
   ]);
+  const heldElsewhere = new Set(((exclusiveRows ?? []) as { song_ids: string[] | null }[]).flatMap(r => r.song_ids ?? []));
+  const songs = ((rawSongs ?? []) as StationSong[]).filter(s => !heldElsewhere.has(s.id));
+
+  // Artist order: the lineup as listed, or for a song list, the order the
+  // artists first appear in it.
+  const artists: string[] = songIds.length
+    ? Array.from(new Set(songIds.map(id => songs.find(s => s.id === id)?.primary_artist_slug).filter((a): a is string => !!a)))
+    : ((station.artist_slugs ?? []) as string[]);
+  const { data: artistRows } = await sb.from("gfs_artists").select("slug, name, profile").in("slug", artists);
 
   type ArtistRow = { slug: string; name: string | null; profile: { tracks?: { n?: string; v?: string }[] } | null };
   const names = new Map<string, string>();
@@ -193,7 +205,7 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
 
   // Per-artist queues in a stable order, then interleave.
   const queues = artists.map(a =>
-    ((songs ?? []) as StationSong[])
+    songs
       .filter(s => s.primary_artist_slug === a)
       .sort((x, y) => (x.sort_order ?? 9999) - (y.sort_order ?? 9999) || x.title.localeCompare(y.title))
   );
