@@ -493,3 +493,30 @@
 .mk-story-card i{height:5px}
 .tour-panel>.tour-offer2{background:linear-gradient(180deg,#f6f6f8,#eeeef2);border-radius:18px;padding:28px 32px;box-sizing:border-box}
 .tour-offer2 .to-art img{max-height:46vh;width:auto;max-width:100%}
+
+/* Round 6: Press stop, Founding Fan badge art, faces never cropped */
+.mk-post-img,.mk-mini img{object-position:top}
+.mk-press{padding:14px 16px;display:grid;gap:12px;height:100%;box-sizing:border-box;grid-template-rows:auto 1fr}
+.mk-press-head{display:grid}
+.mk-press-head span{font-size:9px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--rx,#e91e8c)}
+.mk-press-head strong{font-size:18px;font-weight:900}
+.mk-press-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;min-height:0}
+.mk-press-lead{display:flex;flex-direction:column;gap:8px;min-height:0}
+.mk-press-lead img{width:100%;flex:1;min-height:0;object-fit:cover;object-position:top;border-radius:10px}
+.mk-press-lead strong{font-size:15px;font-weight:900;line-height:1.2;display:block;margin:4px 0}
+.mk-press-lead p{margin:0;font-size:11px;line-height:1.45;color:rgba(0,0,0,.6)}
+.mk-press em{font-style:normal;font-size:10px;color:rgba(0,0,0,.45)}
+.mk-press-tag{font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--rx,#e91e8c)}
+.mk-press-side{display:grid;gap:8px;align-content:start}
+.mk-press-side article{display:flex;gap:10px;align-items:center;border-bottom:1px solid rgba(0,0,0,.06);padding-bottom:8px}
+.mk-press-side img{width:64px;height:64px;border-radius:8px;object-fit:cover;object-position:top;flex-shrink:0}
+.mk-press-side div{display:grid;gap:2px;min-width:0}
+.mk-press-side strong{font-size:12px;line-height:1.25}
+.mk-press-empty{color:rgba(0,0,0,.55);font-size:13px}
+.to-badge2{position:absolute;right:-18px;bottom:-18px;display:grid;justify-items:center;gap:4px}
+.to-badge2 img{width:120px;height:120px;object-fit:contain;mix-blend-mode:multiply;filter:drop-shadow(0 8px 14px rgba(0,0,0,.25));border-radius:0;box-shadow:none;aspect-ratio:auto;max-height:none}
+.to-badge2 span{background:#111;color:#fff;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-radius:999px}
+@media(max-width:900px){.mk-press-grid{grid-template-columns:1fr}.mk-press-side{display:none}.to-badge2 img{width:84px;height:84px}}
+.to-price-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.to-badge2{position:static;display:flex;flex-direction:column;align-items:center;gap:4px}
+.to-badge2 img{width:104px;height:104px}
