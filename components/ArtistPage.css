@@ -1017,3 +1017,26 @@
   .af-roster-word { display: none; }
 }
 .pulse-articles-grid { scroll-margin-top: 140px; }
+
+/* Article page: the article and an Up next column, about half and half on
+   desktop (Sean, 2026-10-04); the column drops below the article on phones. */
+@media (min-width: 901px) {
+  .body-layout.is-article .body-main { flex: 1 1 0; }
+  .body-layout.is-article .billboard { width: auto; flex: 0 1 44%; max-width: 560px; position: static; }
+  .body-layout.is-article .billboard > :not(.art-more) { max-width: 300px; width: 100%; }
+}
+.art-more { display: grid; gap: 14px; margin-bottom: 26px; }
+.art-more-head { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 2px solid var(--lr-border, rgba(0,0,0,.08)); }
+.art-more-head span { font-size: 11px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: var(--rx, #e91e8c); }
+.art-more-head strong { font-size: 20px; font-weight: 900; color: #141414; }
+.art-more-item { display: flex; gap: 14px; align-items: center; text-decoration: none; color: inherit; padding-bottom: 14px; border-bottom: 1px solid rgba(0,0,0,.06); }
+.art-more-item img, .art-more-ph { width: 96px; height: 96px; border-radius: 10px; object-fit: cover; object-position: top; flex-shrink: 0; background: #eee; }
+.art-more-item div { display: grid; gap: 4px; min-width: 0; }
+.art-more-item strong { font-size: 15px; font-weight: 800; line-height: 1.25; color: #141414; }
+.art-more-item:hover strong { color: var(--rx, #e91e8c); }
+.art-more-item p { margin: 0; font-size: 13px; line-height: 1.5; color: rgba(0,0,0,.6); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.art-more-item em { font-style: normal; font-size: 11px; color: rgba(0,0,0,.45); }
+.art-more-tag { font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--rx, #e91e8c); }
+.art-more-item.lead { flex-direction: column; align-items: stretch; }
+.art-more-item.lead img, .art-more-item.lead .art-more-ph { width: 100%; height: auto; aspect-ratio: 16/9; }
+.art-more-item.lead strong { font-size: 18px; }

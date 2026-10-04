@@ -8,6 +8,7 @@ import Discography from "@/components/roster/Discography";
 import FanBible from "@/components/roster/FanBible";
 import SupportModal from "@/components/roster/SupportModal";
 import Gallery from "@/components/roster/Gallery";
+import Chat from "@/components/roster/Chat";
 import RadioStrip from "@/components/roster/RadioStrip";
 import SignInGate from "@/components/roster/SignInGate";
 import Storefront from "@/components/roster/Storefront";
@@ -1543,6 +1544,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // placeholder copy - an empty array here just renders nothing, never
   // someone else's content.
   const pulseArticles = publishedNews;
+  // The other articles for the article page's Up next column.
+  // Starts with the article after this one, then wraps round.
+  const articleAt = activeArticle ? pulseArticles.findIndex(n => (activeArticle.slug && n.slug === activeArticle.slug) || n.title === activeArticle.title) : -1;
+  const moreArticles = activeArticle
+    ? (articleAt >= 0 ? [...pulseArticles.slice(articleAt + 1), ...pulseArticles.slice(0, articleAt)] : pulseArticles)
+        .map(n => ({ ...n, href: n.href || (n.slug ? `/${slug}/news/${n.slug}` : "") }))
+        .filter(n => n.href && n.title && n.title !== activeArticle.title && (!activeArticle.slug || n.slug !== activeArticle.slug))
+        .slice(0, 4)
+    : [];
   const PRESS_PAGE = 2;
   const pressPages = Math.max(1, Math.ceil(pulseArticles.length / PRESS_PAGE));
   const pressPageSafe = Math.min(pressPage, pressPages - 1);
@@ -1798,7 +1808,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
           )}
 
           {/* Two-column body: content + billboard */}
-          <div className="body-layout">
+          <div className={"body-layout" + (activeArticle ? " is-article" : "")}>
             <div className="body-main">
 
               {/* Article detail view â rendered when activeArticle is passed */}
@@ -2155,12 +2165,12 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   message that used to live in the disabled Pulse pill; an unregistered
                   visitor sees the same register-gate pattern as Social (no icon, per
                   the same 2026-07-26 cleanup). */}
-              {!signedOutGate && tab === "chat" && !canSeePulse && (
+              {!signedOutGate && tab === "chat" && !canSeePulse && !(depot && isRegistered() && isSupporterView()) && (
                 <section className="pulse-section">
                   <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Chat for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                 </section>
               )}
-              {!signedOutGate && tab === "chat" && canSeePulse && (
+              {!signedOutGate && tab === "chat" && (canSeePulse || (depot && isRegistered() && isSupporterView())) && (
                 <section className="pulse-section">
                   {!isRegistered() && (
                     <div className="locked-panel">
@@ -2183,7 +2193,11 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                       <button className="mp-btn-buy" onClick={() => openSupport()}>Support {name}</button>
                     </div>
                   )}
-                  {isRegistered() && (isSupporterView() || !depot) && (
+                  {/* The live group chat (2026-10-04). The server re-checks support. */}
+                  {isRegistered() && isSupporterView() && depot && slug && (
+                    <Chat slug={slug} artistName={name || c.name || ""} />
+                  )}
+                  {isRegistered() && !depot && (
                     <div className="locked-panel">
                       <div className="lp-title">Chat is coming soon</div>
                       <p className="lp-sub">Live chat with {name} and other supporters opens here soon. You&apos;re in already.</p>
@@ -3115,6 +3129,25 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }}
               onMouseLeave={() => { const slots = isMobile ? 3 : 2; if (bbTimerRef.current) clearInterval(bbTimerRef.current); bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000); }}
             >
+              {/* What's next (Sean, 2026-10-04): the artist's other articles to
+                  the right of the one being read, like the Press step of the
+                  Support tour. */}
+              {activeArticle && moreArticles.length > 0 && (
+                <section className="art-more" aria-label={`More from ${name || c.name || "this artist"}`}>
+                  <div className="art-more-head"><span>Up next</span><strong>More from {name || c.name}</strong></div>
+                  {moreArticles.map((n, i) => (
+                    <Link key={n.href} href={n.href} className={"art-more-item" + (i === 0 ? " lead" : "")}>
+                      {n.thumb ? <img src={n.thumb} alt="" loading="lazy" /> : <span className="art-more-ph" />}
+                      <div>
+                        {n.tag && <span className="art-more-tag">{n.tag}</span>}
+                        <strong>{n.title}</strong>
+                        {i === 0 && n.blurb && <p>{n.blurb}</p>}
+                        {n.date && <em>{n.date}</em>}
+                      </div>
+                    </Link>
+                  ))}
+                </section>
+              )}
               <div className="bb-label">Billboard</div>
               <div className="bb-rotator">
                 {/* Slide 0: Skyscraper 300x600 */}
