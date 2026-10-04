@@ -9,6 +9,7 @@
 // the player is gone there.
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { createPortal } from "react-dom";
 import "./storefront.css";
 
 const PREVIEW_SECONDS = 30;
@@ -33,6 +34,8 @@ type PlayerApi = {
   setHearAll: (fn: (() => void) | null) => void;
   /** The artist's accent, for the player's buttons. */
   setAccent: (color: string | null) => void;
+  /** A slot in the song list the player docks into (Music section); null elsewhere. */
+  setDock: (el: HTMLElement | null) => void;
 };
 
 const PlayerContext = createContext<PlayerApi | null>(null);
@@ -56,6 +59,11 @@ export default function ArtistPlayerProvider({ children }: { children: React.Rea
   const hearAllRef = useRef<(() => void) | null>(null);
   const [accent, setAccentState] = useState<string | null>(null);
   const setAccent = useCallback((c: string | null) => setAccentState(c), []);
+  // Docked in the song list on the Music section (Sean, 2026-10-04: the
+  // player "came up above [the Support bar], taking over a slot... it doesn't
+  // interfere with the selector"); a fixed bar everywhere else.
+  const [dock, setDockState] = useState<HTMLElement | null>(null);
+  const setDock = useCallback((el: HTMLElement | null) => setDockState(el), []);
   const current = index !== null ? queue[index] ?? null : null;
 
   const close = useCallback(() => {
@@ -69,9 +77,11 @@ export default function ArtistPlayerProvider({ children }: { children: React.Rea
 
   // Room at the bottom of the page while the bar is up (storefront.css).
   useEffect(() => {
-    document.documentElement.classList.toggle("artist-playing", !!current);
-    return () => document.documentElement.classList.remove("artist-playing");
-  }, [current]);
+    const root = document.documentElement;
+    root.classList.toggle("artist-playing", !!current);
+    root.classList.toggle("artist-docked", !!current && !!dock);
+    return () => { root.classList.remove("artist-playing"); root.classList.remove("artist-docked"); };
+  }, [current, dock]);
 
   // A different artist never inherits the last one's song.
   useEffect(() => { close(); }, [slug, close]);
@@ -115,7 +125,7 @@ export default function ArtistPlayerProvider({ children }: { children: React.Rea
   const max = current ? (current.capped ? Math.min(PREVIEW_SECONDS, current.durationSeconds || PREVIEW_SECONDS) : (current.durationSeconds || 0)) : 0;
 
   return (
-    <PlayerContext.Provider value={{ current, playing, playQueue, setHearAll, setAccent }}>
+    <PlayerContext.Provider value={{ current, playing, playQueue, setHearAll, setAccent, setDock }}>
       {children}
       <audio
         ref={audioRef}
@@ -125,8 +135,8 @@ export default function ArtistPlayerProvider({ children }: { children: React.Rea
         onPause={() => setPlaying(false)}
         onEnded={() => next()}
       />
-      {current && (
-        <div className="am-player" role="region" aria-label="Player" style={accent ? { ["--rx" as string]: accent } : undefined}>
+      {current && (() => { const bar = (
+        <div className={"am-player" + (dock ? " am-docked" : "")} role="region" aria-label="Player" style={accent ? { ["--rx" as string]: accent } : undefined}>
           <div className="am-p-controls">
             <button className="am-p-btn" onClick={() => next(-1)} aria-label="Previous" disabled={index === 0}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11 6v12L2.5 12zM21 6v12l-8.5-6z" /></svg>
@@ -155,7 +165,7 @@ export default function ArtistPlayerProvider({ children }: { children: React.Rea
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </div>
-      )}
+      ); return dock ? createPortal(bar, dock) : bar; })()}
     </PlayerContext.Provider>
   );
 }

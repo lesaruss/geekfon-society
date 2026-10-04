@@ -718,6 +718,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   const [socialLightboxIdx, setSocialLightboxIdx] = useState<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const [socialPage, setSocialPage] = useState(0);
+  // Press shows two articles at a time, newest first (Sean, 2026-10-04).
+  const [pressPage, setPressPage] = useState(0);
   const [socialFeatureBusyId, setSocialFeatureBusyId] = useState<string | null>(null);
   const [currTrackIdx, setCurrTrackIdx] = useState(0);
   const [lyricsDrawerOpen, setLyricsDrawerOpen] = useState(false);
@@ -943,6 +945,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // Billboard auto-rotate every 6s
   useEffect(() => {
     const slots = isMobile ? 3 : 2;
+    // Back in range when the slot count changes (a phone-only slide index
+    // left over after widening the window rendered an empty billboard).
+    setBbSlot(s => s % slots);
+    if (bbTimerRef.current) clearInterval(bbTimerRef.current);
     bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000);
     return () => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); };
   }, [isMobile]);
@@ -1537,6 +1543,16 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // placeholder copy - an empty array here just renders nothing, never
   // someone else's content.
   const pulseArticles = publishedNews;
+  const PRESS_PAGE = 2;
+  const pressPages = Math.max(1, Math.ceil(pulseArticles.length / PRESS_PAGE));
+  const pressPageSafe = Math.min(pressPage, pressPages - 1);
+  const pressStart = pressPageSafe * PRESS_PAGE;
+  // Turning a page brings the new pair into view (on a phone the pager sits
+  // below both articles).
+  function turnPressPage(n: number) {
+    setPressPage(n);
+    requestAnimationFrame(() => document.querySelector(".pulse-articles-grid")?.scrollIntoView({ block: "start", behavior: "smooth" }));
+  }
 
   // Frame section nav. Locks only show once the depot (and so the supporter
   // check) is loaded; article pages navigate back to the artist page.
@@ -1603,6 +1619,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   );
                 })}
               </div>
+              {/* Back to the roster (Sean, 2026-10-04: "when you're logged in, it
+                  doesn't have the back to roster button"). In the section nav so
+                  it shows on every section, not only Music. */}
+              <a className="af-roster" href="/roster" aria-label="Back to the roster">←<span className="af-roster-word"> Roster</span></a>
             </nav>
           )}
           {storefront && depot && (!framed || section === "music") && (
@@ -1879,7 +1899,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               {!signedOutGate && tab === "pulse" && canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-articles-grid">
-                    {pulseArticles.map((n, i) => (
+                    {pulseArticles.slice(pressStart, pressStart + PRESS_PAGE).map((n, j) => { const i = pressStart + j; return (
                       <div key={i} className="pulse-article-card">
                         <Link href={n.href || "#"} className="pf-article-img">
                           {n.thumb
@@ -1903,8 +1923,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                           </Link>
                         </div>
                       </div>
-                    ))}
+                    ); })}
                   </div>
+                  {pressPages > 1 && (
+                    <nav className="press-pager" aria-label="Press pages">
+                      <button type="button" className="press-pager-btn" disabled={pressPageSafe === 0} onClick={() => turnPressPage(pressPageSafe - 1)}>← Newer</button>
+                      <span className="press-pager-count">{pressPageSafe + 1} / {pressPages}</span>
+                      <button type="button" className="press-pager-btn" disabled={pressPageSafe >= pressPages - 1} onClick={() => turnPressPage(pressPageSafe + 1)}>Older →</button>
+                    </nav>
+                  )}
                 </section>
               )}
 
@@ -3086,7 +3113,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
             {/* Billboard rotator sidebar â 2 slots */}
             <aside className="billboard"
               onMouseEnter={() => { if (bbTimerRef.current) clearInterval(bbTimerRef.current); }}
-              onMouseLeave={() => { const slots = isMobile ? 3 : 2; bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000); }}
+              onMouseLeave={() => { const slots = isMobile ? 3 : 2; if (bbTimerRef.current) clearInterval(bbTimerRef.current); bbTimerRef.current = setInterval(() => setBbSlot(s => (s + 1) % slots), 6000); }}
             >
               <div className="bb-label">Billboard</div>
               <div className="bb-rotator">

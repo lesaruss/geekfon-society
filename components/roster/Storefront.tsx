@@ -14,7 +14,7 @@
 // a guided tour of what $11 gets you, each stop with a visual of the feature
 // (mocked where the feature is not live yet, and labelled as a preview). A
 // Support now button stays in reach the whole way; the last stop is the offer.
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useArtistPlayer, type PlayerTrack } from "./ArtistPlayer";
 import type { PublicAlbum, PublicSong } from "@/lib/server/depot";
 import type { RadioStation } from "@/lib/server/radio";
@@ -173,6 +173,9 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
   // The player itself lives in the artist layout (ArtistPlayer), so it keeps
   // playing across sections; this list only feeds it.
   const player = useArtistPlayer();
+  const setDock = player?.setDock;
+  // Stable ref callback: mounts register the dock slot, unmounts release it.
+  const dockRef = useCallback((el: HTMLDivElement | null) => { setDock?.(el); }, [setDock]);
   const { onMode } = p;
   useEffect(() => {
     player?.setHearAll(() => onMode("tour"));
@@ -262,6 +265,8 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
         </div>
       </div>
 
+      {/* The player docks here, above the Support bar, taking one row's room. */}
+      <div className="am-dock" ref={dockRef} />
       {!p.supporter && (
         <div className="sf-cta-bar">
           <p>

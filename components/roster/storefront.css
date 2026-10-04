@@ -574,3 +574,13 @@ html.artist-playing .gbody{padding-bottom:92px}
    shot is shown whole, on any frame shape, instead of zoomed to one person. */
 .sf-portrait-group .sf-img,.sf-portrait-group .sf-img.on{object-fit:contain;object-position:50% 100%;transform:none}
 @media(max-width:900px){.sf-portrait-group{aspect-ratio:3/4;max-height:70vh}}
+
+/* Docked player (Music section): sits in the song list above the Support
+   bar, in the flow, so it never covers the universal bar. Phones keep the
+   fixed bar, since the list runs long. In full-screen the fixed bar clears
+   the universal bar. */
+@media(min-width:901px){
+  .am-player.am-docked{position:static;transform:none;left:auto;bottom:auto;width:auto;margin:10px 0 0;border-radius:14px;flex-shrink:0}
+  html.artist-docked .gw-body,html.artist-docked .gbody{padding-bottom:0}
+}
+.gw-window.is-fullscreen .am-player:not(.am-docked){bottom:112px}
