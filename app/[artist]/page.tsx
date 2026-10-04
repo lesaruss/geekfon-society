@@ -1,7 +1,7 @@
 import ArtistPage from "@/components/ArtistPage";
 import { notFound } from "next/navigation";
 import type { ArtistContent, RosterDepot, RosterBible, RosterGallery } from "@/components/ArtistPage";
-import { loadArtistDepot } from "@/lib/server/depot";
+import { loadArtistDepot, titleKey } from "@/lib/server/depot";
 import { loadFanBible, lockedBibleLabels } from "@/lib/server/bible";
 import { loadGallery } from "@/lib/server/gallery";
 import { stationsFeaturing } from "@/lib/server/radio";
@@ -340,6 +340,13 @@ export default async function ArtistPageRoute({ params }: Props) {
       v: s.access === "single" ? "public" : "members",
       isRemix: s.isRemix,
     }));
+  }
+
+  // Label-model artists: song audits are A&R working material that name songs
+  // still being made. Only songs already announced may reach the browser.
+  if (depotData.albums.some(a => a.label) && content.songAudits?.length) {
+    const announced = new Set(depotData.songs.map(s => titleKey(s.title)));
+    content.songAudits = content.songAudits.filter(a => announced.has(titleKey(String((a as { title?: string }).title || ""))));
   }
 
   const depot: RosterDepot = depotData;
