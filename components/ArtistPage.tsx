@@ -12,6 +12,9 @@ import RadioStrip from "@/components/roster/RadioStrip";
 import SignInGate from "@/components/roster/SignInGate";
 import Storefront from "@/components/roster/Storefront";
 import { useFramed } from "@/components/shell/GfsShell";
+import { useArtistPlayer } from "@/components/roster/ArtistPlayer";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { GalleryItem } from "@/lib/server/gallery";
 import type { RadioStation } from "@/lib/server/radio";
 import { useRosterAccess } from "@/components/roster/useRosterAccess";
@@ -630,9 +633,13 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // Server-decided supporter access for this artist (streams, lyrics, Bible).
   const rosterAccess = useRosterAccess(slug || "", !!depot);
   const [supportOpen, setSupportOpen] = useState(false);
-  // Label-model artists get the storefront (portrait + music + support tour)
-  // in place of the header and Discography (2026-10-04, Sean).
-  const storefront = !!depot && depot.albums.some(a => a.label) && !activeArticle;
+  // Every artist with songs gets the storefront (portrait + music + support
+  // tour) in place of the header and Discography: first label artists
+  // (2026-10-04, Sean), then every artist ("the whole style that we created
+  // for Roxanne needs to be applied to every artist", same day).
+  const storefront = !!depot && depot.songs.length > 0 && !activeArticle;
+  const router = useRouter();
+  const player = useArtistPlayer();
   const [storeMode, setStoreMode] = useState<"music" | "tour">("music");
   // Signed in, a label artist page sits inside the universal frame and its
   // sections (Music, Press, Social, Gallery, Chat) open inside it
@@ -769,6 +776,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
     ["--rx-text" as string]: c.accentText || "#9c1458",
     ["--rx-tint" as string]: c.accentTint || "rgba(233,30,140,0.10)",
   } as React.CSSProperties;
+  // The player lives in the layout, outside this page's accent variables.
+  useEffect(() => { player?.setAccent(c.accent || null); }, [player, c.accent]);
   const emph = (t: string) => t.replace(/\{\{(.+?)\}\}/g, '<em style="color:var(--rx-text);font-style:normal;font-weight:800">$1</em>');
 
   // Sync viewAs from SiteChrome's localStorage + custom event (same-window)
@@ -1533,7 +1542,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   const sectionsLocked = !!depot && !isSupporterView();
   function goSection(key: string) {
     const base = `/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`;
-    if (activeArticle) { window.location.href = key === "music" ? base : `${base}?tab=${key}`; return; }
+    // Client-side, so the artist player keeps playing (it lives in the layout).
+    if (activeArticle) { router.push(key === "music" ? base : `${base}?tab=${key}`); return; }
     if (sectionsLocked && FRAME_SECTIONS.find(f => f.key === key)?.supporters) {
       openSupport();
       try { window.history.replaceState(null, "", base); } catch { /* ignore */ }
@@ -1546,6 +1556,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
     try { window.history.replaceState(null, "", key === "music" ? base : `${base}?tab=${key}`); } catch { /* ignore */ }
   }
   const frameMusic = framed && storefront && section === "music";
+  // Client-side arrivals (back from an article) can render before the URL
+  // updates; settle the section from ?tab once mounted.
+  useEffect(() => {
+    if (activeArticle) return;
+    const p = new URLSearchParams(window.location.search).get("tab");
+    const key = p === "news" ? "pulse" : p;
+    if (key && key !== section && FRAME_SECTIONS.some(f => f.key === key && f.key !== "music")) { setSection(key); setTab(key); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
 
@@ -1592,7 +1611,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               artistName={name}
               kicker={[c.genre || c.sonic?.primaryGenre, c.location].filter(Boolean).join(" · ")}
               tagline={c.tagline ? c.tagline.replace(/\s+-\s+/g, ", ") : null}
-              blurb={c.shortBio || (c.bio || [])[0] || null}
+              blurb={c.shortBio || (Array.isArray(c.bio) ? c.bio[0] : typeof c.bio === "string" ? c.bio : null) || null}
               portraitUrl={c.tabPortraits?.music || c.heroUrl || null}
               tourPortraitUrl={c.tabPortraits?.support || c.profileUrl || c.heroUrl || null}
               songs={depot.songs}
@@ -1787,10 +1806,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                       return <p key={i}>{lines.map((line: string, j: number) => <span key={j}>{line}{j < lines.length - 1 ? <br /> : null}</span>)}</p>;
                     })}
                   </div>
-                  <a href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}`} className="art-back">
+                  <Link href={`/${slug || (typeof window !== "undefined" ? window.location.pathname.split("/")[1] : "")}${framed ? "?tab=pulse" : ""}`} className="art-back">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16}}><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
                     Back to {c.name || "Artist"}
-                  </a>
+                  </Link>
                 </div>
               ) : (
               <>{/* Pulse tab - News feed only now that Social and Group each have
@@ -1860,7 +1879,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   <div className="pulse-articles-grid">
                     {pulseArticles.map((n, i) => (
                       <div key={i} className="pulse-article-card">
-                        <a href={n.href || "#"} className="pf-article-img">
+                        <Link href={n.href || "#"} className="pf-article-img">
                           {n.thumb
                             ? <img src={n.thumb} alt={n.title || ""} />
                             : <div className="pf-article-ph" style={{ background: `hsl(${(i * 47 + 200) % 360}, 60%, 92%)` }} />
@@ -1871,15 +1890,15 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                             </span>
                           )}
                           {n.tag && <span className="article-tag">{n.tag}</span>}
-                        </a>
+                        </Link>
                         <div className="pf-article-body">
                           {n.date && <div className="pf-article-date">{n.date}</div>}
-                          {n.title && <a href={n.href || "#"} className="pf-article-title pf-article-title-link">{n.title}</a>}
+                          {n.title && <Link href={n.href || "#"} className="pf-article-title pf-article-title-link">{n.title}</Link>}
                           {n.blurb && <p className="pf-article-blurb">{n.blurb}</p>}
-                          <a href={n.href || "#"} className="article-cta">
+                          <Link href={n.href || "#"} className="article-cta">
                             Read more
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     ))}
