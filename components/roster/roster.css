@@ -1,0 +1,78 @@
+/* Public roster tabs (Discography, Bible). Light theme, artist accent via --rx
+   (set by ArtistPage), same type scale as the existing Music tab. */
+.rs-wrap{display:grid;gap:18px;padding:4px 0 24px}
+.rs-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.rs-title{font-size:13px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:rgba(26,26,26,.68);margin:0}
+.rs-count{font-size:12px;color:rgba(26,26,26,.55)}
+.rs-empty{font-size:14px;color:rgba(26,26,26,.6);padding:24px 0}
+
+.rs-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px 16px;border-radius:12px;background:#fff;border:1px solid rgba(0,0,0,.08);font-size:13px;line-height:1.5;color:rgba(26,26,26,.8)}
+.rs-banner>div{flex:1 1 260px}
+.rs-banner-on{border-color:var(--rx,#7c3aed);background:color-mix(in srgb,var(--rx,#7c3aed) 6%,#fff)}
+.rs-cta{appearance:none;border:0;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;background:var(--rx,#7c3aed);color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.rs-cta:disabled{opacity:.6;cursor:default}
+.rs-cta-wide{width:100%;margin-top:6px}
+.rs-link{appearance:none;border:0;background:none;padding:0;font:inherit;font-weight:800;color:var(--rx,#7c3aed);cursor:pointer;text-decoration:underline}
+
+.rs-section{display:grid;gap:8px}
+.rs-section-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:4px}
+.rs-section-title{font-size:16px;font-weight:900;margin:0;color:#1a1a1a}
+.rs-section-sub{font-size:12px;color:rgba(26,26,26,.55)}
+.rs-progress{color:var(--rx,#7c3aed);font-weight:700}
+.rs-rows{display:grid;gap:8px}
+
+.rs-row{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:12px;padding:10px 12px;min-width:0}
+.rs-row-cur{border-color:var(--rx,#7c3aed)}
+.rs-row-main{display:flex;align-items:center;gap:12px;min-width:0}
+.rs-cover{position:relative;flex:0 0 52px;width:52px;height:52px;border-radius:8px;overflow:hidden;border:0;padding:0;cursor:pointer;background:rgba(0,0,0,.06)}
+.rs-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.rs-cover-blank{display:block;width:100%;height:100%;background:linear-gradient(135deg,var(--rx,#7c3aed),#1a1a1a)}
+.rs-cover-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;background:rgba(0,0,0,.28);opacity:0;transition:opacity .15s}
+.rs-cover:hover .rs-cover-icon,.rs-cover:focus-visible .rs-cover-icon,.rs-row-cur .rs-cover-icon{opacity:1}
+@media (hover:none){.rs-cover-icon{opacity:1;background:rgba(0,0,0,.2)}}
+.rs-mid{flex:1;min-width:0;display:grid;gap:6px}
+.rs-line{display:flex;align-items:center;gap:8px;min-width:0}
+.rs-song{font-size:14px;font-weight:800;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rs-tag{flex:0 0 auto;font-size:10px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:999px}
+.rs-tag-single{background:rgba(16,185,129,.12);color:#047857}
+.rs-tag-preview{background:rgba(0,0,0,.06);color:rgba(26,26,26,.6)}
+.rs-tag-vault{background:color-mix(in srgb,var(--rx,#7c3aed) 14%,#fff);color:var(--rx,#7c3aed)}
+.rs-scrub{display:flex;align-items:center;gap:8px}
+.rs-time{font-size:11px;font-variant-numeric:tabular-nums;color:rgba(26,26,26,.55);flex:0 0 auto}
+.rs-bar{position:relative;flex:1;height:6px;border-radius:999px;background:rgba(0,0,0,.08);cursor:pointer;touch-action:none}
+.rs-bar-fill{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--rx,#7c3aed)}
+.rs-actions{display:flex;gap:6px;flex:0 0 auto}
+.rs-act{appearance:none;border:1px solid rgba(0,0,0,.12);background:#fff;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:800;color:rgba(26,26,26,.8);cursor:pointer;text-decoration:none;white-space:nowrap}
+.rs-act-on{border-color:var(--rx,#7c3aed);color:var(--rx,#7c3aed)}
+.rs-capnote{margin-top:8px;font-size:12px;color:rgba(26,26,26,.65)}
+.rs-lyrics{margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,.07)}
+.rs-lyrics p{white-space:pre-wrap;font-size:13px;line-height:1.7;color:rgba(26,26,26,.85);margin:0}
+.rs-lang{display:flex;gap:6px;margin-bottom:8px}
+.rs-lang button{appearance:none;border:1px solid rgba(0,0,0,.12);background:#fff;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;cursor:pointer}
+.rs-lang button.on{border-color:var(--rx,#7c3aed);color:var(--rx,#7c3aed)}
+
+@media (max-width:560px){
+  .rs-row-main{flex-wrap:wrap}
+  .rs-mid{flex:1 1 calc(100% - 64px)}
+  .rs-actions{width:100%;justify-content:flex-end}
+}
+
+.rs-modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.rs-modal{width:100%;max-width:420px;background:#fff;border-radius:16px;padding:22px;display:grid;gap:10px;color:#1a1a1a}
+.rs-modal-title{margin:0;font-size:20px;font-weight:900}
+.rs-modal-list{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14px;line-height:1.5}
+.rs-modal-note{margin:4px 0 0;font-size:13px;color:rgba(26,26,26,.7)}
+.rs-dismiss{appearance:none;border:0;background:none;font-size:13px;color:rgba(26,26,26,.55);cursor:pointer;padding:6px}
+.rs-error{margin:0;font-size:13px;color:#b91c1c}
+
+/* Bible */
+.rb-card{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:12px;padding:16px}
+.rb-card-title{margin:0 0 10px;font-size:15px;font-weight:900}
+.rb-fields{margin:0;display:grid;gap:10px}
+.rb-field dt{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:rgba(26,26,26,.5);margin-bottom:2px}
+.rb-field dd{margin:0;font-size:14px;line-height:1.6;color:rgba(26,26,26,.85);overflow-wrap:anywhere}
+.rb-list{margin:0;padding-left:18px;display:grid;gap:4px}
+.rb-dl{margin:0;display:grid;gap:4px}
+.rb-dl dt{display:inline;font-weight:700;text-transform:capitalize}
+.rb-dl dt::after{content:": "}
+.rb-dl dd{display:inline;margin:0}

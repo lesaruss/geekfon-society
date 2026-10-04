@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { resolvePlayhead, RadioTrack as ScheduleTrack, ScheduleOverride } from "@/lib/radioSchedule";
+import { resolvePlayhead } from "@/lib/radioSchedule";
+import { buildRadioSchedule } from "@/lib/server/radio";
 import { getGoogleAccessToken } from "@/lib/google-auth";
 
 const SB_URL = "https://fwbhwfxpncrsfhttimna.supabase.co";
@@ -113,8 +114,7 @@ export async function GET(req: Request) {
     { data: healthRows },
     { data: briefRows },
     { data: artists },
-    { data: tracks },
-    { data: overrideRows },
+    radioSchedule,
     ga4,
   ] = await Promise.all([
     admin.from("gfs_members").select("*", { count: "exact", head: true }),
@@ -126,8 +126,8 @@ export async function GET(req: Request) {
     admin.from("brand_audit_reports").select("*").ilike("brand_slug", "%geekfon%").order("audited_at", { ascending: false }).limit(3),
     admin.from("gfs_anr_audits").select("artist_slug, title, status, updated_at").eq("doc_type", "artist_brief").order("updated_at", { ascending: false }),
     admin.from("gfs_artists").select("slug, name, profile"),
-    admin.from("radio_tracks").select("artist_slug, title, src_path, duration_seconds, release_date, radio_order, sort_order").eq("is_public", true).neq("src_path", "PENDING").lte("release_date", nowIso).order("radio_order", { ascending: true, nullsFirst: false }).order("artist_slug", { ascending: true }).order("sort_order", { ascending: true }),
-    admin.from("radio_schedule_overrides").select("kind, label, ad_src_path, starts_at, duration_seconds, cadence_seconds, track_id, radio_tracks(artist_slug, title, src_path)").eq("is_active", true),
+    // Same depot-built schedule every listener resolves (lib/server/radio.ts).
+    buildRadioSchedule("ids"),
     fetchGA4(),
   ]);
 
@@ -160,35 +160,7 @@ export async function GET(req: Request) {
   // Now Playing - identical algorithm to the real /radio page (lib/radioSchedule.ts),
   // computed server-side against the same rotation + overrides data every listener's
   // browser resolves independently from the synced clock.
-  const rotation: ScheduleTrack[] = (tracks || []).map(r => ({
-    artist: artistName(r.artist_slug as string),
-    title: r.title as string,
-    path: r.src_path as string,
-    durationSeconds: (r.duration_seconds as number | null) || 180,
-  }));
-  const overrides: ScheduleOverride[] = (overrideRows || []).flatMap((o: any): ScheduleOverride[] => {
-    if (o.kind === "pinned" && o.starts_at && o.radio_tracks) {
-      return [{
-        kind: "pinned",
-        path: o.radio_tracks.src_path,
-        title: o.radio_tracks.title,
-        artist: artistName(o.radio_tracks.artist_slug),
-        startsAtMs: new Date(o.starts_at).getTime(),
-        durationSeconds: o.duration_seconds || 180,
-        label: o.label,
-      }];
-    }
-    if (o.kind === "ad_cadence") {
-      return [{
-        kind: "ad_cadence",
-        adSrcPath: o.ad_src_path || null,
-        cadenceSeconds: o.cadence_seconds || 0,
-        durationSeconds: o.duration_seconds || 30,
-        label: o.label,
-      }];
-    }
-    return [];
-  });
+  const { rotation, overrides } = radioSchedule;
   const nowPlaying = resolvePlayhead(Date.now(), rotation, overrides);
 
   return NextResponse.json({

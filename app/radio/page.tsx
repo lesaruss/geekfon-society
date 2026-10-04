@@ -101,57 +101,22 @@ export default function RadioPage() {
     if (!authChecked || !isMember) return;
     let cancelled = false;
     async function loadSchedule() {
-      const nowIso = new Date().toISOString();
-      const { data: trackRows } = await supabase
-        .from("radio_tracks")
-        .select("artist_slug, title, src_path, duration_seconds, release_date")
-        .eq("is_public", true)
-        .neq("src_path", "PENDING")
-        .lte("release_date", nowIso)
-        .order("radio_order", { ascending: true, nullsFirst: false })
-        .order("artist_slug", { ascending: true })
-        .order("sort_order", { ascending: true });
+      // Rotation + overrides come from the depot via the server (2026-10-04,
+      // playbook geekfon-launch): real durations, and vault songs as signed
+      // links instead of public bucket paths. `path` is a full URL.
+      let fixed: ScheduleTrack[] = [];
+      let mapped: ScheduleOverride[] = [];
+      try {
+        const res = await fetch("/api/radio/rotation");
+        if (res.ok) {
+          const body = await res.json() as { rotation?: ScheduleTrack[]; overrides?: ScheduleOverride[] };
+          fixed = body.rotation || [];
+          mapped = body.overrides || [];
+        }
+      } catch { /* empty rotation renders the loading state */ }
       if (cancelled) return;
-
-      const fixed: ScheduleTrack[] = (trackRows || []).map(r => ({
-        artist: artistName(r.artist_slug as string),
-        title: r.title as string,
-        path: r.src_path as string,
-        durationSeconds: (r.duration_seconds as number | null) || 180,
-      }));
       rotationRef.current = fixed;
       setRotation(fixed);
-
-      const { data: overrideRows } = await supabase
-        .from("radio_schedule_overrides")
-        .select("kind, label, ad_src_path, starts_at, duration_seconds, cadence_seconds, track_id, radio_tracks(artist_slug, title, src_path)")
-        .eq("is_active", true);
-
-      const mapped: ScheduleOverride[] = (overrideRows || []).flatMap((o: any): ScheduleOverride[] => {
-        if (o.kind === "pinned" && o.starts_at && o.radio_tracks) {
-          const pinned: ScheduleOverride = {
-            kind: "pinned",
-            path: o.radio_tracks.src_path,
-            title: o.radio_tracks.title,
-            artist: artistName(o.radio_tracks.artist_slug),
-            startsAtMs: new Date(o.starts_at).getTime(),
-            durationSeconds: o.duration_seconds || 180,
-            label: o.label || undefined,
-          };
-          return [pinned];
-        }
-        if (o.kind === "ad_cadence") {
-          const ad: ScheduleOverride = {
-            kind: "ad_cadence",
-            adSrcPath: o.ad_src_path || null,
-            cadenceSeconds: o.cadence_seconds || 0,
-            durationSeconds: o.duration_seconds || 0,
-            label: o.label || undefined,
-          };
-          return [ad];
-        }
-        return [];
-      });
       overridesRef.current = mapped;
       setOverrides(mapped);
       setLoadingPlaylist(false);
@@ -233,7 +198,7 @@ export default function RadioPage() {
       // a seek issued before the media is seekable, so this is a safety net
       // on top of the immediate assignment below, not the primary path.
       a.onloadedmetadata = () => { a.currentTime = resolved.offsetSeconds; };
-      a.src = AUDIO_BASE + resolved.path;
+      a.src = resolved.path.startsWith("http") ? resolved.path : AUDIO_BASE + resolved.path;
       a.currentTime = resolved.offsetSeconds;
     } else if (Math.abs(a.currentTime - resolved.offsetSeconds) > RESYNC_DRIFT_TOLERANCE_SEC) {
       a.currentTime = resolved.offsetSeconds;

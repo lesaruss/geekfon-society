@@ -206,52 +206,16 @@ export default function HomePage() {
   // it). Lazy-loaded on first click so anonymous homepage visitors who never
   // touch the button don't pay for the extra Supabase calls.
   async function loadRadioSchedule() {
-    const nowIso = new Date().toISOString();
-    const { data: trackRows } = await supabase
-      .from("radio_tracks")
-      .select("artist_slug, title, src_path, duration_seconds, release_date")
-      .eq("is_public", true)
-      .neq("src_path", "PENDING")
-      .lte("release_date", nowIso)
-      .order("radio_order", { ascending: true, nullsFirst: false })
-      .order("artist_slug", { ascending: true })
-      .order("sort_order", { ascending: true });
-
-    radioRotationRef.current = (trackRows || []).map((r: any) => ({
-      artist: r.artist_slug as string,
-      title: r.title as string,
-      path: r.src_path as string,
-      durationSeconds: (r.duration_seconds as number | null) || 180,
-    }));
-
-    const { data: overrideRows } = await supabase
-      .from("radio_schedule_overrides")
-      .select("kind, label, ad_src_path, starts_at, duration_seconds, cadence_seconds, track_id, radio_tracks(artist_slug, title, src_path)")
-      .eq("is_active", true);
-
-    radioOverridesRef.current = (overrideRows || []).flatMap((o: any): ScheduleOverride[] => {
-      if (o.kind === "pinned" && o.starts_at && o.radio_tracks) {
-        return [{
-          kind: "pinned",
-          path: o.radio_tracks.src_path,
-          title: o.radio_tracks.title,
-          artist: o.radio_tracks.artist_slug,
-          startsAtMs: new Date(o.starts_at).getTime(),
-          durationSeconds: o.duration_seconds || 180,
-          label: o.label || undefined,
-        }];
+    // Same depot-built rotation as /radio (see app/api/radio/rotation), so
+    // both players and the admin Now Playing agree on the synced clock.
+    try {
+      const res = await fetch("/api/radio/rotation");
+      if (res.ok) {
+        const body = await res.json() as { rotation?: ScheduleTrack[]; overrides?: ScheduleOverride[] };
+        radioRotationRef.current = body.rotation || [];
+        radioOverridesRef.current = body.overrides || [];
       }
-      if (o.kind === "ad_cadence") {
-        return [{
-          kind: "ad_cadence",
-          adSrcPath: o.ad_src_path || null,
-          cadenceSeconds: o.cadence_seconds || 0,
-          durationSeconds: o.duration_seconds || 0,
-          label: o.label || undefined,
-        }];
-      }
-      return [];
-    });
+    } catch { /* leaves the rotation empty; the player stays idle */ }
     radioLoadedRef.current = true;
   }
 
@@ -288,7 +252,7 @@ export default function HomePage() {
     try {
       if (radioCurrentPathRef.current !== resolved.path) {
         radioCurrentPathRef.current = resolved.path;
-        a.src = RADIO_AUDIO_BASE + resolved.path;
+        a.src = resolved.path.startsWith("http") ? resolved.path : RADIO_AUDIO_BASE + resolved.path;
         a.onloadedmetadata = () => { try { a.currentTime = resolved.offsetSeconds; } catch {} };
         a.currentTime = resolved.offsetSeconds;
       } else if (Math.abs(a.currentTime - resolved.offsetSeconds) > RADIO_RESYNC_DRIFT_TOLERANCE_SEC) {

@@ -4,6 +4,12 @@ import type { SyntheticEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { isNative, purchaseArtistUnlock } from "@/lib/revenuecat";
 import { PostCard } from "@/components/SocialFeed";
+import Discography from "@/components/roster/Discography";
+import FanBible from "@/components/roster/FanBible";
+import SupportModal from "@/components/roster/SupportModal";
+import { useRosterAccess } from "@/components/roster/useRosterAccess";
+import type { PublicAlbum, PublicSong } from "@/lib/server/depot";
+import type { FanBibleModule } from "@/lib/server/bible";
 import "./ArtistPage.css";
 
 const SUPA_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || "https://fwbhwfxpncrsfhttimna.supabase.co";
@@ -107,13 +113,21 @@ export type ArtistContent = {
 // until V decides where it relocates to - deleting the whole read-only
 // release-brief admin view outright felt premature for a nav-only ask.
 // Group renamed to Chat per the same conversation.
+// 2026-10-04 (playbook geekfon-launch): the public roster mirrors the HQ
+// roster tabs. Music became Discography (depot-backed: albums, cover art,
+// lyrics, free singles vs supporter vault) and the fan Bible was added.
+// ?tab=music links still land on Discography.
 const TABS: { key: string; label: string; admin?: boolean; needsMembers?: boolean }[] = [
-  { key: "music",    label: "Music" },
+  { key: "discography", label: "Discography" },
   { key: "pulse",    label: "Pulse" },
   { key: "social",   label: "Social" },
+  { key: "bible",    label: "Bible" },
   { key: "chat",     label: "Chat" },
   { key: "members",  label: "Members", needsMembers: true },
 ];
+
+export type RosterDepot = { songs: PublicSong[]; albums: PublicAlbum[] };
+export type RosterBible = { free: FanBibleModule[]; locked: string[] };
 
 // Artists with real, artist-voiced Pulse/News content built out. Everyone else's
 // Pulse/Social/Group tabs show a "Coming Soon" placeholder instead of content
@@ -561,16 +575,21 @@ function BiblePanel({
 // (see gfs_artist_unlocks.season); update this when Season 2 launches.
 const CURRENT_SEASON = "Season 1";
 
-export default function ArtistPage({ content, cityBg, activeArticle, slug }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string; position?: string } | null; activeArticle?: News; slug?: string }) {
+export default function ArtistPage({ content, cityBg, activeArticle, slug, depot, bible }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string; position?: string } | null; activeArticle?: News; slug?: string; depot?: RosterDepot; bible?: RosterBible }) {
   const [tab, setTab] = useState(() => {
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("tab");
       // "news" used to be its own top-level tab; it now lives inside Pulse as a channel.
       if (p === "news") return "pulse";
+      // Music is now Discography wherever the depot is loaded.
+      if (p === "music" && depot) return "discography";
       if (p) return p;
     }
-    return "music";
+    return depot ? "discography" : "music";
   });
+  // Server-decided supporter access for this artist (streams, lyrics, Bible).
+  const rosterAccess = useRosterAccess(slug || "", !!depot);
+  const [supportOpen, setSupportOpen] = useState(false);
   // 2026-07-31 per Sean: match the Vegans Explore SoFlo community-hub pattern
   // exactly - a dark persistent bar (toggle + breadcrumb) that stays put while
   // just the decorative hero above it collapses/expands. On an article
@@ -611,6 +630,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
   // Replaced 2026-07-23: per-track Points purchase + Points top-up modal
   // retired in favor of a single one-time $11 per-artist unlock.
   const [unlockedArtist, setUnlockedArtist] = useState(false);
+  // A server-confirmed supporter also counts as unlocked for the older
+  // per-artist checks elsewhere on the page (Social, Chat, Members).
+  useEffect(() => { if (rosterAccess.supporter) setUnlockedArtist(true); }, [rosterAccess.supporter]);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
@@ -1647,6 +1669,33 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug }: { c
                   that used to sit under the "News" pill, moved up a level. */}
               {/* Defense in depth: also gate the actual content, not just the tab button,
                   since ?tab=pulse can set tab state directly from a deep link. */}
+              {tab === "discography" && depot && (
+                <Discography
+                  artistName={name || ""}
+                  songs={depot.songs}
+                  albums={depot.albums}
+                  access={rosterAccess}
+                  onSupport={() => setSupportOpen(true)}
+                />
+              )}
+              {tab === "bible" && depot && (
+                <FanBible
+                  artistName={name || ""}
+                  freeModules={bible?.free || []}
+                  lockedLabels={bible?.locked || []}
+                  fullModules={rosterAccess.supporter ? rosterAccess.bible : undefined}
+                  onSupport={() => setSupportOpen(true)}
+                />
+              )}
+              {supportOpen && depot && (
+                <SupportModal
+                  artistName={name || ""}
+                  slug={slug || ""}
+                  albums={depot.albums}
+                  signedIn={rosterAccess.signedIn}
+                  onClose={() => setSupportOpen(false)}
+                />
+              )}
               {tab === "pulse" && !canSeePulse && (
                 <section className="pulse-section">
                   <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Pulse content for {c.name || "this artist"} is on the way. Check back soon.</p></div>

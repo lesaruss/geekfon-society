@@ -1,6 +1,8 @@
 import ArtistPage from "@/components/ArtistPage";
 import { notFound } from "next/navigation";
-import type { ArtistContent } from "@/components/ArtistPage";
+import type { ArtistContent, RosterDepot, RosterBible } from "@/components/ArtistPage";
+import { loadArtistDepot } from "@/lib/server/depot";
+import { loadFanBible, lockedBibleLabels } from "@/lib/server/bible";
 
 // 2026-07-24: forces this route out of Next.js's Full Route Cache. Without
 // this, the custom domain (geekfon.ai) has been observed serving a stale
@@ -312,10 +314,34 @@ type Props = { params: Promise<{ artist: string }> };
 
 export default async function ArtistPageRoute({ params }: Props) {
   const { artist: slug } = await params;
-  const content = await getArtist(slug);
+  // Songs come from the depot (pulse_songs), not gfs_artists.profile.tracks
+  // (2026-10-04, playbook geekfon-launch). The page gets the FREE view only:
+  // singles with their public stream, vault songs with a preview URL and no
+  // lyrics, and the Identity card of the Bible. Supporter content is fetched
+  // per viewer from /api/roster/<artist>/access.
+  const [content, depotData, bibleFree, bibleLocked] = await Promise.all([
+    getArtist(slug),
+    loadArtistDepot(slug),
+    loadFanBible(slug, { full: false }),
+    lockedBibleLabels(slug),
+  ]);
   if (!content) notFound();
+
+  // Keep the legacy tracks field in step with the depot for the parts of the
+  // page that still read it (season pill, schedule view). No audio paths.
+  if (depotData.songs.length) {
+    content.tracks = depotData.songs.map(s => ({
+      n: s.title,
+      m: s.season || "Season 1",
+      v: s.access === "single" ? "public" : "members",
+      isRemix: s.isRemix,
+    }));
+  }
+
+  const depot: RosterDepot = depotData;
+  const bible: RosterBible = { free: bibleFree, locked: bibleLocked };
   const cityBg = ARTIST_CITY[slug] ?? null;
-  return <ArtistPage content={content} cityBg={cityBg} slug={slug} />;
+  return <ArtistPage content={content} cityBg={cityBg} slug={slug} depot={depot} bible={bible} />;
 }
 
 export async function generateMetadata({ params }: Props) {
