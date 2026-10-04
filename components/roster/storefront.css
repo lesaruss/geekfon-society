@@ -520,3 +520,28 @@
 .to-price-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .to-badge2{position:static;display:flex;flex-direction:column;align-items:center;gap:4px}
 .to-badge2 img{width:104px;height:104px}
+
+/* Round 7 (Sean, 2026-10-04): the portrait never shrinks.
+   Desktop at full size shows her full body, with the column sized to the
+   image so there is no empty space beside her. As the window narrows the
+   panel gets taller than the image, so instead of letterboxing we fill it
+   and step the shot tighter (anchored at the top) until it reads as a
+   head-to-hip portrait. Phones get that tighter shot in a framed card.
+   Portrait art is 3:4 (aspect 0.743). */
+.sf-portrait{container-type:size}
+.sf-img{transform-origin:50% 0;transition:opacity .5s ease,transform .45s ease}
+@media(min-width:901px){
+  .sf{grid-template-columns:minmax(0,min(46%,calc((100dvh - 108px) * .743))) minmax(0,1fr);gap:44px}
+}
+@container (max-aspect-ratio: 743/1000){ .sf-img{object-fit:cover;object-position:50% 0} }
+@container (max-aspect-ratio: 70/100){ .sf-img.on{transform:scale(1.1)} }
+@container (max-aspect-ratio: 63/100){ .sf-img.on{transform:scale(1.25)} }
+@container (max-aspect-ratio: 56/100){ .sf-img.on{transform:scale(1.42)} }
+@container (max-aspect-ratio: 49/100){ .sf-img.on{transform:scale(1.62)} }
+@container (max-aspect-ratio: 42/100){ .sf-img.on{transform:scale(1.85)} }
+@media(max-width:900px){
+  .sf-portrait{height:auto;aspect-ratio:5/4;border:2px solid var(--rx,#e91e8c);border-radius:20px;background:#fff}
+  .sf-img{object-fit:cover;object-position:50% 0}
+}
+@media(prefers-reduced-motion:reduce){.sf-img{transition:none}}
+@media(min-width:901px) and (max-width:1200px){.sf-listen-btn span{display:none}.sf-listen-btn{padding:7px}}
