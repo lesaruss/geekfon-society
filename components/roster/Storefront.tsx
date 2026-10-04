@@ -185,6 +185,25 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
   const playing = !!player?.playing;
   const outCount = p.list.filter(s => s.access === "single").length;
 
+  // Nothing released yet (HQ release state): no list, just what's coming.
+  if (!p.list.length) {
+    return (
+      <div className="sf-music">
+        <div className="sf-soon">
+          <span className="sf-soon-kicker">Music</span>
+          <p className="sf-soon-title">{p.artistName}&apos;s first release is on the way.</p>
+          <p className="sf-soon-text">Songs appear here the day they come out.{p.supporter ? " You're a supporter, so you'll hear every one in full." : ""}</p>
+        </div>
+        {!p.supporter && (
+          <div className="sf-cta-bar">
+            <p><strong>Be there from the first song.</strong> Support {p.artistName} for $11: every song in full as it&apos;s released, plus the Gallery, Chat and Press.</p>
+            <button className="sf-btn sf-btn-go" onClick={() => p.onMode("tour")}>Support {p.artistName}</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="sf-music">
       <div className="sf-music-note">
@@ -259,7 +278,7 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
     ...props,
     album: realAlbum ?? ({
       id: "", title: `Every ${props.artistName} song`, status: "released", out: true, label: false,
-      coverUrl: props.list.find(s => s.coverUrl)?.coverUrl ?? null, trackTarget: props.list.length, geekfonReleaseDate: null,
+      coverUrl: props.list.find(s => s.coverUrl)?.coverUrl ?? props.tourPortraitUrl ?? props.portraitUrl ?? null, trackTarget: props.list.length, geekfonReleaseDate: null,
       tracks: props.list.map((s, i) => ({ songId: s.id, kind: s.isRemix ? "remix" : "track", position: i + 1 })),
     } as unknown as PublicAlbum),
   };
@@ -284,7 +303,9 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
       title: `${p.album.title}, in full`,
       text: realAlbum
         ? `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full${p.album.out ? " with downloads" : ", before the album is out everywhere"}.`
-        : `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full, plus every new song as it lands.`,
+        : mains.length
+          ? `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full, plus every new song as it lands.`
+          : `Every song ${p.artistName} releases, streaming in full the day it comes out.`,
       visual: <AlbumScreen artist={p.artistName} slug={p.slug} album={p.album} songs={mains} />,
     },
     {

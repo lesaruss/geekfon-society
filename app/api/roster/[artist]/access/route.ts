@@ -46,7 +46,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   if (!viewer) return NextResponse.json({ signedIn: false, supporter: false, songs: {} }, { headers: noStore });
 
   const ent = await entitlementFor(viewer, artist);
-  const { rows, rule } = await loadArtistRows(artist);
+  const { rows, rule } = await loadArtistRows(artist, true);
 
   const grantRows = rows.filter(r => {
     if (!r.src_path || accessOf(r, rule) === "single") return false;

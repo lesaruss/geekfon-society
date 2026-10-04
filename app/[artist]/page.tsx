@@ -335,7 +335,9 @@ export default async function ArtistPageRoute({ params }: Props) {
 
   // Keep the legacy tracks field in step with the depot for the parts of the
   // page that still read it (season pill, schedule view). No audio paths.
-  if (depotData.songs.length) {
+  // Always replaced, even with nothing out: the legacy list in the profile
+  // names songs HQ has not released.
+  {
     content.tracks = depotData.songs.map(s => ({
       n: s.title,
       m: s.season || "Season 1",
@@ -344,9 +346,9 @@ export default async function ArtistPageRoute({ params }: Props) {
     }));
   }
 
-  // Label-model artists: song audits are A&R working material that name songs
-  // still being made. Only songs already announced may reach the browser.
-  if (depotData.albums.some(a => a.label) && content.songAudits?.length) {
+  // Song audits are A&R working material that name songs still being made.
+  // Only songs HQ has released may reach the browser, for every artist.
+  if (content.songAudits?.length) {
     const announced = new Set(depotData.songs.map(s => titleKey(s.title)));
     content.songAudits = content.songAudits.filter(a => announced.has(titleKey(String((a as { title?: string }).title || ""))));
   }
