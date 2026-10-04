@@ -10,7 +10,7 @@
 //   supporter supporters of the artist (and Lifetime, Pro, staff)
 //   admin     staff only
 import { serviceClient } from "./supabaseAdmin";
-import { depotSlug } from "./depot";
+import { depotSlug, asDownload } from "./depot";
 
 export const GALLERY_BUCKET = "geekfon-gallery";
 const TTL_SECONDS = 6 * 60 * 60;
@@ -53,15 +53,15 @@ export async function loadGallery(artistSlug: string, level: GalleryLevel): Prom
   if (!mine.length) return { items: [], lockedCount };
 
   const paths = mine.map(r => r.storage_path);
-  const [view, dl] = await Promise.all([
-    sb.storage.from(GALLERY_BUCKET).createSignedUrls(paths, TTL_SECONDS),
-    Promise.all(mine.map(r => sb.storage.from(GALLERY_BUCKET).createSignedUrl(r.storage_path, TTL_SECONDS, { download: fileName(r) }))),
-  ]);
+  // One storage request for every image; the download link is the same
+  // signed URL with a file name (one request per image used to pile up
+  // storage connections).
+  const view = await sb.storage.from(GALLERY_BUCKET).createSignedUrls(paths, TTL_SECONDS);
   const items: GalleryItem[] = [];
   mine.forEach((r, i) => {
     const url = view.data?.[i]?.signedUrl;
     if (!url) return;
-    items.push({ id: r.id, title: r.title, kind: r.kind, visibility: r.visibility, url, download: dl[i].data?.signedUrl || url, width: r.width, height: r.height });
+    items.push({ id: r.id, title: r.title, kind: r.kind, visibility: r.visibility, url, download: asDownload(url, fileName(r)), width: r.width, height: r.height });
   });
   return { items, lockedCount };
 }

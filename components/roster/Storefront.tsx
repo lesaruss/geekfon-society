@@ -38,6 +38,8 @@ type Props = {
   albums: PublicAlbum[];
   access: RosterAccess;
   supporter: boolean;
+  /** Signed in and the access answer isn't back yet: hold the Support asks. */
+  pending?: boolean;
   stations: RadioStation[];
   // Articles featuring the artist (what Pulse used to be; Sean 2026-10-04).
   press: { title?: string; blurb?: string; thumb?: string; tag?: string; date?: string; href?: string }[];
@@ -205,7 +207,7 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
           <p className="sf-soon-title">{p.artistName}&apos;s first release is on the way.</p>
           <p className="sf-soon-text">Songs appear here the day they come out.{p.supporter ? " You're a supporter, so you'll hear every one in full." : ""}</p>
         </div>
-        {!p.supporter && (
+        {!p.supporter && !p.pending && (
           <div className="sf-cta-bar">
             <p><strong>Be there from the first song.</strong> Support {p.artistName} for $11: every song in full as it&apos;s released, plus the Gallery, Chat and Press.</p>
             <button className="sf-btn sf-btn-go" onClick={() => p.onMode("tour")}>Support {p.artistName}</button>
@@ -267,7 +269,7 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
 
       {/* The player docks here, above the Support bar, taking one row's room. */}
       <div className="am-dock" ref={dockRef} />
-      {!p.supporter && (
+      {!p.supporter && !p.pending && (
         <div className="sf-cta-bar">
           <p>
             <strong>Want to hear all of it?</strong> Support {p.artistName} for $11: {p.album ? <em>{p.album.title}</em> : "every song"} in full, plus the Gallery, Chat and Press.

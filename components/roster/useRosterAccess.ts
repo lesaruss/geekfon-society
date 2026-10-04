@@ -3,7 +3,7 @@
 // app/api/roster/[artist]/access). The page renders the free view first;
 // this upgrades it in place once the answer comes back. Nothing here is
 // trusted for gating: the server only returns what the viewer is entitled to.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { FanBibleModule } from "@/lib/server/bible";
 import type { GalleryItem } from "@/lib/server/gallery";
@@ -72,9 +72,18 @@ export function useRosterAccess(slug: string, enabled = true): RosterAccess & { 
     }
   }, [load]);
 
+  // Only a real change of who is signed in re-asks: supabase-js also reports
+  // SIGNED_IN each time a tab regains focus, which re-ran this request (and
+  // its stream signing) over and over (2026-10-04).
+  const userRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") load();
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "INITIAL_SESSION") return;
+      const id = session?.user?.id ?? null;
+      const before = userRef.current;
+      userRef.current = id;
+      if (before === undefined || before === id) return;
+      load();
     });
     return () => sub.subscription.unsubscribe();
   }, [load]);

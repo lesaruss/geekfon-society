@@ -147,3 +147,11 @@
 .rs-show-cap{padding:10px 12px;display:grid;gap:2px;font-size:12px;line-height:1.4;color:rgba(26,26,26,.65)}
 .rs-show-cap strong{font-size:13px;color:#1a1a1a}
 @media(max-width:520px){.rs-show{grid-template-columns:1fr}.rs-show-album .rs-show-art{width:90px;height:90px}}
+
+/* Gallery laid out like the Support tour's Gallery screen (Sean, 2026-10-04:
+   "you have it set up exactly"): five across, the newest piece large. */
+.rs-gallery{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.rs-tile{aspect-ratio:3/4;border-radius:10px}
+.rs-tile img{position:absolute;inset:0;object-position:top}
+.rs-gallery .rs-tile:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto}
+@media(max-width:700px){.rs-gallery{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}
