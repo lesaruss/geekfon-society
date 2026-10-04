@@ -71,11 +71,9 @@
 
 /* Tour */
 .tour{margin-top:30px}
-.tour-bar{position:sticky;top:72px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;background:#fff;border-bottom:1px solid var(--line)}
 .tour-back{appearance:none;border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;padding:6px 0}
 .tour-back:hover{color:var(--ink)}
 .tour-title{font-size:22px;font-weight:900;margin:22px 0 6px}
-.tour-stops{list-style:none;margin:0;padding:0;display:grid;gap:18px}
 .tour-stop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:24px;align-items:center;padding:22px 0;border-bottom:1px solid var(--line)}
 .tour-num{font-size:12px;font-weight:900;letter-spacing:.18em;color:var(--rx,#e91e8c)}
 .tour-copy h3{font-size:19px;font-weight:900;margin:6px 0 6px}
@@ -130,10 +128,85 @@
   .am-c-artist,.am-c-album{display:none}
   .am-sub{display:block}
   .am-c-time{gap:8px}
-  .tour-bar{top:60px}
   .tour-stop{grid-template-columns:1fr;gap:12px}
   .am-player{border-radius:18px;gap:10px;padding:8px 10px}
   .am-p-controls .am-p-btn:not(.am-p-main){display:none}
   .am-p-cta{padding:9px 12px;font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.sf-img{transition:none}}
+
+/* 2026-10-04 (Sean, round 2): one screen, no page scroll on desktop. The
+   storefront fills the viewport under the 60px site bar; only the song list
+   scrolls, in its own module, ending on the support call to action. The tour
+   is a set of toggles instead of a scroll. */
+@media(min-width:901px){
+  .sf{height:calc(100vh - 60px);height:calc(100dvh - 60px);padding:24px 40px;gap:48px;overflow:hidden}
+  .sf-portrait{position:relative;top:0;height:100%;min-height:0}
+  .sf-right{display:flex;flex-direction:column;min-height:0;padding-top:0}
+  .sf-name{font-size:clamp(40px,min(5.6vw,10vh),96px);margin:0 0 10px}
+  .sf-kicker{margin-bottom:10px}
+  .sf-blurb{font-size:16px;line-height:1.65;margin-top:12px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
+  .sf-music{flex:1;min-height:0;display:flex;flex-direction:column;margin-top:20px}
+  .am{flex:1;min-height:0;display:flex;flex-direction:column}
+  .am-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+  .am-player{position:static;transform:none;width:auto;margin-top:10px;border-radius:14px}
+  .sf-cta{margin:18px 0 6px}
+  /* Tour fills the column: small name, toggles, one stop at a time. */
+  .tour{flex:1;min-height:0;display:flex;flex-direction:column;margin-top:0}
+  .tour-panel{flex:1;min-height:0;display:flex;align-items:center}
+  .tour-panel>*{width:100%}
+}
+@media(min-width:901px) and (max-height:760px){
+  .sf{padding:16px 32px}
+  .sf-blurb{-webkit-line-clamp:3;font-size:15px}
+  .sf-tagline{font-size:12px}
+  .am-row{padding:6px 10px}
+  .am-thumb{width:38px;height:38px}
+}
+.tour-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.tour-name{font-size:22px;font-weight:900;letter-spacing:-.01em;text-transform:uppercase}
+.tour-top-actions{display:flex;align-items:center;gap:14px}
+.tour-title{font-size:20px;margin:16px 0 12px}
+.tour-steps{display:flex;gap:6px;flex-wrap:wrap}
+.tour-step{appearance:none;font:inherit;font-size:12px;font-weight:800;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.tour-step span{font-size:10px;letter-spacing:.1em;color:var(--rx,#e91e8c)}
+.tour-step.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tour-step.on span{color:#fff}
+.tour-step.offer{border-color:var(--rx,#e91e8c);color:var(--rx,#e91e8c)}
+.tour-step.offer.on{background:var(--rx,#e91e8c);color:#fff}
+.tour-panel{margin-top:16px}
+.tour-panel .tour-stop{border-bottom:0;padding:0;grid-template-columns:minmax(0,.9fr) minmax(0,1.2fr);gap:28px}
+.tour-panel .tour-copy h3{font-size:26px}
+.tour-panel .tour-copy p{font-size:15px}
+.tour-panel .tour-visual{min-height:240px;padding:18px}
+.tour-panel .tour-offer{margin-top:0}
+.tour-nav{display:flex;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+@media(max-width:900px){
+  .tour-steps{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+  .tour-step{flex-shrink:0}
+  .tour-panel .tour-stop{grid-template-columns:1fr;gap:12px}
+  .tour-name{font-size:18px}
+  .tour-top-actions{width:100%;justify-content:space-between}
+}
+@media(min-width:901px) and (max-width:1200px){
+  .sf{grid-template-columns:minmax(0,40%) minmax(0,1fr);gap:32px;padding-left:28px;padding-right:28px}
+  .am-head,.am-row{grid-template-columns:minmax(0,1.7fr) minmax(0,1.2fr) 128px}
+  .am-head .am-c-artist,.am-row .am-c-artist{display:none}
+  .am-sub{display:block}
+}
+@media(min-width:901px) and (max-height:700px){
+  .sf-name{font-size:clamp(34px,min(5vw,8vh),60px);margin-bottom:6px}
+  .sf-kicker{margin-bottom:6px;font-size:11px}
+  .sf-blurb{-webkit-line-clamp:2;margin-top:8px}
+  .sf-music{margin-top:12px}
+  .sf-music-note{display:none}
+  .am-head{padding-bottom:6px}
+  .am-player{padding:6px 10px;margin-top:6px}
+  .am-p-now img,.am-p-blank{width:34px;height:34px}
+  .am-p-main{width:36px;height:36px}
+  .tour-title{margin:10px 0 8px;font-size:17px}
+  .tour-panel{margin-top:10px}
+  .tour-panel .tour-visual{min-height:180px}
+  .tour-panel .tour-copy h3{font-size:22px}
+}
+@media(min-width:901px){.tour-panel .tour-visual{min-height:clamp(180px,38vh,420px);display:flex;flex-direction:column;justify-content:center}}
