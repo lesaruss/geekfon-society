@@ -36,11 +36,14 @@
 //     out; nothing from an album still being made (or songs on no visible
 //     album) is shown to anyone outside HQ, radio included;
 //   - an album is OUT when every one of its tracks (remixes aside) is out.
-// Other artists keep the interim rule for radio until they move onto the
-// label model, but their ARTIST PAGES follow HQ release state too
-// (2026-10-04, Sean: "Roxanne is the only one that has songs listed
-// publicly... we shouldn't have it on the other artists until that has been
-// notated in the HQ"): loadArtistDepot only lists songs HQ marks out.
+// Other artists keep the interim rule for radio, but on ARTIST PAGES (and the
+// preview/stream gate) every artist follows HQ release state for ACCESS
+// (2026-10-04, Sean): every catalog song is listed, a song plays in full
+// only once HQ marks it out on DistroKid, and everything else is a 30-second
+// preview that the $11 unlocks in full. The radio still plays every song in
+// full; that's the discovery hack, and the $11 buys on-demand listening.
+// Album-level hiding (nothing from an album still being made) applies to
+// LABEL_ARTISTS only.
 
 import { serviceClient, SUPABASE_URL } from "./supabaseAdmin";
 
@@ -265,7 +268,7 @@ export async function loadArtistRows(artistSlug: string, pageGate = false): Prom
     return { rows: [], rule };
   }
   let rows = (data ?? []) as DepotRow[];
-  if (rule.label) rows = rows.filter(r => rule.label!.visibleIds.has(r.id));
+  if (rule.label && LABEL_ARTISTS.has(slug)) rows = rows.filter(r => rule.label!.visibleIds.has(r.id));
   return { rows: orderRows(rows), rule };
 }
 
@@ -296,7 +299,7 @@ export async function loadArtistDepot(artistSlug: string): Promise<{ songs: Publ
     geekfon_release_date: string | null; gfs_album_tracks: { song_id: string; kind: string; position: number }[] | null;
   };
   const albumRows = ((albumRes.error ? [] : albumRes.data ?? []) as AlbumRow[])
-    .filter(a => !rule.label || rule.label.visibleAlbumIds.has(a.id));
+    .filter(a => !rule.label || !LABEL_ARTISTS.has(slug) || rule.label.visibleAlbumIds.has(a.id));
   const albums: PublicAlbum[] = albumRows.map(a => ({
     id: a.id,
     title: a.title || a.working_title || "Untitled album",
@@ -332,10 +335,10 @@ export async function loadSong(songId: string): Promise<{ row: DepotRow; access:
   const { data, error } = await sb.from("pulse_songs").select(ROW_COLUMNS).eq("id", songId).is("retired_at", null).maybeSingle();
   if (error || !data) return null;
   const row = data as DepotRow;
-  const [singleKeys, states] = await Promise.all([singleKeysFor(row.primary_artist_slug), labelStates([row.primary_artist_slug])]);
+  const [singleKeys, states] = await Promise.all([singleKeysFor(row.primary_artist_slug), labelStates([row.primary_artist_slug], true)]);
   const label = states.get(row.primary_artist_slug) ?? null;
   // A label-model song nobody outside HQ may see does not exist publicly.
-  if (label && !label.visibleIds.has(row.id)) return null;
+  if (label && LABEL_ARTISTS.has(row.primary_artist_slug) && !label.visibleIds.has(row.id)) return null;
   return { row, access: accessOf(row, { singleKeys, label }) };
 }
 
