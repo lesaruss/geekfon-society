@@ -224,7 +224,7 @@ function DayEditor({ date, today, row, lines, cast, onChange, say }: { date: str
           <div className="cw-approve">
             {row.status === "approved"
               ? <>
-                  <span className="cw-muted">Live on the artists&apos; pages{row.day > today ? ` from ${row.day}` : ""}. Lines appear at their times (LA time).</span>
+                  <span className="cw-muted">Live on the artists&apos; pages{row.day > today ? ` from ${row.day}` : ""}. Lines appear at their times. Times here are LA time; readers see them in their own time zone.</span>
                   <button type="button" className="cw-ghost" disabled={!!busy} onClick={() => run("unapprove", () => api("POST", { action: "unapprove", day_id: row.id }), "Day taken down")}>Take down</button>
                 </>
               : <>

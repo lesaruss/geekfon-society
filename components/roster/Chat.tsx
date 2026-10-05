@@ -26,8 +26,12 @@ function dayLabel(day: string, today: string): string {
   return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 }
 
+// Times show in the reader's own time zone (Sean, 2026-10-05: "show the time
+// ... in relation to the time of the person that's looking"). The story's
+// days stay LA days; only the clock is local. Rendered client-side only, so
+// the browser's zone is the reader's.
 function timeLabel(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles" });
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
 // Media rides beside a line as a small icon and opens in a lightbox, so it
