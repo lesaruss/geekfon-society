@@ -11,6 +11,7 @@ import Gallery from "@/components/roster/Gallery";
 import Chat from "@/components/roster/Chat";
 import RadioStrip from "@/components/roster/RadioStrip";
 import SignInGate from "@/components/roster/SignInGate";
+import AdCreative from "@/components/AdCreative";
 import Storefront from "@/components/roster/Storefront";
 import { useFramed } from "@/components/shell/GfsShell";
 import { useArtistPlayer } from "@/components/roster/ArtistPlayer";
@@ -3158,9 +3159,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                 {/* Slide 0: Skyscraper 300x600 */}
                 <div className={"bb-slide" + (bbSlot === 0 ? " active" : "")}>
                   {c.skyscraperUrl ? (
-                    <a href={c.skyscraperLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.skyscraperPlacementId, c.skyscraperCampaignId)}>
-                      <img src={c.skyscraperUrl} alt="Advertisement" className="bb-ad-img" />
-                    </a>
+                    <AdCreative src={c.skyscraperUrl} link={c.skyscraperLink} tall imgClassName="bb-ad-img" onClick={() => handleAdClick(c.skyscraperPlacementId, c.skyscraperCampaignId)} />
                   ) : (
                     <div className="bb-placeholder bb-tall">
                       <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
@@ -3173,9 +3172,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                 <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
                   {isMobile ? (
                     c.primaryAdUrl ? (
-                      <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.primaryAdPlacementId, c.primaryAdCampaignId)}>
-                        <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
-                      </a>
+                      <AdCreative src={c.primaryAdUrl} link={c.primaryAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(c.primaryAdPlacementId, c.primaryAdCampaignId)} />
                     ) : (
                       <div className="bb-placeholder">
                         <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
@@ -3186,9 +3183,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   ) : (
                     <div className="bb-stacked">
                       {c.primaryAdUrl ? (
-                        <a href={c.primaryAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.primaryAdPlacementId, c.primaryAdCampaignId)}>
-                          <img src={c.primaryAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
-                        </a>
+                        <AdCreative src={c.primaryAdUrl} link={c.primaryAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(c.primaryAdPlacementId, c.primaryAdCampaignId)} />
                       ) : (
                         <div className="bb-placeholder">
                           <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
@@ -3197,9 +3192,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                         </div>
                       )}
                       {c.featureAdUrl ? (
-                        <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.featureAdPlacementId, c.featureAdCampaignId)}>
-                          <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
-                        </a>
+                        <AdCreative src={c.featureAdUrl} link={c.featureAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(c.featureAdPlacementId, c.featureAdCampaignId)} />
                       ) : (
                         <div className="bb-placeholder">
                           <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
@@ -3214,9 +3207,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                 {isMobile && (
                   <div className={"bb-slide" + (bbSlot === 2 ? " active" : "")}>
                     {c.featureAdUrl ? (
-                      <a href={c.featureAdLink || '#'} target="_blank" rel="noopener noreferrer" className="bb-ad-link" onClick={() => handleAdClick(c.featureAdPlacementId, c.featureAdCampaignId)}>
-                        <img src={c.featureAdUrl} alt="Advertisement" className="bb-ad-img-sm" />
-                      </a>
+                      <AdCreative src={c.featureAdUrl} link={c.featureAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(c.featureAdPlacementId, c.featureAdCampaignId)} />
                     ) : (
                       <div className="bb-placeholder">
                         <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
