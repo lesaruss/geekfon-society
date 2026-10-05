@@ -3,14 +3,13 @@
 // The artists' group chat (2026-10-04, Sean: "start building the chat, going
 // back to what we used to have"): the GeekFon artists talking to each other
 // day by day, read from one artist's page with that artist on the right.
-// Supporters of the artist (and Lifetime / Pro / staff) read it; staff post
-// lines as any artist, optionally scheduled (a future posted_at stays hidden
-// until then). Lines live in gfs_chat_messages (service role only).
+// Supporters of the artist (and Lifetime / Pro / staff) read it. Lines are
+// written and approved in the Chat Writers' Room (/api/admin/chat-room); only
+// published lines show, and a future posted_at stays hidden until then.
+// Lines live in gfs_chat_messages (service role only).
 //
 // GET  ?day=YYYY-MM-DD   that day's lines (New York days), the days that have
 //                        lines, and the cast (name, avatar, accent).
-// POST { from, body, original?, originalLang?, postedAt?, kind?, drop? }  staff
-// DELETE ?id=<uuid>                                                     staff
 
 import { NextRequest, NextResponse } from "next/server";
 import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
@@ -112,51 +111,4 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   }
 
   return NextResponse.json({ day, days, today: nyDay(now), messages, people, staff: g.staff }, { headers: noStore });
-}
-
-export async function POST(req: NextRequest, { params }: { params: Promise<{ artist: string }> }) {
-  const { artist } = await params;
-  const g = await gate(req, artist);
-  if (!g.ok || !g.staff) return NextResponse.json({ error: "staff only" }, { status: 403, headers: noStore });
-  const sb = serviceClient();
-  if (!sb) return NextResponse.json({ error: "unavailable" }, { status: 503, headers: noStore });
-
-  const b = await req.json().catch(() => null) as {
-    from?: string; body?: string; original?: string; originalLang?: string; postedAt?: string;
-    kind?: "message" | "drop"; drop?: { title?: string; label?: string; cover?: string };
-  } | null;
-  const from = (b?.from || "").trim();
-  const body = (b?.body || "").trim();
-  if (!from || !body) return NextResponse.json({ error: "from and body are required" }, { status: 400, headers: noStore });
-  const postedAt = b?.postedAt ? new Date(b.postedAt) : new Date();
-  if (isNaN(postedAt.getTime())) return NextResponse.json({ error: "bad postedAt" }, { status: 400, headers: noStore });
-  const kind = b?.kind === "drop" ? "drop" : "message";
-
-  const { data, error } = await sb.from("gfs_chat_messages").insert({
-    room: ROOM,
-    from_slug: from,
-    body: body.slice(0, 2000),
-    original: b?.original?.trim() || null,
-    original_lang: b?.original?.trim() ? (b?.originalLang?.trim() || null) : null,
-    kind,
-    drop_title: kind === "drop" ? b?.drop?.title?.trim() || null : null,
-    drop_label: kind === "drop" ? b?.drop?.label?.trim() || null : null,
-    drop_cover: kind === "drop" ? b?.drop?.cover?.trim() || null : null,
-    posted_at: postedAt.toISOString(),
-    created_by: g.viewer.email,
-  }).select("id").single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: noStore });
-  return NextResponse.json({ id: data.id, day: nyDay(postedAt) }, { headers: noStore });
-}
-
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ artist: string }> }) {
-  const { artist } = await params;
-  const g = await gate(req, artist);
-  if (!g.ok || !g.staff) return NextResponse.json({ error: "staff only" }, { status: 403, headers: noStore });
-  const sb = serviceClient();
-  const id = req.nextUrl.searchParams.get("id");
-  if (!sb || !id) return NextResponse.json({ error: "bad request" }, { status: 400, headers: noStore });
-  const { error } = await sb.from("gfs_chat_messages").delete().eq("id", id).eq("room", ROOM);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: noStore });
-  return NextResponse.json({ ok: true }, { headers: noStore });
 }

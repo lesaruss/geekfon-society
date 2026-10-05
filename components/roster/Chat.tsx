@@ -4,8 +4,9 @@
 // Like the original GFS Chat: the crew talking day by day, a day picker,
 // Translate on lines first written in another language, and drop cards for
 // upcoming releases. Read from this artist's side: their lines sit on the
-// right. Supporters read; staff post as any artist (and can schedule a line
-// for later). Data and gating: app/api/roster/[artist]/chat.
+// right. Supporters read; the lines come from the Chat Writers' Room
+// (app/dashboard/chat-room), where staff plan, generate and approve each day.
+// Data and gating: app/api/roster/[artist]/chat.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { ChatMessage, ChatPerson } from "@/app/api/roster/[artist]/chat/route";
@@ -35,6 +36,30 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
   const [error, setError] = useState<string | null>(null);
   const [translated, setTranslated] = useState<Set<string>>(new Set());
   const feedRef = useRef<HTMLDivElement | null>(null);
+  const shellRef = useRef<HTMLDivElement | null>(null);
+
+  // Fit the chat to the screen so the page itself never scrolls (Sean,
+  // 2026-10-04: "it goes too low... it should stop a little above the
+  // selector"): it ends just above the app dock on phones, or at the
+  // bottom of the window on desktop; only the messages scroll.
+  useEffect(() => {
+    const fit = () => {
+      const el = shellRef.current;
+      if (!el) return;
+      const phone = window.innerWidth <= 760;
+      const body = el.closest(".gw-body") as HTMLElement | null;
+      // Phones: the page scrolls, so measure from the top of the document;
+      // the dock covers the bottom 92px (plus the safe area).
+      const top = el.getBoundingClientRect().top + (phone ? window.scrollY : 0);
+      const limit = phone
+        ? window.innerHeight - 92 - 14
+        : Math.min(window.innerHeight, body ? body.getBoundingClientRect().bottom : window.innerHeight) - 18;
+      el.style.height = `${Math.max(360, Math.floor(limit - top))}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [data !== null]);
 
   const load = useCallback(async (day?: string) => {
     try {
@@ -61,12 +86,12 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
 
   if (error === "locked") return null;
   if (error) return <div className="ch-empty">The chat didn&apos;t load. Try again in a moment.</div>;
-  if (!data) return <div className="ch-shell ch-loading" aria-busy="true"><div className="ch-spin" /></div>;
+  if (!data) return <div ref={shellRef} className="ch-shell ch-loading" aria-busy="true"><div className="ch-spin" /></div>;
 
   const person = (s: string): ChatPerson => data.people[s] || { name: s, avatar: null, accent: null };
 
   return (
-    <div className="ch-shell">
+    <div ref={shellRef} className="ch-shell">
       <header className="ch-head">
         <div className="ch-room">
           <strong>GeekFon crew</strong>
@@ -132,100 +157,18 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
                     {showOriginal ? `↻ Translate${m.originalLang && LANGS[m.originalLang] ? ` from ${LANGS[m.originalLang]}` : ""}` : "↺ Show original"}
                   </button>
                 )}
-                {data.staff && <DeleteLine slug={slug} id={m.id} onDone={() => load(data.day)} />}
               </div>
             </div>
           );
         })}
       </div>
 
-      {data.staff
-        ? <Composer slug={slug} people={data.people} onPosted={day => load(day)} />
-        : <div className="ch-foot">You&apos;re reading the crew&apos;s group chat. New lines land here every day.</div>}
-    </div>
-  );
-}
-
-function DeleteLine({ slug, id, onDone }: { slug: string; id: string; onDone: () => void }) {
-  const [busy, setBusy] = useState(false);
-  return (
-    <button type="button" className="ch-del" disabled={busy} onClick={async () => {
-      if (!confirm("Delete this line?")) return;
-      setBusy(true);
-      await fetch(`/api/roster/${encodeURIComponent(slug)}/chat?id=${id}`, { method: "DELETE", headers: await authHeaders() });
-      setBusy(false);
-      onDone();
-    }}>Delete</button>
-  );
-}
-
-// Staff only: post a line as any artist, now or scheduled.
-function Composer({ slug, people, onPosted }: { slug: string; people: Record<string, ChatPerson>; onPosted: (day: string) => void }) {
-  const [from, setFrom] = useState(slug);
-  const [body, setBody] = useState("");
-  const [original, setOriginal] = useState("");
-  const [lang, setLang] = useState("ja");
-  const [when, setWhen] = useState("");
-  const [drop, setDrop] = useState(false);
-  const [dropTitle, setDropTitle] = useState("");
-  const [dropLabel, setDropLabel] = useState("");
-  const [more, setMore] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  async function post() {
-    if (!body.trim()) return;
-    setBusy(true); setErr(null);
-    const res = await fetch(`/api/roster/${encodeURIComponent(slug)}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-      body: JSON.stringify({
-        from, body,
-        ...(original.trim() ? { original, originalLang: lang } : {}),
-        ...(when ? { postedAt: new Date(when).toISOString() } : {}),
-        ...(drop ? { kind: "drop", drop: { title: dropTitle, label: dropLabel } } : {}),
-      }),
-    });
-    setBusy(false);
-    if (!res.ok) { setErr((await res.json().catch(() => ({}))).error || "Couldn't post."); return; }
-    const { day } = await res.json();
-    setBody(""); setOriginal(""); setDropTitle(""); setDropLabel("");
-    onPosted(day);
-  }
-
-  return (
-    <form className="ch-compose" onSubmit={e => { e.preventDefault(); post(); }}>
-      <div className="ch-compose-row">
-        <select value={from} onChange={e => setFrom(e.target.value)} aria-label="Post as">
-          {Object.entries(people).map(([s, p]) => <option key={s} value={s}>{p.name}</option>)}
-        </select>
-        <input value={body} onChange={e => setBody(e.target.value)} placeholder={drop ? "What they say about it" : "Write a line (English)"} aria-label="Line" />
-        <button type="submit" className="ch-send" disabled={busy || !body.trim()}>{busy ? "…" : when ? "Schedule" : "Post"}</button>
+      {/* Lines are written in the Chat Writers' Room, never here (Sean, 2026-10-04).
+          AI attribution per the roster's content rules. */}
+      <div className="ch-foot">
+        A scripted look inside the crew&apos;s group chat, written with AI and approved by GeekFon. New lines land every day.
+        {data.staff && <> <a href="/dashboard/chat-room">Edit in the Writers&apos; Room</a></>}
       </div>
-      <button type="button" className="ch-more" onClick={() => setMore(m => !m)}>{more ? "Fewer options" : "Original language, drop card, schedule"}</button>
-      {more && (
-        <div className="ch-compose-more">
-          <label>Original
-            <span className="ch-inline">
-              <select value={lang} onChange={e => setLang(e.target.value)} aria-label="Original language">
-                {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
-              <input value={original} onChange={e => setOriginal(e.target.value)} placeholder="Optional: the line as they wrote it" />
-            </span>
-          </label>
-          <label className="ch-check"><input type="checkbox" checked={drop} onChange={e => setDrop(e.target.checked)} /> Drop card</label>
-          {drop && (
-            <span className="ch-inline">
-              <input value={dropTitle} onChange={e => setDropTitle(e.target.value)} placeholder="Song title" />
-              <input value={dropLabel} onChange={e => setDropLabel(e.target.value)} placeholder="Label, e.g. Dropping Friday" />
-            </span>
-          )}
-          <label>Post at (your local time; blank posts now)
-            <input type="datetime-local" value={when} onChange={e => setWhen(e.target.value)} />
-          </label>
-        </div>
-      )}
-      {err && <p className="ch-err">{err}</p>}
-    </form>
+    </div>
   );
 }

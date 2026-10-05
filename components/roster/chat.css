@@ -1,5 +1,5 @@
 /* The artists' group chat (components/roster/Chat.tsx). */
-.ch-shell{display:flex;flex-direction:column;height:min(720px,calc(100vh - 220px));min-height:440px;border:1px solid rgba(20,20,20,.1);border-radius:16px;background:#fff;overflow:hidden}
+.ch-shell{display:flex;flex-direction:column;height:min(720px,calc(100vh - 260px));min-height:360px;border:1px solid rgba(20,20,20,.1);border-radius:16px;background:#fff;overflow:hidden}
 .ch-loading{align-items:center;justify-content:center}
 .ch-spin{width:28px;height:28px;border-radius:50%;border:2px solid rgba(0,0,0,.1);border-top-color:var(--rx,#e91e8c);animation:chspin .8s linear infinite}
 @keyframes chspin{to{transform:rotate(360deg)}}
@@ -59,9 +59,11 @@
 .ch-inline input{flex:1}
 .ch-err{margin:0;font-size:12px;color:#c62828}
 @media(max-width:600px){
-  .ch-shell{height:calc(100vh - 230px);border-radius:12px}
+  .ch-shell{border-radius:12px}
   .ch-head{padding:12px 14px}
   .ch-feed{padding:12px}
   .ch-msg{max-width:92%}
   .ch-compose-row select{max-width:110px}
 }
+.ch-foot a{color:var(--rx,#e91e8c);font-weight:800;text-decoration:none;margin-left:4px}
+.ch-foot a:hover{text-decoration:underline}
