@@ -397,7 +397,9 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
       <div className="tour-top">
         <div className="tour-name">{p.artistName}</div>
         <div className="tour-top-actions">
-          <button className="tour-back" onClick={() => p.onMode("music")}>← Back to the music</button>
+          {/* Roster link on both pages (Sean, 2026-10-05); the way back to the
+              music is the Back button below. */}
+          <a className="sf-roster-link" href="/roster">← Roster</a>
           <button className="sf-btn sf-btn-go" onClick={buy} disabled={busy}>{busy ? "Starting..." : "Support now · $11"}</button>
         </div>
       </div>
@@ -414,7 +416,9 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
         ) : offer}
       </div>
       <div className="tour-nav">
-        <button className="sf-btn" onClick={() => setI(Math.max(0, i - 1))} disabled={i === 0} aria-label="Previous">← Back</button>
+        {i === 0
+          ? <button className="sf-btn" onClick={() => p.onMode("music")}>← Back to the music</button>
+          : <button className="sf-btn" onClick={() => setI(i - 1)} aria-label="Previous">← Back</button>}
         <div className="tour-dots" role="tablist" aria-label="Steps">
           {Array.from({ length: total }, (_, n) => (
             <button key={n} role="tab" aria-selected={n === i} aria-label={n === last ? "Support" : stops[n].title} className={"tour-dot" + (n === i ? " on" : "")} onClick={() => setI(n)} />

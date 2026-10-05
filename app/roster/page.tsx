@@ -118,12 +118,6 @@ function ArtistCard({ a }: { a: Artist }) {
             decoding="async"
             width={400}
             height={400}
-            // Roxanne's portrait has the head right at the top edge of the
-            // source art. Shift the visible crop down for her only - other
-            // artists have natural headroom and don't need this.
-            // Doing this per-slug (not a shared CSS change) on purpose per
-            // Sean, to prove out the fix on one artist before any rollout.
-            style={a.slug === "roxanne" ? { objectPosition: "center 20%" } : undefined}
           />
         ) : (
           <div className="r-card-fallback" style={{ backgroundColor: accent + "33" }}>
