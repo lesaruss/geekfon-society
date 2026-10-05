@@ -527,8 +527,12 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 /* Cover art in the circle (2026-10-05): the art stays bright; the play icon
    sits on a soft scrim while paused, and while playing the pause icon only
    appears on hover so the art isn't covered. */
-.rd-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; animation: rdCoverIn .6s ease; }
-@keyframes rdCoverIn { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+.rd-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; animation: rdCoverIn .6s ease, rdSpin 24s linear infinite; animation-play-state: running, paused; }
+@keyframes rdCoverIn { from { opacity: 0; } to { opacity: 1; } }
+/* Turns slowly like a record while the radio plays (Sean, 2026-10-05) and
+   holds its angle when paused. */
+@keyframes rdSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.rd-play-btn.playing .rd-cover-img { animation-play-state: running, running; }
 .rd-cover-scrim { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(0,0,0,.45) 0%, rgba(0,0,0,.15) 55%, rgba(0,0,0,0) 75%); transition: opacity .25s; pointer-events: none; }
 .rd-play-btn.has-cover .rd-play-icon { opacity: .9; }
 .rd-play-btn.has-cover.playing .rd-cover-scrim,
