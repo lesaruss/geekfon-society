@@ -573,7 +573,12 @@ html.artist-playing .gbody{padding-bottom:92px}
 /* Bands (2026-10-04, Sean: Shamanic Resin's portrait was cut off): a group
    shot is shown whole, on any frame shape, instead of zoomed to one person. */
 .sf-portrait-group .sf-img,.sf-portrait-group .sf-img.on{object-fit:contain;object-position:50% 100%;transform:none}
-@media(max-width:900px){.sf-portrait-group{aspect-ratio:3/4;max-height:70vh}}
+/* Phones (Sean, 2026-10-05): every artist's portrait is shown whole, the way
+   the band shot is, instead of the tighter head-to-hip crop. */
+@media(max-width:900px){
+  .sf-portrait{aspect-ratio:3/4;max-height:70vh}
+  .sf-portrait .sf-img,.sf-portrait .sf-img.on{object-fit:contain;object-position:50% 100%;transform:none}
+}
 
 /* Docked player (Music section): sits in the song list above the Support
    bar, in the flow, so it never covers the universal bar. Phones keep the
