@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { loadArtistRows, accessOf } from "@/lib/server/depot";
 import { signStreams, asDownload } from "@/lib/server/depot";
 import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
+import { serviceClient } from "@/lib/server/supabaseAdmin";
 import { loadFanBible } from "@/lib/server/bible";
 import { loadGallery } from "@/lib/server/gallery";
 
@@ -48,9 +49,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   const ent = await entitlementFor(viewer, artist);
   const { rows, rule } = await loadArtistRows(artist, true);
 
+  // An album supporter hears that album's songs; songs on other albums (or
+  // on none yet) stay previews until they buy that album too.
+  let onOwnedAlbum: (id: string) => boolean = () => true;
+  if (ent.supporter && ent.albumIds) {
+    const owned = ent.albumIds;
+    const { data: tracks } = await serviceClient()!.from("gfs_album_tracks").select("song_id, album_id").in("album_id", [...owned]);
+    const songIds = new Set((tracks ?? []).map((t: { song_id: string }) => t.song_id));
+    onOwnedAlbum = id => songIds.has(id);
+  }
   const grantRows = rows.filter(r => {
     if (!r.src_path || accessOf(r, rule) === "single") return false;
-    return ent.supporter || ent.ownedTitles.has(r.title);
+    return (ent.supporter && onOwnedAlbum(r.id)) || ent.ownedTitles.has(r.title);
   });
 
   // Downloads of public singles for supporters with download rights.

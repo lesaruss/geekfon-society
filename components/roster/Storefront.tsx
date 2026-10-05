@@ -324,7 +324,9 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
       key: "album",
       title: `${p.album.title}, in full`,
       text: realAlbum
-        ? `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full${p.album.out ? " with downloads" : ", before the album is out everywhere"}.`
+        ? p.album.out
+          ? `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full with downloads. Only on GeekFon.`
+          : `${mains.length} of ${p.album.trackTarget} songs so far${remixes.length ? `, plus ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full, and every song added to the album until it's complete. Only on GeekFon.`
         : mains.length
           ? `The ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""} on ${p.artistName}'s first album, streaming in full. A new album is a new release of its own.`
           : `${p.artistName}'s first album, streaming in full the day it comes out.`,
@@ -382,7 +384,7 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
           )}
         </div>
         <ul>
-          <li><strong>{p.album.title}</strong> in full{!realAlbum ? `: all ${mains.length} songs${remixes.length ? ` and ${remixes.length} remixes` : ""}` : p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
+          <li><strong>{p.album.title}</strong> in full{!realAlbum ? `: all ${mains.length} songs${remixes.length ? ` and ${remixes.length} remixes` : ""}` : p.album.out ? `: all ${mains.length} songs${remixes.length ? ` and ${remixes.length} remixes` : ""}, with downloads` : `: ${mains.length} of ${p.album.trackTarget} songs so far, and the rest as they're finished`}</li>
           <li><strong>Social feed, Press and Chat</strong>, every day</li>
           <li><strong>The Gallery</strong> of wallpapers and art</li>
           <li><strong>Radio</strong>: every station {p.artistName} is on</li>

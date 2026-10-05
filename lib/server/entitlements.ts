@@ -25,6 +25,11 @@ export type Entitlement = {
   allArtists: boolean; // Lifetime / grandfathered All Access / Pro / staff
   download: boolean;
   ownedTitles: Set<string>;
+  // Which of the artist's albums the vault covers: null means every song
+  // (staff, Lifetime, Pro, or an artist-wide unlock); otherwise only the
+  // songs on these albums (Sean, 2026-10-05: the $11 buys an album, and a
+  // new album is a new release of its own).
+  albumIds: Set<string> | null;
   reason: "staff" | "lifetime" | "pro" | "support" | "none";
 };
 
@@ -43,7 +48,7 @@ export async function viewerFromRequest(req: NextRequest): Promise<Viewer | null
 }
 
 export async function entitlementFor(viewer: Viewer | null, artistSlug: string): Promise<Entitlement> {
-  const none: Entitlement = { supporter: false, allArtists: false, download: false, ownedTitles: new Set(), reason: "none" };
+  const none: Entitlement = { supporter: false, allArtists: false, download: false, ownedTitles: new Set(), albumIds: null, reason: "none" };
   if (!viewer) return none;
   const sb = serviceClient();
   if (!sb) return none;
@@ -54,18 +59,22 @@ export async function entitlementFor(viewer: Viewer | null, artistSlug: string):
 
   const [{ data: member }, { data: unlocks }, { data: owned }] = await Promise.all([
     sb.from("gfs_members").select("tier, is_pro, role").eq("user_id", viewer.id).maybeSingle(),
-    sb.from("gfs_artist_unlocks").select("id, download_enabled").eq("user_id", viewer.id).in("artist_slug", slugs),
+    sb.from("gfs_artist_unlocks").select("id, download_enabled, album_id").eq("user_id", viewer.id).in("artist_slug", slugs),
     sb.from("gfs_track_purchases").select("track_name").eq("user_id", viewer.id).in("artist_slug", slugs),
   ]);
 
   const ownedTitles = new Set((owned ?? []).map((r: { track_name: string }) => r.track_name));
   const isStaff = viewer.email === ADMIN_EMAIL || member?.role === "super_admin";
-  if (isStaff) return { supporter: true, allArtists: true, download: true, ownedTitles, reason: "staff" };
-  if (member?.tier && ALL_ARTIST_TIERS.has(member.tier)) return { supporter: true, allArtists: true, download: true, ownedTitles, reason: "lifetime" };
-  if (member?.is_pro) return { supporter: true, allArtists: true, download: false, ownedTitles, reason: "pro" };
+  if (isStaff) return { supporter: true, allArtists: true, download: true, ownedTitles, albumIds: null, reason: "staff" };
+  if (member?.tier && ALL_ARTIST_TIERS.has(member.tier)) return { supporter: true, allArtists: true, download: true, ownedTitles, albumIds: null, reason: "lifetime" };
+  if (member?.is_pro) return { supporter: true, allArtists: true, download: false, ownedTitles, albumIds: null, reason: "pro" };
   if (unlocks && unlocks.length > 0) {
-    const download = unlocks.some((u: { download_enabled: boolean | null }) => u.download_enabled !== false);
-    return { supporter: true, allArtists: false, download, ownedTitles, reason: "support" };
+    type Unlock = { download_enabled: boolean | null; album_id: string | null };
+    const rows = unlocks as Unlock[];
+    const download = rows.some(u => u.download_enabled !== false);
+    // An unlock with no album (the older season pass) covers every song.
+    const albumIds = rows.some(u => !u.album_id) ? null : new Set(rows.map(u => u.album_id!));
+    return { supporter: true, allArtists: false, download, ownedTitles, albumIds, reason: "support" };
   }
   return { ...none, ownedTitles };
 }
