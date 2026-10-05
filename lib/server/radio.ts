@@ -23,6 +23,51 @@ import { STREAM_BUCKET, publicStreamUrl, titleKey, labelStates, type LabelState 
 import type { RadioTrack, ScheduleOverride } from "@/lib/radioSchedule";
 
 const SIGNED_TTL_SECONDS = 24 * 60 * 60;
+const MAIN_STATION_SLUG = "main";
+
+// ---------------------------------------------------------------------------
+// Sponsor spots (Sean, 2026-10-05): a station's own artist reads a short spot
+// with their instrumental underneath, BETWEEN songs, never over one. Each
+// station's active public.radio_spots rows are slotted into its rotation after
+// every `every_n_songs` songs, taking turns when a station has several. Being
+// part of the rotation keeps the synced clock identical for every listener.
+// Managed from the admin Radio Schedule page (Spots).
+
+type SpotRow = { label: string; sponsor_name: string; voiced_by: string | null; src_url: string; duration_seconds: number; click_url: string | null; every_n_songs: number; starts_at: string | null; ends_at: string | null };
+
+async function stationSpots(sb: NonNullable<ReturnType<typeof serviceClient>>, slug: string): Promise<SpotRow[]> {
+  const { data } = await sb
+    .from("radio_spots")
+    .select("label, sponsor_name, voiced_by, src_url, duration_seconds, click_url, every_n_songs, starts_at, ends_at")
+    .eq("is_active", true)
+    .contains("station_slugs", [slug])
+    .order("sort_order", { ascending: true });
+  const now = Date.now();
+  return ((data ?? []) as SpotRow[]).filter(s =>
+    (!s.starts_at || Date.parse(s.starts_at) <= now) && (!s.ends_at || Date.parse(s.ends_at) > now));
+}
+
+function withSpots(rotation: RadioTrack[], spots: SpotRow[], names: Map<string, string>): RadioTrack[] {
+  if (!spots.length || !rotation.length) return rotation;
+  const every = Math.max(1, Math.min(...spots.map(s => s.every_n_songs || 4)));
+  const out: RadioTrack[] = [];
+  let next = 0;
+  rotation.forEach((t, i) => {
+    out.push(t);
+    if ((i + 1) % every !== 0) return;
+    const s = spots[next++ % spots.length];
+    out.push({
+      kind: "spot",
+      path: s.src_url,
+      title: s.label,
+      artist: (s.voiced_by && names.get(s.voiced_by)) || s.sponsor_name,
+      durationSeconds: Number(s.duration_seconds),
+      linkUrl: s.click_url || undefined,
+      sponsor: s.sponsor_name,
+    });
+  });
+  return out;
+}
 
 // Radio plays every song in the catalog, released or not, for discovery:
 // listeners can't pick or see what's next (Sean, 2026-10-04). The Radio
@@ -44,7 +89,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
   if (!sb) return { rotation: [], overrides: [] };
   const nowIso = new Date().toISOString();
 
-  const [{ data: rt }, { data: ov }, { data: artists }] = await Promise.all([
+  const [{ data: rt }, { data: ov }, { data: artists }, spots] = await Promise.all([
     sb.from("radio_tracks")
       .select("id, artist_slug, title, radio_order, sort_order")
       .eq("is_public", true)
@@ -57,6 +102,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
       .select("kind, label, ad_src_path, starts_at, duration_seconds, cadence_seconds, track_id")
       .eq("is_active", true),
     sb.from("gfs_artists").select("slug, name, profile"),
+    stationSpots(sb, MAIN_STATION_SLUG),
   ]);
 
   const rtRows = (rt ?? []) as RtRow[];
@@ -140,7 +186,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
     return [];
   });
 
-  return { rotation, overrides };
+  return { rotation: withSpots(rotation, spots, names), overrides };
 }
 
 // ---------------------------------------------------------------------------
@@ -157,7 +203,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
 
 export type RadioStation = { slug: string; name: string; tagline: string | null };
 
-export const MAIN_STATION: RadioStation = { slug: "main", name: "GeekFon Radio", tagline: "The whole roster" };
+export const MAIN_STATION: RadioStation = { slug: MAIN_STATION_SLUG, name: "GeekFon Radio", tagline: "The whole roster" };
 
 export async function listStations(): Promise<RadioStation[]> {
   const sb = serviceClient();
@@ -196,9 +242,10 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
     .not("src_path", "is", null);
   q = songIds.length ? q.in("id", songIds) : q.in("primary_artist_slug", (station.artist_slugs ?? []) as string[]);
   if (!station.include_remixes) q = q.eq("is_remix", false);
-  const [{ data: rawSongs }, { data: exclusiveRows }] = await Promise.all([
+  const [{ data: rawSongs }, { data: exclusiveRows }, spots] = await Promise.all([
     q,
     sb.from("gfs_radio_stations").select("slug, song_ids").eq("active", true).eq("exclusive", true).neq("slug", slug),
+    stationSpots(sb, slug),
   ]);
   const heldElsewhere = new Set(((exclusiveRows ?? []) as { song_ids: string[] | null }[]).flatMap(r => r.song_ids ?? []));
   const candidates = ((rawSongs ?? []) as StationSong[]).filter(s => !heldElsewhere.has(s.id));
@@ -210,7 +257,8 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
   const artists: string[] = songIds.length
     ? Array.from(new Set(songIds.map(id => songs.find(s => s.id === id)?.primary_artist_slug).filter((a): a is string => !!a)))
     : ((station.artist_slugs ?? []) as string[]);
-  const { data: artistRows } = await sb.from("gfs_artists").select("slug, name, profile").in("slug", artists);
+  const voices = spots.map(sp => sp.voiced_by).filter((v): v is string => !!v);
+  const { data: artistRows } = await sb.from("gfs_artists").select("slug, name, profile").in("slug", Array.from(new Set([...artists, ...voices])));
 
   type ArtistRow = { slug: string; name: string | null; profile: { tracks?: { n?: string; v?: string }[] } | null };
   const names = new Map<string, string>();
@@ -247,7 +295,7 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
     if (!path) continue;
     rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, title: s.title, path, durationSeconds: s.duration_seconds || 180 });
   }
-  return { rotation, overrides: [] };
+  return { rotation: withSpots(rotation, spots, names), overrides: [] };
 }
 
 // Stations an artist can be heard on, for the "on GeekFon Radio" strip on

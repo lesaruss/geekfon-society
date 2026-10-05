@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useDashboard } from "../context";
 import { supabase } from "@/lib/supabase";
+import RadioSpots from "@/components/admin/RadioSpots";
 
 interface RadioTrack {
   id: string;
@@ -286,6 +287,8 @@ export default function RadioSchedulePage() {
           )}
         </div>
       </div>
+
+      <RadioSpots authHeaders={authHeaders} />
 
       {addOpen && (
         <div className="rdc-add-panel">

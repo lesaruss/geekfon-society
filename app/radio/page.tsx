@@ -360,7 +360,7 @@ export default function RadioPage() {
             {loadingPlaylist
               ? "TUNING IN"
               : nowPlaying?.type === "ad"
-              ? "AD BREAK"
+              ? (nowPlaying.sponsor ? `WITH ${nowPlaying.sponsor.toUpperCase()}` : "AD BREAK")
               : nowPlaying?.type === "pinned"
               ? "LIVE PREMIERE"
               : playing ? "NOW PLAYING - LIVE WORLDWIDE" : "READY TO TUNE IN"}
@@ -373,6 +373,13 @@ export default function RadioPage() {
               ? <a className="rd-np-artist rd-np-artist-link" href={href} target="_blank" rel="noopener" title={`Open ${nowPlaying.artist}'s page in a new tab`}>{nowPlaying.artist} <span aria-hidden="true">↗</span></a>
               : <div className="rd-np-artist">{nowPlaying.artist}</div>;
           })()}
+          {/* A sponsor spot (radio_spots) names its sponsor and links out through its
+              tracked /go link, so a tap counts. New tab keeps the radio playing. */}
+          {nowPlaying?.type === "ad" && nowPlaying.linkUrl && (
+            <a className="rd-sponsor" href={nowPlaying.linkUrl} target="_blank" rel="noopener sponsored">
+              Shop {nowPlaying.sponsor || "now"} <span aria-hidden="true">↗</span>
+            </a>
+          )}
 
           {playing && duration > 0 && (
             <div className="rd-progress">
@@ -541,6 +548,8 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 .rd-np-artist-link { display: inline-block; text-decoration: none; pointer-events: auto; border-bottom: 1px solid rgba(255,255,255,.2); }
 .rd-np-artist-link:hover { color: #fff; border-bottom-color: #fff; }
 .rd-np-artist { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.05em; }
+.rd-sponsor { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 9px 18px; border-radius: 999px; background: #fff; color: #111; font-size: 13px; font-weight: 800; letter-spacing: .02em; text-decoration: none; pointer-events: auto; }
+.rd-sponsor:hover { background: rgba(255,255,255,.85); }
 
 .rd-progress { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 .rd-time { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35); font-variant-numeric: tabular-nums; white-space: nowrap; }
