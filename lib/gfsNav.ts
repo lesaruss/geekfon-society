@@ -67,6 +67,8 @@ export function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = 
   // account-only gate as Release Schedule (locked 2026-07-07), not a tier/role perk.
   if (canSeeRadioSchedule) {
     base = [...base, { label: "Radio Schedule", href: "/dashboard/radio-schedule" }];
+    // The artists' group chat back end (2026-10-04), same account-only gate.
+    base = [...base, { label: "Chat Writers' Room", href: "/dashboard/chat-room" }];
   }
   // Members list (name/email/tier/points/joined/last login) - same account-only gate,
   // not a tier/role perk. Standalone page pulled out of the dashboard 2026-07-13.
@@ -97,6 +99,7 @@ export function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = 
 const TOOL_HREFS = new Set([
   "/dashboard/release-schedule",
   "/dashboard/radio-schedule",
+  "/dashboard/chat-room",
   "/dashboard/members",
   "/dashboard/outreach",
   "/dashboard/pro-applications",
