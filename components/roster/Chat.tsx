@@ -8,6 +8,7 @@
 // (app/dashboard/chat-room), where staff plan, generate and approve each day.
 // Data and gating: app/api/roster/[artist]/chat.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import type { ChatMessage, ChatPerson } from "@/app/api/roster/[artist]/chat/route";
 import "./chat.css";
@@ -26,8 +27,17 @@ function dayLabel(day: string, today: string): string {
 }
 
 function timeLabel(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles" });
 }
+
+// Media rides beside a line as a small icon and opens in a lightbox, so it
+// never takes over the chat (Sean, 2026-10-05).
+const MEDIA_ICON: Record<string, React.ReactNode> = {
+  image: <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>,
+  video: <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>,
+  audio: <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 10v4h4l5 4V6L8 10zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /></svg>,
+};
+const MEDIA_LABEL: Record<string, string> = { image: "View photo", video: "Watch video", audio: "Listen" };
 
 const LANGS: Record<string, string> = { ja: "Japanese", ko: "Korean", es: "Spanish", fr: "French", pt: "Portuguese", zh: "Chinese" };
 
@@ -35,6 +45,13 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [translated, setTranslated] = useState<Set<string>>(new Set());
+  const [viewing, setViewing] = useState<ChatMessage | null>(null);
+  useEffect(() => {
+    if (!viewing) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setViewing(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewing]);
   const feedRef = useRef<HTMLDivElement | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
 
@@ -148,8 +165,15 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
                     </div>
                   </div>
                 ) : (
-                  <div className="ch-bubble" style={me ? { background: p.accent || undefined } : undefined}>
-                    {showOriginal ? m.original : m.body}
+                  <div className="ch-bubble-row">
+                    <div className="ch-bubble" style={me ? { background: p.accent || undefined } : undefined}>
+                      {showOriginal ? m.original : m.body}
+                    </div>
+                    {m.media && (
+                      <button type="button" className={"ch-media ch-media-" + m.media.kind} onClick={() => setViewing(m)} aria-label={`${MEDIA_LABEL[m.media.kind]} from ${p.name}`} title={MEDIA_LABEL[m.media.kind]}>
+                        {MEDIA_ICON[m.media.kind]}
+                      </button>
+                    )}
                   </div>
                 )}
                 {m.original && (
@@ -162,6 +186,23 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
           );
         })}
       </div>
+
+      {/* Over the whole screen, not inside the frame window (its glass
+          backdrop makes it the containing block for fixed children). */}
+      {viewing?.media && typeof document !== "undefined" && createPortal(
+        <div className="ch-lightbox" role="dialog" aria-modal="true" aria-label={MEDIA_LABEL[viewing.media.kind]} onClick={() => setViewing(null)}>
+          <div className="ch-lightbox-inner" onClick={e => e.stopPropagation()}>
+            {viewing.media.kind === "video" ? <video src={viewing.media.url} controls autoPlay playsInline />
+              : viewing.media.kind === "audio" ? <audio src={viewing.media.url} controls autoPlay />
+              : <img src={viewing.media.url} alt={viewing.body} />}
+            <div className="ch-lightbox-bar">
+              <span><strong>{person(viewing.from).name}</strong> {viewing.body}</span>
+              <button type="button" onClick={() => setViewing(null)}>Close</button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {/* Lines are written in the Chat Writers' Room, never here (Sean, 2026-10-04).
           AI attribution per the roster's content rules. */}

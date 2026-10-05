@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabase";
 
 type Story = { id: string; title: string; premise: string; secrets: string; tone: string; starts_on: string | null; ends_on: string | null };
 type Day = { id: string; day: string; beat: string; cast: string[]; direction: string | null; status: "planned" | "draft" | "approved"; notes: string | null; generated_at: string | null; approved_at: string | null };
-type Line = { id: string; day_id: string; from_slug: string; body: string; original: string | null; original_lang: string | null; posted_at: string; published: boolean };
+type Line = { id: string; day_id: string; from_slug: string; body: string; original: string | null; original_lang: string | null; posted_at: string; published: boolean; media_url: string | null; media_kind: "image" | "video" | "audio" | null; media_poster: string | null; photo_prompt: string | null; tagged: string[] | null };
 type CastMember = { slug: string; name: string; avatar: string | null; accent: string | null; hasVoice: boolean };
 type Data = { today: string; story: Story | null; days: Day[]; lines: Line[]; cast: CastMember[] };
 
@@ -43,8 +43,9 @@ function dayLabel(day: string, today: string): string {
   return day === today ? `Today · ${d}` : d;
 }
 
-function nyTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "America/New_York" });
+// Story time is LA time: the chat lives in the LA house.
+function laTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "America/Los_Angeles" });
 }
 
 export default function ChatWritersRoom() {
@@ -63,11 +64,13 @@ export default function ChatWritersRoom() {
   useEffect(() => { document.querySelector(".cw-day.today")?.scrollIntoView({ block: "center" }); }, [data !== null]);
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(null), 3200); };
 
-  // The plan shows every day from a week back to three weeks out.
+  // The plan shows every day from the story's first day (or a week back) to
+  // three weeks out.
   const planDays = useMemo(() => {
     if (!data) return [];
+    const first = [data.story?.starts_on, data.days[0]?.day, addDays(data.today, -7)].filter(Boolean).sort()[0] as string;
     const out: string[] = [];
-    for (let i = -7; i <= 21; i++) out.push(addDays(data.today, i));
+    for (let d = first; d <= addDays(data.today, 21); d = addDays(d, 1)) out.push(d);
     return out;
   }, [data]);
 
@@ -221,11 +224,12 @@ function DayEditor({ date, today, row, lines, cast, onChange, say }: { date: str
           <div className="cw-approve">
             {row.status === "approved"
               ? <>
-                  <span className="cw-muted">Live on the artists&apos; pages{row.day > today ? ` from ${row.day}` : ""}. Lines appear at their times (New York).</span>
+                  <span className="cw-muted">Live on the artists&apos; pages{row.day > today ? ` from ${row.day}` : ""}. Lines appear at their times (LA time).</span>
                   <button type="button" className="cw-ghost" disabled={!!busy} onClick={() => run("unapprove", () => api("POST", { action: "unapprove", day_id: row.id }), "Day taken down")}>Take down</button>
                 </>
               : <>
-                  <span className="cw-muted">Edit any line, then approve to publish this day.</span>
+                  <span className="cw-muted">Edit any line, then approve to publish this day. Photos and videos post to the tagged artists&apos; Social feeds when you approve.</span>
+                  <button type="button" className="cw-ghost" disabled={!!busy} onClick={() => { if (confirm("Clear this day? Its lines and beat are deleted.")) run("clear", () => api("POST", { action: "clear_day", day_id: row.id }), "Day cleared"); }}>Clear day</button>
                   <button type="button" className="cw-go" disabled={!!busy} onClick={() => run("approve", () => api("POST", { action: "approve", day_id: row.id }), "Day approved")}>{busy === "approve" ? "Approving…" : "Approve day"}</button>
                 </>}
           </div>
@@ -238,22 +242,34 @@ function DayEditor({ date, today, row, lines, cast, onChange, say }: { date: str
 function LineRow({ line, date, people, who, onChange }: { line: Line; date: string; people: Record<string, CastMember>; who: string[]; onChange: () => Promise<void> }) {
   const [body, setBody] = useState(line.body);
   const [from, setFrom] = useState(line.from_slug);
-  const [time, setTime] = useState(nyTime(line.posted_at));
+  const [time, setTime] = useState(laTime(line.posted_at));
   const p = people[from];
-  const dirty = body !== line.body || from !== line.from_slug || time !== nyTime(line.posted_at);
+  const dirty = body !== line.body || from !== line.from_slug || time !== laTime(line.posted_at);
   async function save() {
     await api("POST", { action: "edit_line", id: line.id, body, from, time, day: date });
     await onChange();
   }
   return (
     <div className="cw-line" style={p?.accent ? { borderLeftColor: p.accent } : undefined}>
-      <input className="cw-time" value={time} onChange={e => setTime(e.target.value)} aria-label="Time (New York)" />
+      <input className="cw-time" value={time} onChange={e => setTime(e.target.value)} aria-label="Time (LA)" />
       <select value={from} onChange={e => setFrom(e.target.value)} aria-label="Speaker">
         {[...new Set([...who, from])].map(s => <option key={s} value={s}>{people[s]?.name || s}</option>)}
       </select>
       <div className="cw-line-text">
         <textarea rows={1} value={body} onChange={e => setBody(e.target.value)} aria-label="Line" />
         {line.original && <span className="cw-orig">{line.original_lang ? `${line.original_lang}: ` : ""}{line.original}</span>}
+        {(line.photo_prompt || line.media_url) && (
+          <div className="cw-media">
+            <span className="cw-media-kind">{line.media_kind === "video" ? "▶ Video" : line.media_kind === "audio" ? "♪ Audio" : "📷 Photo"}</span>
+            {line.media_url
+              ? <a href={line.media_url} target="_blank" rel="noopener noreferrer" className="cw-media-thumb">
+                  {line.media_kind === "image" || line.media_poster ? <img src={line.media_kind === "image" ? line.media_url : line.media_poster!} alt="" /> : "Open"}
+                </a>
+              : <span className="cw-media-pending">to be made</span>}
+            {line.photo_prompt && <span className="cw-media-prompt">{line.photo_prompt}</span>}
+            {(line.tagged?.length ?? 0) > 0 && <span className="cw-media-tags">Tagged: {line.tagged!.map(t => people[t]?.name || t).join(", ")}</span>}
+          </div>
+        )}
       </div>
       {dirty && <button type="button" className="cw-mini" onClick={save}>Save</button>}
       <button type="button" className="cw-mini cw-del" onClick={async () => { await api("POST", { action: "delete_line", id: line.id }); await onChange(); }} aria-label="Delete line">✕</button>
@@ -267,7 +283,7 @@ function AddLine({ dayId, who, people, onChange }: { dayId: string; who: string[
   const [body, setBody] = useState("");
   return (
     <form className="cw-line cw-add" onSubmit={async e => { e.preventDefault(); if (!body.trim()) return; await api("POST", { action: "add_line", day_id: dayId, from, time, body }); setBody(""); await onChange(); }}>
-      <input className="cw-time" value={time} onChange={e => setTime(e.target.value)} aria-label="Time (New York)" />
+      <input className="cw-time" value={time} onChange={e => setTime(e.target.value)} aria-label="Time (LA)" />
       <select value={from} onChange={e => setFrom(e.target.value)} aria-label="Speaker">
         {who.map(s => <option key={s} value={s}>{people[s]?.name || s}</option>)}
       </select>
@@ -391,6 +407,13 @@ const CSS = `
 .cw-line-text { display: grid; gap: 4px; }
 .cw-line-text textarea { width: 100%; box-sizing: border-box; field-sizing: content; min-height: 38px; }
 .cw-orig { font-size: 12px; color: rgba(255,255,255,.5); }
+.cw-media { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; border-radius: 8px; background: rgba(170,255,0,.05); border: 1px dashed rgba(170,255,0,.25); font-size: 12px; color: rgba(255,255,255,.7); }
+.cw-media-kind { font-weight: 900; color: #AAFF00; }
+.cw-media-thumb img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; display: block; }
+.cw-media-thumb { color: #AAFF00; font-weight: 800; }
+.cw-media-pending { font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.45); }
+.cw-media-prompt { flex-basis: 100%; line-height: 1.45; }
+.cw-media-tags { font-weight: 700; color: rgba(255,255,255,.55); }
 .cw-mini { background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; font: inherit; font-size: 11px; font-weight: 800; padding: 8px 10px; cursor: pointer; }
 .cw-del { color: #ff8a80; }
 .cw-add { margin-top: 8px; border-left-style: dashed; }

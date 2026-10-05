@@ -8,7 +8,7 @@
 // published lines show, and a future posted_at stays hidden until then.
 // Lines live in gfs_chat_messages (service role only).
 //
-// GET  ?day=YYYY-MM-DD   that day's lines (New York days), the days that have
+// GET  ?day=YYYY-MM-DD   that day's lines (LA days), the days that have
 //                        lines, and the cast (name, avatar, accent).
 
 import { NextRequest, NextResponse } from "next/server";
@@ -20,7 +20,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const ROOM = "geekfon-crew";
-const TZ = "America/New_York";
+// The story lives in the LA house, so its days and clock are LA time (2026-10-05).
+const TZ = "America/Los_Angeles";
 const noStore = { "Cache-Control": "private, no-store" };
 
 export type ChatMessage = {
@@ -33,20 +34,23 @@ export type ChatMessage = {
   drop: { title: string | null; label: string | null; cover: string | null } | null;
   postedAt: string;
   scheduled?: boolean;
+  /** A photo, video or audio clip shown as an icon beside the line. */
+  media?: { url: string; kind: "image" | "video" | "audio" };
 };
 export type ChatPerson = { name: string; avatar: string | null; accent: string | null };
 
 type Row = {
   id: string; from_slug: string; body: string; original: string | null; original_lang: string | null;
   kind: "message" | "drop"; drop_title: string | null; drop_label: string | null; drop_cover: string | null; posted_at: string;
+  media_url: string | null; media_kind: "image" | "video" | "audio" | null;
 };
 
-// The New York calendar day of an instant, as YYYY-MM-DD.
+// The story-time (LA) calendar day of an instant, as YYYY-MM-DD.
 function nyDay(iso: string | Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
 }
 
-// The UTC instants bounding a New York day (DST-safe: probe the offset at noon).
+// The UTC instants bounding a story-time day (DST-safe: probe the offset at noon).
 function nyDayBounds(day: string): [string, string] {
   const noon = new Date(`${day}T12:00:00Z`);
   const local = new Date(noon.toLocaleString("en-US", { timeZone: TZ }));
@@ -82,7 +86,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   const day = asked && /^\d{4}-\d{2}-\d{2}$/.test(asked) ? asked : (days.filter(d => d <= nyDay(now)).pop() ?? days[days.length - 1] ?? nyDay(now));
   const [from, to] = nyDayBounds(day);
   let q = sb.from("gfs_chat_messages")
-    .select("id, from_slug, body, original, original_lang, kind, drop_title, drop_label, drop_cover, posted_at")
+    .select("id, from_slug, body, original, original_lang, kind, drop_title, drop_label, drop_cover, posted_at, media_url, media_kind")
     .eq("room", ROOM).eq("published", true).gte("posted_at", from).lt("posted_at", to).order("posted_at", { ascending: true });
   if (!g.staff) q = q.lte("posted_at", now);
   const { data: rows } = await q;
@@ -97,6 +101,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
     drop: r.kind === "drop" ? { title: r.drop_title, label: r.drop_label, cover: r.drop_cover } : null,
     postedAt: r.posted_at,
     ...(r.posted_at > now ? { scheduled: true } : {}),
+    ...(r.media_url ? { media: { url: r.media_url, kind: r.media_kind || "image" } } : {}),
   }));
 
   // Everyone the Writers' Room can cast (roster plus Logan and LoLA).

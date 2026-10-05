@@ -9,21 +9,27 @@
 //
 // GET                         story, days in a window, their lines, the cast list
 // POST { action, ... }        save_story | save_day | generate | edit_line |
-//                             add_line | delete_line | approve | unapprove
+//                             add_line | delete_line | set_media | clear_day |
+//                             approve | unapprove
+//
+// Approving a day also posts its tagged photos and videos to the tagged
+// artists' Social feeds (lib/server/chatSocial.ts); taking it down removes
+// them. Times are LA time: the story lives in the LA house.
 
 import { NextRequest, NextResponse } from "next/server";
 import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
 import { serviceClient, SUPABASE_URL } from "@/lib/server/supabaseAdmin";
 import { loadChatCast } from "@/lib/server/chatCast";
+import { syncDaySocial } from "@/lib/server/chatSocial";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const noStore = { "Cache-Control": "private, no-store" };
-const TZ = "America/New_York";
+const TZ = "America/Los_Angeles";
 
-function nyInstant(day: string, hhmm: string): string {
+function laInstant(day: string, hhmm: string): string {
   const [h, m] = hhmm.split(":").map(n => parseInt(n, 10));
   const noon = new Date(`${day}T12:00:00Z`);
   const local = new Date(noon.toLocaleString("en-US", { timeZone: TZ }));
@@ -32,7 +38,7 @@ function nyInstant(day: string, hhmm: string): string {
   return new Date(base + ((isNaN(h) ? 12 : h) * 60 + (isNaN(m) ? 0 : m)) * 60000).toISOString();
 }
 
-function nyDay(d: Date): string {
+function laDay(d: Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 }
 
@@ -47,9 +53,9 @@ export async function GET(req: NextRequest) {
   const v = await staff(req);
   if (!v) return NextResponse.json({ error: "staff only" }, { status: 403, headers: noStore });
   const sb = serviceClient()!;
-  const today = nyDay(new Date());
-  const from = nyDay(new Date(Date.now() - 7 * 864e5));
-  const to = nyDay(new Date(Date.now() + 45 * 864e5));
+  const today = laDay(new Date());
+  const from = laDay(new Date(Date.now() - 30 * 864e5));
+  const to = laDay(new Date(Date.now() + 45 * 864e5));
 
   const [{ data: story }, { data: days }, cast] = await Promise.all([
     sb.from("gfs_chat_story").select("*").eq("active", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -58,7 +64,7 @@ export async function GET(req: NextRequest) {
   ]);
   const dayIds = (days ?? []).map((d: { id: string }) => d.id);
   const { data: lines } = dayIds.length
-    ? await sb.from("gfs_chat_messages").select("id, day_id, from_slug, body, original, original_lang, posted_at, published").in("day_id", dayIds).order("posted_at")
+    ? await sb.from("gfs_chat_messages").select("id, day_id, from_slug, body, original, original_lang, posted_at, published, media_url, media_kind, media_poster, photo_prompt, tagged").in("day_id", dayIds).order("posted_at")
     : { data: [] };
 
   return NextResponse.json({ today, story, days: days ?? [], lines: lines ?? [], cast }, { headers: noStore });
@@ -122,7 +128,7 @@ export async function POST(req: NextRequest) {
       if (typeof b.from === "string") patch.from_slug = b.from;
       if (b.original !== undefined) patch.original = b.original || null;
       if (b.original_lang !== undefined) patch.original_lang = b.original_lang || null;
-      if (typeof b.time === "string" && typeof b.day === "string") patch.posted_at = nyInstant(b.day, b.time);
+      if (typeof b.time === "string" && typeof b.day === "string") patch.posted_at = laInstant(b.day, b.time);
       const { error } = await sb.from("gfs_chat_messages").update(patch).eq("id", String(b.id));
       return error ? fail(error.message, 500) : NextResponse.json({ ok: true }, { headers: noStore });
     }
@@ -135,7 +141,7 @@ export async function POST(req: NextRequest) {
         day_id: d.id,
         from_slug: String(b.from || ""),
         body: String(b.body || "").slice(0, 2000),
-        posted_at: nyInstant(d.day, String(b.time || "12:00")),
+        posted_at: laInstant(d.day, String(b.time || "12:00")),
         published: d.status === "approved",
         created_by: v.email,
       });
@@ -145,6 +151,28 @@ export async function POST(req: NextRequest) {
     case "delete_line": {
       const { error } = await sb.from("gfs_chat_messages").delete().eq("id", String(b.id));
       return error ? fail(error.message, 500) : NextResponse.json({ ok: true }, { headers: noStore });
+    }
+
+    case "set_media": {
+      const kind = ["image", "video", "audio"].includes(String(b.kind)) ? String(b.kind) : null;
+      const patch: Record<string, unknown> = {
+        media_url: b.url ? String(b.url) : null,
+        media_kind: b.url ? kind || "image" : null,
+        ...(b.poster !== undefined ? { media_poster: b.poster ? String(b.poster) : null } : {}),
+        ...(Array.isArray(b.tagged) ? { tagged: b.tagged as string[] } : {}),
+        ...(typeof b.prompt === "string" ? { photo_prompt: b.prompt || null } : {}),
+      };
+      const { error } = await sb.from("gfs_chat_messages").update(patch).eq("id", String(b.id));
+      return error ? fail(error.message, 500) : NextResponse.json({ ok: true }, { headers: noStore });
+    }
+
+    case "clear_day": {
+      const { data: d } = await sb.from("gfs_chat_days").select("id, status").eq("id", String(b.day_id)).maybeSingle();
+      if (!d) return fail("day not found", 404);
+      if (d.status === "approved") await syncDaySocial(sb, d.id, false);
+      const { error: e1 } = await sb.from("gfs_chat_messages").delete().eq("day_id", d.id);
+      const { error: e2 } = await sb.from("gfs_chat_days").delete().eq("id", d.id);
+      return e1 || e2 ? fail((e1 || e2)!.message, 500) : NextResponse.json({ ok: true }, { headers: noStore });
     }
 
     case "approve":
@@ -158,7 +186,9 @@ export async function POST(req: NextRequest) {
       }).eq("id", String(b.day_id));
       // The tour-preview placeholder lines retire once a real day is approved.
       if (approve) await sb.from("gfs_chat_messages").delete().eq("created_by", "seed:chatPreview");
-      return e1 || e2 ? fail((e1 || e2)!.message, 500) : NextResponse.json({ ok: true }, { headers: noStore });
+      if (e1 || e2) return fail((e1 || e2)!.message, 500);
+      const social = await syncDaySocial(sb, String(b.day_id), approve);
+      return NextResponse.json({ ok: true, social }, { headers: noStore });
     }
   }
   return fail("unknown action");

@@ -67,3 +67,16 @@
 }
 .ch-foot a{color:var(--rx,#e91e8c);font-weight:800;text-decoration:none;margin-left:4px}
 .ch-foot a:hover{text-decoration:underline}
+/* Media beside a line: a small icon that opens a lightbox (2026-10-05). */
+.ch-bubble-row{display:flex;align-items:flex-end;gap:6px}
+.ch-msg.me .ch-bubble-row{flex-direction:row-reverse}
+.ch-media{flex-shrink:0;width:30px;height:30px;border-radius:50%;border:1px solid rgba(20,20,20,.14);background:#fff;color:#141414;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.ch-media:hover{border-color:var(--rx,#e91e8c);color:var(--rx,#e91e8c)}
+.ch-media:focus-visible{outline:2px solid var(--rx,#e91e8c);outline-offset:2px}
+.ch-lightbox{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:20px}
+.ch-lightbox-inner{max-width:min(960px,100%);max-height:100%;display:flex;flex-direction:column;gap:10px}
+.ch-lightbox-inner img,.ch-lightbox-inner video{max-width:100%;max-height:calc(100vh - 140px);border-radius:12px;object-fit:contain;background:#000}
+.ch-lightbox-inner audio{width:min(480px,90vw)}
+.ch-lightbox-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;color:#fff;font-size:14px}
+.ch-lightbox-bar strong{margin-right:6px}
+.ch-lightbox-bar button{flex-shrink:0;border:1px solid rgba(255,255,255,.3);background:none;color:#fff;border-radius:999px;padding:7px 16px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}

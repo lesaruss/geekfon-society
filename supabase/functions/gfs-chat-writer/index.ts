@@ -23,7 +23,7 @@ import { z } from "npm:zod";
 import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
 
 const MODEL = "claude-opus-5-5";
-const TZ = "America/New_York";
+const TZ = "America/Los_Angeles"; // story time: the LA house
 const ADMIN_EMAIL = "contact@lesaruss.com";
 // gfs_artists slugs that differ from their character_agents slug.
 const AGENT_SLUG: Record<string, string> = { riku: "riku-hayasaka" };
@@ -41,7 +41,7 @@ function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
 
-// The UTC instant of HH:MM on a New York calendar day (DST-safe).
+// The UTC instant of HH:MM on a story-time (LA) calendar day (DST-safe).
 function nyInstant(day: string, hhmm: string): string {
   const [h, m] = hhmm.split(":").map(n => parseInt(n, 10));
   const noon = new Date(`${day}T12:00:00Z`);
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
   const system = `You are the writers' room for the GeekFon Society artists' group chat: a daily, scripted glimpse into the artists' lives that supporters read on the artists' pages. You write one day of the chat at a time, as the artists themselves, each in their own established voice.
 
-Write like a real group chat: short messages, replies to each other, someone being late, in-jokes, the occasional single emoji line. Typically 10 to 24 messages across the day, spread over plausible times (HH:MM, 24-hour, New York time). Every message must come from someone in today's cast, using exactly the "from" key given for them.
+Write like a real group chat: short messages, replies to each other, someone being late, in-jokes, the occasional single emoji line. Typically 10 to 24 messages across the day, spread over plausible times (HH:MM, 24-hour, Los Angeles time; the story lives in LA). Every message must come from someone in today's cast, using exactly the "from" key given for them.
 
 Hard rules (roster-wide canon): no cursing or vulgarity; no political, religious or third-rail content; stage names only (Logan is the only real name allowed); never sexualize any character; don't invent new biographical facts (ages, family, past events) beyond what each persona states; Riku uses they/them; Shamanic Resin's members (Aoi, Ren, Momo, Vera) are young and wholesome, so keep their lines age-appropriate and speak as the group or name the member speaking at the start ("Momo: ..."). Respect the story's secrets exactly. Only mention a song by title if it is in the released list or today's beat names it.
 
