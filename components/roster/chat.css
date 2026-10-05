@@ -8,7 +8,7 @@
 .ch-room strong{font-size:15px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;color:#141414}
 .ch-room span{font-size:12px;color:rgba(20,20,20,.55)}
 .ch-cast{display:flex;flex-shrink:0}
-.ch-cast img,.ch-cast .ch-av-ph{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:50% 15%;border:2px solid #fff;margin-left:-8px;background:#eee}
+.ch-cast img,.ch-cast .ch-av-ph{width:30px;height:30px;border-radius:8px;object-fit:cover;object-position:50% 15%;border:2px solid #fff;margin-left:-8px;background:#eee}
 .ch-av-ph{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:900}
 .ch-days{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(20,20,20,.06);background:#fafafa}
 .ch-day-arrow{width:32px;height:32px;border-radius:50%;border:1px solid rgba(20,20,20,.12);background:#fff;font-size:20px;line-height:1;cursor:pointer;color:#141414}
@@ -22,7 +22,7 @@
 .ch-msg.grouped{margin-top:0}
 .ch-msg.me{align-self:flex-end;flex-direction:row-reverse}
 .ch-msg.scheduled{opacity:.55}
-.ch-av,.ch-av-gap{width:36px;height:36px;flex-shrink:0;border-radius:50%}
+.ch-av,.ch-av-gap{width:36px;height:36px;flex-shrink:0;border-radius:10px}
 .ch-av{object-fit:cover;object-position:50% 15%;border:2px solid transparent;background:#eee}
 .ch-col{display:flex;flex-direction:column;gap:4px;min-width:0}
 .ch-msg.me .ch-col{align-items:flex-end}
