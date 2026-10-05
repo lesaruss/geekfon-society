@@ -417,7 +417,7 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
       </div>
       <div className="tour-nav">
         {i === 0
-          ? <button className="sf-btn" onClick={() => p.onMode("music")}>← Back to the music</button>
+          ? <button className="sf-btn" onClick={() => p.onMode("music")} aria-label="Back to the music">← Back</button>
           : <button className="sf-btn" onClick={() => setI(i - 1)} aria-label="Previous">← Back</button>}
         <div className="tour-dots" role="tablist" aria-label="Steps">
           {Array.from({ length: total }, (_, n) => (
