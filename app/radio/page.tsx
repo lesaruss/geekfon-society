@@ -347,13 +347,12 @@ export default function RadioPage() {
                 GeekFon mark shows for ads and while nothing has loaded. */}
             {cover ? (
               // A record (Sean, 2026-10-05): vinyl grooves around a center
-              // label printed with the song's art and the GeekFon mark. The
+              // label printed with the song's art and a spindle hole. The
               // disc turns while playing; the light sheen stays put.
               <>
                 <div className="rd-disc" aria-hidden="true">
                   <div className="rd-label">
                     <img key={cover} src={cover} alt="" className="rd-label-art" />
-                    <img src="/geekfon-logo.png" alt="" className="rd-label-mark" />
                     <span className="rd-label-hole" />
                   </div>
                 </div>
@@ -476,7 +475,20 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
    a common effect with one big element over smaller ones. Asymmetric
    padding (more on the bottom than the top) shifts the centered group up
    within the box without touching the header-clearance math at all. */
-.rd-main { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 60px); overflow: hidden; gap: 24px; padding: 24px 24px calc(24px + 6vh) 24px; box-sizing: border-box; }
+.rd-main { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: calc(100vh - 60px); overflow: hidden; gap: 24px; padding: calc(32px + 2vh) 24px 24px 24px; box-sizing: border-box; }
+/* Centered, but never pushed up under the navigation (Sean, 2026-10-05: the
+   record touched the nav). Auto margins center the stack when it fits and
+   pin it to the top padding when it doesn't, where justify-content: center
+   would push the record above the top edge. */
+.rd-main > :first-child { margin-top: auto; }
+.rd-main > :last-child { margin-bottom: auto; }
+/* Desktop: the record also sizes to the stage it sits in (the window, or
+   the smaller frame window when signed in), leaving room for the song
+   details, hint and station buttons below it. */
+@media (min-width: 761px) {
+  .rd-main { container-type: size; }
+  .rd-main .rd-play-btn { width: min(360px, 42cqw, calc(100cqh - 250px)); height: min(360px, 42cqw, calc(100cqh - 250px)); }
+}
 
 /* Inside the universal frame (signed in) the stage is the window body. */
 .gw-body .rd-main { height: 100%; }
@@ -507,7 +519,7 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
      homepage's own 44vw/72vh since this page still has a separate now-playing
      text block + progress bar below the circle that needs its own vertical
      room (the homepage puts its text inside the circle instead). */
-  position: relative; width: min(320px, min(38vw, 52vh)); height: min(320px, min(38vw, 52vh)); border-radius: 50%;
+  position: relative; width: min(360px, min(42vw, 60vh)); height: min(360px, min(42vw, 60vh)); border-radius: 50%;
   background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.12);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
@@ -548,11 +560,10 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
   animation: rdSpin 24s linear infinite; animation-play-state: paused; }
 .rd-play-btn.playing .rd-disc { animation-play-state: running; }
 @keyframes rdSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-/* Center label: the song's art, the GeekFon mark, and the spindle hole. */
+/* Center label: the song's art and the spindle hole. */
 .rd-label { position: absolute; inset: 26%; border-radius: 50%; overflow: hidden; background: #222; box-shadow: 0 0 0 2px rgba(0,0,0,.6); }
 .rd-label-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; animation: rdCoverIn .6s ease; }
 @keyframes rdCoverIn { from { opacity: 0; } to { opacity: 1; } }
-.rd-label-mark { position: absolute; left: 50%; top: 8%; width: 24%; transform: translateX(-50%); filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
 .rd-label-hole { position: absolute; left: 50%; top: 50%; width: 7%; height: 7%; transform: translate(-50%, -50%); border-radius: 50%; background: #0a0a0a; box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
 /* Light catching the vinyl: two soft highlights that do not turn with it. */
 .rd-sheen { position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
@@ -602,7 +613,7 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 @media(max-width:480px) {
   /* Mirrors the homepage's mobile hero-circle-wrap (min(280px,70vw)) - logo
      scales with it automatically since it's percentage-based now. */
-  .rd-play-btn { width: min(240px, 62vw); height: min(240px, 62vw); }
+  .rd-play-btn { width: min(260px, 68vw); height: min(260px, 68vw); }
   .rd-np-title { font-size: 20px; }
 }
 
