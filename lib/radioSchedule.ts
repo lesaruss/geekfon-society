@@ -23,6 +23,7 @@ export type RadioTrack = {
   title: string;
   artist: string;
   durationSeconds: number;
+  coverUrl?: string | null;
 };
 
 export type PinnedOverride = {
@@ -30,6 +31,7 @@ export type PinnedOverride = {
   path: string;
   title: string;
   artist: string;
+  coverUrl?: string | null;
   startsAtMs: number;
   durationSeconds: number;
   label?: string;
@@ -50,6 +52,7 @@ export type ResolvedPlayhead = {
   path: string;
   title: string;
   artist: string;
+  coverUrl?: string | null;
   offsetSeconds: number;
   durationSeconds: number;
   label?: string;
@@ -74,6 +77,7 @@ export function resolvePlayhead(
         path: o.path,
         title: o.title,
         artist: o.artist,
+        coverUrl: o.coverUrl ?? null,
         offsetSeconds: (nowMs - o.startsAtMs) / 1000,
         durationSeconds: o.durationSeconds,
         label: o.label,
@@ -113,6 +117,7 @@ export function resolvePlayhead(
         path: t.path,
         title: t.title,
         artist: t.artist,
+        coverUrl: t.coverUrl ?? null,
         offsetSeconds: elapsed - acc,
         durationSeconds: d,
       };
@@ -126,6 +131,7 @@ export function resolvePlayhead(
     path: last.path,
     title: last.title,
     artist: last.artist,
+    coverUrl: last.coverUrl ?? null,
     offsetSeconds: Math.max(last.durationSeconds - 0.1, 0),
     durationSeconds: last.durationSeconds,
   };

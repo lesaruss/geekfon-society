@@ -19,7 +19,7 @@
 // open decision in the geekfon-launch playbook (radio ideas, V session).
 
 import { serviceClient } from "./supabaseAdmin";
-import { STREAM_BUCKET, publicStreamUrl, titleKey, labelStates, type LabelState } from "./depot";
+import { STREAM_BUCKET, publicStreamUrl, titleKey, labelStates, sizedImage, type LabelState } from "./depot";
 import type { RadioTrack, ScheduleOverride } from "@/lib/radioSchedule";
 
 const SIGNED_TTL_SECONDS = 24 * 60 * 60;
@@ -35,7 +35,7 @@ function labelSingle(states: Map<string, LabelState>, artist: string, id: string
 }
 
 type RtRow = { id: string; artist_slug: string; title: string; radio_order: number | null; sort_order: number | null };
-type PsRow = { id: string; title: string; primary_artist_slug: string; src_path: string | null; duration_seconds: number | null; source_radio_track_id: string };
+type PsRow = { id: string; title: string; primary_artist_slug: string; src_path: string | null; duration_seconds: number | null; source_radio_track_id: string; cover_art_path: string | null; thumb_path: string | null };
 
 // mode "urls": path is a playable URL (public for singles, signed for vault).
 // mode "ids":  path is the depot song id; for server-side Now Playing only.
@@ -64,7 +64,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
   const linkIds = Array.from(new Set([...rtRows.map(r => r.id), ...pinnedIds]));
   const { data: ps } = linkIds.length
     ? await sb.from("pulse_songs")
-        .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id")
+        .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id, cover_art_path, thumb_path")
         .in("source_radio_track_id", linkIds)
         .is("retired_at", null)
     : { data: [] as PsRow[] };
@@ -108,7 +108,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
     const p = byRt.get(r.id);
     const path = p && pathOf(p);
     if (!p || !path) continue;
-    rotation.push({ artist: artistOf(p), title: p.title, path, durationSeconds: p.duration_seconds || 180 });
+    rotation.push({ artist: artistOf(p), title: p.title, path, durationSeconds: p.duration_seconds || 180, coverUrl: radioCover(p) });
   }
 
   type OvRow = { kind: string; label: string | null; ad_src_path: string | null; starts_at: string | null; duration_seconds: number | null; cadence_seconds: number | null; track_id: string | null };
@@ -122,6 +122,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
         path,
         title: p.title,
         artist: artistOf(p),
+        coverUrl: radioCover(p),
         startsAtMs: new Date(o.starts_at).getTime(),
         durationSeconds: o.duration_seconds || p.duration_seconds || 180,
         label: o.label || undefined,
@@ -170,6 +171,12 @@ export async function listStations(): Promise<RadioStation[]> {
   return [MAIN_STATION, ...((data ?? []) as RadioStation[])];
 }
 
+// The song's cover art for the radio's center circle (Sean, 2026-10-05), as a
+// resized square copy.
+function radioCover(p: { cover_art_path: string | null; thumb_path: string | null }): string | null {
+  return sizedImage(p.cover_art_path || p.thumb_path, 720, "cover");
+}
+
 type StationSong = PsRow & { is_remix: boolean | null; sort_order: number | null };
 
 export async function buildStationSchedule(slug: string): Promise<{ rotation: RadioTrack[]; overrides: ScheduleOverride[] } | null> {
@@ -191,7 +198,7 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
   // `exclusive` station (seasonal ones) stay off every other station.
   let q = sb
     .from("pulse_songs")
-    .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id, is_remix, sort_order")
+    .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id, is_remix, sort_order, cover_art_path, thumb_path")
     .is("retired_at", null)
     .not("src_path", "is", null);
   q = songIds.length ? q.in("id", songIds) : q.in("primary_artist_slug", (station.artist_slugs ?? []) as string[]);
@@ -245,7 +252,7 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
   for (const s of ordered) {
     const path = signedBy.get(s.id) ?? (isSingleRow(s) ? publicStreamUrl(s.src_path!) : undefined);
     if (!path) continue;
-    rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, title: s.title, path, durationSeconds: s.duration_seconds || 180 });
+    rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, title: s.title, path, durationSeconds: s.duration_seconds || 180, coverUrl: radioCover(s) });
   }
   return { rotation, overrides: [] };
 }

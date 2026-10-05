@@ -311,6 +311,8 @@ export default function RadioPage() {
 
   if (!authChecked || !isMember) return null;
 
+  const cover = nowPlaying && nowPlaying.type !== "ad" ? nowPlaying.coverUrl || null : null;
+
   return (
     <SiteChrome>
       <style>{CSS}</style>
@@ -336,12 +338,17 @@ export default function RadioPage() {
       <div className="rd-main">
         <div className="rd-logo-wrap">
           <button
-            className={"rd-play-btn" + (playing ? " playing" : "")}
+            className={"rd-play-btn" + (playing ? " playing" : "") + (cover ? " has-cover" : "")}
             onClick={toggle}
             disabled={loadingPlaylist || rotation.length === 0}
             aria-label={(playing ? "Pause " : "Play ") + (stations.find(st => st.slug === station)?.name || "GeekFon Radio")}
           >
-            <img src="/geekfon-logo.png" alt="" aria-hidden="true" className="rd-logo-img" />
+            {/* The song that's on fills the circle (Sean, 2026-10-05); the
+                GeekFon mark shows for ads and while nothing has loaded. */}
+            {cover
+              ? <img key={cover} src={cover} alt="" aria-hidden="true" className="rd-cover-img" />
+              : <img src="/geekfon-logo.png" alt="" aria-hidden="true" className="rd-logo-img" />}
+            {cover && <div className="rd-cover-scrim" aria-hidden="true" />}
             <div className="rd-play-icon">
               {playing ? (
                 <svg viewBox="0 0 24 24" fill="white" width="44" height="44"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
@@ -386,7 +393,7 @@ export default function RadioPage() {
         </div>
 
         {!playing && !loadingPlaylist && rotation.length > 0 && (
-          <p className="rd-hint">Tap the logo to tune in - everyone hears the same moment, live</p>
+          <p className="rd-hint">Tap to tune in - everyone hears the same moment, live</p>
         )}
         {stations.length > 1 && (
           <div className="rd-station-picker">
@@ -516,6 +523,20 @@ html, body { background: #020c0a !important; overflow: hidden !important; height
 .rd-play-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0.4; transition: opacity 0.25s; }
 .rd-play-btn:hover .rd-play-icon { opacity: 0.7; }
 .rd-play-btn.playing .rd-play-icon { opacity: 1; }
+
+/* Cover art in the circle (2026-10-05): the art stays bright; the play icon
+   sits on a soft scrim while paused, and while playing the pause icon only
+   appears on hover so the art isn't covered. */
+.rd-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; animation: rdCoverIn .6s ease; }
+@keyframes rdCoverIn { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+.rd-cover-scrim { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(0,0,0,.45) 0%, rgba(0,0,0,.15) 55%, rgba(0,0,0,0) 75%); transition: opacity .25s; pointer-events: none; }
+.rd-play-btn.has-cover .rd-play-icon { opacity: .9; }
+.rd-play-btn.has-cover.playing .rd-cover-scrim,
+.rd-play-btn.has-cover.playing .rd-play-icon { opacity: 0; }
+.rd-play-btn.has-cover.playing:hover .rd-cover-scrim,
+.rd-play-btn.has-cover.playing:hover .rd-play-icon,
+.rd-play-btn.has-cover.playing:focus-visible .rd-play-icon { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .rd-cover-img { animation: none; } }
 
 @keyframes rdPulse1 { 0% { transform: scale(1); opacity: 0.55; } 100% { transform: scale(1.65); opacity: 0; } }
 @keyframes rdPulse2 { 0% { transform: scale(1); opacity: 0.35; } 100% { transform: scale(1.9); opacity: 0; } }

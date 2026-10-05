@@ -217,7 +217,7 @@ export function previewUrl(songId: string): string {
 // width and height are always given: a width-only render keeps the original
 // height and crops (error_registry SUPABASE_RENDER_WIDTH_ONLY_CROP). The
 // renderer also serves WebP to browsers that accept it.
-function sizedImage(url: string | null, size: number, resize: "cover" | "contain"): string | null {
+export function sizedImage(url: string | null, size: number, resize: "cover" | "contain"): string | null {
   if (!url) return null;
   const marker = "/storage/v1/object/public/";
   if (!url.startsWith(SUPABASE_URL) || !url.includes(marker)) return url;
