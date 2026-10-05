@@ -1588,6 +1588,37 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
     try { window.history.replaceState(null, "", key === "music" ? base : `${base}?tab=${key}`); } catch { /* ignore */ }
   }
   const frameMusic = framed && storefront && section === "music";
+  // Ads (Sean, 2026-10-05): fetched in the browser, and only while the billboard is on the page,
+  // so ad-resolve logs an impression only for a visitor who can see the ads. A signed-out visitor
+  // on the storefront never sees the billboard and never counts.
+  const showBillboard = !hideBelow && !frameMusic;
+  const [ads, setAds] = useState<Record<string, { url: string; link?: string; placementId: string; campaignId: string }>>({});
+  useEffect(() => {
+    if (!showBillboard) return;
+    let off = false;
+    fetch(`${SUPA_URL}/functions/v1/ad-resolve?brand_slug=geekfon-society&page_slug=${encodeURIComponent("/[artist]")}`, {
+      headers: { apikey: SUPA_ANON, Authorization: `Bearer ${SUPA_ANON}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { slots?: { slot_id: string; image_url: string | null; link_url: string | null; placement_id: string; campaign_id: string | null }[] } | null) => {
+        if (off || !d) return;
+        const next: Record<string, { url: string; link?: string; placementId: string; campaignId: string }> = {};
+        for (const sl of d.slots || []) {
+          if (sl.image_url && sl.campaign_id) next[sl.slot_id] = { url: sl.image_url, link: sl.link_url || undefined, placementId: sl.placement_id, campaignId: sl.campaign_id };
+        }
+        setAds(next);
+      })
+      .catch(() => { /* the empty slots stay */ });
+    return () => { off = true; };
+  }, [showBillboard]);
+  const ad = {
+    skyscraperUrl: ads["gfs-artist-skyscraper"]?.url, skyscraperLink: ads["gfs-artist-skyscraper"]?.link,
+    skyscraperPlacementId: ads["gfs-artist-skyscraper"]?.placementId, skyscraperCampaignId: ads["gfs-artist-skyscraper"]?.campaignId,
+    primaryAdUrl: ads["gfs-artist-primary-ad"]?.url, primaryAdLink: ads["gfs-artist-primary-ad"]?.link,
+    primaryAdPlacementId: ads["gfs-artist-primary-ad"]?.placementId, primaryAdCampaignId: ads["gfs-artist-primary-ad"]?.campaignId,
+    featureAdUrl: ads["gfs-artist-feature-ad"]?.url, featureAdLink: ads["gfs-artist-feature-ad"]?.link,
+    featureAdPlacementId: ads["gfs-artist-feature-ad"]?.placementId, featureAdCampaignId: ads["gfs-artist-feature-ad"]?.campaignId,
+  };
   // Client-side arrivals (back from an article) can render before the URL
   // updates; settle the section from ?tab once mounted.
   useEffect(() => {
@@ -3158,8 +3189,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               <div className="bb-rotator">
                 {/* Slide 0: Skyscraper 300x600 */}
                 <div className={"bb-slide" + (bbSlot === 0 ? " active" : "")}>
-                  {c.skyscraperUrl ? (
-                    <AdCreative src={c.skyscraperUrl} link={c.skyscraperLink} tall imgClassName="bb-ad-img" onClick={() => handleAdClick(c.skyscraperPlacementId, c.skyscraperCampaignId)} />
+                  {ad.skyscraperUrl ? (
+                    <AdCreative src={ad.skyscraperUrl} link={ad.skyscraperLink} tall imgClassName="bb-ad-img" onClick={() => handleAdClick(ad.skyscraperPlacementId, ad.skyscraperCampaignId)} />
                   ) : (
                     <div className="bb-placeholder bb-tall">
                       <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
@@ -3171,8 +3202,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                 {/* Slide 1: Desktop=both stacked / Mobile=primary ad only */}
                 <div className={"bb-slide" + (bbSlot === 1 ? " active" : "")}>
                   {isMobile ? (
-                    c.primaryAdUrl ? (
-                      <AdCreative src={c.primaryAdUrl} link={c.primaryAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(c.primaryAdPlacementId, c.primaryAdCampaignId)} />
+                    ad.primaryAdUrl ? (
+                      <AdCreative src={ad.primaryAdUrl} link={ad.primaryAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(ad.primaryAdPlacementId, ad.primaryAdCampaignId)} />
                     ) : (
                       <div className="bb-placeholder">
                         <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
@@ -3182,8 +3213,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                     )
                   ) : (
                     <div className="bb-stacked">
-                      {c.primaryAdUrl ? (
-                        <AdCreative src={c.primaryAdUrl} link={c.primaryAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(c.primaryAdPlacementId, c.primaryAdCampaignId)} />
+                      {ad.primaryAdUrl ? (
+                        <AdCreative src={ad.primaryAdUrl} link={ad.primaryAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(ad.primaryAdPlacementId, ad.primaryAdCampaignId)} />
                       ) : (
                         <div className="bb-placeholder">
                           <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
@@ -3191,8 +3222,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                           <div className="bb-ph-dim">300 x 250</div>
                         </div>
                       )}
-                      {c.featureAdUrl ? (
-                        <AdCreative src={c.featureAdUrl} link={c.featureAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(c.featureAdPlacementId, c.featureAdCampaignId)} />
+                      {ad.featureAdUrl ? (
+                        <AdCreative src={ad.featureAdUrl} link={ad.featureAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(ad.featureAdPlacementId, ad.featureAdCampaignId)} />
                       ) : (
                         <div className="bb-placeholder">
                           <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
@@ -3206,8 +3237,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                 {/* Slide 2: Mobile only â feature ad */}
                 {isMobile && (
                   <div className={"bb-slide" + (bbSlot === 2 ? " active" : "")}>
-                    {c.featureAdUrl ? (
-                      <AdCreative src={c.featureAdUrl} link={c.featureAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(c.featureAdPlacementId, c.featureAdCampaignId)} />
+                    {ad.featureAdUrl ? (
+                      <AdCreative src={ad.featureAdUrl} link={ad.featureAdLink} imgClassName="bb-ad-img-sm" onClick={() => handleAdClick(ad.featureAdPlacementId, ad.featureAdCampaignId)} />
                     ) : (
                       <div className="bb-placeholder">
                         <div className="bb-ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>

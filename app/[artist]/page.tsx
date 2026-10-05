@@ -189,18 +189,15 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
   const headers = { apikey: key, Authorization: `Bearer ${key}` };
   const opts = { headers, next: { revalidate: 0 } } as RequestInit & { next: { revalidate: number } };
 
-  // Fetch profile, audits, and active ads in parallel
-  const [profileRes, auditsRes, adsRes, pulseRes] = await Promise.all([
+  // Fetch profile, audits and Pulse articles in parallel. Ads are fetched by ArtistPage in the
+  // browser, only while the billboard shows, so a render never logs an impression nobody sees.
+  const [profileRes, auditsRes, pulseRes] = await Promise.all([
     fetch(
       `${url}/rest/v1/gfs_artists?slug=eq.${encodeURIComponent(slug)}&select=name,profile,updated_at&limit=1`,
       opts
     ),
     fetch(
       `${url}/rest/v1/gfs_anr_audits?artist_slug=eq.${encodeURIComponent(slug)}&select=doc_type,title,content,scores&order=doc_type.asc,title.asc`,
-      opts
-    ),
-    fetch(
-      `${url}/functions/v1/ad-resolve?brand_slug=geekfon-society&page_slug=${encodeURIComponent('/[artist]')}`,
       opts
     ),
     // Pulse Studios live-pipe test (2026-07-27, agent_tasks a0dbc7f9): read this
@@ -296,18 +293,6 @@ async function getArtist(slug: string): Promise<ArtistContent | null> {
         m: "Season 1",
         v: "members" as const,
       }));
-    }
-  }
-
-  // Merge ad-resolve slots (real Ad Console inventory - replaces gfs_active_ads 2026-07-19)
-  if (adsRes && adsRes.ok) {
-    const adData: { slots?: { slot_id: string; image_url: string | null; link_url: string | null; placement_id: string; campaign_id: string | null }[] } = await adsRes.json();
-    const slots = adData.slots || [];
-    for (const s of slots) {
-      if (!s.image_url || !s.campaign_id) continue;
-      if (s.slot_id === "gfs-artist-primary-ad")  { profile.primaryAdUrl  = s.image_url; profile.primaryAdLink  = s.link_url || undefined; profile.primaryAdPlacementId  = s.placement_id; profile.primaryAdCampaignId  = s.campaign_id; }
-      if (s.slot_id === "gfs-artist-feature-ad")  { profile.featureAdUrl  = s.image_url; profile.featureAdLink  = s.link_url || undefined; profile.featureAdPlacementId  = s.placement_id; profile.featureAdCampaignId  = s.campaign_id; }
-      if (s.slot_id === "gfs-artist-skyscraper")  { profile.skyscraperUrl = s.image_url; profile.skyscraperLink = s.link_url || undefined; profile.skyscraperPlacementId = s.placement_id; profile.skyscraperCampaignId = s.campaign_id; }
     }
   }
 
