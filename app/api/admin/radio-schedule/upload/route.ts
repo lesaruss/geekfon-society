@@ -2,7 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 const SB_URL = "https://fwbhwfxpncrsfhttimna.supabase.co";
-const SB_SVC = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymh3ZnhwbmNyc2ZodHRpbW5hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDY2MDEzOSwiZXhwIjoyMDkwMjM2MTM5fQ.Ux3OKsH_ESG8bm2ZiFHtVUb8DPsjuAn8XRYjMVjcmjI";
+// Service key from the Vercel env, never in the repo (this repo is public; the literal that used to sit here was exposed and is being rotated, 2026-10-05).
+const SB_SVC = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 // Radio Schedule audio upload - part of the same admin-only tool as ./route.ts.
 const ADMIN_EMAIL = "contact@lesaruss.com";
