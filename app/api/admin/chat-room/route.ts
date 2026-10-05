@@ -98,17 +98,18 @@ export async function POST(req: NextRequest) {
         day,
         beat: String(b.beat || ""),
         cast: Array.isArray(b.cast) ? (b.cast as string[]) : [],
+        ...(typeof b.direction === "string" ? { direction: b.direction } : {}),
         story_id: story?.id ?? null,
       }, { onConflict: "day" }).select().single();
       return error ? fail(error.message, 500) : NextResponse.json({ day: data }, { headers: noStore });
     }
 
     case "generate": {
-      const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      if (!key || !b.day_id) return fail("missing day");
+      if (!b.day_id) return fail("missing day");
+      // The writer checks the admin's own session (already verified above).
       const res = await fetch(`${SUPABASE_URL}/functions/v1/gfs-chat-writer`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+        headers: { "Content-Type": "application/json", Authorization: req.headers.get("authorization") || "" },
         body: JSON.stringify({ day_id: b.day_id, direction: b.direction || null }),
       });
       const out = await res.json().catch(() => ({ error: `writer returned ${res.status}` }));

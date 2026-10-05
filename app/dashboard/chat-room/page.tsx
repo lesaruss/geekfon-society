@@ -12,7 +12,7 @@ import { useDashboard, ADMIN_EMAIL } from "../context";
 import { supabase } from "@/lib/supabase";
 
 type Story = { id: string; title: string; premise: string; secrets: string; tone: string; starts_on: string | null; ends_on: string | null };
-type Day = { id: string; day: string; beat: string; cast: string[]; status: "planned" | "draft" | "approved"; notes: string | null; generated_at: string | null; approved_at: string | null };
+type Day = { id: string; day: string; beat: string; cast: string[]; direction: string | null; status: "planned" | "draft" | "approved"; notes: string | null; generated_at: string | null; approved_at: string | null };
 type Line = { id: string; day_id: string; from_slug: string; body: string; original: string | null; original_lang: string | null; posted_at: string; published: boolean };
 type CastMember = { slug: string; name: string; avatar: string | null; accent: string | null; hasVoice: boolean };
 type Data = { today: string; story: Story | null; days: Day[]; lines: Line[]; cast: CastMember[] };
@@ -162,17 +162,17 @@ function StoryCard({ story, onSaved }: { story: Story | null; onSaved: (s: Story
 function DayEditor({ date, today, row, lines, cast, onChange, say }: { date: string; today: string; row: Day | null; lines: Line[]; cast: CastMember[]; onChange: () => Promise<void>; say: (m: string) => void }) {
   const [beat, setBeat] = useState(row?.beat || "");
   const [who, setWho] = useState<string[]>(row?.cast?.length ? row.cast : DEFAULT_CAST);
-  const [direction, setDirection] = useState("");
+  const [direction, setDirection] = useState(row?.direction || "");
   const [busy, setBusy] = useState<string | null>(null);
   const people = useMemo(() => Object.fromEntries(cast.map(c => [c.slug, c])), [cast]);
-  const dirty = beat !== (row?.beat || "") || who.join() !== (row?.cast?.length ? row.cast : DEFAULT_CAST).join();
+  const dirty = beat !== (row?.beat || "") || direction !== (row?.direction || "") || who.join() !== (row?.cast?.length ? row.cast : DEFAULT_CAST).join();
 
   async function run(label: string, fn: () => Promise<unknown>, done?: string) {
     setBusy(label);
     try { await fn(); await onChange(); if (done) say(done); } catch (e) { alert((e as Error).message); }
     setBusy(null);
   }
-  const saveDay = () => api("POST", { action: "save_day", day: date, beat, cast: who });
+  const saveDay = () => api("POST", { action: "save_day", day: date, beat, cast: who, direction });
 
   return (
     <section className="cw-editor">

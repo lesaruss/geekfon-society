@@ -13,7 +13,8 @@
 // marks the day 'draft'. Nothing reaches the site until Sean approves the
 // day in the Chat Writers' Room (the Next app publishes on approve).
 //
-// Auth: only the GeekFon app's server calls this, with the service role key.
+// Auth: the caller's own Supabase session (the GeekFon admin account or a
+// super_admin), forwarded by the Writers' Room API.
 // Source of truth: lesaruss/geekfon-society supabase/functions/gfs-chat-writer.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -23,6 +24,7 @@ import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
 
 const MODEL = "claude-opus-5-5";
 const TZ = "America/New_York";
+const ADMIN_EMAIL = "contact@lesaruss.com";
 // gfs_artists slugs that differ from their character_agents slug.
 const AGENT_SLUG: Record<string, string> = { riku: "riku-hayasaka" };
 
@@ -51,13 +53,28 @@ function nyInstant(day: string, hhmm: string): string {
 
 Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const auth = req.headers.get("authorization") || "";
-  if (auth !== `Bearer ${serviceKey}`) return json({ error: "unauthorized" }, 401);
+  const sb = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
+
+  // The Writers' Room forwards the signed-in admin's own session; only the
+  // GeekFon admin account (or a super_admin member) may run the writer.
+  // (2026-10-05: comparing against the app's copy of the service key failed
+  // because the app and this function hold different key formats.)
+  const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  let allowed = token === serviceKey;
+  if (!allowed && token) {
+    const { data: u } = await sb.auth.getUser(token);
+    if (u?.user) {
+      if (u.user.email === ADMIN_EMAIL) allowed = true;
+      else {
+        const { data: m } = await sb.from("gfs_members").select("role").eq("user_id", u.user.id).maybeSingle();
+        allowed = m?.role === "super_admin";
+      }
+    }
+  }
+  if (!allowed) return json({ error: "unauthorized" }, 401);
 
   const { day_id, direction } = await req.json().catch(() => ({}));
   if (!day_id) return json({ error: "day_id required" }, 400);
-
-  const sb = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
   const { data: day } = await sb.from("gfs_chat_days").select("*").eq("id", day_id).maybeSingle();
   if (!day) return json({ error: "day not found" }, 404);
   if (!day.cast?.length) return json({ error: "pick the cast for this day first" }, 400);
