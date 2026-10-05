@@ -25,6 +25,8 @@ export type GalleryItem = {
   download: string;
   width: number | null;
   height: number | null;
+  thumb?: string;      // smaller render for the mosaic tile
+  featured?: boolean;  // the artist's current art, not a gallery row
 };
 
 const VISIBLE: Record<GalleryLevel, GalleryLevel[]> = {
@@ -69,4 +71,60 @@ export async function loadGallery(artistSlug: string, level: GalleryLevel): Prom
 function fileName(r: Row): string {
   const ext = r.storage_path.split(".").pop() || "png";
   return `${(r.title || "GeekFon wallpaper").replace(/[\\/:*?"<>|]+/g, "")}.${ext}`;
+}
+
+// The artist's current art, first in the Gallery (2026-10-05, Sean: the
+// Gallery should look like the Support tour's Gallery screen and show the new
+// portraits and covers, not only the archived ones). Everything here is
+// already public on the artist's page, so it shows to every viewer. Order:
+// music portrait, support portrait, new member portraits, song covers.
+const RENDER = "/storage/v1/render/image/public/";
+const OBJECT = "/storage/v1/object/public/";
+
+function original(url: string): string {
+  return url.includes(RENDER) ? url.replace(RENDER, OBJECT).split("?")[0] : url.split("?")[0];
+}
+
+function rendered(url: string, w: number, h: number): string {
+  const o = original(url);
+  return o.includes(OBJECT) ? `${o.replace(OBJECT, RENDER)}?width=${w}&height=${h}&resize=contain&quality=78` : url;
+}
+
+const MEDIA_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/";
+
+export function featuredGallery(
+  artistName: string,
+  profile: { tabPortraits?: Record<string, string>; heroUrl?: string; members?: { name: string; img?: string }[] },
+  songs: { title: string; coverUrl: string | null }[],
+): GalleryItem[] {
+  const out: GalleryItem[] = [];
+  const seen = new Set<string>();
+  const add = (id: string, title: string, src: string | null | undefined, w: number, h: number) => {
+    if (!src) return;
+    const o = original(src);
+    if (seen.has(o)) return;
+    seen.add(o);
+    const ext = o.split(".").pop() || "png";
+    out.push({
+      id: `featured:${id}`,
+      title,
+      kind: "art",
+      visibility: "public",
+      url: rendered(o, w * 2, h * 2),
+      thumb: rendered(o, w, h),
+      download: `${o}?${new URLSearchParams({ download: `${title.replace(/[\\/:*?"<>|]+/g, "")}.${ext}` }).toString()}`,
+      width: null,
+      height: null,
+      featured: true,
+    });
+  };
+  add("music", artistName, profile.tabPortraits?.music || profile.heroUrl, 720, 960);
+  add("support", `${artistName}, offstage`, profile.tabPortraits?.support, 720, 960);
+  // Only the new-look member portraits (portraits/members/), never the old art.
+  for (const m of profile.members || []) {
+    if (!m.img || !m.img.includes("portraits/members/")) continue;
+    add(`member:${m.name}`, m.name, m.img.startsWith("http") ? m.img : MEDIA_BASE + m.img, 720, 960);
+  }
+  for (const s of songs) add(`cover:${s.title}`, s.title, s.coverUrl, 600, 600);
+  return out;
 }

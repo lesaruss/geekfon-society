@@ -13,6 +13,7 @@ type Props = {
   artistName: string;
   slug: string;
   publicItems: GalleryItem[];
+  featured?: GalleryItem[];       // the artist's current portraits and covers, first
   lockedCount: number;
   supporterItems?: GalleryItem[]; // from the access route (supporters, staff)
   supporter: boolean;             // as this viewer is shown the page (respects View As)
@@ -23,8 +24,9 @@ type Props = {
 
 const LEVEL_LABEL: Record<string, string> = { public: "Everyone", supporter: "Supporters", admin: "Admin only" };
 
-export default function Gallery({ artistName, slug, publicItems, lockedCount, supporterItems, supporter, staff, onSupport, onChanged }: Props) {
-  const items = supporter && supporterItems ? supporterItems : publicItems;
+export default function Gallery({ artistName, slug, publicItems, featured = [], lockedCount, supporterItems, supporter, staff, onSupport, onChanged }: Props) {
+  // Current art first (big tile = the music portrait), then the gallery rows.
+  const items = [...featured, ...(supporter && supporterItems ? supporterItems : publicItems)];
   const [open, setOpen] = useState<GalleryItem | null>(null);
 
   return (
@@ -37,7 +39,7 @@ export default function Gallery({ artistName, slug, publicItems, lockedCount, su
       {!supporter && (
         <div className="rs-banner">
           <div>
-            <strong>The Gallery is for supporters.</strong>{" "}
+            <strong>{featured.length ? "Downloads and every wallpaper are for supporters." : "The Gallery is for supporters."}</strong>{" "}
             {lockedCount > 0
               ? `${lockedCount} ${lockedCount === 1 ? "wallpaper is" : "wallpapers are"} waiting, with new ones as they're made.`
               : `Phone and desktop wallpapers and art made just for ${artistName}'s supporters, starting soon.`}
@@ -54,8 +56,8 @@ export default function Gallery({ artistName, slug, publicItems, lockedCount, su
         <div className="rs-gallery">
           {items.map(it => (
             <button key={it.id} className="rs-tile" onClick={() => setOpen(it)} aria-label={`Open ${it.title || "image"}`}>
-              <img src={it.url} alt={it.title || ""} loading="lazy" />
-              {staff && <span className={"rs-tile-level rs-level-" + it.visibility}>{LEVEL_LABEL[it.visibility]}</span>}
+              <img src={it.thumb || it.url} alt={it.title || ""} loading="lazy" />
+              {staff && !it.featured && <span className={"rs-tile-level rs-level-" + it.visibility}>{LEVEL_LABEL[it.visibility]}</span>}
               {it.title && <span className="rs-tile-title">{it.title}</span>}
             </button>
           ))}
@@ -69,8 +71,10 @@ export default function Gallery({ artistName, slug, publicItems, lockedCount, su
             <div className="rs-lightbox-bar">
               <span>{open.title}</span>
               <span className="rs-lightbox-actions">
-                <a className="rs-cta" href={open.download}>Download</a>
-                {staff && <DeleteButton id={open.id} onDone={() => { setOpen(null); onChanged(); }} />}
+                {supporter
+                  ? <a className="rs-cta" href={open.download}>Download</a>
+                  : <button className="rs-cta" onClick={() => { setOpen(null); onSupport(); }}>Support to download</button>}
+                {staff && !open.featured && <DeleteButton id={open.id} onDone={() => { setOpen(null); onChanged(); }} />}
                 <button className="rs-dismiss" onClick={() => setOpen(null)}>Close</button>
               </span>
             </div>

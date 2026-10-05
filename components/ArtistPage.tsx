@@ -170,7 +170,7 @@ const FRAME_SECTIONS: { key: string; label: string; supporters?: boolean; needsM
 
 export type RosterDepot = { songs: PublicSong[]; albums: PublicAlbum[] };
 export type RosterBible = { free: FanBibleModule[]; locked: string[] };
-export type RosterGallery = { items: GalleryItem[]; lockedCount: number };
+export type RosterGallery = { items: GalleryItem[]; lockedCount: number; featured?: GalleryItem[] };
 export type ChatPreview = { room: string; me: string; people: Record<string, { name: string; avatar: string | null }>; lines: { from: string; text: string }[] };
 
 // Artists with real, artist-voiced Pulse/News content built out. Everyone else's
@@ -1900,6 +1900,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   artistName={name || ""}
                   slug={slug || ""}
                   publicItems={gallery?.items || []}
+                  featured={gallery?.featured || []}
                   lockedCount={gallery?.lockedCount || 0}
                   supporterItems={rosterAccess.gallery?.items}
                   supporter={isSupporterView()}

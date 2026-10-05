@@ -155,3 +155,7 @@
 .rs-tile img{position:absolute;inset:0;object-position:top}
 .rs-gallery .rs-tile:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto}
 @media(max-width:700px){.rs-gallery{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}
+/* Clean mosaic like the mock: titles only on hover (and in the lightbox). */
+.rs-tile{background:#f2f2f2}
+.rs-tile-title{opacity:0;transition:opacity .15s}
+.rs-tile:hover .rs-tile-title,.rs-tile:focus-visible .rs-tile-title{opacity:1}

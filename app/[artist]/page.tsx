@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { ArtistContent, RosterDepot, RosterBible, RosterGallery, ChatPreview } from "@/components/ArtistPage";
 import { loadArtistDepot, titleKey } from "@/lib/server/depot";
 import { loadFanBible, lockedBibleLabels } from "@/lib/server/bible";
-import { loadGallery } from "@/lib/server/gallery";
+import { loadGallery, featuredGallery } from "@/lib/server/gallery";
 import { stationsFeaturing } from "@/lib/server/radio";
 import { CHAT_PREVIEWS } from "@/lib/chatPreview";
 import { serviceClient } from "@/lib/server/supabaseAdmin";
@@ -340,7 +340,7 @@ export default async function ArtistPageRoute({ params }: Props) {
 
   const depot: RosterDepot = depotData;
   const bible: RosterBible = { free: bibleFree, locked: bibleLocked };
-  const gallery: RosterGallery = galleryPublic;
+  const gallery: RosterGallery = { ...galleryPublic, featured: featuredGallery(content.name || slug, content, depotData.songs) };
 
   // Group-chat preview for the storefront tour: the script plus each cast
   // member's name and thumbnail.
