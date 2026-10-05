@@ -77,7 +77,8 @@ export type PublicSong = {
   season: string | null;
   isRemix: boolean;
   durationSeconds: number | null;
-  coverUrl: string | null;
+  coverUrl: string | null; // up to 600px, for album art and players
+  thumbUrl: string | null; // 160px square, for song-list rows
   releaseDate: string | null;
   access: SongAccess;
   // Singles: the full public stream. Vault: the 30-second preview route.
@@ -210,6 +211,19 @@ export function previewUrl(songId: string): string {
   return `/api/songs/${songId}/preview`;
 }
 
+// Cover art is stored as the full-size original (5 to 8 MB PNGs). Pages get a
+// resized copy from Supabase's image renderer instead (2026-10-05, Sean: the
+// song thumbnails were slow; one artist's list pulled about 100 MB). Both
+// width and height are always given: a width-only render keeps the original
+// height and crops (error_registry SUPABASE_RENDER_WIDTH_ONLY_CROP). The
+// renderer also serves WebP to browsers that accept it.
+function sizedImage(url: string | null, size: number, resize: "cover" | "contain"): string | null {
+  if (!url) return null;
+  const marker = "/storage/v1/object/public/";
+  if (!url.startsWith(SUPABASE_URL) || !url.includes(marker)) return url;
+  return `${url.replace(marker, "/storage/v1/render/image/public/")}?width=${size}&height=${size}&resize=${resize}&quality=75`;
+}
+
 function toPublic(row: DepotRow, access: SongAccess): PublicSong {
   const single = access === "single";
   return {
@@ -220,7 +234,8 @@ function toPublic(row: DepotRow, access: SongAccess): PublicSong {
     season: row.season,
     isRemix: !!row.is_remix,
     durationSeconds: row.duration_seconds,
-    coverUrl: row.cover_art_path || row.thumb_path || null,
+    coverUrl: sizedImage(row.cover_art_path || row.thumb_path, 600, "contain"),
+    thumbUrl: sizedImage(row.thumb_path || row.cover_art_path, 160, "cover"),
     releaseDate: row.release_date,
     access,
     playUrl: single && row.src_path ? publicStreamUrl(row.src_path) : previewUrl(row.id),

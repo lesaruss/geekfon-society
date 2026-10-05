@@ -246,7 +246,7 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
             <button key={s.id} role="row" className={"am-row" + (isCur ? " cur" : "")} onClick={() => player?.playQueue(queue, i)} aria-label={`${isCur && playing ? "Pause" : "Play"} ${s.title}${full ? "" : " (30-second preview)"}`}>
               <span className="am-c-song" role="cell">
                 <span className="am-thumb">
-                  {s.coverUrl ? <img src={s.coverUrl} alt="" loading="lazy" /> : null}
+                  {s.thumbUrl || s.coverUrl ? <img src={s.thumbUrl || s.coverUrl!} alt="" loading="lazy" decoding="async" /> : null}
                   <span className="am-thumb-icon" aria-hidden="true">
                     {isCur && playing
                       ? <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
