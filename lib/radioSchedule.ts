@@ -14,7 +14,10 @@
 //                        worldwide. No-ops (falls through) if no creative is
 //                        configured yet.
 //   3. Base rotation   - the season catalog, fixed order, looped forever via
-//                        elapsed-time-mod-total-duration.
+//                        elapsed-time-mod-total-duration. Sponsor spots
+//                        (radio_spots) sit IN the rotation between songs
+//                        (kind "spot"), so they never cut a song off and every
+//                        listener hears them at the same moment.
 
 export const RADIO_EPOCH_MS = new Date("2026-01-01T00:00:00Z").getTime();
 
@@ -24,6 +27,12 @@ export type RadioTrack = {
   artist: string;
   durationSeconds: number;
   coverUrl?: string | null;
+  /** "spot": a sponsor read between songs (radio_spots); resolves as type "ad". */
+  kind?: "spot";
+  /** Spots only: the tracked /go link the player's sponsor card opens. */
+  linkUrl?: string;
+  /** Spots only: the sponsor's name for the player's card. */
+  sponsor?: string;
 };
 
 export type PinnedOverride = {
@@ -56,6 +65,8 @@ export type ResolvedPlayhead = {
   offsetSeconds: number;
   durationSeconds: number;
   label?: string;
+  linkUrl?: string;
+  sponsor?: string;
 };
 
 /** Positive modulo - JS `%` can return negative for negative inputs. */
@@ -113,13 +124,14 @@ export function resolvePlayhead(
     const d = Math.max(t.durationSeconds, 1);
     if (elapsed < acc + d) {
       return {
-        type: "rotation",
+        type: t.kind === "spot" ? "ad" : "rotation",
         path: t.path,
         title: t.title,
         artist: t.artist,
         coverUrl: t.coverUrl ?? null,
         offsetSeconds: elapsed - acc,
         durationSeconds: d,
+        ...(t.kind === "spot" ? { linkUrl: t.linkUrl, sponsor: t.sponsor } : {}),
       };
     }
     acc += d;
