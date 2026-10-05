@@ -14,6 +14,7 @@
 // day in the Chat Writers' Room (the Next app publishes on approve).
 //
 // Auth: only the GeekFon app's server calls this, with the service role key.
+// Source of truth: lesaruss/geekfon-society supabase/functions/gfs-chat-writer.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
@@ -76,7 +77,12 @@ Deno.serve(async (req) => {
     sb.from("gfs_albums").select("title, artist_slug, status, geekfon_release_date"),
   ]);
 
-  const nameOf = (s: string) => (artists ?? []).find((a: { slug: string }) => a.slug === s)?.name || s;
+  // Roster artists by their roster name; Logan, LoLA and anyone else off the
+  // roster by their character name.
+  const nameOf = (s: string) =>
+    (artists ?? []).find((a: { slug: string }) => a.slug === s)?.name
+    || (agents ?? []).find((a: { slug: string }) => a.slug === (AGENT_SLUG[s] || s))?.display_name
+    || s;
   const personas = day.cast.map((s: string) => {
     const a = (agents ?? []).find((x: { slug: string }) => x.slug === (AGENT_SLUG[s] || s));
     return `### ${nameOf(s)}  (use from: "${s}")\n${a?.system_prompt || "(no persona on file: keep this artist brief and neutral)"}`;

@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
 import { serviceClient, SUPABASE_URL } from "@/lib/server/supabaseAdmin";
+import { loadChatCast } from "@/lib/server/chatCast";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,6 @@ export const maxDuration = 300;
 
 const noStore = { "Cache-Control": "private, no-store" };
 const TZ = "America/New_York";
-const AGENT_SLUG: Record<string, string> = { riku: "riku-hayasaka" };
 
 function nyInstant(day: string, hhmm: string): string {
   const [h, m] = hhmm.split(":").map(n => parseInt(n, 10));
@@ -51,25 +51,15 @@ export async function GET(req: NextRequest) {
   const from = nyDay(new Date(Date.now() - 7 * 864e5));
   const to = nyDay(new Date(Date.now() + 45 * 864e5));
 
-  const [{ data: story }, { data: days }, { data: artists }, { data: agents }] = await Promise.all([
+  const [{ data: story }, { data: days }, cast] = await Promise.all([
     sb.from("gfs_chat_story").select("*").eq("active", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     sb.from("gfs_chat_days").select("*").gte("day", from).lte("day", to).order("day"),
-    sb.from("gfs_artists").select("slug, name, profile").order("name"),
-    sb.from("character_agents").select("slug").eq("brand_slug", "geekfon-society").eq("active", true),
+    loadChatCast(sb),
   ]);
   const dayIds = (days ?? []).map((d: { id: string }) => d.id);
   const { data: lines } = dayIds.length
     ? await sb.from("gfs_chat_messages").select("id, day_id, from_slug, body, original, original_lang, posted_at, published").in("day_id", dayIds).order("posted_at")
     : { data: [] };
-
-  const withAgent = new Set((agents ?? []).map((a: { slug: string }) => a.slug));
-  const cast = (artists ?? []).map((a: { slug: string; name: string; profile: Record<string, unknown> | null }) => ({
-    slug: a.slug,
-    name: a.name,
-    avatar: (a.profile?.profileUrl as string) || null,
-    accent: (a.profile?.accent as string) || null,
-    hasVoice: withAgent.has(AGENT_SLUG[a.slug] || a.slug),
-  }));
 
   return NextResponse.json({ today, story, days: days ?? [], lines: lines ?? [], cast }, { headers: noStore });
 }

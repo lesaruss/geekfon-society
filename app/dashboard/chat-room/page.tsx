@@ -7,7 +7,7 @@
 // (character_agents personas, via the gfs-chat-writer edge function), line
 // edits, and approval, which is the only way a day reaches the artists' pages.
 // Same account-only gate as the other admin tools.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDashboard, ADMIN_EMAIL } from "../context";
 import { supabase } from "@/lib/supabase";
 
@@ -141,9 +141,9 @@ function StoryCard({ story, onSaved }: { story: Story | null; onSaved: (s: Story
       {open && (
         <div className="cw-form">
           <label>Title<input value={f.title} onChange={set("title")} /></label>
-          <label>What&apos;s happening (the premise every day follows)<textarea rows={6} value={f.premise} onChange={set("premise")} /></label>
-          <label>Secrets (never revealed in the chat)<textarea rows={3} value={f.secrets} onChange={set("secrets")} /></label>
-          <label>Tone<textarea rows={2} value={f.tone} onChange={set("tone")} /></label>
+          <div className="cw-field"><span className="cw-label-row">What&apos;s happening (the premise every day follows)<Dictate onText={t => setF(v => ({ ...v, premise: joinText(v.premise, t) }))} /></span><textarea rows={6} value={f.premise} onChange={set("premise")} aria-label="Premise" /></div>
+          <div className="cw-field"><span className="cw-label-row">Secrets (never revealed in the chat)<Dictate onText={t => setF(v => ({ ...v, secrets: joinText(v.secrets, t) }))} /></span><textarea rows={3} value={f.secrets} onChange={set("secrets")} aria-label="Secrets" /></div>
+          <div className="cw-field"><span className="cw-label-row">Tone<Dictate onText={t => setF(v => ({ ...v, tone: joinText(v.tone, t) }))} /></span><textarea rows={2} value={f.tone} onChange={set("tone")} aria-label="Tone" /></div>
           <div className="cw-row">
             <label>From<input type="date" value={f.starts_on || ""} onChange={set("starts_on")} /></label>
             <label>To<input type="date" value={f.ends_on || ""} onChange={set("ends_on")} /></label>
@@ -181,24 +181,28 @@ function DayEditor({ date, today, row, lines, cast, onChange, say }: { date: str
         {row && <span className={"cw-badge cw-" + row.status}>{row.status}</span>}
       </div>
 
-      <label className="cw-label">What happens today (the beat)</label>
-      <textarea className="cw-beat" rows={4} value={beat} onChange={e => setBeat(e.target.value)}
+      <div className="cw-label cw-label-row">What happens today (the beat)<Dictate onText={t => setBeat(v => joinText(v, t))} /></div>
+      <textarea className="cw-beat" rows={4} value={beat} onChange={e => setBeat(e.target.value)} aria-label="Beat"
         placeholder="e.g. First full day at the house. Lex calls out Roxanne for being late to their session again; she has a comeback. Riku is up all night on something and won't say what. Shamanic Resin get lost on the way to the studio." />
 
       <label className="cw-label">Who&apos;s in the chat</label>
       <div className="cw-cast">
-        {cast.filter(c => c.hasVoice || who.includes(c.slug)).map(c => (
-          <button key={c.slug} type="button" className={"cw-chip" + (who.includes(c.slug) ? " on" : "")} style={who.includes(c.slug) && c.accent ? { borderColor: c.accent } : undefined}
+        {cast.map(c => (
+          <button key={c.slug} type="button" className={"cw-chip" + (who.includes(c.slug) ? " on" : "") + (c.hasVoice ? "" : " novoice")} style={who.includes(c.slug) && c.accent ? { borderColor: c.accent } : undefined}
+            title={c.hasVoice ? undefined : `${c.name} has no character voice yet, so their lines will be brief and neutral`}
             onClick={() => setWho(w => w.includes(c.slug) ? w.filter(x => x !== c.slug) : [...w, c.slug])}>
             {c.avatar ? <img src={c.avatar} alt="" /> : <span className="cw-chip-ph" style={{ background: c.accent || "#555" }} />}
-            {c.name}
+            {c.name}{!c.hasVoice && <span className="cw-novoice">no voice yet</span>}
           </button>
         ))}
       </div>
 
       <div className="cw-actions">
         <button type="button" className="cw-ghost" disabled={!!busy || !dirty} onClick={() => run("save", saveDay, "Day saved")}>{busy === "save" ? "Saving…" : "Save day"}</button>
-        <input className="cw-direction" value={direction} onChange={e => setDirection(e.target.value)} placeholder="Optional direction for this draft (e.g. shorter, more Riku, end on a cliffhanger)" />
+        <span className="cw-direction-wrap">
+          <input className="cw-direction" value={direction} onChange={e => setDirection(e.target.value)} placeholder="Optional direction for this draft (e.g. shorter, more Riku, end on a cliffhanger)" />
+          <Dictate onText={t => setDirection(v => joinText(v, t))} />
+        </span>
         <button type="button" className="cw-go" disabled={!!busy || !beat.trim() || who.length === 0} onClick={() => run("gen", async () => {
           const { day } = await saveDay();
           const out = await api("POST", { action: "generate", day_id: day.id, direction });
@@ -273,6 +277,56 @@ function AddLine({ dayId, who, people, onChange }: { dayId: string; who: string[
   );
 }
 
+// Dictation (2026-10-04, Sean: "a recording feature so I can just dictate my
+// thoughts and don't have to type"). The browser's own speech recognition
+// (Chrome, Edge, Safari incl. iPhone); the button hides where there is none.
+type Recognition = { continuous: boolean; interimResults: boolean; lang: string; start(): void; stop(): void; onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null };
+
+function joinText(prev: string, add: string): string {
+  const t = add.trim();
+  if (!t) return prev;
+  return prev && !/\s$/.test(prev) ? `${prev} ${t}` : prev + t;
+}
+
+function Dictate({ onText }: { onText: (text: string) => void }) {
+  const [on, setOn] = useState(false);
+  const [supported, setSupported] = useState(false);
+  const recRef = useRef<Recognition | null>(null);
+  const cb = useRef(onText);
+  cb.current = onText;
+  useEffect(() => {
+    const w = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
+    setSupported(!!(w.SpeechRecognition || w.webkitSpeechRecognition));
+    return () => recRef.current?.stop();
+  }, []);
+  if (!supported) return null;
+  function toggle() {
+    if (on) { recRef.current?.stop(); return; }
+    const w = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
+    const R = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!R) return;
+    const rec = new R();
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.lang = "en-US";
+    rec.onresult = e => {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) cb.current(e.results[i][0].transcript);
+      }
+    };
+    rec.onend = () => setOn(false);
+    rec.onerror = () => setOn(false);
+    recRef.current = rec;
+    rec.start();
+    setOn(true);
+  }
+  return (
+    <button type="button" className={"cw-mic" + (on ? " on" : "")} onClick={toggle} aria-pressed={on} aria-label={on ? "Stop dictating" : "Dictate"} title={on ? "Stop dictating" : "Dictate"}>
+      {on ? <><span className="cw-mic-dot" />Listening… tap to stop</> : <><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>Dictate</>}
+    </button>
+  );
+}
+
 const CSS = `
 .cw { padding: 28px 32px 60px; color: #e8e8e8; max-width: 1400px; margin: 0 auto; }
 .cw-center { display: flex; align-items: center; justify-content: center; padding: 80px 0; }
@@ -288,7 +342,7 @@ const CSS = `
 .cw-card-head { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; background: none; border: none; color: inherit; font: inherit; cursor: pointer; text-align: left; }
 .cw-card-head strong { display: block; font-size: 16px; color: #fff; margin-top: 2px; }
 .cw-form { display: grid; gap: 12px; padding: 0 18px 18px; }
-.cw-form label, .cw-label { display: grid; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.cw-form label, .cw-form .cw-field, .cw-label { display: grid; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.55); }
 .cw-label { margin-top: 14px; }
 .cw input, .cw textarea, .cw select { font: inherit; font-size: 14px; color: #fff; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 9px 11px; min-width: 0; text-transform: none; letter-spacing: 0; font-weight: 500; }
 .cw select option { color: #111; }
@@ -320,7 +374,16 @@ const CSS = `
 .cw-chip.on { color: #fff; background: rgba(255,255,255,.08); }
 .cw-chip img, .cw-chip-ph { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; object-position: 50% 15%; }
 .cw-actions { display: flex; gap: 10px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
-.cw-direction { flex: 1; min-width: 220px; }
+.cw-direction-wrap { flex: 1; min-width: 220px; display: flex; gap: 8px; align-items: center; }
+.cw-direction { flex: 1; min-width: 0; }
+.cw-label-row { display: flex !important; align-items: center; justify-content: space-between; gap: 10px; }
+.cw-mic { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); color: rgba(255,255,255,.8); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+.cw-mic:hover { color: #fff; border-color: #AAFF00; }
+.cw-mic.on { background: rgba(255,82,82,.16); border-color: #ff5252; color: #fff; }
+.cw-mic-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff5252; animation: cwpulse 1s ease-in-out infinite; }
+@keyframes cwpulse { 50% { opacity: .3; } }
+.cw-chip.novoice { opacity: .7; }
+.cw-novoice { font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.45); margin-left: 2px; }
 .cw-summary { margin: 16px 0 0; font-size: 13px; color: rgba(255,255,255,.7); background: rgba(170,255,0,.05); border: 1px solid rgba(170,255,0,.18); border-radius: 10px; padding: 10px 12px; }
 .cw-lines { display: grid; gap: 6px; margin-top: 16px; }
 .cw-line { display: grid; grid-template-columns: 64px 160px minmax(0, 1fr) auto auto; gap: 8px; align-items: start; padding: 6px 8px 6px 10px; border-left: 3px solid rgba(255,255,255,.2); background: rgba(255,255,255,.02); border-radius: 8px; }

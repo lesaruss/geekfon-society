@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
 import { serviceClient } from "@/lib/server/supabaseAdmin";
+import { loadChatCast } from "@/lib/server/chatCast";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -98,17 +99,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
     ...(r.posted_at > now ? { scheduled: true } : {}),
   }));
 
-  // The cast: everyone on the roster, so staff can post as anyone.
-  const { data: artists } = await sb.from("gfs_artists").select("slug, name, profile").order("name");
+  // Everyone the Writers' Room can cast (roster plus Logan and LoLA).
   const people: Record<string, ChatPerson> = {};
-  for (const a of (artists ?? []) as { slug: string; name: string; profile: Record<string, unknown> | null }[]) {
-    const p = a.profile || {};
-    people[a.slug] = {
-      name: a.name,
-      avatar: (p.profileUrl as string) || (p.heroUrl as string) || null,
-      accent: (p.accent as string) || null,
-    };
-  }
+  for (const m of await loadChatCast(sb)) people[m.slug] = { name: m.name, avatar: m.avatar, accent: m.accent };
 
   return NextResponse.json({ day, days, today: nyDay(now), messages, people, staff: g.staff }, { headers: noStore });
 }
