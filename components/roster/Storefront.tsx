@@ -171,6 +171,12 @@ export default function Storefront(p: Props) {
 
 // ---------------------------------------------------------------- music ---
 
+// What an artist with no album on file is selling: the songs on the page, as
+// their first album.
+function firstAlbumTitle(artist: string): string {
+  return `${artist}'s first album`;
+}
+
 function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; album: PublicAlbum | null }) {
   // The player itself lives in the artist layout (ArtistPlayer), so it keeps
   // playing across sections; this list only feeds it.
@@ -209,7 +215,7 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
         </div>
         {!p.supporter && !p.pending && (
           <div className="sf-cta-bar">
-            <p><strong>Be there from the first song.</strong> Support {p.artistName} for $11: every song in full as it&apos;s released, plus the Gallery, Chat and Press.</p>
+            <p><strong>Be there from the first song.</strong> Support {p.artistName} for $11: their first album in full as it&apos;s released, plus the Gallery, Chat and Press.</p>
             <button className="sf-btn sf-btn-go" onClick={() => p.onMode("tour")}>Support {p.artistName}</button>
           </div>
         )}
@@ -253,7 +259,7 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
                 </span>
               </span>
               <span className="am-c-artist" role="cell">{p.artistName}</span>
-              <span className="am-c-album" role="cell">{p.albumOf.get(s.id) || (s.isRemix ? "GeekFon exclusive" : "Single")}</span>
+              <span className="am-c-album" role="cell">{p.albumOf.get(s.id) || (s.isRemix ? "GeekFon exclusive" : p.album ? "Single" : "First album")}</span>
               <span className="am-c-time" role="cell">
                 {full
                   ? <span className={"am-tag " + (s.access === "single" ? "am-tag-out" : "am-tag-full")}>{s.access === "single" ? "Out now" : "Full"}</span>
@@ -272,7 +278,7 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
       {!p.supporter && !p.pending && (
         <div className="sf-cta-bar">
           <p>
-            <strong>Want to hear all of it?</strong> Support {p.artistName} for $11: {p.album ? <em>{p.album.title}</em> : "every song"} in full, plus the Gallery, Chat and Press.
+            <strong>Want to hear all of it?</strong> Support {p.artistName} for $11: <em>{p.album ? p.album.title : firstAlbumTitle(p.artistName)}</em>, the songs on this page, in full, plus the Gallery, Chat and Press.
           </p>
           <button className="sf-btn sf-btn-go" onClick={() => p.onMode("tour")}>Support {p.artistName}</button>
         </div>
@@ -286,13 +292,14 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
 function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // No album yet: the tour sells the whole catalog through the season pass,
-  // shown as one collection of every song.
+  // No album on file yet: the tour sells the songs on the page as the
+  // artist's first album (Sean, 2026-10-05: support buys an album, not every
+  // song they ever make; a new album is its own release).
   const realAlbum = props.album;
   const p = {
     ...props,
     album: realAlbum ?? ({
-      id: "", title: `Every ${props.artistName} song`, status: "released", out: true, label: false,
+      id: "", title: firstAlbumTitle(props.artistName), status: "released", out: true, label: false,
       coverUrl: props.list.find(s => s.coverUrl)?.coverUrl ?? props.tourPortraitUrl ?? props.portraitUrl ?? null, trackTarget: props.list.length, geekfonReleaseDate: null,
       tracks: props.list.map((s, i) => ({ songId: s.id, kind: s.isRemix ? "remix" : "track", position: i + 1 })),
     } as unknown as PublicAlbum),
@@ -319,8 +326,8 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
       text: realAlbum
         ? `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full${p.album.out ? " with downloads" : ", before the album is out everywhere"}.`
         : mains.length
-          ? `All ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""}, streaming in full, plus every new song as it lands.`
-          : `Every song ${p.artistName} releases, streaming in full the day it comes out.`,
+          ? `The ${mains.length} songs${remixes.length ? ` and ${remixes.length} GeekFon-exclusive remixes` : ""} on ${p.artistName}'s first album, streaming in full. A new album is a new release of its own.`
+          : `${p.artistName}'s first album, streaming in full the day it comes out.`,
       visual: <AlbumScreen artist={p.artistName} slug={p.slug} album={p.album} songs={mains} />,
     },
     {
@@ -375,7 +382,7 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
           )}
         </div>
         <ul>
-          <li><strong>{p.album.title}</strong> in full{!realAlbum ? ", and every new one as it lands" : p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
+          <li><strong>{p.album.title}</strong> in full{!realAlbum ? `: all ${mains.length} songs${remixes.length ? ` and ${remixes.length} remixes` : ""}` : p.album.out ? ", with downloads" : ", before it's out everywhere"}</li>
           <li><strong>Social feed, Press and Chat</strong>, every day</li>
           <li><strong>The Gallery</strong> of wallpapers and art</li>
           <li><strong>Radio</strong>: every station {p.artistName} is on</li>

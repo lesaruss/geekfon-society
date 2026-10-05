@@ -658,11 +658,18 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
     }
     return "music";
   });
+  // Switching Music <-> Support starts at the top of the storefront, the
+  // portrait first (Sean, 2026-10-05: Support opened at the name, below the
+  // image). scrollIntoView finds whichever element scrolls: the window, or
+  // the frame window when signed in.
+  function changeStoreMode(mode: "music" | "tour") {
+    setStoreMode(mode);
+    if (typeof window !== "undefined") requestAnimationFrame(() => document.querySelector(".sf")?.scrollIntoView({ block: "start", behavior: "smooth" }));
+  }
   function openSupport() {
     if (storefront) {
       if (framed) setSection("music");
-      setStoreMode("tour");
-      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+      changeStoreMode("tour");
     } else {
       setSupportOpen(true);
     }
@@ -1692,7 +1699,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               posts={(c.pulse || []).map(pp => ({ text: pp.text || pp.caption, title: pp.title, thumb: pp.thumb, date: pp.date }))}
               galleryCount={rosterAccess.gallery?.items.length ?? gallery?.lockedCount ?? 0}
               mode={storeMode}
-              onMode={setStoreMode}
+              onMode={changeStoreMode}
               platformLinks={c.platformLinks}
               chat={chatPreview}
               group={(c.members?.length ?? 0) > 1}

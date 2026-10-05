@@ -116,6 +116,8 @@
 .tour-offer ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14px;color:var(--ink)}
 .tour-error{color:#b91c1c;font-size:13px;margin:0}
 
+/* Switching Music <-> Support scrolls here; clear the 60px site bar. */
+.sf{scroll-margin-top:60px}
 /* Narrow screens: portrait on top, list collapses to song + time. */
 @media(max-width:900px){
   .sf{grid-template-columns:1fr;gap:20px;padding:16px 16px 110px}
