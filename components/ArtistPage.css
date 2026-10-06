@@ -1040,3 +1040,5 @@
 .art-more-item.lead { flex-direction: column; align-items: stretch; }
 .art-more-item.lead img, .art-more-item.lead .art-more-ph { width: 100%; height: auto; aspect-ratio: 16/9; }
 .art-more-item.lead strong { font-size: 18px; }
+.sg-scheduled .sg-cell-btn img{opacity:.55}
+.sg-sched{position:absolute;top:7px;left:7px;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;z-index:2}

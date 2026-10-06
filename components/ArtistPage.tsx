@@ -2050,7 +2050,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                         .filter((p): p is { post: PulsePost; i: number; thumbUrl: string } => !!p.thumbUrl)
                         // Posts carried over from the group chat wait for their
                         // chat time, so the feed never runs ahead of the story.
-                        .filter(p => !p.post.timestamp || new Date(p.post.timestamp).getTime() <= Date.now())
+                        // Staff see them early, marked Scheduled, like the chat
+                        // (Sean, 2026-10-06).
+                        .filter(p => (isSuperAdmin && viewAs === "real") || !p.post.timestamp || new Date(p.post.timestamp).getTime() <= Date.now())
                         .sort((a, b) => {
                           const pinDiff = ((b.post.pinned || b.post.featured) ? 1 : 0) - ((a.post.pinned || a.post.featured) ? 1 : 0);
                           if (pinDiff !== 0) return pinDiff;
@@ -2090,8 +2092,9 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                                 {pagePosts.map(({ post, i, thumbUrl }) => {
                                   const isVideo = post.type === "video";
                                   const caption = (post.text || post.caption || "").split("\n")[0].slice(0, 60);
+                                  const scheduled = !!post.timestamp && new Date(post.timestamp).getTime() > Date.now();
                                   return (
-                                    <div key={post.id || i} className="sg-cell">
+                                    <div key={post.id || i} className={"sg-cell" + (scheduled ? " sg-scheduled" : "")}>
                                       <button type="button" className="sg-cell-btn" onClick={() => setSocialLightboxIdx(i)} aria-label={caption || "View post"}>
                                         <img src={thumbUrl} alt="" loading="lazy" decoding="async" />
                                         {post.pinned && (
@@ -2101,6 +2104,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                                           <span className="sg-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span>
                                         )}
                                         {caption && <span className="sg-caption">{caption}</span>}
+                                        {scheduled && <span className="sg-sched">Scheduled</span>}
                                       </button>
                                       {isSuperAdmin && (
                                         <button
