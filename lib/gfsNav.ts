@@ -88,6 +88,13 @@ export function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = 
   if (canSeeProApplications) {
     base = [...base, { label: "Pro Applications", href: "/dashboard/pro-applications" }];
   }
+  // Revenue (2026-10-06, Sean: "logged into GeekFon ... under my tools I should
+  // see ... financials"). GeekFon's own money dashboard lives in HQ, so this opens
+  // HQ's Revenue page for the brand; HQ checks the owner account again on its side.
+  // Same account-only gate as the rest of Tools.
+  if (canSeeReleaseSchedule) {
+    base = [...base, { label: "Revenue", href: REVENUE_HREF }];
+  }
   return base;
 }
 
@@ -96,7 +103,10 @@ export function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = 
 // section, especially for super admins... so they're not on the main
 // navigation"). The universal shell shows these under a Tools menu instead of
 // in the top nav; the public drawer lists them after the main items.
+const REVENUE_HREF = "https://hq.lesaruss.ai/revenue/brands/geekfon-society";
+
 const TOOL_HREFS = new Set([
+  REVENUE_HREF,
   "/dashboard/release-schedule",
   "/dashboard/radio-schedule",
   "/dashboard/chat-room",
