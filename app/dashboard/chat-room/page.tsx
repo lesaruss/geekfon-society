@@ -388,7 +388,7 @@ const CSS = `
 .cw-cast { display: flex; flex-wrap: wrap; gap: 8px; }
 .cw-chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03); color: rgba(255,255,255,.6); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
 .cw-chip.on { color: #fff; background: rgba(255,255,255,.08); }
-.cw-chip img, .cw-chip-ph { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; object-position: 50% 15%; }
+.cw-chip img, .cw-chip-ph { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; object-position: 50% 15%; }
 .cw-actions { display: flex; gap: 10px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
 .cw-direction-wrap { flex: 1; min-width: 220px; display: flex; gap: 8px; align-items: center; }
 .cw-direction { flex: 1; min-width: 0; }
