@@ -101,7 +101,9 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
 
   useEffect(() => { load(); }, [load]);
   // Open on the latest line of the day, like any chat.
-  useEffect(() => { const f = feedRef.current; if (f) f.scrollTop = f.scrollHeight; }, [data?.day, data?.messages.length]);
+  // Each day opens at its first line and reads down, like a story (Sean,
+  // 2026-10-06: switching days left the reader mid-day, scrolling up).
+  useEffect(() => { const f = feedRef.current; if (f) f.scrollTop = 0; }, [data?.day]);
 
   const idx = data ? data.days.indexOf(data.day) : -1;
   const prev = data && idx > 0 ? data.days[idx - 1] : null;
