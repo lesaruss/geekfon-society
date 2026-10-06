@@ -34,6 +34,14 @@ function timeLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
+// Cast reactions under a line, one chip per emoji with a count; hovering
+// shows who reacted.
+function groupReactions(list: { emoji: string; from: string }[]): { emoji: string; from: string[] }[] {
+  const out = new Map<string, string[]>();
+  for (const r of list) out.set(r.emoji, [...(out.get(r.emoji) ?? []), r.from]);
+  return [...out].map(([emoji, from]) => ({ emoji, from }));
+}
+
 // Media rides beside a line as a small icon and opens in a lightbox, so it
 // never takes over the chat (Sean, 2026-10-05).
 const MEDIA_ICON: Record<string, React.ReactNode> = {
@@ -180,6 +188,15 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
                     )}
                   </div>
                 )}
+                {m.reactions?.length ? (
+                  <div className="ch-reacts">
+                    {groupReactions(m.reactions).map(r => (
+                      <span key={r.emoji} className="ch-react" title={r.from.map(s => person(s).name).join(", ")}>
+                        {r.emoji}<b>{r.from.length}</b>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
                 {m.original && (
                   <button type="button" className="ch-tr" onClick={() => setTranslated(s => { const n = new Set(s); if (n.has(m.id)) n.delete(m.id); else n.add(m.id); return n; })}>
                     {showOriginal ? `↻ Translate${m.originalLang && LANGS[m.originalLang] ? ` from ${LANGS[m.originalLang]}` : ""}` : "↺ Show original"}

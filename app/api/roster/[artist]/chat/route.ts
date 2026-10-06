@@ -36,6 +36,8 @@ export type ChatMessage = {
   scheduled?: boolean;
   /** A photo, video or audio clip shown as an icon beside the line. */
   media?: { url: string; kind: "image" | "video" | "audio" };
+  /** Cast reactions to the line (2026-10-06, Sean: "you can see all the people liking his message"). */
+  reactions?: { emoji: string; from: string }[];
 };
 export type ChatPerson = { name: string; avatar: string | null; accent: string | null };
 
@@ -43,6 +45,7 @@ type Row = {
   id: string; from_slug: string; body: string; original: string | null; original_lang: string | null;
   kind: "message" | "drop"; drop_title: string | null; drop_label: string | null; drop_cover: string | null; posted_at: string;
   media_url: string | null; media_kind: "image" | "video" | "audio" | null;
+  reactions: { emoji: string; from: string }[] | null;
 };
 
 // The story-time (LA) calendar day of an instant, as YYYY-MM-DD.
@@ -86,7 +89,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   const day = asked && /^\d{4}-\d{2}-\d{2}$/.test(asked) ? asked : (days.filter(d => d <= nyDay(now)).pop() ?? days[days.length - 1] ?? nyDay(now));
   const [from, to] = nyDayBounds(day);
   let q = sb.from("gfs_chat_messages")
-    .select("id, from_slug, body, original, original_lang, kind, drop_title, drop_label, drop_cover, posted_at, media_url, media_kind")
+    .select("id, from_slug, body, original, original_lang, kind, drop_title, drop_label, drop_cover, posted_at, media_url, media_kind, reactions")
     .eq("room", ROOM).eq("published", true).gte("posted_at", from).lt("posted_at", to).order("posted_at", { ascending: true });
   if (!g.staff) q = q.lte("posted_at", now);
   const { data: rows } = await q;
@@ -102,6 +105,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
     postedAt: r.posted_at,
     ...(r.posted_at > now ? { scheduled: true } : {}),
     ...(r.media_url ? { media: { url: r.media_url, kind: r.media_kind || "image" } } : {}),
+    ...(r.reactions?.length ? { reactions: r.reactions } : {}),
   }));
 
   // Everyone the Writers' Room can cast (roster plus Logan and LoLA).
