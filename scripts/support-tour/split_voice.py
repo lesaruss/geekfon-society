@@ -17,12 +17,17 @@ starts = [float(x) for x in re.findall(r'silence_start: ([\d.]+)', log)]
 ends = [float(x) for x in re.findall(r'silence_end: ([\d.]+)', log)]
 mids = [round((s + e) / 2, 2) for s, e in zip(starts, ends)]
 
+# Fewest clips that fit, with the cuts spread evenly: each cut goes at the pause
+# closest to an even share of what is left, never more than mx after the last.
+import math
 cuts, at = [], 0.0
 while dur - at > mx:
-    ok = [m for m in mids if at + 2 < m <= at + mx]
+    left = math.ceil((dur - at) / mx)
+    ideal = at + (dur - at) / left
+    ok = [m for m in mids if at + 2 < m <= at + mx and dur - m >= 2]
     if not ok:
         sys.exit(f'no pause between {at:.2f}s and {at + mx:.2f}s; rewrite the line or allow a longer clip')
-    at = ok[-1]
+    at = min(ok, key=lambda m: abs(m - ideal))
     cuts.append(at)
 bounds = [0.0] + cuts + [dur]
 parts = []

@@ -24,22 +24,50 @@ STOPS = [('social', ['feed', 'posts']), ('gallery', ['wallpaper', 'wallpapers', 
 segs, _ = WhisperModel('base', compute_type='int8').transcribe(src, word_timestamps=True)
 words = [w for s in segs for w in s.words]
 
-def tidy(t):
-    t = t.strip()
-    for k, v in fixes.items():
-        t = re.sub(re.escape(k), v, t, flags=re.I)
-    return t[0].upper() + t[1:] if t else t
+# Break at sentence ends and real pauses; a chunk longer than 5.5 s splits at its
+# most central comma, unless that comma sits inside a fixed phrase (an album title).
+def chunk_text(ws):
+    return ''.join(x.word for x in ws)
 
-caps, cur = [], []
+def protected(text, cut):
+    low = text.lower()
+    for k in fixes:
+        for m in re.finditer(re.escape(k), low):
+            if m.start() < cut < m.end():
+                return True
+    return False
+
+raw, cur = [], []
 for i, w in enumerate(words):
     cur.append(w)
     nxt = words[i + 1] if i + 1 < len(words) else None
-    end_sentence = w.word.strip()[-1:] in '.!?'
-    gap = (nxt.start - w.end) if nxt else 9
-    if end_sentence or gap > 0.35 or (w.end - cur[0].start) > 4.5 or not nxt:
-        caps.append({'start': round(cur[0].start, 2), 'end': round(nxt.start if nxt else w.end + 0.3, 2),
-                     'text': tidy(''.join(x.word for x in cur))})
-        cur = []
+    if not nxt or w.word.strip()[-1:] in '.!?' or nxt.start - w.end > 0.45:
+        raw.append(cur); cur = []
+final = []
+for ch in raw:
+    while ch[-1].end - ch[0].start > 5.5:
+        text = chunk_text(ch); pos = 0; best = None
+        for j, w in enumerate(ch[:-1]):
+            pos += len(w.word)
+            if w.word.strip().endswith(',') and not protected(text, pos):
+                score = abs((w.end - ch[0].start) - (ch[-1].end - w.end))
+                if best is None or score < best[0]:
+                    best = (score, j)
+        if best is None:
+            break
+        final.append(ch[:best[1] + 1]); ch = ch[best[1] + 1:]
+    final.append(ch)
+
+caps, prev_end = [], '.'
+for k, ch in enumerate(final):
+    t = chunk_text(ch).strip()
+    for key, v in fixes.items():
+        t = re.sub(re.escape(key), v, t, flags=re.I)
+    if prev_end in '.!?' and t:
+        t = t[0].upper() + t[1:]
+    nxt = final[k + 1][0].start if k + 1 < len(final) else ch[-1].end + 0.3
+    caps.append({'start': round(ch[0].start, 2), 'end': round(nxt, 2), 'text': t})
+    prev_end = t[-1:] if t else '.'
 
 stops, after = {'album': 0}, 0.0
 for key, kws in STOPS:
