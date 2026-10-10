@@ -25,6 +25,8 @@ export type RadioTrack = {
   path: string;
   title: string;
   artist: string;
+  /** The gfs_artists slug, for the homepage stage and on-air glow (songs only). */
+  slug?: string;
   durationSeconds: number;
   coverUrl?: string | null;
   /** "spot": a sponsor read between songs (radio_spots); resolves as type "ad". */
@@ -40,6 +42,7 @@ export type PinnedOverride = {
   path: string;
   title: string;
   artist: string;
+  slug?: string;
   coverUrl?: string | null;
   startsAtMs: number;
   durationSeconds: number;
@@ -61,6 +64,7 @@ export type ResolvedPlayhead = {
   path: string;
   title: string;
   artist: string;
+  slug?: string;
   coverUrl?: string | null;
   offsetSeconds: number;
   durationSeconds: number;
@@ -88,6 +92,7 @@ export function resolvePlayhead(
         path: o.path,
         title: o.title,
         artist: o.artist,
+        slug: o.slug,
         coverUrl: o.coverUrl ?? null,
         offsetSeconds: (nowMs - o.startsAtMs) / 1000,
         durationSeconds: o.durationSeconds,
@@ -128,6 +133,7 @@ export function resolvePlayhead(
         path: t.path,
         title: t.title,
         artist: t.artist,
+        slug: t.slug,
         coverUrl: t.coverUrl ?? null,
         offsetSeconds: elapsed - acc,
         durationSeconds: d,
@@ -143,6 +149,7 @@ export function resolvePlayhead(
     path: last.path,
     title: last.title,
     artist: last.artist,
+    slug: last.slug,
     coverUrl: last.coverUrl ?? null,
     offsetSeconds: Math.max(last.durationSeconds - 0.1, 0),
     durationSeconds: last.durationSeconds,
