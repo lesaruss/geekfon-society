@@ -14,7 +14,7 @@
 // a guided tour of what $11 gets you, each stop with a visual of the feature
 // (mocked where the feature is not live yet, and labelled as a preview). A
 // Support now button stays in reach the whole way; the last stop is the offer.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useArtistPlayer, type PlayerTrack } from "./ArtistPlayer";
 import type { PublicAlbum, PublicSong } from "@/lib/server/depot";
 import type { RadioStation } from "@/lib/server/radio";
@@ -64,6 +64,21 @@ type Props = {
   // Group shot (bands): show the whole image, never zoom or crop it, so no
   // member is cut off. Solo portraits keep the head-to-hip zoom.
   group?: boolean;
+  // LoLA walks the Support tour (profile.tourVideo).
+  tourVideo?: TourVideo | null;
+};
+
+// LoLA's Support-tour video (Sean, 2026-10-10, playbook
+// geekfon-character-select): she plays in the portrait panel and explains
+// why to support the artist, wearing their merch. While she plays, the tour
+// follows her: stops maps each stop key (and "offer") to the second she
+// starts talking about it. Captions show under her. Pressing Back, Next or a
+// dot hands the tour back to the visitor; she keeps talking.
+export type TourVideo = {
+  src: string;
+  poster: string | null;
+  captions: { start: number; end: number; text: string }[];
+  stops: Record<string, number>;
 };
 
 export type StoreChat = { room: string; me: string; people: Record<string, { name: string; avatar: string | null }>; lines: { from: string; text: string }[] };
@@ -142,12 +157,17 @@ export default function Storefront(p: Props) {
   }, [p.songs, p.albums]);
 
 
+  // Where LoLA is in her tour video, in seconds; null while she isn't playing.
+  const [guideAt, setGuideAt] = useState<number | null>(null);
+
   return (
     <section className={"sf" + (p.mode === "tour" ? " sf-touring" : "")}>
       <div className="sf-left">
         <div className={"sf-portrait" + (p.group ? " sf-portrait-group" : "")}>
           {p.portraitUrl && <img key="music" className={"sf-img" + (p.mode !== "tour" ? " on" : "")} src={p.portraitUrl} alt={`${p.artistName}`} />}
-          {p.tourPortraitUrl && <img key="tour" className={"sf-img" + (p.mode === "tour" ? " on" : "")} src={p.tourPortraitUrl} alt="" aria-hidden={p.mode !== "tour"} />}
+          {p.tourVideo
+            ? <TourGuide video={p.tourVideo} on={p.mode === "tour"} onTime={setGuideAt} />
+            : p.tourPortraitUrl && <img key="tour" className={"sf-img" + (p.mode === "tour" ? " on" : "")} src={p.tourPortraitUrl} alt="" aria-hidden={p.mode !== "tour"} />}
         </div>
       </div>
       <div className="sf-right">
@@ -183,7 +203,7 @@ export default function Storefront(p: Props) {
             <Chat slug={p.slug} artistName={p.artistName} onSupport={() => p.onMode("tour")} />
           </div>
         ) : (
-          <Tour {...p} album={album} list={list} />
+          <Tour {...p} album={album} list={list} guideAt={guideAt} />
         )}
       </div>
     </section>
@@ -310,7 +330,7 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
 
 // ----------------------------------------------------------------- tour ---
 
-function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) {
+function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[]; guideAt: number | null }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // No album on file yet: the tour sells the songs on the page as the
@@ -420,6 +440,23 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
   const [i, setI] = useState(0);
   const last = total - 1;
   const stop = stops[i];
+
+  // Follow LoLA while she plays: the latest stop she has reached. A visitor
+  // who steps through the tour themselves takes over until she starts again.
+  const [follow, setFollow] = useState(true);
+  const cues = props.tourVideo?.stops;
+  const at = props.guideAt;
+  useEffect(() => {
+    if (at === null || !cues) return;
+    if (at < 0.5) setFollow(true);
+    if (!follow && at >= 0.5) return;
+    const keys = [...stops.map(s => s.key), "offer"];
+    let target = 0;
+    keys.forEach((k, n) => { if (cues[k] !== undefined && at >= cues[k]) target = n; });
+    setI(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [at, follow, cues]);
+  const go = (n: number) => { setFollow(false); setI(n); };
   const nextLabel = i + 1 < stops.length ? stops[i + 1].title : "Support";
 
   return (
@@ -448,16 +485,67 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
       <div className="tour-nav">
         {i === 0
           ? <button className="sf-btn" onClick={() => p.onMode("music")} aria-label="Back to the music">← Back</button>
-          : <button className="sf-btn" onClick={() => setI(i - 1)} aria-label="Previous">← Back</button>}
+          : <button className="sf-btn" onClick={() => go(i - 1)} aria-label="Previous">← Back</button>}
         <div className="tour-dots" role="tablist" aria-label="Steps">
           {Array.from({ length: total }, (_, n) => (
-            <button key={n} role="tab" aria-selected={n === i} aria-label={n === last ? "Support" : stops[n].title} className={"tour-dot" + (n === i ? " on" : "")} onClick={() => setI(n)} />
+            <button key={n} role="tab" aria-selected={n === i} aria-label={n === last ? "Support" : stops[n].title} className={"tour-dot" + (n === i ? " on" : "")} onClick={() => go(n)} />
           ))}
         </div>
         {i < last
-          ? <button className="sf-btn sf-btn-dark" onClick={() => setI(i + 1)}>Next: {nextLabel} →</button>
-          : <button className="sf-btn" onClick={() => setI(0)}>Start over</button>}
+          ? <button className="sf-btn sf-btn-dark" onClick={() => go(i + 1)}>Next: {nextLabel} →</button>
+          : <button className="sf-btn" onClick={() => go(0)}>Start over</button>}
       </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------ tour guide ---
+
+// LoLA in the portrait panel. Browsers block sound until the visitor acts,
+// so she waits on her first frame with a play button; tapping her pauses.
+function TourGuide({ video, on, onTime }: { video: TourVideo; on: boolean; onTime: (t: number | null) => void }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [t, setT] = useState(0);
+
+  // Leaving the tour pauses her.
+  useEffect(() => {
+    if (!on) ref.current?.pause();
+  }, [on]);
+
+  const toggle = () => {
+    const v = ref.current;
+    if (!v) return;
+    if (v.paused) {
+      if (v.ended) v.currentTime = 0;
+      v.play().catch(() => setPlaying(false));
+    } else v.pause();
+  };
+
+  const line = video.captions.find(c => t >= c.start && t < c.end);
+
+  return (
+    <div className={"sf-guide" + (on ? " on" : "")} aria-hidden={!on}>
+      <video
+        ref={ref}
+        className="sf-guide-video"
+        src={video.src}
+        poster={video.poster ?? undefined}
+        playsInline
+        preload="metadata"
+        onClick={toggle}
+        onPlay={() => setPlaying(true)}
+        onPause={() => { setPlaying(false); onTime(null); }}
+        onEnded={() => { setPlaying(false); onTime(null); }}
+        onTimeUpdate={e => { const now = e.currentTarget.currentTime; setT(now); onTime(now); }}
+      />
+      {playing && line && <div className="sf-guide-cap">{line.text}</div>}
+      {!playing && (
+        <button type="button" className="sf-guide-play" onClick={toggle}>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor" /></svg>
+          {t > 0 ? "Keep listening" : "Hear it from LoLA"}
+        </button>
+      )}
     </div>
   );
 }

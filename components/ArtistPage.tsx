@@ -12,7 +12,7 @@ import Chat from "@/components/roster/Chat";
 import RadioStrip from "@/components/roster/RadioStrip";
 import SignInGate from "@/components/roster/SignInGate";
 import AdCreative from "@/components/AdCreative";
-import Storefront, { type StoreMode } from "@/components/roster/Storefront";
+import Storefront, { type StoreMode, type TourVideo } from "@/components/roster/Storefront";
 import { useFramed } from "@/components/shell/GfsShell";
 import { useArtistPlayer } from "@/components/roster/ArtistPlayer";
 import Link from "next/link";
@@ -106,6 +106,9 @@ export type ArtistContent = {
   // (profile.tabPortraits = { discography: url, pulse: url, ... }). Any tab
   // without one shows heroUrl.
   tabPortraits?: Record<string, string>;
+  // LoLA's Support-tour video (2026-10-10): src, poster, captions and the
+  // second each tour stop starts. See TourVideo in components/roster/Storefront.
+  tourVideo?: TourVideo;
   // Short bio shown on the storefront, same copy as lesaruss.com.
   shortBio?: string; location?: string;
   // Direct streaming links when known: { spotify: url, "apple-music": url, ... }
@@ -1706,6 +1709,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               chat={chatPreview}
               radioBg={cityBg ? { src: cityBg.desktop, position: cityBg.position } : null}
               group={(c.members?.length ?? 0) > 1}
+              tourVideo={c.tourVideo ?? null}
             />
             </div>
           )}
