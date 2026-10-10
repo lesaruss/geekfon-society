@@ -250,7 +250,7 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
                   </button>
                 ) : null}
                 <a className="cs-btn cs-btn-go" href={`/${stage.slug}`} onClick={() => track("gfs_artist_open", { artist: stage.slug, from: "stage", page: variant })}>
-                  Meet {stage.name} <span aria-hidden="true">&rarr;</span>
+                  Meet<span className="cs-long">&nbsp;{stage.name}</span> <span aria-hidden="true">&rarr;</span>
                 </a>
               </div>
               {askFor && !followState && bySlug.get(askFor) ? (
