@@ -239,12 +239,26 @@ export default function CharacterSelect() {
             {stage?.cutout ? (
               <img key={stage.slug} className="cs-hero" src={sized(stage.cutout, 900) ?? ""} alt={stage.name} />
             ) : null}
-            {!radio.playing ? (
-              <button type="button" className="cs-sound" data-own-sound onClick={() => { gestured.current = true; track("gfs_tap_listen", { page: variant, via: "button" }); void radio.startRadio(); }}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" strokeWidth="2" strokeLinecap="round" /></svg>
-                {radio.loading ? "Tuning in" : "Tap anywhere to listen"}
-              </button>
-            ) : null}
+            {/* One pill, two jobs: start the radio, and once anything is playing,
+                pause it (Sean, 2026-10-10: "I don't see a way to stop the radio"). */}
+            <button
+              type="button"
+              className={"cs-sound" + (radio.playing ? " on" : "")}
+              data-own-sound
+              aria-label={radio.playing ? "Pause the music" : "Play GeekFon Radio"}
+              onClick={() => {
+                gestured.current = true;
+                if (radio.playing) { radio.stop(); return; }
+                track("gfs_tap_listen", { page: variant, via: "button" });
+                void radio.startRadio();
+              }}
+            >
+              {radio.playing ? (
+                <><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" stroke="none" /><rect x="14" y="5" width="4" height="14" stroke="none" /></svg>Pause</>
+              ) : (
+                <><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" strokeWidth="2" strokeLinecap="round" /></svg>{radio.loading ? "Tuning in" : "Tap anywhere to listen"}</>
+              )}
+            </button>
           </div>
 
           {stage ? (
