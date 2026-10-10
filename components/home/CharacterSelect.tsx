@@ -246,7 +246,7 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
                     {singlePlaying ? (
                       <><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>Pause</>
                     ) : (
-                      <><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 4 20 12 7 20" /></svg>Play &ldquo;{stageSong.title}&rdquo;</>
+                      <><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 4 20 12 7 20" /></svg><span className="cs-btn-label">Play &ldquo;{stageSong.title}&rdquo;</span></>
                     )}
                   </button>
                 ) : null}
@@ -385,10 +385,8 @@ function FollowAsk({ artist, source, onDone }: { artist: StageArtist; source: "h
         <input className="cs-hp" tabIndex={-1} autoComplete="off" aria-hidden="true" value={hp} onChange={e => setHp(e.target.value)} name="website" />
         <button type="submit" disabled={state === "sending"}>{state === "sending" ? "Sending" : "Tell me"}</button>
       </div>
-      <div className="cs-ask-foot">
-        <Link href={`/${artist.slug}`} onClick={() => track("gfs_album_click", { artist: artist.slug, page: source })}>Or get the album, $11</Link>
-        <button type="button" onClick={() => onDone("dismissed")}>Not now</button>
-      </div>
+      <Link className="cs-ask-album" href={`/${artist.slug}`} onClick={() => track("gfs_album_click", { artist: artist.slug, page: source })}>Or get the album, $11</Link>
+      <button type="button" className="cs-ask-x" onClick={() => onDone("dismissed")} aria-label="Not now">&times;</button>
       {state === "error" ? <p className="cs-ask-err" role="alert">That didn&rsquo;t go through. Check the email and try again.</p> : null}
     </form>
   );
