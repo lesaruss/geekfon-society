@@ -648,7 +648,10 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   const storefront = !!depot && !activeArticle;
   const router = useRouter();
   const player = useArtistPlayer();
-  const [storeMode, setStoreMode] = useState<StoreMode>("music");
+  // ?tab=chat opens the storefront on the group chat: the homepage's drifting
+  // chat lines link straight to that artist's side of it (Sean, 2026-10-10).
+  const [storeMode, setStoreMode] = useState<StoreMode>(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "chat" ? "chat" : "music");
   // Signed in, a label artist page sits inside the universal frame and its
   // sections (Music, Press, Social, Gallery, Chat) open inside it
   // (2026-10-04, Sean). Music is the storefront; the rest are the tabs.
