@@ -168,6 +168,10 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
   .cs-framed.cs-home { position: absolute; inset: 0; height: auto; }
   .cs-framed .cs-bg, .cs-framed .cs-screen { height: 100%; }
 }
+/* Lift the rails clear of the chat bubble and LoLA in the window's corners. */
+@media (min-width: 900px) {
+  .cs-framed .cs-rail { margin-bottom: 56px; }
+}
 @media (min-width: 761px) and (max-width: 899px) {
   .cs-framed .cs-chat, .cs-framed .cs-lola { top: 10px; }
 }
