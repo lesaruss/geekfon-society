@@ -7,12 +7,13 @@
 export type Tier = "public" | "passport" | "plus" | "pro";
 export type NavItem = { label: string; href: string };
 
+// Roster tab removed 2026-10-10 (Sean): the roster page was retired into the
+// homepage, which the GeekFon logo already opens.
 // GeekFon Radio added 2026-07-26 per Sean: the /radio page (and the homepage
 // hero-circle play button) no longer require an account, so the nav should
 // surface it to anonymous visitors too, not just logged-in tiers below.
 const NAV_PUBLIC: NavItem[] = [
   { label: "Overview",      href: "/#overview" },
-  { label: "Roster",        href: "/roster" },
   { label: "GeekFon Radio", href: "/radio" },
 ];
 
@@ -24,7 +25,6 @@ const NAV_PUBLIC: NavItem[] = [
 // before this fix, despite already being eligible to apply.
 const NAV_PASSPORT: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
-  { label: "Roster",          href: "/roster" },
   { label: "Playlist",        href: "/dashboard/library" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Pro",             href: "/pro" },
@@ -33,7 +33,6 @@ const NAV_PASSPORT: NavItem[] = [
 
 const NAV_PLUS: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
-  { label: "Roster",          href: "/roster" },
   { label: "Playlist",        href: "/dashboard/library" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Pro",             href: "/pro" },
@@ -42,7 +41,6 @@ const NAV_PLUS: NavItem[] = [
 
 const NAV_PRO: NavItem[] = [
   { label: "Overview",        href: "/dashboard" },
-  { label: "Roster",          href: "/roster" },
   { label: "Playlist",        href: "/dashboard/library" },
   { label: "Artist Rankings", href: "/dashboard/top10" },
   { label: "Pro",             href: "/pro" },

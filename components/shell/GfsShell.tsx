@@ -208,7 +208,7 @@ export default function GfsShell({ children, email, rawTier, fallbackName, title
 
         <nav className="gw-topnav" aria-label="GeekFon">
           <div className="gw-left">
-            <a href="/dashboard" className="gw-logo" aria-label="GeekFon Society dashboard">
+            <a href="/" className="gw-logo" aria-label="GeekFon Society home">
               <img src="/geekfon-logo.png" alt="" aria-hidden="true" />
               <span><span className="gw-geek">GEEK</span><span className="gw-fon">FON</span></span>
             </a>

@@ -2,8 +2,9 @@
 // Gallery tab of the public roster (2026-10-04, Sean): wallpapers and art made
 // for fans. Public items show to everyone; supporter items come back from the
 // access route as signed URLs once the server confirms the viewer; staff also
-// see admin-only items and get an upload form. lib/server/gallery.ts decides
-// what each level may see.
+// see admin-only items. lib/server/gallery.ts decides what each level may see.
+// New art is added by the team straight to storage, so there is no upload
+// form on the site (Sean, 2026-10-10).
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { GalleryItem } from "@/lib/server/gallery";
@@ -24,7 +25,7 @@ type Props = {
 
 const LEVEL_LABEL: Record<string, string> = { public: "Everyone", supporter: "Supporters", admin: "Admin only" };
 
-export default function Gallery({ artistName, slug, publicItems, featured = [], lockedCount, supporterItems, supporter, staff, onSupport, onChanged }: Props) {
+export default function Gallery({ artistName, publicItems, featured = [], lockedCount, supporterItems, supporter, staff, onSupport, onChanged }: Props) {
   // Current art first (big tile = the music portrait), then the gallery rows.
   const items = [...featured, ...(supporter && supporterItems ? supporterItems : publicItems)];
   const [open, setOpen] = useState<GalleryItem | null>(null);
@@ -47,8 +48,6 @@ export default function Gallery({ artistName, slug, publicItems, featured = [], 
           <button className="rs-cta" onClick={onSupport}>Support {artistName}</button>
         </div>
       )}
-
-      {staff && supporter && <UploadForm slug={slug} onDone={onChanged} />}
 
       {items.length === 0 ? (
         <p className="rs-empty">{supporter ? `The first ${artistName} wallpapers land here soon.` : ""}</p>
@@ -88,69 +87,6 @@ export default function Gallery({ artistName, slug, publicItems, featured = [], 
 async function authHeader(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
-}
-
-function imageSize(file: File): Promise<{ w: number; h: number } | null> {
-  return new Promise(resolve => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => { resolve({ w: img.naturalWidth, h: img.naturalHeight }); URL.revokeObjectURL(url); };
-    img.onerror = () => { resolve(null); URL.revokeObjectURL(url); };
-    img.src = url;
-  });
-}
-
-function UploadForm({ slug, onDone }: { slug: string; onDone: () => void }) {
-  const [file, setFile] = useState<File | null>(null);
-  const [title, setTitle] = useState("");
-  const [visibility, setVisibility] = useState("supporter");
-  const [kind, setKind] = useState("wallpaper");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!file) return;
-    setBusy(true);
-    setMsg(null);
-    const size = await imageSize(file);
-    const fd = new FormData();
-    fd.set("artist", slug);
-    fd.set("file", file);
-    fd.set("title", title);
-    fd.set("visibility", visibility);
-    fd.set("kind", kind);
-    if (size) { fd.set("width", String(size.w)); fd.set("height", String(size.h)); }
-    try {
-      const res = await fetch("/api/admin/gallery", { method: "POST", headers: await authHeader(), body: fd });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) setMsg(body.error || "Upload failed.");
-      else { setFile(null); setTitle(""); setMsg("Added."); onDone(); }
-    } catch {
-      setMsg("Upload failed.");
-    }
-    setBusy(false);
-  }
-
-  return (
-    <form className="rs-upload" onSubmit={submit}>
-      <strong className="rs-upload-head">Add to the gallery <span>(only you see this)</span></strong>
-      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} />
-      <input type="text" placeholder="Title (optional)" value={title} onChange={e => setTitle(e.target.value)} maxLength={120} />
-      <select value={kind} onChange={e => setKind(e.target.value)} aria-label="Kind">
-        <option value="wallpaper">Wallpaper</option>
-        <option value="art">Art</option>
-        <option value="photo">Photo</option>
-      </select>
-      <select value={visibility} onChange={e => setVisibility(e.target.value)} aria-label="Who sees it">
-        <option value="supporter">Supporters</option>
-        <option value="public">Everyone</option>
-        <option value="admin">Admin only</option>
-      </select>
-      <button className="rs-cta" type="submit" disabled={!file || busy}>{busy ? "Uploading..." : "Upload"}</button>
-      {msg && <span className="rs-upload-msg">{msg}</span>}
-    </form>
-  );
 }
 
 function DeleteButton({ id, onDone }: { id: string; onDone: () => void }) {

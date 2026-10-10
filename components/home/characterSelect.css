@@ -159,6 +159,34 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
   .cs-tagline { display: none; }
 }
 
+/* Signed in: inside the universal frame (GfsShell). The frame owns the page
+   height, so the stage fills the window body instead of the viewport, and the
+   chat bubble and LoLA sit inside the stage instead of on the screen edges,
+   where they collided with the frame's nav (Sean, 2026-10-10, iPhone). */
+.cs-framed .cs-chat, .cs-framed .cs-lola { position: absolute; }
+@media (min-width: 761px) {
+  .cs-framed.cs-home { position: absolute; inset: 0; height: auto; }
+  .cs-framed .cs-bg, .cs-framed .cs-screen { height: 100%; }
+}
+/* Lift the rails clear of the chat bubble and LoLA in the window's corners. */
+@media (min-width: 900px) {
+  .cs-framed .cs-rail { margin-bottom: 56px; }
+}
+@media (min-width: 761px) and (max-width: 899px) {
+  .cs-framed .cs-chat, .cs-framed .cs-lola { top: 10px; }
+}
+/* Phones: the frame is a normal scrolling page with the app dock below, so the
+   stage gets a fixed height and the page scrolls to the artist strip. */
+@media (max-width: 760px) {
+  html.gfs-cs-framed, html.gfs-cs-framed body { overflow: visible; }
+  .cs-framed.cs-home, .cs-framed .cs-screen { height: auto; }
+  .cs-framed .cs-bg { height: 100%; }
+  .cs-framed .cs-center { padding-bottom: 16px; }
+  .cs-framed .cs-stage { flex: none; height: min(41vh, 400px); }
+  .cs-framed .cs-chat, .cs-framed .cs-lola { top: 10px; }
+  .cs-framed .cs-head { padding-top: 50px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cs-tile.air, .cs-sound, .cs-aurora, .cs-live, .cs-onair-dot { animation: none !important; }
   .cs-chat { animation: none; }
