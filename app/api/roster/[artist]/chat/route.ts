@@ -8,15 +8,17 @@
 // stays hidden until then. Lines live in gfs_chat_messages (service role only).
 //
 // Who reads what (Sean, 2026-10-10, lib/chatAccess.ts): October 1 to 3 are
-// free for everyone, no sign-in. Later days are for supporters of ANY artist
-// (chatSupporter in lib/server/entitlements.ts). Everyone else gets a locked
-// day: its date, who talks, and one teaser line, never the rest of its lines.
+// free for everyone, no sign-in. Later days are for supporters of THIS
+// artist (entitlementFor in lib/server/entitlements.ts: their album, or
+// Lifetime, Pro, staff). Support is per artist: a Roxanne supporter reads
+// every day on Roxanne's page and gets the locked days on Likkle Sis's page.
+// A locked day sends its date, who talks and one teaser line, nothing else.
 //
 // GET  ?day=YYYY-MM-DD   that day's lines (LA days), the days that have
 //                        lines, and the cast (name, avatar, accent).
 
 import { NextRequest, NextResponse } from "next/server";
-import { viewerFromRequest, chatSupporter } from "@/lib/server/entitlements";
+import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
 import { serviceClient } from "@/lib/server/supabaseAdmin";
 import { loadChatCast } from "@/lib/server/chatCast";
 import { FREE_CHAT_DAYS, isFreeChatDay } from "@/lib/chatAccess";
@@ -70,8 +72,10 @@ function nyDayBounds(day: string): [string, string] {
   return [start.toISOString(), end.toISOString()];
 }
 
-export async function GET(req: NextRequest) {
-  const g = await chatSupporter(await viewerFromRequest(req));
+export async function GET(req: NextRequest, { params }: { params: Promise<{ artist: string }> }) {
+  const { artist } = await params;
+  const ent = await entitlementFor(await viewerFromRequest(req), artist);
+  const g = { supporter: ent.supporter, staff: ent.reason === "staff" };
   const sb = serviceClient();
   if (!sb) return NextResponse.json({ error: "unavailable" }, { status: 503, headers: noStore });
 

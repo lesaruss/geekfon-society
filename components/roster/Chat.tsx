@@ -172,7 +172,7 @@ export default function Chat({ slug, artistName, onSupport }: { slug: string; ar
               </div>
             )}
             <strong className="ch-locked-title">The rest of the story is for supporters</strong>
-            <p className="ch-locked-text">October 1 to 3 are free. Get any album and every day of the chat opens, on every artist&apos;s page.</p>
+            <p className="ch-locked-text">October 1 to 3 are free. Support {artistName} and every day of the chat opens here, from {artistName}&apos;s side.</p>
             {onSupport && <button type="button" className="ch-locked-btn" onClick={onSupport}>Support {artistName} · $11</button>}
           </div>
         )}
@@ -257,7 +257,7 @@ export default function Chat({ slug, artistName, onSupport }: { slug: string; ar
           AI attribution per the roster's content rules. */}
       <div className="ch-foot">
         A scripted look inside the crew&apos;s group chat, written with AI and approved by GeekFon. New lines land every day.
-        {!data.supporter && <> October 1 to 3 are free to read. Supporters read every day.</>}
+        {!data.supporter && <> October 1 to 3 are free to read. {artistName}&apos;s supporters read every day.</>}
         {data.staff && <> <a href="/dashboard/chat-room">Edit in the Writers&apos; Room</a></>}
       </div>
     </div>
