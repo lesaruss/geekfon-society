@@ -36,9 +36,10 @@ const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZF
 // the cities sync up with the artist playing on the radio"). Night art for the
 // dark page, day art for the light one. The night set and its phone crops are
 // the 2026-06-19 skylines; day versions, NYC and Nashville were added
-// 2026-10-10 (geekfon-media/city-backgrounds). Phones use the wide art where
+// 2026-10-10 (geekfon-media/artists/geekfon-society/city-backgrounds). Phones use the wide art where
 // there is no phone crop.
-const BG = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/city-backgrounds/";
+const MEDIA = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/";
+const BG = MEDIA + "artists/geekfon-society/city-backgrounds/";
 type City = { name: string; night: string; nightMobile?: string; day: string };
 const CITIES: Record<string, City> = {
   london: { name: "London", night: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", nightMobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png", day: BG + "london-day.png" },
@@ -46,7 +47,7 @@ const CITIES: Record<string, City> = {
   seoul: { name: "Seoul", night: CDN + "hf_20260619_061116_c00ea5ca-cad0-4b95-b593-c9d5d4a7f654.png", nightMobile: CDN + "hf_20260619_062102_df16b724-a594-440e-a35d-3a96406fabf7.png", day: BG + "seoul-day.png" },
   berlin: { name: "Berlin", night: CDN + "hf_20260619_061452_342ffc31-9332-438d-b032-c581bbfc5205.png", nightMobile: CDN + "hf_20260619_062309_26ba4c35-6221-47ff-844e-a8cab948cdab.png", day: BG + "berlin-day.png" },
   johannesburg: { name: "Johannesburg", night: CDN + "hf_20260619_061618_b63a68e5-ec0d-4f6a-8473-0e9652db85bf.png", nightMobile: CDN + "hf_20260619_064547_2906c350-a205-4c96-9bb1-114dc53fc237.png", day: BG + "johannesburg-day.png" },
-  orlando: { name: "Orlando", night: BG + "orlando-desktop-cropped.png", nightMobile: CDN + "hf_20260619_125452_ad933e6f-0b03-43a4-b111-341e76b9efd9.jpeg", day: BG + "orlando-day.png" },
+  orlando: { name: "Orlando", night: MEDIA + "city-backgrounds/orlando-desktop-cropped.png", nightMobile: CDN + "hf_20260619_125452_ad933e6f-0b03-43a4-b111-341e76b9efd9.jpeg", day: BG + "orlando-day.png" },
   nyc: { name: "New York", night: BG + "nyc-night.png", day: BG + "nyc-day.png" },
   nashville: { name: "Nashville", night: BG + "nashville-night.png", day: BG + "nashville-day.png" },
 };
