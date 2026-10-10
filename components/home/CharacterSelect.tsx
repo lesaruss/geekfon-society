@@ -25,6 +25,7 @@
 // the music keeps going between pages.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRadio } from "@/components/radio/RadioProvider";
 import { CHAT_TO_ROSTER, sized, type HomeChatLine, type StageArtist } from "@/lib/roster";
@@ -249,9 +250,9 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
                     )}
                   </button>
                 ) : null}
-                <a className="cs-btn cs-btn-go" href={`/${stage.slug}`} onClick={() => track("gfs_artist_open", { artist: stage.slug, from: "stage", page: variant })}>
+                <Link className="cs-btn cs-btn-go" href={`/${stage.slug}`} onClick={() => track("gfs_artist_open", { artist: stage.slug, from: "stage", page: variant })}>
                   Meet<span className="cs-long">&nbsp;{stage.name}</span> <span aria-hidden="true">&rarr;</span>
-                </a>
+                </Link>
               </div>
               {askFor && !followState && bySlug.get(askFor) ? (
                 <FollowAsk
@@ -268,7 +269,7 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
           <nav className="cs-strip" aria-label="Artists">{artists.map(a => tile(a, "strip"))}</nav>
 
           {variant === "home" ? (
-            <a className="cs-everyone" href="/roster#everyone">See everyone</a>
+            <Link className="cs-everyone" href="/roster#everyone">See everyone</Link>
           ) : null}
         </main>
 
@@ -335,7 +336,7 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
                     {on ? <span className="cs-card-bar" style={{ width: `${pct}%` }} /> : null}
                   </button>
                   <div className="cs-card-meta">
-                    <a href={`/${a.slug}`} className="cs-card-name" onClick={() => track("gfs_artist_open", { artist: a.slug, from: "grid", page: variant })}>{a.name}</a>
+                    <Link href={`/${a.slug}`} className="cs-card-name" onClick={() => track("gfs_artist_open", { artist: a.slug, from: "grid", page: variant })}>{a.name}</Link>
                     <span className="cs-card-genre">{on && song ? song.title : a.genre ?? ""}</span>
                   </div>
                 </article>
@@ -385,7 +386,7 @@ function FollowAsk({ artist, source, onDone }: { artist: StageArtist; source: "h
         <button type="submit" disabled={state === "sending"}>{state === "sending" ? "Sending" : "Tell me"}</button>
       </div>
       <div className="cs-ask-foot">
-        <a href={`/${artist.slug}`} onClick={() => track("gfs_album_click", { artist: artist.slug, page: source })}>Or get the album, $11</a>
+        <Link href={`/${artist.slug}`} onClick={() => track("gfs_album_click", { artist: artist.slug, page: source })}>Or get the album, $11</Link>
         <button type="button" onClick={() => onDone("dismissed")}>Not now</button>
       </div>
       {state === "error" ? <p className="cs-ask-err" role="alert">That didn&rsquo;t go through. Check the email and try again.</p> : null}
