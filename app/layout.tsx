@@ -4,6 +4,7 @@ import "./globals.css";
 import RegisterSW from "../components/RegisterSW";
 import RevenueCatBootstrap from "../components/RevenueCatBootstrap";
 import AudioFocus from "../components/AudioFocus";
+import RadioProvider from "../components/radio/RadioProvider";
 
 export const metadata: Metadata = {
   title: "GeekFon Society",
@@ -48,7 +49,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <RegisterSW />
         <RevenueCatBootstrap />
         <AudioFocus />
-        {children}
+        {/* One radio for the whole site, so the music keeps going between pages (2026-10-10). */}
+        <RadioProvider>{children}</RadioProvider>
       </body>
     </html>
   );

@@ -154,7 +154,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
     const p = byRt.get(r.id);
     const path = p && pathOf(p);
     if (!p || !path) continue;
-    rotation.push({ artist: artistOf(p), title: p.title, path, durationSeconds: p.duration_seconds || 180, coverUrl: radioCover(p) });
+    rotation.push({ artist: artistOf(p), slug: p.primary_artist_slug, title: p.title, path, durationSeconds: p.duration_seconds || 180, coverUrl: radioCover(p) });
   }
 
   type OvRow = { kind: string; label: string | null; ad_src_path: string | null; starts_at: string | null; duration_seconds: number | null; cadence_seconds: number | null; track_id: string | null };
@@ -168,6 +168,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
         path,
         title: p.title,
         artist: artistOf(p),
+        slug: p.primary_artist_slug,
         coverUrl: radioCover(p),
         startsAtMs: new Date(o.starts_at).getTime(),
         durationSeconds: o.duration_seconds || p.duration_seconds || 180,
@@ -300,7 +301,7 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
   for (const s of ordered) {
     const path = signedBy.get(s.id) ?? (isSingleRow(s) ? publicStreamUrl(s.src_path!) : undefined);
     if (!path) continue;
-    rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, title: s.title, path, durationSeconds: s.duration_seconds || 180, coverUrl: radioCover(s) });
+    rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, slug: s.primary_artist_slug, title: s.title, path, durationSeconds: s.duration_seconds || 180, coverUrl: radioCover(s) });
   }
   return { rotation: withSpots(rotation, spots, names), overrides: [] };
 }
