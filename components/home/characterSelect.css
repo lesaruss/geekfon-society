@@ -154,11 +154,12 @@ span.cs-chat-name { cursor: default; }
   .cs-chat { animation: none; }
 }
 
-/* Light theme (?theme=light, Sean 2026-10-10): white page, dark type, no
-   night skylines. The cutouts sit on white, so any leftover paper-white
+/* Light theme (?theme=light, Sean 2026-10-10): white page, dark type, the
+   day skylines. The cutouts sit on white, so any leftover paper-white
    specks around the art disappear. */
 .cs.cs-light { --ink: #fff; --text: #1a1a1a; --muted: rgba(0,0,0,.62); background: #fff; }
-.cs-light .cs-city, .cs-light .cs-fade { display: none; }
+.cs-light .cs-city.on { opacity: .75; }
+.cs-light .cs-fade { background: linear-gradient(to bottom, #fff 0%, rgba(255,255,255,.72) 42%, rgba(255,255,255,.38) 70%, rgba(255,255,255,.8) 100%); }
 .cs-light .cs-aurora { background:
   radial-gradient(55vw 40vh at 15% 0%, rgba(246,152,32,.10), transparent 70%),
   radial-gradient(50vw 40vh at 85% 0%, rgba(233,30,140,.08), transparent 70%),

@@ -32,16 +32,30 @@ import { track } from "@/lib/track";
 import "./characterSelect.css";
 
 const CDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3CDGnUNmLloVUBJsrfOxR8cZFdv/";
-// The city skylines the homepage has always had (2026-06-19 set).
-const CITIES = [
-  { name: "London", desktop: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", mobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png" },
-  { name: "Fort Lauderdale", desktop: CDN + "hf_20260619_061001_82fbd428-6543-4a12-ba50-fe80d6255515.png", mobile: CDN + "hf_20260619_061949_d919c8f7-448a-48c4-aa18-a5487e4ae4a0.png" },
-  { name: "Seoul", desktop: CDN + "hf_20260619_061116_c00ea5ca-cad0-4b95-b593-c9d5d4a7f654.png", mobile: CDN + "hf_20260619_062102_df16b724-a594-440e-a35d-3a96406fabf7.png" },
-  { name: "Tokyo", desktop: CDN + "hf_20260619_061254_7c730145-acef-4518-a816-64c5846ffb1b.png", mobile: CDN + "hf_20260619_062028_83b5584e-2bc2-4879-ac28-ec59b79962f8.png" },
-  { name: "Berlin", desktop: CDN + "hf_20260619_061452_342ffc31-9332-438d-b032-c581bbfc5205.png", mobile: CDN + "hf_20260619_062309_26ba4c35-6221-47ff-844e-a8cab948cdab.png" },
-  { name: "Johannesburg", desktop: CDN + "hf_20260619_061618_b63a68e5-ec0d-4f6a-8473-0e9652db85bf.png", mobile: CDN + "hf_20260619_064547_2906c350-a205-4c96-9bb1-114dc53fc237.png" },
-];
-const CITY_MS = 9000;
+// Each artist's home city sits behind them on stage (Sean, 2026-10-10: "have
+// the cities sync up with the artist playing on the radio"). Night art for the
+// dark page, day art for the light one. The night set and its phone crops are
+// the 2026-06-19 skylines; day versions, NYC and Nashville were added
+// 2026-10-10 (geekfon-media/city-backgrounds). Phones use the wide art where
+// there is no phone crop.
+const BG = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/city-backgrounds/";
+type City = { name: string; night: string; nightMobile?: string; day: string };
+const CITIES: Record<string, City> = {
+  london: { name: "London", night: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", nightMobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png", day: BG + "london-day.png" },
+  tokyo: { name: "Tokyo", night: CDN + "hf_20260619_061254_7c730145-acef-4518-a816-64c5846ffb1b.png", nightMobile: CDN + "hf_20260619_062028_83b5584e-2bc2-4879-ac28-ec59b79962f8.png", day: BG + "tokyo-day.png" },
+  seoul: { name: "Seoul", night: CDN + "hf_20260619_061116_c00ea5ca-cad0-4b95-b593-c9d5d4a7f654.png", nightMobile: CDN + "hf_20260619_062102_df16b724-a594-440e-a35d-3a96406fabf7.png", day: BG + "seoul-day.png" },
+  berlin: { name: "Berlin", night: CDN + "hf_20260619_061452_342ffc31-9332-438d-b032-c581bbfc5205.png", nightMobile: CDN + "hf_20260619_062309_26ba4c35-6221-47ff-844e-a8cab948cdab.png", day: BG + "berlin-day.png" },
+  johannesburg: { name: "Johannesburg", night: CDN + "hf_20260619_061618_b63a68e5-ec0d-4f6a-8473-0e9652db85bf.png", nightMobile: CDN + "hf_20260619_064547_2906c350-a205-4c96-9bb1-114dc53fc237.png", day: BG + "johannesburg-day.png" },
+  orlando: { name: "Orlando", night: BG + "orlando-desktop-cropped.png", nightMobile: CDN + "hf_20260619_125452_ad933e6f-0b03-43a4-b111-341e76b9efd9.jpeg", day: BG + "orlando-day.png" },
+  nyc: { name: "New York", night: BG + "nyc-night.png", day: BG + "nyc-day.png" },
+  nashville: { name: "Nashville", night: BG + "nashville-night.png", day: BG + "nashville-day.png" },
+};
+// profile.location on each artist (gfs_artists).
+const ARTIST_CITY: Record<string, string> = {
+  "lex-from-brixton": "london", "likkle-bro": "london", "likkle-sis": "london", "mad-tings": "london",
+  "mr-russell": "nyc", "nilo-wave": "orlando", "riku": "tokyo", "roxanne": "tokyo",
+  "rustblood-prophets": "berlin", "shamanic-resin": "seoul", "straight-and-narrow": "nashville", "vuka": "johannesburg",
+};
 const CHAT_MS = 6500;
 
 type HomeData = { artists: StageArtist[]; chat: HomeChatLine[]; lola: { avatar: string | null } };
@@ -53,7 +67,8 @@ export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "
   const radio = useRadio();
   const [data, setData] = useState<HomeData | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
-  const [city, setCity] = useState(0);
+  // Cities shown so far stay mounted, so going back to one is instant.
+  const [seenCities, setSeenCities] = useState<string[]>([]);
   const [chatAt, setChatAt] = useState(0);
   const [lolaOpen, setLolaOpen] = useState(false);
   const gestured = useRef(false);
@@ -64,10 +79,6 @@ export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const t = setInterval(() => setCity(c => (c + 1) % CITIES.length), CITY_MS);
-    return () => clearInterval(t);
-  }, []);
 
   const chatLines = data?.chat ?? [];
   useEffect(() => {
@@ -81,6 +92,10 @@ export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "
   const onAirSlug = radio.onAir?.slug && bySlug.has(radio.onAir.slug) ? radio.onAir.slug : null;
   const stageSlug = picked ?? onAirSlug ?? artists[0]?.slug ?? null;
   const stage = stageSlug ? bySlug.get(stageSlug) ?? null : null;
+  const cityKey = (stageSlug && ARTIST_CITY[stageSlug]) || "london";
+  useEffect(() => {
+    setSeenCities(prev => (prev.includes(cityKey) ? prev : [...prev, cityKey]));
+  }, [cityKey]);
 
   // Each artist's single for the stage button and the grid preview: their
   // first released single that is on the radio, else their first original
@@ -170,19 +185,19 @@ export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "
     <div className={"cs cs-home" + (theme === "light" ? " cs-light" : "")} onPointerDownCapture={onAnyTap}>
       <h1 className="cs-sr">GeekFon Society</h1>
 
-      {/* Background: aurora and the city skylines, as before. */}
+      {/* Background: the stage artist home city, crossfading when the stage changes. */}
       <div className="cs-bg" aria-hidden="true">
         <div className="cs-aurora" />
-        {CITIES.map((c, i) => (
-          <picture key={c.name} className={"cs-city" + (i === city ? " on" : "")}>
-            {i === city || i === (city + 1) % CITIES.length ? (
-              <>
-                <source media="(max-width: 899px)" srcSet={c.mobile} />
-                <img src={c.desktop} alt="" />
-              </>
-            ) : null}
-          </picture>
-        ))}
+        {seenCities.map(key => {
+          const c = CITIES[key];
+          const day = theme === "light";
+          return (
+            <picture key={key + (day ? "-day" : "-night")} className={"cs-city" + (key === cityKey ? " on" : "")}>
+              {!day && c.nightMobile ? <source media="(max-width: 899px)" srcSet={c.nightMobile} /> : null}
+              <img src={day ? c.day : c.night} alt="" />
+            </picture>
+          );
+        })}
         <div className="cs-fade" />
       </div>
 
