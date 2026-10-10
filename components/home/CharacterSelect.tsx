@@ -13,10 +13,8 @@
 //               radio on (browsers block sound until a tap).
 //   Chat        lines from the free days of the group chat drift in at the
 //               edge; a name puts that artist on stage.
-//   LoLA        a corner badge with a short written intro (her animated tour
+//   LoLA        a prompt under the buttons with a short written intro (her animated tour
 //               is phase 2).
-//   Follow      the artist asks, in their voice, to tell you when the next
-//               one drops: after a song or two, or when you pick them.
 //   Roster      the same screen, plus a see-everyone grid whose cards play a
 //               30-second preview in place.
 //
@@ -46,16 +44,9 @@ const CITIES = [
 const CITY_MS = 9000;
 const CHAT_MS = 6500;
 const PREVIEW_SECONDS = 30;
-const FOLLOW_KEY = "gfs-follow";
 
 type HomeData = { artists: StageArtist[]; chat: HomeChatLine[]; lola: { avatar: string | null } };
 
-function readFollow(): string | null {
-  try { return localStorage.getItem(FOLLOW_KEY); } catch { return null; }
-}
-function writeFollow(v: string) {
-  try { localStorage.setItem(FOLLOW_KEY, v); } catch { /* private mode */ }
-}
 
 export default function CharacterSelect({ variant }: { variant: "home" | "roster" }) {
   const router = useRouter();
@@ -65,16 +56,12 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
   const [city, setCity] = useState(0);
   const [chatAt, setChatAt] = useState(0);
   const [lolaOpen, setLolaOpen] = useState(false);
-  const [askFor, setAskFor] = useState<string | null>(null);
-  const [followState, setFollowState] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<string | null>(null);
   const gestured = useRef(false);
-  const songsAtLoad = useRef<number | null>(null);
 
   useEffect(() => {
     fetch("/api/home").then(r => (r.ok ? r.json() : null)).then(setData).catch(() => {});
     void radio.loadSchedule();
-    setFollowState(readFollow());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -126,12 +113,6 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
     }
   }, [radio, variant]);
 
-  // The follow ask after a song or two.
-  useEffect(() => {
-    if (songsAtLoad.current === null) songsAtLoad.current = radio.songsHeard;
-    if (followState || askFor) return;
-    if (radio.songsHeard - (songsAtLoad.current ?? 0) >= 2 && stageSlug) setAskFor(stageSlug);
-  }, [radio.songsHeard, followState, askFor, stageSlug]);
 
   const pick = useCallback((slug: string, from: string) => {
     if (picked === slug) {
@@ -141,7 +122,6 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
     }
     setPicked(slug);
     track("gfs_artist_pick", { artist: slug, from, page: variant });
-    if (!readFollow()) setAskFor(slug);
     if (variant === "roster" && from === "grid") window.scrollTo({ top: 0, behavior: "smooth" });
   }, [picked, router, variant]);
 
@@ -191,7 +171,15 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
       aria-pressed={a.slug === stageSlug}
       aria-label={`${a.name}${a.slug === onAirSlug ? ", on the radio now" : ""}${picked === a.slug ? ". Tap again to open their page" : ""}`}
     >
-      {a.cutout ? <img src={sized(a.cutout, 260) ?? ""} alt="" loading="lazy" /> : <span className="cs-tile-initial">{a.name[0]}</span>}
+      {a.cutout ? (
+        <img
+          src={sized(a.cutout, 260) ?? ""}
+          alt=""
+          loading="lazy"
+          // Bands and duos are wide: show everyone, not a crop of the middle member.
+          onLoad={e => { const i = e.currentTarget; if (i.naturalWidth / i.naturalHeight > 0.55) i.classList.add("wide"); }}
+        />
+      ) : <span className="cs-tile-initial">{a.name[0]}</span>}
       <span className="cs-tile-name">{a.name}</span>
       {a.slug === onAirSlug ? <span className="cs-tile-air">On air</span> : null}
     </button>
@@ -266,13 +254,26 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
                   Meet<span className="cs-long">&nbsp;{stage.name}</span> <span aria-hidden="true">&rarr;</span>
                 </Link>
               </div>
-              {askFor && !followState && bySlug.get(askFor) ? (
-                <FollowAsk
-                  artist={bySlug.get(askFor)!}
-                  source={variant}
-                  onDone={v => { writeFollow(v); setFollowState(v); setAskFor(null); }}
-                />
-              ) : null}
+              {/* LoLA's intro, under the buttons (Sean, 2026-10-10). Her animated tour is phase 2. */}
+              <div className={"cs-lola" + (lolaOpen ? " open" : "")}>
+                {lolaOpen ? (
+                  <div className="cs-lola-card" role="dialog" aria-label="LoLA's intro">
+                    <button type="button" className="cs-lola-x" onClick={() => setLolaOpen(false)} aria-label="Close">&times;</button>
+                    <p className="cs-lola-hi">Hi, I&rsquo;m LoLA.</p>
+                    <p>GeekFon Society is a record label where every artist is animated and every song is real.</p>
+                    <ul>
+                      <li>Tap anyone on the sides to meet them. Tap again to visit their page.</li>
+                      <li>The radio plays the whole roster. Tap anywhere to turn it on.</li>
+                      <li>They all live in one house in LA, and their group chat is open. October 1 to 3 are free to read.</li>
+                      <li>Love someone? Support them for $11 and you get their album, their side of the chat and everything on their page.</li>
+                    </ul>
+                  </div>
+                ) : null}
+                <button type="button" className="cs-lola-badge" onClick={() => { setLolaOpen(o => !o); if (!lolaOpen) track("gfs_lola_intro", { page: variant }); }} aria-expanded={lolaOpen}>
+                  {data?.lola.avatar ? <img src={data.lola.avatar} alt="" /> : <span className="cs-lola-dot" aria-hidden="true">L</span>}
+                  <span>New here? <strong>LoLA will show you around.</strong></span>
+                </button>
+              </div>
             </section>
           ) : (
             <div className="cs-info cs-loading" aria-hidden="true" />
@@ -304,26 +305,6 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
         </div>
       ) : null}
 
-      {/* LoLA's corner badge. */}
-      <div className={"cs-lola" + (lolaOpen ? " open" : "")}>
-        {lolaOpen ? (
-          <div className="cs-lola-card" role="dialog" aria-label="LoLA's intro">
-            <button type="button" className="cs-lola-x" onClick={() => setLolaOpen(false)} aria-label="Close">&times;</button>
-            <p className="cs-lola-hi">Hi, I&rsquo;m LoLA.</p>
-            <p>GeekFon Society is a record label where every artist is animated and every song is real.</p>
-            <ul>
-              <li>Tap anyone on the sides to meet them. Tap again to visit their page.</li>
-              <li>The radio plays the whole roster. Tap anywhere to turn it on.</li>
-              <li>They all live in one house in LA, and their group chat is open. October 1 to 3 are free to read.</li>
-              <li>Love someone? Support them for $11 and you get their album, their side of the chat and everything on their page.</li>
-            </ul>
-          </div>
-        ) : null}
-        <button type="button" className="cs-lola-badge" onClick={() => { setLolaOpen(o => !o); if (!lolaOpen) track("gfs_lola_intro", { page: variant }); }} aria-expanded={lolaOpen}>
-          {data?.lola.avatar ? <img src={data.lola.avatar} alt="" /> : <span className="cs-lola-dot" aria-hidden="true">L</span>}
-          <span>New here? <strong>LoLA will show you around.</strong></span>
-        </button>
-      </div>
 
       {variant === "roster" ? (
         <section id="everyone" className="cs-everyone-grid" aria-label="See everyone">
@@ -361,45 +342,3 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
   );
 }
 
-function FollowAsk({ artist, source, onDone }: { artist: StageArtist; source: "home" | "roster"; onDone: (v: string) => void }) {
-  const [email, setEmail] = useState("");
-  const [hp, setHp] = useState("");
-  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (state === "sending") return;
-    setState("sending");
-    const res = await fetch("/api/follow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, artist: artist.slug, source, website: hp }),
-    }).catch(() => null);
-    const ok = !!res && res.ok && (await res.json().catch(() => ({})))?.ok;
-    if (ok) {
-      track("gfs_follow", { artist: artist.slug, page: source });
-      setState("done");
-      setTimeout(() => onDone("followed"), 2600);
-    } else {
-      setState("error");
-    }
-  }
-
-  if (state === "done") {
-    return <div className="cs-ask cs-ask-done">{artist.name}: &ldquo;Got you. You&rsquo;ll hear it first.&rdquo;</div>;
-  }
-  return (
-    <form className="cs-ask" onSubmit={submit}>
-      <p className="cs-ask-q"><strong>{artist.name}:</strong> &ldquo;Want me to tell you when the next one drops?&rdquo;</p>
-      <div className="cs-ask-row">
-        <label className="cs-sr" htmlFor="cs-ask-email">Email</label>
-        <input id="cs-ask-email" type="email" required autoComplete="email" placeholder="Your email" value={email} onChange={e => setEmail(e.target.value)} />
-        <input className="cs-hp" tabIndex={-1} autoComplete="off" aria-hidden="true" value={hp} onChange={e => setHp(e.target.value)} name="website" />
-        <button type="submit" disabled={state === "sending"}>{state === "sending" ? "Sending" : "Tell me"}</button>
-      </div>
-      <Link className="cs-ask-album" href={`/${artist.slug}`} onClick={() => track("gfs_album_click", { artist: artist.slug, page: source })}>Or get the album, $11</Link>
-      <button type="button" className="cs-ask-x" onClick={() => onDone("dismissed")} aria-label="Not now">&times;</button>
-      {state === "error" ? <p className="cs-ask-err" role="alert">That didn&rsquo;t go through. Check the email and try again.</p> : null}
-    </form>
-  );
-}

@@ -26,13 +26,15 @@
 .cs-center { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; min-height: 0; min-width: 0; padding: 14px 8px 18px; }
 
 /* Tiles */
-.cs-tile { position: relative; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; border: 2px solid rgba(255,255,255,.10); padding: 0; cursor: pointer;
-  background: radial-gradient(120% 90% at 50% 100%, color-mix(in srgb, var(--accent) 55%, transparent), rgba(255,255,255,.04) 70%), #0b1512;
+.cs-tile { position: relative; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; border: 2px solid rgba(255,255,255,.85); padding: 0; cursor: pointer;
+  background: #fff; border-bottom: 3px solid var(--accent);
   transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; font-family: inherit; }
 .cs-tile img { position: absolute; left: 0; right: 0; top: 6%; width: 100%; height: 160%; object-fit: cover; object-position: center top; }
-.cs-tile-initial { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 900; color: #fff; }
+/* Bands and duos: the whole group, scaled to fit above the name. */
+.cs-tile img.wide { top: 4%; left: 3%; width: 94%; height: 74%; object-fit: contain; object-position: center bottom; }
+.cs-tile-initial { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 900; color: #1a1a1a; }
 .cs-tile-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 6px 7px; font-size: 10.5px; font-weight: 800; line-height: 1.15; color: #fff; text-align: center;
-  background: linear-gradient(to top, rgba(0,0,0,.88), transparent); }
+  background: linear-gradient(to top, rgba(0,0,0,.9) 55%, rgba(0,0,0,0)); }
 .cs-tile:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 70%, #fff 0%); }
 .cs-tile:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 .cs-tile.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 10px 30px color-mix(in srgb, var(--accent) 45%, transparent); transform: scale(1.04); }
@@ -55,9 +57,8 @@
   box-shadow: 0 0 60px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 0 0 2px rgba(255,255,255,.08); transition: background .6s ease, box-shadow .6s ease; }
 .cs-circle img { width: 100%; height: 100%; object-fit: contain; opacity: .16; }
 .cs-hero { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 18px 24px rgba(0,0,0,.55));
-  transform-origin: 50% 100%; animation: csEnter .55s cubic-bezier(.2,.8,.2,1) both, csIdle 5.5s ease-in-out .55s infinite; }
-@keyframes csEnter { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: none; } }
-@keyframes csIdle { 0%,100% { transform: translateY(0) rotate(0deg) scaleY(1); } 30% { transform: translateY(-5px) rotate(-.6deg) scaleY(1.008); } 65% { transform: translateY(-2px) rotate(.5deg) scaleY(1.004); } }
+  animation: csFade .45s ease both; }
+@keyframes csFade { from { opacity: 0; } to { opacity: 1; } }
 .cs-sound { position: absolute; z-index: 3; bottom: 6px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px;
   border: 1px solid rgba(255,255,255,.35); background: rgba(2,12,10,.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); color: #fff; font: 800 11px 'Montserrat', sans-serif;
   letter-spacing: .08em; text-transform: uppercase; cursor: pointer; animation: csNudge 2.6s ease-in-out infinite; white-space: nowrap; }
@@ -85,20 +86,6 @@
 .cs-btn-go:hover { border-color: var(--accent); }
 .cs-btn:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 
-/* Follow ask */
-.cs-ask { position: relative; margin: 10px auto 0; padding: 9px 12px; border-radius: 14px; background: rgba(255,255,255,.05); border: 1px solid color-mix(in srgb, var(--accent) 45%, rgba(255,255,255,.1)); max-width: 440px; text-align: left; }
-.cs-ask-q { margin: 0 22px 7px 0; font-size: 12px; line-height: 1.4; color: #fff; }
-.cs-ask-row { display: flex; gap: 8px; }
-.cs-ask-row input { flex: 1; min-width: 0; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.2); background: rgba(0,0,0,.35); color: #fff; font: 600 13px 'Montserrat', sans-serif; }
-.cs-ask-row input:focus { outline: none; border-color: var(--orange); }
-.cs-ask-row button { padding: 9px 14px; border-radius: 10px; border: none; background: var(--orange); color: #1a1a1a; font: 900 11px 'Montserrat', sans-serif; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
-.cs-ask-foot { display: contents; }
-.cs-ask-album { display: block; margin-top: 6px; font-size: 11px; }
-.cs-ask-album, .cs-ask-foot a { color: var(--orange); font-weight: 800; text-decoration: none; }
-.cs-ask-x { position: absolute; top: 2px; right: 4px; width: 26px; height: 26px; background: none; border: none; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; }
-.cs-ask-err { margin: 6px 0 0; font-size: 11px; color: #ff8a80; }
-.cs-ask-done { text-align: center; font-size: 12.5px; font-weight: 700; }
-.cs-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 
 .cs-strip { display: none; }
 .cs-everyone { margin-top: 10px; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); text-decoration: none; flex-shrink: 0; }
@@ -116,16 +103,16 @@ span.cs-chat-name { cursor: default; }
 .cs-chat-body { font-size: 12px; line-height: 1.4; color: #fff; }
 .cs-chat-tag { position: absolute; top: -8px; right: 10px; padding: 1px 6px; border-radius: 5px; background: #1a1a1a; font-size: 8px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 
-/* LoLA */
-.cs-lola { position: fixed; z-index: 21; left: 18px; bottom: 18px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+/* LoLA: under the stage buttons, her intro opens above */
+.cs-lola { position: relative; display: flex; justify-content: center; margin-top: 12px; }
 .cs-lola-badge { display: inline-flex; align-items: center; gap: 9px; padding: 6px 14px 6px 6px; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); background: rgba(10,16,14,.86);
-  color: #fff; font: 600 11px 'Montserrat', sans-serif; cursor: pointer; text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+  color: #fff; font: 600 11px 'Montserrat', sans-serif; cursor: pointer; text-align: left; }
 .cs-lola-badge strong { font-weight: 800; color: #ff8fc4; }
 .cs-lola-badge img, .cs-lola-dot { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .cs-lola-dot { display: flex; align-items: center; justify-content: center; background: #ff8fc4; color: #1a1a1a; font-weight: 900; }
 .cs-lola-badge:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
-.cs-lola-card { position: relative; width: min(340px, calc(100vw - 36px)); padding: 16px 18px 14px; border-radius: 18px; background: #0f1714; border: 1px solid rgba(255,143,196,.4); box-shadow: 0 16px 40px rgba(0,0,0,.5);
-  font-size: 12.5px; line-height: 1.5; color: var(--text); animation: csEnter .3s ease both; }
+.cs-lola-card { position: absolute; z-index: 30; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); width: min(340px, calc(100vw - 32px)); text-align: left; padding: 16px 18px 14px; border-radius: 18px; background: #0f1714; border: 1px solid rgba(255,143,196,.4); box-shadow: 0 16px 40px rgba(0,0,0,.5);
+  font-size: 12.5px; line-height: 1.5; color: var(--text); }
 .cs-lola-card p { margin: 0 0 8px; }
 .cs-lola-card ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
 .cs-lola-hi { font-size: 15px; font-weight: 900; color: #ff8fc4; }
@@ -168,17 +155,14 @@ span.cs-chat-name { cursor: default; }
   .cs-strip .cs-tile { flex: 0 0 74px; scroll-snap-align: start; border-radius: 12px; }
   .cs-strip .cs-tile-name { font-size: 9px; padding: 14px 3px 5px; }
   .cs-everyone { margin-top: 6px; }
-  .cs-chat { right: 12px; left: 64px; top: calc(var(--top) + 8px); bottom: auto; max-width: none; padding: 6px 9px; border-radius: 14px 14px 4px 14px; }
+  .cs-chat { right: 12px; left: 12px; top: calc(var(--top) + 8px); bottom: auto; max-width: none; padding: 6px 9px; border-radius: 14px 14px 4px 14px; }
   .cs-chat-tag { display: none; }
   .cs-eyebrow { display: none; }
   .cs-head { padding: 52px 16px 0; }
   .cs-chat-face { width: 24px; height: 24px; }
   .cs-chat-body { font-size: 11px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-  .cs-lola { left: 12px; top: calc(var(--top) + 8px); bottom: auto; }
-  .cs-lola-badge { padding: 4px; }
-  .cs-lola-badge span { display: none; }
-  .cs-lola.open .cs-lola-badge { order: -1; }
-  .cs-ask { margin-top: 8px; padding: 8px 10px; }
+  .cs-lola { margin-top: 8px; }
+  .cs-lola-badge img, .cs-lola-dot { width: 26px; height: 26px; }
   .cs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .cs-everyone-grid { padding: 40px 16px 100px; }
 }
@@ -192,6 +176,6 @@ span.cs-chat-name { cursor: default; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cs-hero, .cs-tile.air, .cs-sound, .cs-aurora, .cs-live, .cs-onair-dot { animation: none !important; }
+  .cs-tile.air, .cs-sound, .cs-aurora, .cs-live, .cs-onair-dot { animation: none !important; }
   .cs-chat { animation: none; }
 }
