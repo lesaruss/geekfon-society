@@ -42,15 +42,21 @@ const MEDIA = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public
 const BG = MEDIA + "artists/geekfon-society/city-backgrounds/";
 type City = { name: string; night: string; nightMobile?: string; day: string };
 const CITIES: Record<string, City> = {
-  london: { name: "London", night: CDN + "hf_20260619_060647_f5cc249a-0fe0-4f02-97a4-2a848334cf98.png", nightMobile: CDN + "hf_20260619_062128_cd958296-6f06-4efb-ad10-97306f3d2558.png", day: BG + "london-day.png" },
-  tokyo: { name: "Tokyo", night: CDN + "hf_20260619_061254_7c730145-acef-4518-a816-64c5846ffb1b.png", nightMobile: CDN + "hf_20260619_062028_83b5584e-2bc2-4879-ac28-ec59b79962f8.png", day: BG + "tokyo-day.png" },
-  seoul: { name: "Seoul", night: CDN + "hf_20260619_061116_c00ea5ca-cad0-4b95-b593-c9d5d4a7f654.png", nightMobile: CDN + "hf_20260619_062102_df16b724-a594-440e-a35d-3a96406fabf7.png", day: BG + "seoul-day.png" },
-  berlin: { name: "Berlin", night: CDN + "hf_20260619_061452_342ffc31-9332-438d-b032-c581bbfc5205.png", nightMobile: CDN + "hf_20260619_062309_26ba4c35-6221-47ff-844e-a8cab948cdab.png", day: BG + "berlin-day.png" },
-  johannesburg: { name: "Johannesburg", night: CDN + "hf_20260619_061618_b63a68e5-ec0d-4f6a-8473-0e9652db85bf.png", nightMobile: CDN + "hf_20260619_064547_2906c350-a205-4c96-9bb1-114dc53fc237.png", day: BG + "johannesburg-day.png" },
-  orlando: { name: "Orlando", night: MEDIA + "city-backgrounds/orlando-desktop-cropped.png", nightMobile: CDN + "hf_20260619_125452_ad933e6f-0b03-43a4-b111-341e76b9efd9.jpeg", day: BG + "orlando-day.png" },
+  london: { name: "London", night: BG + "london-night.png", nightMobile: BG + "london-night-mobile.png", day: BG + "london-day.png" },
+  tokyo: { name: "Tokyo", night: BG + "tokyo-night.png", nightMobile: BG + "tokyo-night-mobile.png", day: BG + "tokyo-day.png" },
+  seoul: { name: "Seoul", night: BG + "seoul-night.png", nightMobile: BG + "seoul-night-mobile.png", day: BG + "seoul-day.png" },
+  berlin: { name: "Berlin", night: BG + "berlin-night.png", nightMobile: BG + "berlin-night-mobile.png", day: BG + "berlin-day.png" },
+  johannesburg: { name: "Johannesburg", night: BG + "johannesburg-night.png", nightMobile: BG + "johannesburg-night-mobile.png", day: BG + "johannesburg-day.png" },
+  orlando: { name: "Orlando", night: MEDIA + "city-backgrounds/orlando-desktop-cropped.png", nightMobile: BG + "orlando-night-mobile.jpg", day: BG + "orlando-day.png" },
   nyc: { name: "New York", night: BG + "nyc-night.png", day: BG + "nyc-day.png" },
   nashville: { name: "Nashville", night: BG + "nashville-night.png", day: BG + "nashville-day.png" },
 };
+// The originals are 1.2 to 4.7 MB PNGs; Supabase resizes and serves WebP
+// (about 130 KB at 1600 wide), sized to the screen (Sean, 2026-10-10: "the
+// backgrounds appear to be too large and load slowly").
+const bgSrc = (url: string, w: number) =>
+  url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/") + `?width=${w}&quality=68`;
+const bgSet = (url: string, widths: number[]) => widths.map(w => `${bgSrc(url, w)} ${w}w`).join(", ");
 // profile.location on each artist (gfs_artists).
 const ARTIST_CITY: Record<string, string> = {
   "lex-from-brixton": "london", "likkle-bro": "london", "likkle-sis": "london", "mad-tings": "london",
@@ -201,8 +207,8 @@ export default function CharacterSelect() {
           const day = theme === "light";
           return (
             <picture key={key + (day ? "-day" : "-night")} className={"cs-city" + (key === cityKey ? " on" : "")}>
-              {!day && c.nightMobile ? <source media="(max-width: 899px)" srcSet={c.nightMobile} /> : null}
-              <img src={day ? c.day : c.night} alt="" />
+              {!day && c.nightMobile ? <source media="(max-width: 899px)" srcSet={bgSet(c.nightMobile, [600, 900])} sizes="100vw" /> : null}
+              <img src={bgSrc(day ? c.day : c.night, 1600)} srcSet={bgSet(day ? c.day : c.night, [900, 1280, 1600, 2000])} sizes="100vw" alt="" decoding="async" />
             </picture>
           );
         })}
@@ -213,9 +219,17 @@ export default function CharacterSelect() {
         <nav className="cs-rail cs-rail-l" aria-label="Artists">{left.map(a => tile(a, "rail"))}</nav>
 
         <main className="cs-center">
-          <div className="cs-head">
-            <div className="cs-eyebrow"><span className="cs-live" aria-hidden="true" />LESARUSS Universe</div>
-            <p className="cs-pitch">A record label of animated artists. <strong>Pick one.</strong></p>
+          {/* The artist's name leads (Sean, 2026-10-10), with the radio pill above it. */}
+          <div className="cs-head" aria-live="polite" style={{ ["--accent" as string]: stage?.accent ?? "#F69820" }}>
+            {stageOnAir && radio.onAir ? (
+              <div className="cs-onair"><span className="cs-onair-dot" aria-hidden="true" />On the radio now: {radio.onAir.title}</div>
+            ) : onAirSlug && radio.onAir ? (
+              <button type="button" className="cs-onair cs-onair-back" onClick={() => setPicked(null)}>
+                <span className="cs-onair-dot" aria-hidden="true" />On air: {bySlug.get(onAirSlug)?.name}
+              </button>
+            ) : <div className="cs-onair cs-onair-empty" aria-hidden="true" />}
+            <h2 className="cs-name">{stage?.name ?? "\u00a0"}</h2>
+            <p className="cs-tagline">{stage?.tagline ?? "A record label of animated artists."}</p>
           </div>
 
           <div className="cs-stage" style={{ ["--accent" as string]: stage?.accent ?? "#F69820" }}>
@@ -234,16 +248,7 @@ export default function CharacterSelect() {
           </div>
 
           {stage ? (
-            <section className="cs-info" aria-live="polite" style={{ ["--accent" as string]: stage.accent }}>
-              {stageOnAir && radio.onAir ? (
-                <div className="cs-onair"><span className="cs-onair-dot" aria-hidden="true" />On the radio now: {radio.onAir.title}</div>
-              ) : onAirSlug && radio.onAir ? (
-                <button type="button" className="cs-onair cs-onair-back" onClick={() => setPicked(null)}>
-                  <span className="cs-onair-dot" aria-hidden="true" />On air: {bySlug.get(onAirSlug)?.name}
-                </button>
-              ) : null}
-              <h2 className="cs-name">{stage.name}</h2>
-              {stage.tagline ? <p className="cs-tagline">{stage.tagline}</p> : null}
+            <div className="cs-info" style={{ ["--accent" as string]: stage.accent }}>
               <div className="cs-actions">
                 {stageSong ? (
                   <button type="button" className="cs-btn cs-btn-play" data-own-sound onClick={() => playSingle(stage.slug)}>
@@ -258,7 +263,7 @@ export default function CharacterSelect() {
                   Meet<span className="cs-long">&nbsp;{stage.name}</span> <span aria-hidden="true">&rarr;</span>
                 </Link>
               </div>
-            </section>
+            </div>
           ) : (
             <div className="cs-info cs-loading" aria-hidden="true" />
           )}

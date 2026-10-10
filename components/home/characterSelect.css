@@ -21,7 +21,7 @@
 
 /* Layout: rail | center | rail. SiteChrome's .gbody already sits below the 60px header. */
 .cs-screen { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0,1fr) minmax(380px, 1.35fr) minmax(0,1fr); grid-template-rows: minmax(0, 1fr); height: calc(100dvh - var(--top)); box-sizing: border-box; }
-.cs-rail { align-self: center; display: grid; grid-template-columns: repeat(2, minmax(0, 112px)); gap: 12px; justify-content: center; padding: 0 12px; }
+.cs-rail { align-self: center; display: grid; grid-template-columns: repeat(2, minmax(0, 122px)); gap: 12px; justify-content: center; padding: 0 12px; }
 .cs-center { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; min-height: 0; min-width: 0; padding: 14px 8px 18px; }
 
 /* Tiles */
@@ -32,7 +32,7 @@
 /* Bands and duos: the whole group, scaled to fit above the name. */
 .cs-tile img.wide { top: 4%; left: 3%; width: 94%; height: 74%; object-fit: contain; object-position: center bottom; }
 .cs-tile-initial { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 900; color: #1a1a1a; }
-.cs-tile-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 6px 7px; font-size: 10.5px; font-weight: 800; line-height: 1.15; color: #fff; text-align: center;
+.cs-tile-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 20px 6px 8px; font-size: 12.5px; font-weight: 800; line-height: 1.15; color: #fff; text-align: center;
   background: linear-gradient(to top, rgba(0,0,0,.9) 55%, rgba(0,0,0,0)); }
 .cs-tile:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 70%, #fff 0%); }
 .cs-tile:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
@@ -42,7 +42,9 @@
 .cs-tile-air { position: absolute; top: 6px; left: 6px; padding: 3px 6px; border-radius: 6px; background: #e53935; color: #fff; font-size: 8.5px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
 
 /* Head */
-.cs-head { text-align: center; flex-shrink: 0; }
+/* Name first: radio pill, the artist's name, their line (Sean, 2026-10-10). */
+.cs-head { text-align: center; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; max-width: 620px; padding: 0 8px; }
+.cs-onair-empty { visibility: hidden; height: 24px; padding: 0; border: 0; }
 .cs-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
 .cs-live { width: 6px; height: 6px; border-radius: 50%; background: #4caf50; animation: csPulse 1.6s ease-in-out infinite; }
 @keyframes csPulse { 50% { opacity: .3; transform: scale(.65); } }
@@ -66,15 +68,15 @@
 @keyframes csNudge { 50% { box-shadow: 0 0 0 8px rgba(255,255,255,0), 0 0 0 0 rgba(255,255,255,.25); } 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,.25); } }
 
 /* Info under the stage */
-.cs-info { position: relative; z-index: 2; text-align: center; flex-shrink: 0; max-width: 560px; padding: 10px 6px 0; margin-top: 18px; }
-.cs-loading { min-height: 120px; }
+.cs-info { position: relative; z-index: 2; text-align: center; flex-shrink: 0; max-width: 560px; padding: 0 6px; margin-top: 14px; }
+.cs-loading { min-height: 44px; }
 .cs-onair { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(229,57,53,.16); border: 1px solid rgba(229,57,53,.5);
   font: 800 10px 'Montserrat', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #fff; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cs-onair-back { cursor: pointer; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.22); }
 .cs-onair-dot { width: 7px; height: 7px; border-radius: 50%; background: #e53935; flex-shrink: 0; animation: csPulse 1.4s ease-in-out infinite; }
-.cs-name { margin: 0; font-size: clamp(26px, 3.4vw, 40px); font-weight: 900; letter-spacing: -.02em; line-height: 1.05; color: #fff; text-shadow: 0 0 26px color-mix(in srgb, var(--accent) 60%, transparent); }
-.cs-tagline { margin: 6px auto 0; font-size: 13px; line-height: 1.45; color: var(--muted); max-width: 460px; }
-.cs-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.cs-name { margin: 0; font-size: clamp(28px, 3.4vw, 44px); font-weight: 900; letter-spacing: -.02em; line-height: 1.05; color: #fff; text-shadow: 0 0 26px color-mix(in srgb, var(--accent) 60%, transparent); }
+.cs-tagline { margin: 4px auto 0; font-size: 13px; line-height: 1.4; color: var(--muted); max-width: 520px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cs-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .cs-btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 12px 20px; font: 800 11px 'Montserrat', sans-serif; letter-spacing: .08em; text-transform: uppercase;
   text-decoration: none; cursor: pointer; border: 1px solid transparent; max-width: 100%; }
 .cs-btn svg { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
@@ -126,15 +128,15 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
   .cs-rail { display: none; }
   .cs-center { padding: 10px 0 12px; }
   .cs-circle { width: min(78vw, 46vh); }
-  .cs-info { padding: 6px 16px 0; }
+  .cs-info { padding: 0 16px; }
   .cs-tagline { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .cs-actions { flex-wrap: nowrap; gap: 8px; margin-top: 10px; }
+  .cs-actions { flex-wrap: nowrap; gap: 8px; }
   .cs-btn { padding: 10px 13px; font-size: 10px; letter-spacing: .05em; min-width: 0; }
   .cs-long { display: none; }
   .cs-strip { display: flex; gap: 10px; width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; padding: 12px 16px 4px; box-sizing: border-box; flex-shrink: 0; scrollbar-width: none; }
   .cs-strip::-webkit-scrollbar { display: none; }
   .cs-strip .cs-tile { flex: 0 0 74px; scroll-snap-align: start; border-radius: 12px; }
-  .cs-strip .cs-tile-name { font-size: 9px; padding: 14px 3px 5px; }
+  .cs-strip .cs-tile-name { font-size: 10px; padding: 14px 3px 5px; }
   .cs-chat { right: 12px; left: 64px; top: calc(var(--top) + 8px); bottom: auto; max-width: none; padding: 6px 9px; border-radius: 14px 14px 4px 14px; }
   .cs-chat-tag { display: none; }
   .cs-eyebrow { display: none; }
@@ -153,7 +155,6 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
 }
 @media (max-width: 899px) and (max-height: 700px) {
   .cs-tagline { display: none; }
-  .cs-pitch { font-size: 13px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -195,6 +196,6 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
 [data-gfs-theme="light"] .cs-lola-badge strong { color: #d0337a; }
 [data-gfs-theme="light"] .cs-lola-card { background: #fff; border-color: rgba(208,51,122,.35); color: #1a1a1a; box-shadow: 0 16px 40px rgba(0,0,0,.15); }
 [data-gfs-theme="light"] .cs-lola-hi { color: #d0337a; }
-/* Day skylines are busy: a frosted panel keeps the name, line and buttons readable. */
-[data-gfs-theme="light"] .cs-info { background: rgba(255,255,255,.78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 20px; padding: 10px 18px 12px; box-shadow: 0 8px 28px rgba(0,0,0,.08); }
+/* The name sits over the white top of the page; the tagline gets a soft halo in case a skyline reaches it. */
+[data-gfs-theme="light"] .cs-tagline { text-shadow: 0 0 8px #fff, 0 0 2px #fff; }
 [data-gfs-theme="light"] .cs-tagline { color: rgba(0,0,0,.7); }
