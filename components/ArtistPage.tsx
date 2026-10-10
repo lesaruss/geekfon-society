@@ -1640,6 +1640,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
     if (activeArticle) return;
     const p = new URLSearchParams(window.location.search).get("tab");
     const key = p === "news" ? "pulse" : p;
+    if (key === "chat" && storefront) setStoreMode("chat");
     if (key && key !== section && FRAME_SECTIONS.some(f => f.key === key && f.key !== "music")) { setSection(key); setTab(key); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
