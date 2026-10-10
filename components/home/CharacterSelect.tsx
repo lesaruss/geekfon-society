@@ -62,7 +62,7 @@ const CHAT_MS = 6500;
 type HomeData = { artists: StageArtist[]; chat: HomeChatLine[]; lola: { avatar: string | null } };
 
 
-export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "light" }) {
+export default function CharacterSelect() {
   const variant = "home";
   const router = useRouter();
   const radio = useRadio();
@@ -73,6 +73,13 @@ export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "
   const [chatAt, setChatAt] = useState(0);
   const [lolaOpen, setLolaOpen] = useState(false);
   const gestured = useRef(false);
+  // Light by day, dark by night on the visitor's own clock (Sean, 2026-10-10).
+  // app/page.tsx sets html[data-gfs-theme] before paint; the CSS keys off it,
+  // and this picks day or night skylines to match.
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  useEffect(() => {
+    setTheme(document.documentElement.dataset.gfsTheme === "light" ? "light" : "dark");
+  }, []);
 
   useEffect(() => {
     fetch("/api/home").then(r => (r.ok ? r.json() : null)).then(setData).catch(() => {});
@@ -183,7 +190,7 @@ export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "
   );
 
   return (
-    <div className={"cs cs-home" + (theme === "light" ? " cs-light" : "")} onPointerDownCapture={onAnyTap}>
+    <div className="cs cs-home" onPointerDownCapture={onAnyTap}>
       <h1 className="cs-sr">GeekFon Society</h1>
 
       {/* Background: the stage artist home city, crossfading when the stage changes. */}
@@ -251,26 +258,6 @@ export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "
                   Meet<span className="cs-long">&nbsp;{stage.name}</span> <span aria-hidden="true">&rarr;</span>
                 </Link>
               </div>
-              {/* LoLA's intro, under the buttons (Sean, 2026-10-10). Her animated tour is phase 2. */}
-              <div className={"cs-lola" + (lolaOpen ? " open" : "")}>
-                {lolaOpen ? (
-                  <div className="cs-lola-card" role="dialog" aria-label="LoLA's intro">
-                    <button type="button" className="cs-lola-x" onClick={() => setLolaOpen(false)} aria-label="Close">&times;</button>
-                    <p className="cs-lola-hi">Hi, I&rsquo;m LoLA.</p>
-                    <p>GeekFon Society is a record label where every artist is animated and every song is real.</p>
-                    <ul>
-                      <li>Tap anyone on the sides to meet them. Tap again to visit their page.</li>
-                      <li>The radio plays the whole roster. Tap anywhere to turn it on.</li>
-                      <li>They all live in one house in LA, and their group chat is open. October 1 to 3 are free to read.</li>
-                      <li>Love someone? Support them for $11 and you get their album, their side of the chat and everything on their page.</li>
-                    </ul>
-                  </div>
-                ) : null}
-                <button type="button" className="cs-lola-badge" onClick={() => { setLolaOpen(o => !o); if (!lolaOpen) track("gfs_lola_intro", { page: variant }); }} aria-expanded={lolaOpen}>
-                  {data?.lola.avatar ? <img src={data.lola.avatar} alt="" /> : <span className="cs-lola-dot" aria-hidden="true">L</span>}
-                  <span>New here? <strong>LoLA will show you around.</strong></span>
-                </button>
-              </div>
             </section>
           ) : (
             <div className="cs-info cs-loading" aria-hidden="true" />
@@ -283,21 +270,49 @@ export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "
         <nav className="cs-rail cs-rail-r" aria-label="More artists">{right.map(a => tile(a, "rail"))}</nav>
       </div>
 
-      {/* The group chat, free days only, drifting in at the edge. */}
-      {line ? (
-        <div className="cs-chat" key={line.id} style={{ ["--accent" as string]: line.accent ?? "#F69820" }}>
-          {line.avatar ? <img src={line.avatar} alt="" className="cs-chat-face" /> : null}
-          <div className="cs-chat-text">
-            {lineSlug && bySlug.has(lineSlug) ? (
-              <button type="button" className="cs-chat-name" onClick={() => pick(lineSlug, "chat")}>{line.name}</button>
-            ) : (
+      {/* The group chat, free days only, drifting in at the edge. A tap opens
+          that artist's side of the chat (Sean, 2026-10-10). */}
+      {line ? (() => {
+        const inner = (
+          <>
+            {line.avatar ? <img src={line.avatar} alt="" className="cs-chat-face" /> : null}
+            <div className="cs-chat-text">
               <span className="cs-chat-name">{line.name}</span>
-            )}
-            <span className="cs-chat-body">{line.body}</span>
+              <span className="cs-chat-body">{line.body}</span>
+            </div>
+            <span className="cs-chat-tag">Group chat</span>
+          </>
+        );
+        const style = { ["--accent" as string]: line.accent ?? "#F69820" };
+        return lineSlug && bySlug.has(lineSlug) ? (
+          <Link className="cs-chat" key={line.id} style={style} href={`/${lineSlug}?tab=chat`}
+            aria-label={`${line.name} in the group chat: ${line.body}. Open the chat`}
+            onClick={() => track("gfs_artist_open", { artist: lineSlug, from: "chat", page: variant })}>{inner}</Link>
+        ) : (
+          <div className="cs-chat" key={line.id} style={style}>{inner}</div>
+        );
+      })() : null}
+
+      {/* LoLA's intro, bottom left opposite the chat (Sean, 2026-10-10). Her animated tour is phase 2. */}
+      <div className={"cs-lola" + (lolaOpen ? " open" : "")}>
+        {lolaOpen ? (
+          <div className="cs-lola-card" role="dialog" aria-label="LoLA's intro">
+            <button type="button" className="cs-lola-x" onClick={() => setLolaOpen(false)} aria-label="Close">&times;</button>
+            <p className="cs-lola-hi">Hi, I&rsquo;m LoLA.</p>
+            <p>GeekFon Society is a record label where every artist is animated and every song is real.</p>
+            <ul>
+              <li>Tap anyone on the sides to meet them. Tap again to visit their page.</li>
+              <li>The radio plays the whole roster. Tap anywhere to turn it on.</li>
+              <li>They all live in one house in LA, and their group chat is open. October 1 to 3 are free to read.</li>
+              <li>Love someone? Support them for $11 and you get their album, their side of the chat and everything on their page.</li>
+            </ul>
           </div>
-          <span className="cs-chat-tag">Group chat</span>
-        </div>
-      ) : null}
+        ) : null}
+        <button type="button" className="cs-lola-badge" onClick={() => { setLolaOpen(o => !o); if (!lolaOpen) track("gfs_lola_intro", { page: variant }); }} aria-expanded={lolaOpen}>
+          {data?.lola.avatar ? <img src={data.lola.avatar} alt="" /> : <span className="cs-lola-dot" aria-hidden="true">L</span>}
+          <span>New here? <strong>LoLA will show you around.</strong></span>
+        </button>
+      </div>
 
 
     </div>
