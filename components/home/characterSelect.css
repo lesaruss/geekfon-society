@@ -188,3 +188,6 @@ span.cs-chat-name { cursor: default; }
 .cs-light .cs-lola-badge strong { color: #d0337a; }
 .cs-light .cs-lola-card { background: #fff; border-color: rgba(208,51,122,.35); color: #1a1a1a; box-shadow: 0 16px 40px rgba(0,0,0,.15); }
 .cs-light .cs-lola-hi { color: #d0337a; }
+/* Day skylines are busy: a frosted panel keeps the name, line and buttons readable. */
+.cs-light .cs-info { background: rgba(255,255,255,.78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 20px; padding: 10px 18px 12px; box-shadow: 0 8px 28px rgba(0,0,0,.08); }
+.cs-light .cs-tagline { color: rgba(0,0,0,.7); }
