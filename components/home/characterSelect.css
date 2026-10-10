@@ -107,6 +107,9 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
 .cs-chat-body { font-size: 12px; line-height: 1.4; color: #fff; }
 .cs-chat-tag { position: absolute; top: -8px; right: 10px; padding: 1px 6px; border-radius: 5px; background: #1a1a1a; font-size: 8px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 
+/* Phones only: the chat as a round icon (see the phone block below). */
+.cs-chat-icon { display: none; }
+
 /* LoLA: under the stage buttons, her intro opens above */
 .cs-lola { position: fixed; z-index: 21; left: 18px; bottom: 18px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 .cs-lola-badge { display: inline-flex; align-items: center; gap: 9px; padding: 6px 14px 6px 6px; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); background: rgba(10,16,14,.86);
@@ -187,6 +190,29 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
   .cs-framed .cs-head { padding-top: 50px; }
 }
 
+/* Phones: the rotating chat bubble gives way to a round icon top right,
+   opposite LoLA, and the radio pill moves up between the two. */
+@media (max-width: 899px) {
+  .cs-chat { display: none; }
+  .cs-chat-icon { position: fixed; z-index: 20; right: 12px; top: calc(var(--top) + 8px); display: flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--accent); background: rgba(10,16,14,.86); color: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,.3); transition: border-color .4s ease; }
+  .cs-chat-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+  .cs-chat-icon:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+  .cs-chat-ping { position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--accent); pointer-events: none; animation: csPing 1.4s ease-out 1 both; }
+  .cs-head { padding-top: 6px; }
+  .cs-onair { max-width: calc(100vw - 132px); box-sizing: border-box; }
+  .cs-onair { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; line-height: 14px; }
+  .cs-onair-dot { display: inline-block; vertical-align: middle; margin: -2px 6px 0 0; }
+  .cs-framed .cs-chat-icon { position: absolute; top: 10px; }
+  .cs-framed .cs-head { padding-top: 6px; }
+}
+@keyframes csPing { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.5); } }
+[data-gfs-theme="light"] .cs-chat-icon { background: #fff; color: #1a1a1a; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-chat-ping { animation: none; opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
   .cs-tile.air, .cs-sound, .cs-aurora, .cs-live, .cs-onair-dot { animation: none !important; }
   .cs-chat { animation: none; }

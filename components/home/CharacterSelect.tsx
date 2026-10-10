@@ -322,6 +322,21 @@ export default function CharacterSelect() {
         );
       })() : null}
 
+      {/* Phones get the chat as one round icon top right, opposite LoLA:
+          no scrolling text, one soft ping when a new line comes in
+          (Sean, 2026-10-10: "the chat is doing too much on mobile"). */}
+      {line ? (() => {
+        const to = lineSlug && bySlug.has(lineSlug) ? lineSlug : stage?.slug;
+        return to ? (
+          <Link className="cs-chat-icon" href={`/${to}?tab=chat`} aria-label="Open the group chat"
+            style={{ ["--accent" as string]: line.accent ?? "#F69820" }}
+            onClick={() => track("gfs_artist_open", { artist: to, from: "chat_icon", page: variant })}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" /></svg>
+            <span key={line.id} className="cs-chat-ping" aria-hidden="true" />
+          </Link>
+        ) : null;
+      })() : null}
+
       {/* LoLA's intro, bottom left opposite the chat (Sean, 2026-10-10). Her animated tour is phase 2. */}
       <div className={"cs-lola" + (lolaOpen ? " open" : "")}>
         {lolaOpen ? (
