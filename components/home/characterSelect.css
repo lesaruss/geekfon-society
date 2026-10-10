@@ -178,7 +178,7 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
   .cs-framed.cs-home, .cs-framed .cs-screen { height: auto; }
   .cs-framed .cs-bg { height: 100%; }
   .cs-framed .cs-center { padding-bottom: 16px; }
-  .cs-framed .cs-stage { flex: none; height: min(50vh, 440px); }
+  .cs-framed .cs-stage { flex: none; height: min(41vh, 400px); }
   .cs-framed .cs-chat, .cs-framed .cs-lola { top: 10px; }
   .cs-framed .cs-head { padding-top: 50px; }
 }
