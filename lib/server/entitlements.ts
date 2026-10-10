@@ -47,6 +47,22 @@ export async function viewerFromRequest(req: NextRequest): Promise<Viewer | null
   return { id: data.user.id, email: data.user.email ?? null };
 }
 
+// The group chat is one chat for the whole roster, so it opens for a
+// supporter of ANY artist (Sean, 2026-10-10): an album or pre-order of any
+// artist, Lifetime, grandfathered All Access, Pro, or staff.
+export async function chatSupporter(viewer: Viewer | null): Promise<{ supporter: boolean; staff: boolean }> {
+  if (!viewer) return { supporter: false, staff: false };
+  const sb = serviceClient();
+  if (!sb) return { supporter: false, staff: false };
+  const [{ data: member }, { count }] = await Promise.all([
+    sb.from("gfs_members").select("tier, is_pro, role").eq("user_id", viewer.id).maybeSingle(),
+    sb.from("gfs_artist_unlocks").select("id", { count: "exact", head: true }).eq("user_id", viewer.id),
+  ]);
+  const staff = viewer.email === ADMIN_EMAIL || member?.role === "super_admin";
+  const supporter = staff || (!!member?.tier && ALL_ARTIST_TIERS.has(member.tier)) || !!member?.is_pro || (count ?? 0) > 0;
+  return { supporter, staff };
+}
+
 export async function entitlementFor(viewer: Viewer | null, artistSlug: string): Promise<Entitlement> {
   const none: Entitlement = { supporter: false, allArtists: false, download: false, ownedTitles: new Set(), albumIds: null, reason: "none" };
   if (!viewer) return none;

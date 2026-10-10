@@ -84,3 +84,16 @@
 .ch-msg.me .ch-reacts{justify-content:flex-end}
 .ch-react{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 6px;border-radius:999px;border:1px solid rgba(20,20,20,.1);background:#fff;font-size:13px;line-height:1.4;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:default}
 .ch-react b{font-size:11px;font-weight:800;color:rgba(20,20,20,.6)}
+/* A supporters-only day for a non-supporter (2026-10-10): who talks, one
+   teaser line fading out, and the way in. */
+.ch-locked{max-width:440px;margin:28px auto;padding:22px 20px;border:1px solid rgba(20,20,20,.1);border-radius:16px;background:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.ch-locked-cast{display:flex;padding-left:8px}
+.ch-locked-cast img,.ch-locked-cast .ch-av-ph{width:38px;height:38px;border-radius:10px;object-fit:cover;object-position:50% 15%;border:2px solid #fff;margin-left:-8px;background:#eee}
+.ch-locked-who{margin:0;font-size:13px;color:rgba(20,20,20,.6)}
+.ch-locked-teaser{position:relative;align-self:stretch;text-align:left;display:flex;flex-direction:column;gap:4px;max-height:96px;overflow:hidden}
+.ch-locked-fade{position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(to bottom,rgba(255,255,255,0),#fff)}
+.ch-locked-title{font-size:16px;font-weight:900;color:#141414}
+.ch-locked-text{margin:0;font-size:13.5px;line-height:1.5;color:rgba(20,20,20,.65)}
+.ch-locked-btn{margin-top:4px;border:none;border-radius:999px;padding:12px 22px;font:inherit;font-size:13px;font-weight:800;background:var(--rx,#e91e8c);color:#fff;cursor:pointer}
+.ch-locked-btn:hover{filter:brightness(1.06)}
+.ch-locked-btn:focus-visible{outline:2px solid var(--rx,#e91e8c);outline-offset:3px}

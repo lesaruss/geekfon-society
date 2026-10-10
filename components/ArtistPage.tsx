@@ -12,7 +12,7 @@ import Chat from "@/components/roster/Chat";
 import RadioStrip from "@/components/roster/RadioStrip";
 import SignInGate from "@/components/roster/SignInGate";
 import AdCreative from "@/components/AdCreative";
-import Storefront from "@/components/roster/Storefront";
+import Storefront, { type StoreMode } from "@/components/roster/Storefront";
 import { useFramed } from "@/components/shell/GfsShell";
 import { useArtistPlayer } from "@/components/roster/ArtistPlayer";
 import Link from "next/link";
@@ -164,7 +164,9 @@ const FRAME_SECTIONS: { key: string; label: string; supporters?: boolean; needsM
   { key: "pulse",   label: "Press" },
   { key: "social",  label: "Social" },
   { key: "gallery", label: "Gallery", supporters: true },
-  { key: "chat",    label: "Chat", supporters: true },
+  // Chat opens for everyone: October 1 to 3 are free and later days show
+  // their own locked card (Sean, 2026-10-10, lib/chatAccess.ts).
+  { key: "chat",    label: "Chat" },
   { key: "members", label: "Members", needsMembers: true },
 ];
 
@@ -643,7 +645,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   const storefront = !!depot && !activeArticle;
   const router = useRouter();
   const player = useArtistPlayer();
-  const [storeMode, setStoreMode] = useState<"music" | "tour">("music");
+  const [storeMode, setStoreMode] = useState<StoreMode>("music");
   // Signed in, a label artist page sits inside the universal frame and its
   // sections (Music, Press, Social, Gallery, Chat) open inside it
   // (2026-10-04, Sean). Music is the storefront; the rest are the tabs.
@@ -662,7 +664,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // portrait first (Sean, 2026-10-05: Support opened at the name, below the
   // image). scrollIntoView finds whichever element scrolls: the window, or
   // the frame window when signed in.
-  function changeStoreMode(mode: "music" | "tour") {
+  function changeStoreMode(mode: StoreMode) {
     setStoreMode(mode);
     if (typeof window !== "undefined") requestAnimationFrame(() => document.querySelector(".sf")?.scrollIntoView({ block: "start", behavior: "smooth" }));
   }
@@ -1536,7 +1538,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // tab but Discography shows the sign-in prompt (SignInGate).
   // Inside the frame the viewer is signed in by definition (the frame only
   // mounts with a session), so nothing waits on the tier or access fetch.
-  const signedOutGate = !!depot && !activeArticle && tab !== "discography" && !isRegistered()
+  const signedOutGate = !!depot && !activeArticle && tab !== "discography" && tab !== "chat" && !isRegistered()
     && !(viewAs === "real" && (rosterAccess.signedIn || framed));
   // Storefront pages: a signed-out visitor gets the storefront alone; the tabs
   // (Pulse, Social, Gallery, Chat, Bible) appear below it once signed in.
@@ -2217,43 +2219,16 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   message that used to live in the disabled Pulse pill; an unregistered
                   visitor sees the same register-gate pattern as Social (no icon, per
                   the same 2026-07-26 cleanup). */}
-              {!signedOutGate && tab === "chat" && !canSeePulse && !(depot && isRegistered() && isSupporterView()) && (
+              {/* The group chat (2026-10-10, Sean): open to everyone, signed in or
+                  not. October 1 to 3 read in full; later days show a locked card
+                  whose button opens the $11 album offer. The server decides what
+                  each viewer gets (app/api/roster/[artist]/chat). */}
+              {!signedOutGate && tab === "chat" && (
                 <section className="pulse-section">
-                  <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Chat for {c.name || "this artist"} is on the way. Check back soon.</p></div>
-                </section>
-              )}
-              {!signedOutGate && tab === "chat" && (canSeePulse || (depot && isRegistered() && isSupporterView())) && (
-                <section className="pulse-section">
-                  {!isRegistered() && (
-                    <div className="locked-panel">
-                      <div className="lp-title">Chat is a free member benefit</div>
-                      <p className="lp-sub">Create a free account to join the conversation with {name} and other members.</p>
-                      <a
-                        className="mp-btn-buy"
-                        href={`/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`}
-                      >
-                        Sign Up Free
-                      </a>
-                    </div>
-                  )}
-                  {/* 2026-10-04 per Sean: Chat is a supporter benefit now. */}
-                  {isRegistered() && !isSupporterView() && depot && (
-                    <div className="locked-panel">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-                      <div className="lp-title">Chat is for {name}&apos;s supporters</div>
-                      <p className="lp-sub">Support {name} to join the chat with {name} and other supporters, along with the full album, the Gallery and more.</p>
-                      <button className="mp-btn-buy" onClick={() => openSupport()}>Support {name}</button>
-                    </div>
-                  )}
-                  {/* The live group chat (2026-10-04). The server re-checks support. */}
-                  {isRegistered() && isSupporterView() && depot && slug && (
-                    <Chat slug={slug} artistName={name || c.name || ""} />
-                  )}
-                  {isRegistered() && !depot && (
-                    <div className="locked-panel">
-                      <div className="lp-title">Chat is coming soon</div>
-                      <p className="lp-sub">Live chat with {name} and other supporters opens here soon. You&apos;re in already.</p>
-                    </div>
+                  {depot && slug ? (
+                    <Chat slug={slug} artistName={name || c.name || ""} onSupport={() => openSupport()} />
+                  ) : (
+                    <div className="pulse-empty"><p className="pulse-empty-title">Coming Soon</p><p>Chat for {c.name || "this artist"} is on the way. Check back soon.</p></div>
                   )}
                 </section>
               )}

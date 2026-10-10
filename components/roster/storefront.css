@@ -591,3 +591,11 @@ html.artist-playing .gbody{padding-bottom:92px}
   html.artist-docked .gw-body,html.artist-docked .gbody{padding-bottom:0}
 }
 .gw-window.is-fullscreen .am-player:not(.am-docked){bottom:112px}
+/* The group chat from the storefront (2026-10-10): its first days read free. */
+.sf-chat-link{appearance:none;display:inline-flex;align-items:center;gap:8px;margin:16px 0 0;padding:9px 16px;border-radius:999px;border:1px solid var(--rx,#e91e8c);background:#fff;color:var(--ink);font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.sf-chat-link svg{color:var(--rx,#e91e8c)}
+.sf-chat-link:hover{background:var(--rx,#e91e8c);color:#fff}
+.sf-chat-link:hover svg{color:#fff}
+.sf-chat-link:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sf-chat{display:flex;flex-direction:column;gap:14px;min-width:0}
+.sf-chat .sf-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}

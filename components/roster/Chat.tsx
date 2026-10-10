@@ -4,16 +4,17 @@
 // Like the original GFS Chat: the crew talking day by day, a day picker,
 // Translate on lines first written in another language, and drop cards for
 // upcoming releases. Read from this artist's side: their lines sit on the
-// right. Supporters read; the lines come from the Chat Writers' Room
-// (app/dashboard/chat-room), where staff plan, generate and approve each day.
-// Data and gating: app/api/roster/[artist]/chat.
+// right. The lines come from the Chat Writers' Room (app/dashboard/chat-room),
+// where staff plan, generate and approve each day. October 1 to 3 are free
+// for everyone; later days show a locked card for non-supporters (Sean,
+// 2026-10-10, lib/chatAccess.ts). Data and gating: app/api/roster/[artist]/chat.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
-import type { ChatMessage, ChatPerson } from "@/app/api/roster/[artist]/chat/route";
+import type { ChatMessage, ChatPerson, ChatLockedDay } from "@/app/api/roster/[artist]/chat/route";
 import "./chat.css";
 
-type Data = { day: string; days: string[]; today: string; messages: ChatMessage[]; people: Record<string, ChatPerson>; staff: boolean };
+type Data = { day: string; days: string[]; today: string; messages: ChatMessage[]; locked: ChatLockedDay | null; freeDays: string[]; supporter: boolean; people: Record<string, ChatPerson>; staff: boolean };
 
 async function authHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -53,7 +54,8 @@ const MEDIA_LABEL: Record<string, string> = { image: "View photo", video: "Watch
 
 const LANGS: Record<string, string> = { ja: "Japanese", ko: "Korean", es: "Spanish", fr: "French", pt: "Portuguese", zh: "Chinese" };
 
-export default function Chat({ slug, artistName }: { slug: string; artistName: string }) {
+// onSupport opens the $11 album offer (the Support tour or modal on the page).
+export default function Chat({ slug, artistName, onSupport }: { slug: string; artistName: string; onSupport?: () => void }) {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [translated, setTranslated] = useState<Set<string>>(new Set());
@@ -112,6 +114,7 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
     if (!data) return [];
     const seen = new Set<string>([slug]);
     data.messages.forEach(m => seen.add(m.from));
+    data.locked?.cast.forEach(s => seen.add(s));
     return [...seen].filter(s => data.people[s]);
   }, [data, slug]);
 
@@ -143,14 +146,37 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
         <label className="ch-day-pick">
           <span className="ch-day-label">{dayLabel(data.day, data.today)}</span>
           <select value={data.day} onChange={e => load(e.target.value)} aria-label="Pick a day">
-            {[...data.days].reverse().map(d => <option key={d} value={d}>{dayLabel(d, data.today)}{d > data.today ? " (scheduled)" : ""}</option>)}
+            {[...data.days].reverse().map(d => <option key={d} value={d}>{dayLabel(d, data.today)}{d > data.today ? " (scheduled)" : ""}{!data.supporter && !data.freeDays.includes(d) ? " · supporters" : ""}</option>)}
           </select>
         </label>
         <button type="button" className="ch-day-arrow" disabled={!next} onClick={() => next && load(next)} aria-label="Next day">›</button>
       </nav>
 
       <div className="ch-feed" ref={feedRef}>
-        {data.messages.length === 0 && <div className="ch-empty">Nobody&apos;s said anything yet today.</div>}
+        {data.locked && (
+          <div className="ch-locked">
+            <div className="ch-locked-cast" aria-hidden="true">
+              {data.locked.cast.slice(0, 6).map(s => {
+                const p = person(s);
+                return p.avatar
+                  ? <img key={s} src={p.avatar} alt="" style={{ borderColor: p.accent || undefined }} />
+                  : <span key={s} className="ch-av-ph" style={{ background: p.accent || "#999" }}>{p.name.charAt(0)}</span>;
+              })}
+            </div>
+            <p className="ch-locked-who">{data.locked.cast.map(s => person(s).name).join(", ")} {data.locked.cast.length === 1 ? "is" : "are"} talking.</p>
+            {data.locked.teaser && (
+              <div className="ch-locked-teaser">
+                <span className="ch-name" style={{ color: person(data.locked.teaser.from).accent || undefined }}>{person(data.locked.teaser.from).name}</span>
+                <div className="ch-bubble">{data.locked.teaser.body}</div>
+                <div className="ch-locked-fade" aria-hidden="true" />
+              </div>
+            )}
+            <strong className="ch-locked-title">The rest of the story is for supporters</strong>
+            <p className="ch-locked-text">October 1 to 3 are free. Get any album and every day of the chat opens, on every artist&apos;s page.</p>
+            {onSupport && <button type="button" className="ch-locked-btn" onClick={onSupport}>Support {artistName} · $11</button>}
+          </div>
+        )}
+        {!data.locked && data.messages.length === 0 && <div className="ch-empty">Nobody&apos;s said anything yet today.</div>}
         {data.messages.map((m, i) => {
           const p = person(m.from);
           const me = m.from === slug;
@@ -231,6 +257,7 @@ export default function Chat({ slug, artistName }: { slug: string; artistName: s
           AI attribution per the roster's content rules. */}
       <div className="ch-foot">
         A scripted look inside the crew&apos;s group chat, written with AI and approved by GeekFon. New lines land every day.
+        {!data.supporter && <> October 1 to 3 are free to read. Supporters read every day.</>}
         {data.staff && <> <a href="/dashboard/chat-room">Edit in the Writers&apos; Room</a></>}
       </div>
     </div>
