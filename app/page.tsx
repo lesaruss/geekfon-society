@@ -10,7 +10,7 @@ export default function HomePage() {
   return (
     <SiteChrome>
       <style>{`html,body{overflow:hidden;background:#020c0a;}`}</style>
-      <CharacterSelect variant="home" />
+      <CharacterSelect />
     </SiteChrome>
   );
 }

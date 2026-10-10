@@ -1,5 +1,5 @@
 "use client";
-// The character-select homepage and roster (playbook geekfon-character-select:
+// The character-select homepage (playbook geekfon-character-select:
 // Sean and V locked it 2026-10-05, extended 2026-10-10 "throw visitors
 // straight into the characters").
 //
@@ -15,8 +15,8 @@
 //               edge; a name puts that artist on stage.
 //   LoLA        a prompt under the buttons with a short written intro (her animated tour
 //               is phase 2).
-//   Roster      the same screen, plus a see-everyone grid whose cards play a
-//               30-second preview in place.
+//   Roster      retired 2026-10-10 (Sean: it did the same as the homepage);
+//               /roster redirects here.
 //
 // Art: transparent cutouts of the existing portraits (profile.cutoutUrl), no
 // new renders (Sean, 2026-10-10). Sound: components/radio/RadioProvider, so
@@ -43,12 +43,12 @@ const CITIES = [
 ];
 const CITY_MS = 9000;
 const CHAT_MS = 6500;
-const PREVIEW_SECONDS = 30;
 
 type HomeData = { artists: StageArtist[]; chat: HomeChatLine[]; lola: { avatar: string | null } };
 
 
-export default function CharacterSelect({ variant }: { variant: "home" | "roster" }) {
+export default function CharacterSelect() {
+  const variant = "home";
   const router = useRouter();
   const radio = useRadio();
   const [data, setData] = useState<HomeData | null>(null);
@@ -56,7 +56,6 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
   const [city, setCity] = useState(0);
   const [chatAt, setChatAt] = useState(0);
   const [lolaOpen, setLolaOpen] = useState(false);
-  const [previewing, setPreviewing] = useState<string | null>(null);
   const gestured = useRef(false);
 
   useEffect(() => {
@@ -111,7 +110,7 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
       track("gfs_tap_listen", { page: variant });
       void radio.startRadio();
     }
-  }, [radio, variant]);
+  }, [radio]);
 
 
   const pick = useCallback((slug: string, from: string) => {
@@ -122,8 +121,7 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
     }
     setPicked(slug);
     track("gfs_artist_pick", { artist: slug, from, page: variant });
-    if (variant === "roster" && from === "grid") window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [picked, router, variant]);
+  }, [picked, router]);
 
   const playSingle = useCallback((slug: string) => {
     const s = songOf.get(slug);
@@ -132,26 +130,9 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
     if (radio.mode === "clip" && radio.now?.slug === slug && radio.playing) { radio.stop(); return; }
     track("gfs_play_single", { artist: slug, page: variant });
     void radio.playClip({ slug, title: s.title, artist: s.artist, path: s.path, coverUrl: s.coverUrl });
-  }, [radio, songOf, variant]);
+  }, [radio, songOf]);
 
-  const preview = useCallback((slug: string) => {
-    const s = songOf.get(slug);
-    gestured.current = true;
-    if (previewing === slug && radio.mode === "clip" && radio.playing) { radio.stop(); setPreviewing(null); return; }
-    setPreviewing(slug);
-    if (!s) return;
-    track("gfs_preview", { artist: slug });
-    const start = s.durationSeconds > 75 ? 30 : 0;
-    void radio.playClip({ slug, title: s.title, artist: s.artist, path: s.path, coverUrl: s.coverUrl, start, seconds: PREVIEW_SECONDS });
-  }, [previewing, radio, songOf]);
 
-  // Clear the grid highlight when its preview ends.
-  useEffect(() => {
-    if (previewing && !(radio.mode === "clip" && radio.now?.slug === previewing)) {
-      const t = setTimeout(() => setPreviewing(p => (radio.mode === "clip" && radio.now?.slug === p ? p : null)), 400);
-      return () => clearTimeout(t);
-    }
-  }, [previewing, radio.mode, radio.now?.slug]);
 
   const left = artists.slice(0, Math.ceil(artists.length / 2));
   const right = artists.slice(Math.ceil(artists.length / 2));
@@ -186,7 +167,7 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
   );
 
   return (
-    <div className={`cs cs-${variant}`} onPointerDownCapture={onAnyTap}>
+    <div className="cs cs-home" onPointerDownCapture={onAnyTap}>
       <h1 className="cs-sr">GeekFon Society</h1>
 
       {/* Background: aurora and the city skylines, as before. */}
@@ -281,9 +262,6 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
 
           <nav className="cs-strip" aria-label="Artists">{artists.map(a => tile(a, "strip"))}</nav>
 
-          {variant === "home" ? (
-            <Link className="cs-everyone" href="/roster#everyone">See everyone</Link>
-          ) : null}
         </main>
 
         <nav className="cs-rail cs-rail-r" aria-label="More artists">{right.map(a => tile(a, "rail"))}</nav>
@@ -306,38 +284,6 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
       ) : null}
 
 
-      {variant === "roster" ? (
-        <section id="everyone" className="cs-everyone-grid" aria-label="See everyone">
-          <h2 className="cs-grid-title">See everyone</h2>
-          <p className="cs-grid-sub">Tap a card to hear 30 seconds. Tap their name to meet them.</p>
-          <div className="cs-grid">
-            {artists.map(a => {
-              const on = previewing === a.slug;
-              const song = songOf.get(a.slug);
-              const pct = on ? Math.min(100, (radio.clipAt / PREVIEW_SECONDS) * 100) : 0;
-              return (
-                <article key={a.slug} className={"cs-card" + (on ? " on" : "")} style={{ ["--accent" as string]: a.accent }}>
-                  <button type="button" className="cs-card-play" data-own-sound onClick={() => preview(a.slug)} aria-label={on ? `Stop ${a.name}` : `Hear 30 seconds of ${a.name}${song ? `, ${song.title}` : ""}`}>
-                    {a.cutout ? <img src={sized(a.cutout, 480) ?? ""} alt="" loading="lazy" /> : null}
-                    <span className="cs-card-icon" aria-hidden="true">
-                      {on && radio.playing ? (
-                        <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20" /></svg>
-                      )}
-                    </span>
-                    {on ? <span className="cs-card-bar" style={{ width: `${pct}%` }} /> : null}
-                  </button>
-                  <div className="cs-card-meta">
-                    <Link href={`/${a.slug}`} className="cs-card-name" onClick={() => track("gfs_artist_open", { artist: a.slug, from: "grid", page: variant })}>{a.name}</Link>
-                    <span className="cs-card-genre">{on && song ? song.title : a.genre ?? ""}</span>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
     </div>
   );
 }
