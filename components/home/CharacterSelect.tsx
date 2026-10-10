@@ -26,6 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRadio } from "@/components/radio/RadioProvider";
+import { useFramed } from "@/components/shell/GfsShell";
 import { CHAT_TO_ROSTER, sized, titleKey, type HomeChatLine, type StageArtist } from "@/lib/roster";
 import type { RadioTrack } from "@/lib/radioSchedule";
 import { track } from "@/lib/track";
@@ -79,6 +80,15 @@ export default function CharacterSelect() {
   const [chatAt, setChatAt] = useState(0);
   const [lolaOpen, setLolaOpen] = useState(false);
   const gestured = useRef(false);
+  // Signed in, the page sits inside the universal frame (GfsShell) instead of
+  // under the public header, so the one-screen sizing and the scroll lock in
+  // app/page.tsx give way to the frame (Sean, 2026-10-10, iPhone report).
+  const framed = useFramed();
+  useEffect(() => {
+    if (!framed) return;
+    document.documentElement.classList.add("gfs-cs-framed");
+    return () => document.documentElement.classList.remove("gfs-cs-framed");
+  }, [framed]);
   // Light by day, dark by night on the visitor's own clock (Sean, 2026-10-10).
   // app/page.tsx sets html[data-gfs-theme] before paint; the CSS keys off it,
   // and this picks day or night skylines to match.
@@ -196,7 +206,7 @@ export default function CharacterSelect() {
   );
 
   return (
-    <div className="cs cs-home" onPointerDownCapture={onAnyTap}>
+    <div className={"cs cs-home" + (framed ? " cs-framed" : "")} onPointerDownCapture={onAnyTap}>
       <h1 className="cs-sr">GeekFon Society</h1>
 
       {/* Background: the stage artist home city, crossfading when the stage changes. */}
