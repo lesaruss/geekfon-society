@@ -275,7 +275,7 @@ export default function RadioProvider({ children }: { children: React.ReactNode 
 }
 
 const MINI_CSS = `
-.gfr-mini{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:45;display:flex;align-items:center;gap:10px;max-width:min(340px,calc(100vw - 32px));padding:8px 8px 8px 10px;border-radius:999px;background:rgba(14,14,20,.92);border:1px solid rgba(255,255,255,.12);box-shadow:0 8px 28px rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-family:'Montserrat',sans-serif;color:#fff;}
+.gfr-mini{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:45;display:flex;align-items:center;gap:10px;max-width:min(340px,calc(100vw - 32px));padding:8px 8px 8px 10px;border-radius:999px;background:rgba(14,14,20,.92);border:1px solid rgba(255,255,255,.12);box-shadow:0 8px 28px rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-family:'Montserrat',sans-serif;color:#fff;}
 .gfr-mini-cover{width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;}
 .gfr-mini-dot{width:10px;height:10px;border-radius:50%;background:#4caf50;flex-shrink:0;margin:0 6px;}
 .gfr-mini-text{min-width:0;flex:1;}

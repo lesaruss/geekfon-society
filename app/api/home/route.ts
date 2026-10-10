@@ -60,6 +60,7 @@ export async function GET() {
       genre: (p.genre as string) || null,
       cutout: (p.cutoutUrl as string) || (p.heroUrl as string) || null,
       avatar: (p.chatAvatar as string) || null,
+      singles: ((p.tracks as { n?: string; v?: string }[] | undefined) ?? []).filter(t => t.v === "public" && t.n).map(t => t.n!),
     }];
   });
 

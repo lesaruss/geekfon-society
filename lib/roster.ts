@@ -17,7 +17,12 @@ export type StageArtist = {
   cutout: string | null;
   /** Square face crop used in the group chat. */
   avatar: string | null;
+  /** Released singles, newest choice first (profile.tracks with v "public"). */
+  singles: string[];
 };
+
+/** Title match that ignores case, punctuation and spacing. */
+export const titleKey = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
 export type HomeChatLine = { id: string; from: string; name: string; avatar: string | null; accent: string | null; body: string };
 

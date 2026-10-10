@@ -28,7 +28,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRadio } from "@/components/radio/RadioProvider";
-import { CHAT_TO_ROSTER, sized, type HomeChatLine, type StageArtist } from "@/lib/roster";
+import { CHAT_TO_ROSTER, sized, titleKey, type HomeChatLine, type StageArtist } from "@/lib/roster";
+import type { RadioTrack } from "@/lib/radioSchedule";
 import { track } from "@/lib/track";
 import "./characterSelect.css";
 
@@ -95,12 +96,23 @@ export default function CharacterSelect({ variant }: { variant: "home" | "roster
   const stageSlug = picked ?? onAirSlug ?? artists[0]?.slug ?? null;
   const stage = stageSlug ? bySlug.get(stageSlug) ?? null : null;
 
-  // Each artist's first radio song: their single on the stage, their preview on the grid.
+  // Each artist's single for the stage button and the grid preview: their
+  // first released single that is on the radio, else their first original
+  // (not a remix), else whatever the radio has of theirs.
   const songOf = useMemo(() => {
-    const m = new Map<string, { title: string; path: string; durationSeconds: number; coverUrl?: string | null; artist: string }>();
-    for (const t of radio.rotation) if (t.slug && t.kind !== "spot" && !m.has(t.slug)) m.set(t.slug, t);
+    const songs = new Map<string, RadioTrack[]>();
+    for (const t of radio.rotation) {
+      if (!t.slug || t.kind === "spot") continue;
+      songs.set(t.slug, [...(songs.get(t.slug) ?? []), t]);
+    }
+    const m = new Map<string, RadioTrack>();
+    for (const [slug, list] of songs) {
+      const keys = (bySlug.get(slug)?.singles ?? []).map(titleKey);
+      const single = keys.map(k => list.find(t => titleKey(t.title) === k)).find(Boolean);
+      m.set(slug, single ?? list.find(t => !/remix/i.test(t.title)) ?? list[0]);
+    }
     return m;
-  }, [radio.rotation]);
+  }, [radio.rotation, bySlug]);
 
   // A tap anywhere turns the radio on, once. Buttons that make their own
   // sound (a single, a preview, the radio toggle) opt out with data-own-sound.
