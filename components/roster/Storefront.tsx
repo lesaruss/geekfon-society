@@ -161,7 +161,7 @@ export default function Storefront(p: Props) {
   const [guideAt, setGuideAt] = useState<number | null>(null);
 
   return (
-    <section className={"sf" + (p.mode === "tour" ? " sf-touring" : "")}>
+    <section className={"sf" + (p.mode === "tour" ? " sf-touring" : p.mode === "music" ? " sf-is-music" : "")}>
       <div className="sf-left">
         <div className={"sf-portrait" + (p.group ? " sf-portrait-group" : "")}>
           {p.portraitUrl && <img key="music" className={"sf-img" + (p.mode !== "tour" ? " on" : "")} src={p.portraitUrl} alt={`${p.artistName}`} />}
@@ -173,6 +173,9 @@ export default function Storefront(p: Props) {
       <div className="sf-right">
         {p.mode === "music" ? (
           <>
+            {/* Name, kicker, tagline and blurb: beside the portrait on phones
+                (Sean, 2026-10-10), stacked as before on desktop. */}
+            <div className="sf-intro">
             {/* Same element and style as the Support page title (Sean, 2026-10-04). */}
             <div className="sf-title-row">
               <div className="tour-name sf-title" role="heading" aria-level={1}>{p.artistName}</div>
@@ -183,6 +186,7 @@ export default function Storefront(p: Props) {
             <div className="sf-kicker">{p.kicker}</div>
             {p.tagline && <div className="sf-tagline">{p.tagline}</div>}
             {p.blurb && <p className="sf-blurb">{p.blurb}</p>}
+            </div>
             {/* Straight into the characters (Sean, 2026-10-10): the group chat's
                 first days read free, no sign-in. */}
             <button type="button" className="sf-chat-link" onClick={() => p.onMode("chat")}>

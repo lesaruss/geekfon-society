@@ -624,3 +624,21 @@ html.artist-playing .gbody{padding-bottom:92px}
 .sf-guide-play:hover{filter:brightness(1.07)}
 @media(max-width:768px){.sf-guide-cap{font-size:13px;bottom:10px;left:8px;right:8px}.sf-guide-play{bottom:12px;padding:10px 16px;font-size:13px}}
 @media(prefers-reduced-motion:reduce){.sf-guide{transition:none}}
+
+/* Phones, Music (Sean, 2026-10-10): the portrait takes a third of the width,
+   left of the name, kicker, tagline and blurb; everything after runs full
+   width below. .sf-right steps out of the way so its children join the grid. */
+@media(max-width:900px){
+  .sf.sf-is-music{grid-template-columns:minmax(0,1fr) minmax(0,2fr);column-gap:14px;row-gap:18px}
+  .sf.sf-is-music .sf-right{display:contents}
+  .sf.sf-is-music .sf-left{grid-column:1;grid-row:1;align-self:start}
+  .sf.sf-is-music .sf-intro{grid-column:2;grid-row:1;min-width:0}
+  .sf.sf-is-music .sf-right>:not(.sf-intro){grid-column:1/-1}
+  .sf.sf-is-music .sf-portrait{aspect-ratio:3/4;border-radius:14px}
+  .sf.sf-is-music .sf-img{object-fit:contain;object-position:center bottom}
+  .sf.sf-is-music .sf-img.on{transform:none}
+  .sf.sf-is-music .sf-title-row{flex-wrap:wrap;row-gap:2px}
+  .sf.sf-is-music .sf-kicker{font-size:10px;letter-spacing:.16em}
+  .sf.sf-is-music .sf-tagline{font-size:11px;letter-spacing:.08em;line-height:1.4;margin-top:4px}
+  .sf.sf-is-music .sf-blurb{font-size:13.5px;line-height:1.55;margin-top:8px}
+}
