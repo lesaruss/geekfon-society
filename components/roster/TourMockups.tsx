@@ -135,12 +135,20 @@ export function ChatScreen({ artist, chat }: { artist: string; chat: MockChat })
   );
 }
 
-export function RadioScreen({ artist, song, stations, active }: { artist: string; song: string; stations: RadioStation[]; active: string }) {
+// The radio as it really looks (Sean, 2026-10-10): the song's cover art as
+// the label of a spinning record, over the artist's city skyline. Falls back
+// to the GeekFon mark and the dark backdrop when there's no art or city.
+export function RadioScreen({ artist, song, cover, bg, stations, active }: { artist: string; song: string; cover?: string | null; bg?: { src: string; position?: string } | null; stations: RadioStation[]; active: string }) {
   return (
     <BrowserFrame url={`geekfon.ai/radio?station=${active}`} dark>
-      <div className="mk-radio">
-        <div className="mk-radio-btn">
-          <img src="/geekfon-logo.png" alt="" />
+      <div className={"mk-radio" + (bg ? " has-bg" : "")}>
+        {bg && <img className="mk-radio-bg" src={bg.src} alt="" aria-hidden="true" style={bg.position ? { objectPosition: bg.position } : undefined} />}
+        <div className={"mk-radio-btn" + (cover ? " has-cover" : "")}>
+          {cover ? (
+            <span className="mk-record" aria-hidden="true">
+              <span className="mk-record-label"><img src={cover} alt="" /><i /></span>
+            </span>
+          ) : <img src="/geekfon-logo.png" alt="" />}
           <span className="mk-ring" /><span className="mk-ring r2" />
         </div>
         <div className="mk-radio-np">
