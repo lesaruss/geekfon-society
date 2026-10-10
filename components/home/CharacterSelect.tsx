@@ -232,7 +232,7 @@ export default function CharacterSelect() {
           {/* The artist's name leads (Sean, 2026-10-10), with the radio pill above it. */}
           <div className="cs-head" aria-live="polite" style={{ ["--accent" as string]: stage?.accent ?? "#F69820" }}>
             {stageOnAir && radio.onAir ? (
-              <div className="cs-onair"><span className="cs-onair-dot" aria-hidden="true" />On the radio now: {radio.onAir.title}</div>
+              <div className="cs-onair"><span className="cs-onair-dot" aria-hidden="true" /><span className="cs-onair-pre">On the radio now:</span><span className="cs-onair-short">On air:</span> {radio.onAir.title}</div>
             ) : onAirSlug && radio.onAir ? (
               <button type="button" className="cs-onair cs-onair-back" onClick={() => setPicked(null)}>
                 <span className="cs-onair-dot" aria-hidden="true" />On air: {bySlug.get(onAirSlug)?.name}

@@ -109,6 +109,7 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
 
 /* Phones only: the chat as a round icon (see the phone block below). */
 .cs-chat-icon { display: none; }
+.cs-onair-short { display: none; }
 
 /* LoLA: under the stage buttons, her intro opens above */
 .cs-lola { position: fixed; z-index: 21; left: 18px; bottom: 18px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
@@ -204,6 +205,8 @@ a.cs-chat:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
   .cs-onair { max-width: calc(100vw - 132px); box-sizing: border-box; }
   .cs-onair { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; line-height: 14px; }
   .cs-onair-dot { display: inline-block; vertical-align: middle; margin: -2px 6px 0 0; }
+  .cs-onair-pre { display: none; }
+  .cs-onair-short { display: inline; }
   .cs-framed .cs-chat-icon { position: absolute; top: 10px; }
   .cs-framed .cs-head { padding-top: 6px; }
 }
