@@ -59,6 +59,8 @@ type Props = {
   platformLinks?: Record<string, string>;
   // Scripted group-chat preview (lib/chatPreview.ts) with the cast's thumbnails.
   chat?: StoreChat;
+  // The artist's city skyline, behind the radio slide on the Support tour.
+  radioBg?: { src: string; position?: string } | null;
   // Group shot (bands): show the whole image, never zoom or crop it, so no
   // member is cut off. Solo portraits keep the head-to-hip zoom.
   group?: boolean;
@@ -375,7 +377,7 @@ function Tour(props: Props & { album: PublicAlbum | null; list: PublicSong[] }) 
       key: "radio",
       title: "Radio",
       text: `Every GeekFon station ${p.artistName} is on, playing live with everyone else listening.`,
-      visual: <RadioScreen artist={p.artistName} song={single?.title || p.album.title} stations={p.stations} active={stationWithArtist} />,
+      visual: <RadioScreen artist={p.artistName} song={single?.title || p.album.title} cover={single?.coverUrl || p.album.coverUrl || null} bg={p.radioBg} stations={p.stations} active={stationWithArtist} />,
     },
     {
       key: "press",

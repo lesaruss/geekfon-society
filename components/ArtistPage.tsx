@@ -1704,6 +1704,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
               onMode={changeStoreMode}
               platformLinks={c.platformLinks}
               chat={chatPreview}
+              radioBg={cityBg ? { src: cityBg.desktop, position: cityBg.position } : null}
               group={(c.members?.length ?? 0) > 1}
             />
             </div>

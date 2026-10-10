@@ -599,3 +599,16 @@ html.artist-playing .gbody{padding-bottom:92px}
 .sf-chat-link:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .sf-chat{display:flex;flex-direction:column;gap:14px;min-width:0}
 .sf-chat .sf-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+/* Radio slide as the real radio looks (2026-10-10): city skyline behind a
+   spinning record whose label is the song's cover art. */
+.mk-radio{position:relative;overflow:hidden}
+.mk-radio > *{position:relative;z-index:1}
+.mk-radio > .mk-radio-bg{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:center bottom}
+.mk-radio.has-bg::before{content:'';position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse at center,rgba(0,0,0,.2) 0%,rgba(2,12,10,.82) 100%);pointer-events:none}
+.mk-radio-btn.has-cover{background:#0b0b0d;border-color:rgba(255,255,255,.14);overflow:visible}
+.mk-record{position:absolute;inset:0;border-radius:50%;background:repeating-radial-gradient(circle,#111 0 2px,#1b1b1f 2px 4px);animation:mkSpin 6s linear infinite}
+.mk-record-label{position:absolute;inset:26%;border-radius:50%;overflow:hidden;background:#222;box-shadow:0 0 0 2px rgba(0,0,0,.6)}
+.mk-record-label img{width:100%;height:100%;object-fit:cover;display:block;opacity:1}
+.mk-record-label i{position:absolute;left:50%;top:50%;width:8%;height:8%;transform:translate(-50%,-50%);border-radius:50%;background:#0a0a0a;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+@keyframes mkSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.mk-record{animation:none}}
