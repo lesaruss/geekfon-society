@@ -47,7 +47,7 @@ const CHAT_MS = 6500;
 type HomeData = { artists: StageArtist[]; chat: HomeChatLine[]; lola: { avatar: string | null } };
 
 
-export default function CharacterSelect() {
+export default function CharacterSelect({ theme = "dark" }: { theme?: "dark" | "light" }) {
   const variant = "home";
   const router = useRouter();
   const radio = useRadio();
@@ -167,7 +167,7 @@ export default function CharacterSelect() {
   );
 
   return (
-    <div className="cs cs-home" onPointerDownCapture={onAnyTap}>
+    <div className={"cs cs-home" + (theme === "light" ? " cs-light" : "")} onPointerDownCapture={onAnyTap}>
       <h1 className="cs-sr">GeekFon Society</h1>
 
       {/* Background: aurora and the city skylines, as before. */}
