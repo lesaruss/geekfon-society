@@ -58,7 +58,9 @@ export async function GET() {
       tagline: (p.tagline as string) || null,
       accent: (p.accent as string) || "#F69820",
       genre: (p.genre as string) || null,
-      cutout: (p.cutoutUrl as string) || (p.heroUrl as string) || null,
+      // stageUrl: art drawn for this stage only (Riku first, 2026-10-10);
+      // otherwise the cutout of the profile portrait.
+      cutout: (p.stageUrl as string) || (p.cutoutUrl as string) || (p.heroUrl as string) || null,
       avatar: (p.chatAvatar as string) || null,
       singles: ((p.tracks as { n?: string; v?: string }[] | undefined) ?? []).filter(t => t.v === "public" && t.n).map(t => t.n!),
     }];

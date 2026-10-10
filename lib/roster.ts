@@ -13,7 +13,7 @@ export type StageArtist = {
   tagline: string | null;
   accent: string;
   genre: string | null;
-  /** Transparent full-body portrait (profile.cutoutUrl), made 2026-10-10. */
+  /** Transparent full-body portrait: profile.stageUrl (drawn for the homepage) or profile.cutoutUrl. */
   cutout: string | null;
   /** Square face crop used in the group chat. */
   avatar: string | null;
