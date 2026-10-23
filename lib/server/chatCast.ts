@@ -7,8 +7,10 @@
 // take the role that V used to have... he definitely needs to be on there...
 // LoLA needs to be on there for sure"). V is left out; Mr. Russell is the old
 // display identity merged into Logan, so it's left out as its own row, but
-// Logan's chat username is "Mr. Russell" to match his profile (Sean,
-// 2026-10-05); the others still call him Logan in their lines.
+// Logan's chat username matches his profile, "Logan Russell" since
+// 2026-10-23 (Sean: the artist is Logan, the son of Lazarus and V; Mr. Russell
+// is now only an alias and Sean's human legacy catalog). The others call him
+// Logan in their lines.
 //
 // Avatars: a square head-and-shoulders crop made for the chat
 // (profile.chatAvatar on gfs_artists, meta.chatAvatar on artists), falling
@@ -22,7 +24,7 @@ const LEAVE_OUT = new Set(["v", "mr-russell"]);
 // Non-roster figures who take part in the chat: slug -> character_agents slug.
 const FIGURES = ["logan", "lola"];
 // Chat usernames that differ from the character's name.
-const DISPLAY_NAME: Record<string, string> = { logan: "Mr. Russell" };
+const DISPLAY_NAME: Record<string, string> = { logan: "Logan Russell" };
 // gfs_artists slugs that differ from their character_agents slug.
 export const AGENT_SLUG: Record<string, string> = { riku: "riku-hayasaka" };
 
