@@ -126,7 +126,7 @@ const ARTISTS: ArtistCard[] = [
     ],
   },
   {
-    slug: "mr-russell", name: "Mr. Russell", initial: "MR", accent: "#90A4AE",
+    slug: "mr-russell", name: "Logan Russell", initial: "LR", accent: "#90A4AE",
     genre: "Hip-Hop / NYC", tagline: "Hip-hop that knows where it has been and does not need to prove where it is going.",
     heroUrl: SUPA_MEDIA + "mr-russell/hero.jpg",
     tracks: [

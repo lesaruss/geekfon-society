@@ -89,7 +89,7 @@ const ROSTER_TEASER: { name: string; genre: string; accent: string }[] = [
   { name: "Likkle Bro", genre: "Dancehall · London", accent: "#4CAF50" },
   { name: "Likkle Sis", genre: "Dembow · London", accent: "#FF5722" },
   { name: "Mad Tings", genre: "Hip-Hop · London", accent: "#E91E63" },
-  { name: "Mr. Russell", genre: "Hip-Hop · NYC", accent: "#90A4AE" },
+  { name: "Logan Russell", genre: "Hip-Hop · NYC", accent: "#90A4AE" },
   { name: "Rustblood Prophets", genre: "Alternative · Berlin", accent: "#F44336" },
   { name: "Straight and Narrow", genre: "Country · Nashville", accent: "#A1887F" },
   { name: "Vuka", genre: "Amapiano · Johannesburg", accent: "#FFB300" },

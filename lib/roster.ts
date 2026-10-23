@@ -35,5 +35,6 @@ export function sized(url: string | null, width: number): string | null {
 }
 
 // Group chat names that are not roster slugs: Logan's lines belong to the
-// Mr. Russell profile (one face, one link, Sean 2026-10-05).
+// Logan Russell profile, slug mr-russell (one face, one link, Sean 2026-10-05;
+// renamed from Mr. Russell 2026-10-23).
 export const CHAT_TO_ROSTER: Record<string, string> = { logan: "mr-russell" };

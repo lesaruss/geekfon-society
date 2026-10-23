@@ -16,7 +16,7 @@ const ARTIST_NAMES: Record<string, string> = {
   "likkle-bro": "Likkle Bro",
   "likkle-sis": "Likkle Sis",
   "mad-tings": "Mad Tings",
-  "mr-russell": "Mr. Russell",
+  "mr-russell": "Logan Russell",
   "nilo-wave": "Nilo Wave",
   "riku-hayasaka": "Riku Hayasaka",
   "roxanne": "Roxanne",
