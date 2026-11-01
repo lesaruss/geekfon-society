@@ -586,10 +586,9 @@ html.artist-playing .gbody{padding-bottom:92px}
    bar, in the flow, so it never covers the universal bar. Phones keep the
    fixed bar, since the list runs long. In full-screen the fixed bar clears
    the universal bar. */
-@media(min-width:901px){
-  .am-player.am-docked{position:static;transform:none;left:auto;bottom:auto;width:auto;margin:10px 0 0;border-radius:14px;flex-shrink:0}
-  html.artist-docked .gw-body,html.artist-docked .gbody{padding-bottom:0}
-}
+/* 2026-11-01 (Sean): docked on phones too, at the top of the songs under the group chat line. */
+.am-player.am-docked{position:static;transform:none;left:auto;bottom:auto;width:auto;margin:10px 0 4px;border-radius:14px;flex-shrink:0}
+html.artist-docked .gw-body,html.artist-docked .gbody{padding-bottom:0}
 .gw-window.is-fullscreen .am-player:not(.am-docked){bottom:112px}
 /* The group chat from the storefront (2026-10-10): its first days read free. */
 .sf-chat-link{appearance:none;display:inline-flex;align-items:center;gap:8px;margin:16px 0 0;padding:9px 16px;border-radius:999px;border:1px solid var(--rx,#e91e8c);background:#fff;color:var(--ink);font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
