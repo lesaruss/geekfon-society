@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import SiteChrome from '@/components/SiteChrome';
 import styles from './page.module.css';
 import { signInWithProvider } from '@/lib/socialAuth';
+import { supabase } from '@/lib/supabase';
 import { rememberReturn, safeReturnPath } from '@/lib/postAuth';
 
 type State = 'form' | 'sending' | 'code-entry';
@@ -111,6 +112,14 @@ function LoginPageInner() {
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Invalid code');
+      }
+
+      // Keep the session in this browser too (2026-11-01): the server only set its own cookie, so every page that reads the
+      // Supabase session (the header, the frame, supporter access) still showed the visitor signed out after a correct code.
+      // Social sign-in already does this (lib/socialAuth.ts).
+      const { session } = await res.json().catch(() => ({ session: null }));
+      if (session?.access_token && session?.refresh_token) {
+        await supabase.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token });
       }
 
       router.push(redirect);
