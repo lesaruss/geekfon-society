@@ -5,6 +5,7 @@ import RegisterSW from "../components/RegisterSW";
 import RevenueCatBootstrap from "../components/RevenueCatBootstrap";
 import AudioFocus from "../components/AudioFocus";
 import RadioProvider from "../components/radio/RadioProvider";
+import EmbedBridge, { EMBED_PREPAINT, EMBED_CSS } from "../components/EmbedBridge";
 
 export const metadata: Metadata = {
   title: "GeekFon Society",
@@ -28,6 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Embedded mode (seanarussell.com/media): set before paint so the GeekFon header never flashes inside the frame. */}
+        <script dangerouslySetInnerHTML={{ __html: EMBED_PREPAINT }} />
+        <style>{EMBED_CSS}</style>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
@@ -46,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           gtag('js', new Date());
           gtag('config', 'G-5YTJ0CZLJY');`}
         </Script>
+        <EmbedBridge />
         <RegisterSW />
         <RevenueCatBootstrap />
         <AudioFocus />
