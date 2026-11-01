@@ -587,6 +587,8 @@ html.artist-playing .gbody{padding-bottom:92px}
    fixed bar, since the list runs long. In full-screen the fixed bar clears
    the universal bar. */
 /* 2026-11-01 (Sean): docked on phones too, at the top of the songs under the group chat line. */
+/* An empty dock takes no room (no grid row, no gap); it appears with the player. */
+.am-dock:empty{display:none}
 .am-player.am-docked{position:static;transform:none;left:auto;bottom:auto;width:auto;margin:10px 0 4px;border-radius:14px;flex-shrink:0}
 html.artist-docked .gw-body,html.artist-docked .gbody{padding-bottom:0}
 .gw-window.is-fullscreen .am-player:not(.am-docked){bottom:112px}
@@ -640,4 +642,7 @@ html.artist-docked .gw-body,html.artist-docked .gbody{padding-bottom:0}
   .sf.sf-is-music .sf-kicker{font-size:10px;letter-spacing:.16em}
   .sf.sf-is-music .sf-tagline{font-size:11px;letter-spacing:.08em;line-height:1.4;margin-top:4px}
   .sf.sf-is-music .sf-blurb{font-size:13.5px;line-height:1.55;margin-top:8px}
+  /* The songs follow the group chat line with the grid's own gap only (Sean, 2026-11-01: no gap there). */
+  .sf.sf-is-music .sf-music{margin-top:0}
+  .sf.sf-is-music .am-player.am-docked{margin:0}
 }

@@ -21,7 +21,9 @@ export const EMBED_CSS = `html.gfs-embed .gtop,html.gfs-embed .gdrawer,html.gfs-
   `html.gfs-embed .sf-name{font-size:clamp(40px,min(5.6vw,calc(${HVH} * 10)),96px)!important}` +
   `html.gfs-embed .tour-panel .tour-visual{min-height:clamp(180px,calc(${HVH} * 38),420px)!important}}` +
   `@media(max-width:900px){html.gfs-embed .sf-portrait{max-height:calc(${HVH} * 70)!important}}` +
-  `html.gfs-embed .ch-shell{height:min(720px,calc(${HVH} * 100 - 120px))!important}`;
+  `html.gfs-embed .ch-shell{height:min(720px,calc(${HVH} * 100 - 120px))!important}` +
+  // The frame ends just under the page (Sean, 2026-11-01: "the bottom border should stay flush with just a little bit of gap").
+  `html.gfs-embed .sf{padding-bottom:24px!important}html.gfs-embed .gbody{padding-bottom:0!important}`;
 
 export function isEmbedded(): boolean {
   return typeof document !== "undefined" && document.documentElement.classList.contains("gfs-embed");
@@ -54,8 +56,21 @@ export default function EmbedBridge() {
     window.addEventListener("message", onHost);
     window.parent.postMessage({ type: "gfs-embed-ready" }, "*");
     let last = 0;
+    // The page's own height: the bottom of its content, not the document's scroll height, which never drops below the frame's
+    // current height (so after a resize the frame kept its biggest size and left an empty band under the page).
+    const contentHeight = () => {
+      const body = document.querySelector(".gbody") as HTMLElement | null;
+      if (body) return body.getBoundingClientRect().bottom + window.scrollY;
+      let b = 0;
+      for (const el of Array.from(document.body.children) as HTMLElement[]) {
+        const cs = getComputedStyle(el);
+        if (cs.position === "fixed" || cs.display === "none") continue;
+        b = Math.max(b, el.getBoundingClientRect().bottom + window.scrollY);
+      }
+      return b || document.documentElement.scrollHeight;
+    };
     const post = () => {
-      const height = Math.ceil(document.documentElement.scrollHeight);
+      const height = Math.ceil(contentHeight());
       if (Math.abs(height - last) < 2) return;
       last = height;
       window.parent.postMessage({ type: "gfs-embed-height", height }, "*");
@@ -63,6 +78,7 @@ export default function EmbedBridge() {
     const ro = new ResizeObserver(post);
     ro.observe(document.documentElement);
     ro.observe(document.body);
+    const gb = document.querySelector(".gbody"); if (gb) ro.observe(gb);
     post();
     const t = window.setInterval(post, 1000);
     return () => { document.removeEventListener("click", onClick, true); window.removeEventListener("message", onHost); ro.disconnect(); window.clearInterval(t); };
