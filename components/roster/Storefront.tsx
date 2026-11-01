@@ -193,6 +193,9 @@ export default function Storefront(p: Props) {
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" /></svg>
               Read the crew&apos;s group chat · free
             </button>
+            {/* The player sits here, under the group chat line and over the songs, on every screen (Sean, 2026-11-01:
+                "it would make more sense to have the song at the top of the playlist"), on geekfon.ai and embedded. */}
+            <PlayerDock />
             {list.some(x => x.access === "single") && (
               <ListenOn artistName={p.artistName} single={[...list].reverse().find(x => x.access === "single" && !x.isRemix)?.title ?? null} links={p.platformLinks} />
             )}
@@ -222,13 +225,19 @@ function firstAlbumTitle(artist: string): string {
   return `${artist}'s first album`;
 }
 
+// Where the player docks while the storefront shows: mounting registers the slot, unmounting releases it (the bar then floats
+// at the foot of the window, as in the other sections).
+function PlayerDock() {
+  const player = useArtistPlayer();
+  const setDock = player?.setDock;
+  const dockRef = useCallback((el: HTMLDivElement | null) => { setDock?.(el); }, [setDock]);
+  return <div className="am-dock" ref={dockRef} />;
+}
+
 function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; album: PublicAlbum | null }) {
   // The player itself lives in the artist layout (ArtistPlayer), so it keeps
   // playing across sections; this list only feeds it.
   const player = useArtistPlayer();
-  const setDock = player?.setDock;
-  // Stable ref callback: mounts register the dock slot, unmounts release it.
-  const dockRef = useCallback((el: HTMLDivElement | null) => { setDock?.(el); }, [setDock]);
   const { onMode } = p;
   useEffect(() => {
     player?.setHearAll(() => onMode("tour"));
@@ -318,8 +327,6 @@ function Music(p: Props & { list: PublicSong[]; albumOf: Map<string, string>; al
         </div>
       </div>
 
-      {/* The player docks here, above the Support bar, taking one row's room. */}
-      <div className="am-dock" ref={dockRef} />
       {!p.supporter && !p.pending && (
         <div className="sf-cta-bar">
           <p>

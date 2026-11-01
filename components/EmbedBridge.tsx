@@ -8,10 +8,20 @@
 //   - every link opens on geekfon.ai in the whole window (join, log in, Passport, news...), never inside the frame
 //   - Support on an artist opens that artist's Support tour on geekfon.ai (ArtistPage openSupport, isEmbedded)
 //   - the page tells the host its height ({type:"gfs-embed-height", height}) so the frame grows instead of scrolling
+//   - the host tells the page how tall the visitor's screen is ({type:"gfs-host-viewport", height}). Inside a frame, 100vh is the
+//     frame, and the frame grows to fit the page, so screen-height layouts (the storefront portrait) grew without end (Sean,
+//     2026-11-01: "it continues to grow and grow"). Embedded, those rules use the host's screen height (--hvh) instead.
 import { useEffect } from "react";
 
 export const EMBED_PREPAINT = `try{if(window.self!==window.top&&/[?&]embed=1(&|$)/.test(location.search))document.documentElement.classList.add('gfs-embed')}catch(e){}`;
-export const EMBED_CSS = `html.gfs-embed .gtop,html.gfs-embed .gdrawer,html.gfs-embed .gscrim,html.gfs-embed .gfr-mini{display:none!important}html.gfs-embed .gbody{padding-top:0!important}`;
+const HVH = "var(--hvh,7.6px)"; // one hundredth of the host's screen height (760px until the host says)
+export const EMBED_CSS = `html.gfs-embed .gtop,html.gfs-embed .gdrawer,html.gfs-embed .gscrim,html.gfs-embed .gfr-mini{display:none!important}html.gfs-embed .gbody{padding-top:0!important}` +
+  `@media(min-width:901px){html.gfs-embed .sf{height:calc(${HVH} * 100)!important;min-height:0!important;grid-template-columns:minmax(0,min(46%,calc((${HVH} * 100 - 48px) * .743))) minmax(0,1fr)!important}` +
+  `html.gfs-embed .sf-portrait{position:relative!important;top:0!important;height:100%!important}` +
+  `html.gfs-embed .sf-name{font-size:clamp(40px,min(5.6vw,calc(${HVH} * 10)),96px)!important}` +
+  `html.gfs-embed .tour-panel .tour-visual{min-height:clamp(180px,calc(${HVH} * 38),420px)!important}}` +
+  `@media(max-width:900px){html.gfs-embed .sf-portrait{max-height:calc(${HVH} * 70)!important}}` +
+  `html.gfs-embed .ch-shell{height:min(720px,calc(${HVH} * 100 - 120px))!important}`;
 
 export function isEmbedded(): boolean {
   return typeof document !== "undefined" && document.documentElement.classList.contains("gfs-embed");
@@ -35,6 +45,14 @@ export default function EmbedBridge() {
       openTop(a.href);
     };
     document.addEventListener("click", onClick, true);
+    const onHost = (e: MessageEvent) => {
+      const d = e.data as { type?: string; height?: number } | null;
+      if (!d || d.type !== "gfs-host-viewport" || e.source !== window.parent) return;
+      const h = Math.round(Number(d.height));
+      if (h >= 320 && h <= 4000) document.documentElement.style.setProperty("--hvh", h / 100 + "px");
+    };
+    window.addEventListener("message", onHost);
+    window.parent.postMessage({ type: "gfs-embed-ready" }, "*");
     let last = 0;
     const post = () => {
       const height = Math.ceil(document.documentElement.scrollHeight);
@@ -47,7 +65,7 @@ export default function EmbedBridge() {
     ro.observe(document.body);
     post();
     const t = window.setInterval(post, 1000);
-    return () => { document.removeEventListener("click", onClick, true); ro.disconnect(); window.clearInterval(t); };
+    return () => { document.removeEventListener("click", onClick, true); window.removeEventListener("message", onHost); ro.disconnect(); window.clearInterval(t); };
   }, []);
   return null;
 }
