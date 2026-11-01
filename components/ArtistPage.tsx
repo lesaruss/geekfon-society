@@ -7,6 +7,7 @@ import { PostCard } from "@/components/SocialFeed";
 import Discography from "@/components/roster/Discography";
 import FanBible from "@/components/roster/FanBible";
 import SupportModal from "@/components/roster/SupportModal";
+import { isEmbedded, openTop } from "@/components/EmbedBridge";
 import Gallery from "@/components/roster/Gallery";
 import Chat from "@/components/roster/Chat";
 import RadioStrip from "@/components/roster/RadioStrip";
@@ -627,9 +628,10 @@ const CURRENT_SEASON = "Season 1";
 export default function ArtistPage({ content, cityBg, activeArticle, slug, depot, bible, gallery, radioStations, chatPreview }: { content: ArtistContent; cityBg?: { desktop: string; mobile: string; position?: string } | null; activeArticle?: News; slug?: string; depot?: RosterDepot; bible?: RosterBible; gallery?: RosterGallery; radioStations?: RadioStation[]; chatPreview?: ChatPreview }) {
   const [tab, setTab] = useState(() => {
     if (typeof window !== "undefined") {
-      const p = new URLSearchParams(window.location.search).get("tab");
+      let p = new URLSearchParams(window.location.search).get("tab");
       // "news" used to be its own top-level tab; it now lives inside Pulse as a channel.
       if (p === "news") return "pulse";
+      if (p === "support") p = null;
       // Music is now Discography wherever the depot is loaded.
       if ((p === "music" || p === "discography") && depot?.albums.some(a => a.label)) return "pulse";
       if (p === "music" && depot) return "discography";
@@ -661,6 +663,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("tab");
       if (p === "news") return "pulse";
+      if (p === "support") return "music";
       if (p && FRAME_SECTIONS.some(f => f.key === p && f.key !== "music")) return p;
       if (p && !["music", "discography"].includes(p)) return p;
     }
@@ -671,10 +674,20 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // image). scrollIntoView finds whichever element scrolls: the window, or
   // the frame window when signed in.
   function changeStoreMode(mode: StoreMode) {
+    // Embedded (seanarussell.com/media): the Support tour opens on geekfon.ai in the whole window.
+    if (mode === "tour" && isEmbedded() && slug) { openTop(`/${slug}?tab=support`); return; }
     setStoreMode(mode);
     if (typeof window !== "undefined") requestAnimationFrame(() => document.querySelector(".sf")?.scrollIntoView({ block: "start", behavior: "smooth" }));
   }
+  // ?tab=support opens Support on arrival: the address an embedded artist page sends Join and Support to (2026-11-01).
+  useEffect(() => {
+    if (typeof window === "undefined" || isEmbedded()) return;
+    if (new URLSearchParams(window.location.search).get("tab") === "support") openSupport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   function openSupport() {
+    // Inside another site's frame (seanarussell.com/media), joining and supporting happens on geekfon.ai itself.
+    if (isEmbedded() && slug) { openTop(`/${slug}?tab=support`); return; }
     if (storefront) {
       if (framed) setSection("music");
       changeStoreMode("tour");

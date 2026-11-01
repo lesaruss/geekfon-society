@@ -3,12 +3,15 @@
 // its Stripe webhook writes the gfs_artist_unlocks row the entitlement check
 // reads). Returns an error message, or null once the browser is redirecting.
 import { supabase } from "@/lib/supabase";
+import { isEmbedded, openTop } from "@/components/EmbedBridge";
 
 // Artists without an album yet sell the $11 season pass for that artist
 // (plan "season-pass", same gfs_artist_unlocks row and entitlement).
 const CURRENT_SEASON = "Season 1";
 
 export async function startSupportCheckout(albumId: string | null, slug: string): Promise<string | null> {
+  // Inside another site's frame the purchase happens on geekfon.ai in the whole window (2026-11-01).
+  if (isEmbedded()) { openTop(`/${slug}?tab=support`); return null; }
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch("/api/checkout", {
