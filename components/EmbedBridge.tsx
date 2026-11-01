@@ -23,7 +23,7 @@ export const EMBED_CSS = `html.gfs-embed .gtop,html.gfs-embed .gdrawer,html.gfs-
   `@media(max-width:900px){html.gfs-embed .sf-portrait{max-height:calc(${HVH} * 70)!important}}` +
   `html.gfs-embed .ch-shell{height:min(720px,calc(${HVH} * 100 - 120px))!important}` +
   // The frame ends just under the page (Sean, 2026-11-01: "the bottom border should stay flush with just a little bit of gap").
-  `html.gfs-embed .sf{padding-bottom:24px!important}html.gfs-embed .gbody{padding-bottom:0!important}`;
+  `html.gfs-embed .sf{padding-bottom:24px!important}html.gfs-embed .gbody,html.gfs-embed .apg{padding-bottom:0!important}`;
 
 export function isEmbedded(): boolean {
   return typeof document !== "undefined" && document.documentElement.classList.contains("gfs-embed");
