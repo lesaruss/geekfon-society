@@ -17,7 +17,7 @@ import type { ChatMessage, ChatPerson, ChatLockedDay } from "@/app/api/roster/[a
 import type { EngageCan, EngageCounts, ThreadComment } from "@/app/api/roster/[artist]/chat/engage/route";
 import "./chat.css";
 
-type Data = { day: string; days: string[]; today: string; messages: ChatMessage[]; locked: ChatLockedDay | null; freeDays: string[]; supporter: boolean; people: Record<string, ChatPerson>; staff: boolean };
+type Data = { day: string; days: string[]; today: string; messages: ChatMessage[]; locked: ChatLockedDay | null; freeDays: string[]; supporter: boolean; people: Record<string, ChatPerson>; staff: boolean; opensOn?: string | null };
 
 async function authHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -306,7 +306,13 @@ export default function Chat({ slug, artistName, onSupport }: { slug: string; ar
             {onSupport && <button type="button" className="ch-locked-btn" onClick={onSupport}>Support {artistName} · $11</button>}
           </div>
         )}
-        {!data.locked && data.messages.length === 0 && <div className="ch-empty">Nobody&apos;s said anything yet today.</div>}
+        {!data.locked && data.messages.length === 0 && (
+          <div className="ch-empty">
+            {data.opensOn && data.opensOn > data.today
+              ? <>The story begins {new Date(`${data.opensOn}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" })}. Come back then.</>
+              : <>Nobody&apos;s said anything yet today.</>}
+          </div>
+        )}
         {data.messages.map((m, i) => {
           const p = person(m.from);
           const me = m.from === slug;

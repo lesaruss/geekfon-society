@@ -86,6 +86,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   const { data: allTimes } = await daysQ;
   const days = [...new Set((allTimes ?? []).map((r: { posted_at: string }) => nyDay(r.posted_at)))];
 
+  // Before the story has started, tell visitors when it begins instead of
+  // showing a bare empty chat (2026-11-04: the story opens Nov 5).
+  let opensOn: string | null = null;
+  if (!g.staff && days.length === 0) {
+    const { data: first } = await sb.from("gfs_chat_messages").select("posted_at").eq("room", ROOM).eq("published", true).order("posted_at", { ascending: true }).limit(1).maybeSingle();
+    if (first?.posted_at) opensOn = nyDay(first.posted_at);
+  }
+
   const asked = req.nextUrl.searchParams.get("day");
   // Supporters open on the latest day, like any chat. Everyone else starts
   // at the beginning of the story, on the first free day.
@@ -111,7 +119,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
     };
     const people: Record<string, ChatPerson> = {};
     for (const m of await loadChatCast(sb)) people[m.slug] = { name: m.name, avatar: m.avatar, accent: m.accent };
-    return NextResponse.json({ day, days, today: nyDay(now), messages: [], locked: lock, freeDays: days.filter(isFreeChatDay), supporter: false, people, staff: false }, { headers: noStore });
+    return NextResponse.json({ day, days, today: nyDay(now), messages: [], locked: lock, freeDays: days.filter(isFreeChatDay), supporter: false, people, staff: false, opensOn }, { headers: noStore });
   }
 
   const messages: ChatMessage[] = ((rows ?? []) as Row[]).map(r => ({
@@ -132,5 +140,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   const people: Record<string, ChatPerson> = {};
   for (const m of await loadChatCast(sb)) people[m.slug] = { name: m.name, avatar: m.avatar, accent: m.accent };
 
-  return NextResponse.json({ day, days, today: nyDay(now), messages, locked: null, freeDays: days.filter(isFreeChatDay), supporter: g.supporter, people, staff: g.staff }, { headers: noStore });
+  return NextResponse.json({ day, days, today: nyDay(now), messages, locked: null, freeDays: days.filter(isFreeChatDay), supporter: g.supporter, people, staff: g.staff, opensOn }, { headers: noStore });
 }
