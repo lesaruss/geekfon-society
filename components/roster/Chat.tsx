@@ -5,13 +5,16 @@
 // Translate on lines first written in another language, and drop cards for
 // upcoming releases. Read from this artist's side: their lines sit on the
 // right. The lines come from the Chat Writers' Room (app/dashboard/chat-room),
-// where staff plan, generate and approve each day. October 1 to 3 are free
-// for everyone; later days show a locked card for non-supporters (Sean,
-// 2026-10-10, lib/chatAccess.ts). Data and gating: app/api/roster/[artist]/chat.
+// where staff plan, generate and approve each day. Every day is open to read
+// for everyone (Sean, 2026-11-04, lib/chatAccess.ts); taking part is the
+// member feature: any signed-in account likes, supporters of this artist
+// comment and reply, held for approval (app/api/roster/[artist]/chat/engage).
+// Data: app/api/roster/[artist]/chat.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import type { ChatMessage, ChatPerson, ChatLockedDay } from "@/app/api/roster/[artist]/chat/route";
+import type { EngageCan, EngageCounts, ThreadComment } from "@/app/api/roster/[artist]/chat/engage/route";
 import "./chat.css";
 
 type Data = { day: string; days: string[]; today: string; messages: ChatMessage[]; locked: ChatLockedDay | null; freeDays: string[]; supporter: boolean; people: Record<string, ChatPerson>; staff: boolean };
@@ -54,12 +57,120 @@ const MEDIA_LABEL: Record<string, string> = { image: "View photo", video: "Watch
 
 const LANGS: Record<string, string> = { ja: "Japanese", ko: "Korean", es: "Spanish", fr: "French", pt: "Portuguese", zh: "Chinese" };
 
+function registerHref(): string {
+  return `/register?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`;
+}
+
+function ago(iso: string): string {
+  const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h`;
+  return `${Math.floor(s / 86400)}d`;
+}
+
+const HEART = (on: boolean) => (
+  <svg viewBox="0 0 24 24" width="14" height="14" fill={on ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" /></svg>
+);
+
+// The thread under one chat line: comments with one level of replies, likes,
+// and a box to join in for members. Comments wait for approval; the author
+// sees theirs marked "Awaiting approval".
+function Thread({ slug, artistName, messageId, can, authed, onSupport, onCount }: {
+  slug: string; artistName: string; messageId: string; can: EngageCan; authed: () => Promise<Record<string, string>>;
+  onSupport?: () => void; onCount: (d: number) => void;
+}) {
+  const [list, setList] = useState<ThreadComment[] | null>(null);
+  const [text, setText] = useState("");
+  const [replyTo, setReplyTo] = useState<ThreadComment | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const res = await fetch(`/api/roster/${encodeURIComponent(slug)}/chat/engage?message=${messageId}`, { headers: await authed(), cache: "no-store" });
+    if (res.ok) setList((await res.json()).comments);
+    else setList([]);
+  }, [slug, messageId, authed]);
+  useEffect(() => { load(); }, [load]);
+
+  async function like(c: ThreadComment) {
+    if (!can.signedIn) { window.location.href = registerHref(); return; }
+    setList(l => (l ?? []).map(x => x.id === c.id ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) } : x));
+    const res = await fetch(`/api/roster/${encodeURIComponent(slug)}/chat/engage`, { method: "POST", headers: { "Content-Type": "application/json", ...(await authed()) }, body: JSON.stringify({ action: "like", kind: "comment", id: c.id }) });
+    if (!res.ok) load();
+  }
+
+  async function post() {
+    const body = text.trim();
+    if (!body || busy) return;
+    setBusy(true); setMsg(null); setNote(null);
+    const res = await fetch(`/api/roster/${encodeURIComponent(slug)}/chat/engage`, { method: "POST", headers: { "Content-Type": "application/json", ...(await authed()) }, body: JSON.stringify({ action: "comment", messageId, body, parentId: replyTo?.id }) });
+    const out = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) { setMsg(out.error || "Couldn't post that."); return; }
+    setText(""); setReplyTo(null);
+    const c = out.comment as ThreadComment;
+    setList(l => [...(l ?? []), c]);
+    if (c.pending) setNote("Thanks! Your comment is waiting for approval and shows here once it's approved.");
+    else onCount(1);
+  }
+
+  const top = (list ?? []).filter(c => !c.parentId);
+  const replies = (id: string) => (list ?? []).filter(c => c.parentId === id);
+  const row = (c: ThreadComment, isReply: boolean) => (
+    <div key={c.id} className={"ch-cm" + (isReply ? " reply" : "") + (c.pending ? " pending" : "")}>
+      <div className="ch-cm-head"><strong>{c.name}</strong><span>{ago(c.createdAt)}</span>{c.pending && <em>Awaiting approval</em>}</div>
+      <p>{c.body}</p>
+      {!c.pending && (
+        <div className="ch-cm-acts">
+          <button type="button" className={"ch-cm-btn" + (c.liked ? " on" : "")} onClick={() => like(c)} aria-pressed={c.liked} aria-label={c.liked ? "Unlike" : "Like"}>{HEART(c.liked)}{c.likes > 0 && <b>{c.likes}</b>}</button>
+          {can.comment && <button type="button" className="ch-cm-btn" onClick={() => { setReplyTo(c); setText(""); }}>Reply</button>}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="ch-thread">
+      {list === null && <div className="ch-cm-empty">Loading…</div>}
+      {list !== null && top.length === 0 && <div className="ch-cm-empty">No comments yet. Start the thread.</div>}
+      {top.map(c => (
+        <div key={c.id}>
+          {row(c, false)}
+          {replies(c.id).map(r => row(r, true))}
+        </div>
+      ))}
+      {can.comment ? (
+        <div className="ch-cm-compose">
+          {replyTo && <div className="ch-cm-replying">Replying to {replyTo.name} <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></div>}
+          <textarea value={text} onChange={e => setText(e.target.value)} maxLength={500} rows={2} placeholder={replyTo ? "Write a reply…" : "Add a comment…"} aria-label="Comment" />
+          <div className="ch-cm-send">
+            <span>{text.length}/500</span>
+            <button type="button" disabled={busy || !text.trim()} onClick={post}>{busy ? "Posting…" : replyTo ? "Reply" : "Comment"}</button>
+          </div>
+          {msg && <p className="ch-err">{msg}</p>}
+          {note && <p className="ch-cm-note">{note}</p>}
+        </div>
+      ) : (
+        <div className="ch-cm-gate">
+          {can.why === "signin" && <>Reading is free. <a href={registerHref()}>Sign in</a> to like, and support {artistName} to join the conversation.</>}
+          {can.why === "support" && <>Support {artistName} to comment and reply. {onSupport && <button type="button" onClick={onSupport}>Support {artistName} · $11</button>}</>}
+          {can.why === "minor" && <>Comments are for members 18 and over. You can still like.</>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // onSupport opens the $11 album offer (the Support tour or modal on the page).
 export default function Chat({ slug, artistName, onSupport }: { slug: string; artistName: string; onSupport?: () => void }) {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [translated, setTranslated] = useState<Set<string>>(new Set());
   const [viewing, setViewing] = useState<ChatMessage | null>(null);
+  const [engage, setEngage] = useState<{ counts: EngageCounts; can: EngageCan } | null>(null);
+  const [openThread, setOpenThread] = useState<string | null>(null);
   useEffect(() => {
     if (!viewing) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setViewing(null); };
@@ -102,6 +213,25 @@ export default function Chat({ slug, artistName, onSupport }: { slug: string; ar
   }, [slug]);
 
   useEffect(() => { load(); }, [load]);
+  // Likes and comment counts for the day on screen.
+  const loadEngage = useCallback(async (day: string) => {
+    try {
+      const res = await fetch(`/api/roster/${encodeURIComponent(slug)}/chat/engage?day=${day}`, { headers: await authHeaders(), cache: "no-store" });
+      if (res.ok) setEngage(await res.json());
+    } catch { /* counts are a nicety; the chat still reads without them */ }
+  }, [slug]);
+  useEffect(() => { setOpenThread(null); if (data?.day) loadEngage(data.day); }, [data?.day, loadEngage]);
+
+  async function toggleLike(id: string) {
+    if (!engage) return;
+    if (!engage.can.signedIn) { window.location.href = registerHref(); return; }
+    const cur = engage.counts[id] ?? { likes: 0, liked: false, comments: 0 };
+    setEngage({ ...engage, counts: { ...engage.counts, [id]: { ...cur, liked: !cur.liked, likes: cur.likes + (cur.liked ? -1 : 1) } } });
+    const res = await fetch(`/api/roster/${encodeURIComponent(slug)}/chat/engage`, { method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) }, body: JSON.stringify({ action: "like", kind: "message", id }) });
+    if (!res.ok && data) loadEngage(data.day);
+  }
+  const bumpComments = (id: string, d: number) => setEngage(e => e ? { ...e, counts: { ...e.counts, [id]: { ...(e.counts[id] ?? { likes: 0, liked: false, comments: 0 }), comments: (e.counts[id]?.comments ?? 0) + d } } } : e);
+
   // Open on the latest line of the day, like any chat.
   // Each day opens at its first line and reads down, like a story (Sean,
   // 2026-10-06: switching days left the reader mid-day, scrolling up).
@@ -230,6 +360,21 @@ export default function Chat({ slug, artistName, onSupport }: { slug: string; ar
                     {showOriginal ? `↻ Translate${m.originalLang && LANGS[m.originalLang] ? ` from ${LANGS[m.originalLang]}` : ""}` : "↺ Show original"}
                   </button>
                 )}
+                {engage && !m.scheduled && (() => {
+                  const c = engage.counts[m.id] ?? { likes: 0, liked: false, comments: 0 };
+                  return (
+                    <div className="ch-engage">
+                      <button type="button" className={"ch-cm-btn" + (c.liked ? " on" : "")} onClick={() => toggleLike(m.id)} aria-pressed={c.liked} aria-label={c.liked ? "Unlike this line" : "Like this line"}>{HEART(c.liked)}{c.likes > 0 && <b>{c.likes}</b>}</button>
+                      <button type="button" className="ch-cm-btn" onClick={() => setOpenThread(t => t === m.id ? null : m.id)} aria-expanded={openThread === m.id}>
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.8 7L3 21l2-5.6A8 8 0 1 1 21 12z" /></svg>
+                        {c.comments > 0 ? <b>{c.comments}</b> : <span>Comment</span>}
+                      </button>
+                    </div>
+                  );
+                })()}
+                {openThread === m.id && engage && (
+                  <Thread slug={slug} artistName={artistName} messageId={m.id} can={engage.can} authed={authHeaders} onSupport={onSupport} onCount={d => bumpComments(m.id, d)} />
+                )}
               </div>
             </div>
           );
@@ -256,8 +401,8 @@ export default function Chat({ slug, artistName, onSupport }: { slug: string; ar
       {/* Lines are written in the Chat Writers' Room, never here (Sean, 2026-10-04).
           AI attribution per the roster's content rules. */}
       <div className="ch-foot">
-        A scripted look inside the crew&apos;s group chat, written with AI and approved by GeekFon. New lines land every day.
-        {!data.supporter && <> October 1 to 3 are free to read. {artistName}&apos;s supporters read every day.</>}
+        A scripted look inside the crew&apos;s group chat, written with AI and approved by GeekFon. New lines land every day, and the whole story is free to read.
+        {!data.supporter && <> {artistName}&apos;s supporters can comment and reply.</>}
         {data.staff && <> <a href="/dashboard/chat-room">Edit in the Writers&apos; Room</a></>}
       </div>
     </div>

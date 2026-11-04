@@ -97,6 +97,7 @@ export default function ChatWritersRoom() {
       {err && <p className="cw-err">{err}</p>}
       {!data ? <div className="cw-center"><div className="cw-spin" /></div> : (
         <>
+          <CommentQueue say={say} />
           <StoryCard story={data.story} onSaved={s => { setData({ ...data, story: s }); say("Story saved"); }} />
           <div className="cw-grid">
             <nav className="cw-days" aria-label="Days">
@@ -127,6 +128,58 @@ export default function ChatWritersRoom() {
         </>
       )}
     </div>
+  );
+}
+
+type PendingComment = { id: string; message_id: string; parent_id: string | null; artist_slug: string; author_name: string; body: string; created_at: string; line: { from_slug: string; body: string; posted_at: string } | null };
+
+// Member comments wait here until approved (Sean, 2026-11-04). Only approved
+// comments show to other readers; the author sees their own while it waits.
+function CommentQueue({ say }: { say: (m: string) => void }) {
+  const [rows, setRows] = useState<PendingComment[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const refresh = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/admin/chat-comments", { headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}, cache: "no-store" });
+      const out = await res.json().catch(() => ({}));
+      setRows(res.ok ? out.pending || [] : []);
+    } catch { setRows([]); }
+  }, []);
+  useEffect(() => { refresh(); }, [refresh]);
+  async function decide(id: string, action: "approve" | "reject") {
+    setBusy(id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/admin/chat-comments", { method: "POST", headers: { "Content-Type": "application/json", ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) }, body: JSON.stringify({ action, id }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed");
+      say(action === "approve" ? "Comment approved" : "Comment rejected");
+      await refresh();
+    } catch (e) { alert((e as Error).message); }
+    setBusy(null);
+  }
+  if (!rows) return null;
+  return (
+    <section className="cw-card">
+      <div className="cw-card-head" style={{ cursor: "default" }}>
+        <span><span className="cw-eyebrow">Member comments</span><strong>{rows.length ? `${rows.length} waiting for approval` : "Nothing waiting"}</strong></span>
+        <span className="cw-muted">Held until you approve. Other readers only see approved comments.</span>
+      </div>
+      {rows.length > 0 && (
+        <div className="cw-form">
+          {rows.map(r => (
+            <div key={r.id} className="cw-line" style={{ flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+              {r.line && <span className="cw-muted">On {r.line.from_slug}: &ldquo;{r.line.body.slice(0, 120)}&rdquo; · {r.artist_slug}&apos;s page{r.parent_id ? " · a reply" : ""}</span>}
+              <span><strong>{r.author_name}</strong>: {r.body}</span>
+              <span className="cw-actions">
+                <button type="button" className="cw-approve" disabled={busy === r.id} onClick={() => decide(r.id, "approve")}>Approve</button>
+                <button type="button" className="cw-del" disabled={busy === r.id} onClick={() => decide(r.id, "reject")}>Reject</button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
