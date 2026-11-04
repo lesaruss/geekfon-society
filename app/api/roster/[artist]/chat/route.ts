@@ -21,7 +21,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
 import { serviceClient } from "@/lib/server/supabaseAdmin";
 import { loadChatCast } from "@/lib/server/chatCast";
-import { FREE_CHAT_DAYS, isFreeChatDay } from "@/lib/chatAccess";
+import { isFreeChatDay } from "@/lib/chatAccess";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
     };
     const people: Record<string, ChatPerson> = {};
     for (const m of await loadChatCast(sb)) people[m.slug] = { name: m.name, avatar: m.avatar, accent: m.accent };
-    return NextResponse.json({ day, days, today: nyDay(now), messages: [], locked: lock, freeDays: FREE_CHAT_DAYS, supporter: false, people, staff: false }, { headers: noStore });
+    return NextResponse.json({ day, days, today: nyDay(now), messages: [], locked: lock, freeDays: days.filter(isFreeChatDay), supporter: false, people, staff: false }, { headers: noStore });
   }
 
   const messages: ChatMessage[] = ((rows ?? []) as Row[]).map(r => ({
@@ -132,5 +132,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   const people: Record<string, ChatPerson> = {};
   for (const m of await loadChatCast(sb)) people[m.slug] = { name: m.name, avatar: m.avatar, accent: m.accent };
 
-  return NextResponse.json({ day, days, today: nyDay(now), messages, locked: null, freeDays: FREE_CHAT_DAYS, supporter: g.supporter, people, staff: g.staff }, { headers: noStore });
+  return NextResponse.json({ day, days, today: nyDay(now), messages, locked: null, freeDays: days.filter(isFreeChatDay), supporter: g.supporter, people, staff: g.staff }, { headers: noStore });
 }

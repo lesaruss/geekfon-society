@@ -11,6 +11,14 @@
 
 export const FREE_CHAT_DAYS: readonly string[] = ["2026-10-01", "2026-10-02", "2026-10-03"];
 
+// Sean, 2026-11-04: "unlock the chat ... if they can watch the chat, that is
+// a good way for them to get into the universe." Every day is now readable by
+// everyone, signed in or not. FREE_CHAT_DAYS stays as the opening days the
+// homepage draws its snippets from. Membership is for taking part (comments,
+// replies, likes), not for reading. Flip this to false to restore the
+// per-artist supporter gate.
+export const CHAT_OPEN_TO_ALL = true;
+
 export function isFreeChatDay(day: string): boolean {
-  return FREE_CHAT_DAYS.includes(day);
+  return CHAT_OPEN_TO_ALL || FREE_CHAT_DAYS.includes(day);
 }
