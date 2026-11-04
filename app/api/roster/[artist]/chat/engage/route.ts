@@ -17,6 +17,8 @@
 // GET ?message=<id>     the thread under one line
 // POST { action: "like", kind: "message" | "comment", id }   toggles a like
 // POST { action: "comment", messageId, body, parentId? }     adds a comment
+// POST { action: "delete", id }                              removes a comment (its author, or staff);
+//                                                            deleting a comment also removes its replies and likes
 //
 // Tables gfs_chat_comments and gfs_chat_likes are server-only (service role).
 
@@ -35,7 +37,7 @@ const AUTO_APPROVE = false;
 const MAX_LEN = 500;
 const MAX_PER_HOUR = 10;
 
-export type EngageCan = { signedIn: boolean; like: boolean; comment: boolean; why: "signin" | "support" | "minor" | null };
+export type EngageCan = { signedIn: boolean; like: boolean; comment: boolean; staff: boolean; why: "signin" | "support" | "minor" | null };
 export type EngageCounts = Record<string, { likes: number; liked: boolean; comments: number }>;
 export type ThreadComment = {
   id: string; parentId: string | null; name: string; body: string; createdAt: string;
@@ -68,6 +70,7 @@ async function who(req: NextRequest, artist: string) {
     signedIn: !!viewer,
     like: !!viewer,
     comment: !!viewer && ent.supporter && !minor,
+    staff,
     why: !viewer ? "signin" : !ent.supporter ? "support" : minor ? "minor" : null,
   };
   return { viewer, staff, can, name };
@@ -187,6 +190,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ art
     if (error || !row) return fail("Couldn't post that. Try again.", 500);
     const comment: ThreadComment = { id: row.id, parentId: row.parent_id, name: row.author_name, body: row.body, createdAt: row.created_at, likes: 0, liked: false, mine: true, pending: row.status === "pending" };
     return NextResponse.json({ comment }, { headers: noStore });
+  }
+
+  if (b.action === "delete") {
+    const id = typeof b.id === "string" ? b.id : "";
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return fail("Bad request.");
+    const { data: c } = await sb.from("gfs_chat_comments").select("id, user_id, status").eq("id", id).maybeSingle();
+    if (!c) return fail("That comment is already gone.", 404);
+    if (c.user_id !== viewer.id && !staff) return fail("You can only delete your own comments.", 403);
+    // Its replies go with it (foreign key cascade); clear the likes on all of them.
+    const { data: kids } = await sb.from("gfs_chat_comments").select("id, status").eq("parent_id", id);
+    const gone = [id, ...((kids ?? []) as { id: string }[]).map(k => k.id)];
+    await sb.from("gfs_chat_likes").delete().eq("target_kind", "comment").in("target_id", gone);
+    const { error } = await sb.from("gfs_chat_comments").delete().eq("id", id);
+    if (error) return fail("Couldn't delete that. Try again.", 500);
+    const removedApproved = (c.status === "approved" ? 1 : 0) + ((kids ?? []) as { status: string }[]).filter(k => k.status === "approved").length;
+    return NextResponse.json({ ok: true, removed: gone.length, removedApproved }, { headers: noStore });
   }
 
   return fail("Unknown action.");

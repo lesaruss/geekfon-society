@@ -101,6 +101,16 @@ function Thread({ slug, artistName, messageId, can, authed, onSupport, onCount }
     if (!res.ok) load();
   }
 
+  async function remove(c: ThreadComment) {
+    const kids = (list ?? []).filter(x => x.parentId === c.id).length;
+    if (!window.confirm(kids ? "Delete this comment and its replies?" : "Delete this comment?")) return;
+    const res = await fetch(`/api/roster/${encodeURIComponent(slug)}/chat/engage`, { method: "POST", headers: { "Content-Type": "application/json", ...(await authed()) }, body: JSON.stringify({ action: "delete", id: c.id }) });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok && res.status !== 404) { setMsg(out.error || "Couldn't delete that."); return; }
+    setList(l => (l ?? []).filter(x => x.id !== c.id && x.parentId !== c.id));
+    if (out.removedApproved) onCount(-out.removedApproved);
+  }
+
   async function post() {
     const body = text.trim();
     if (!body || busy) return;
@@ -122,10 +132,12 @@ function Thread({ slug, artistName, messageId, can, authed, onSupport, onCount }
     <div key={c.id} className={"ch-cm" + (isReply ? " reply" : "") + (c.pending ? " pending" : "")}>
       <div className="ch-cm-head"><strong>{c.name}</strong><span>{ago(c.createdAt)}</span>{c.pending && <em>Awaiting approval</em>}</div>
       <p>{c.body}</p>
+      {c.pending && (c.mine || can.staff) && <div className="ch-cm-acts"><button type="button" className="ch-cm-btn" onClick={() => remove(c)}>Delete</button></div>}
       {!c.pending && (
         <div className="ch-cm-acts">
           <button type="button" className={"ch-cm-btn" + (c.liked ? " on" : "")} onClick={() => like(c)} aria-pressed={c.liked} aria-label={c.liked ? "Unlike" : "Like"}>{HEART(c.liked)}{c.likes > 0 && <b>{c.likes}</b>}</button>
           {can.comment && <button type="button" className="ch-cm-btn" onClick={() => { setReplyTo(c); setText(""); }}>Reply</button>}
+          {(c.mine || can.staff) && <button type="button" className="ch-cm-btn" onClick={() => remove(c)}>Delete</button>}
         </div>
       )}
     </div>
