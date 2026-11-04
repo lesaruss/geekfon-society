@@ -360,7 +360,7 @@ export default function Chat({ slug, artistName, onSupport }: { slug: string; ar
                     {showOriginal ? `↻ Translate${m.originalLang && LANGS[m.originalLang] ? ` from ${LANGS[m.originalLang]}` : ""}` : "↺ Show original"}
                   </button>
                 )}
-                {engage && !m.scheduled && (() => {
+                {engage && (!m.scheduled || data.staff) && (() => {
                   const c = engage.counts[m.id] ?? { likes: 0, liked: false, comments: 0 };
                   return (
                     <div className="ch-engage">
