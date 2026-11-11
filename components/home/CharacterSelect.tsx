@@ -262,7 +262,7 @@ export default function CharacterSelect({ initial = null, initialTheme = "dark" 
               type="button"
               className={"cs-sound" + (radio.playing ? " on" : "")}
               data-own-sound
-              aria-label={radio.playing ? "Pause the music" : "Play GeekFon Radio"}
+              aria-label={radio.playing ? "Pause the music" : radio.loading ? "Tuning in to GeekFon Radio" : "Tap anywhere to listen to GeekFon Radio"}
               onClick={() => {
                 gestured.current = true;
                 if (radio.playing) { radio.stop(); return; }
@@ -322,7 +322,6 @@ export default function CharacterSelect({ initial = null, initialTheme = "dark" 
         const style = { ["--accent" as string]: line.accent ?? "#F69820" };
         return lineSlug && bySlug.has(lineSlug) ? (
           <Link className="cs-chat" key={line.id} style={style} href={`/${lineSlug}?tab=chat`}
-            aria-label={`${line.name} in the group chat: ${line.body}. Open the chat`}
             onClick={() => track("gfs_artist_open", { artist: lineSlug, from: "chat", page: variant })}>{inner}</Link>
         ) : (
           <div className="cs-chat" key={line.id} style={style}>{inner}</div>
@@ -344,7 +343,7 @@ export default function CharacterSelect({ initial = null, initialTheme = "dark" 
             </ul>
           </div>
         ) : null}
-        <button type="button" className="cs-lola-badge" onClick={() => { setLolaOpen(o => !o); if (!lolaOpen) track("gfs_lola_intro", { page: variant }); }} aria-expanded={lolaOpen}>
+        <button type="button" className="cs-lola-badge" aria-label="New here? LoLA will show you around." onClick={() => { setLolaOpen(o => !o); if (!lolaOpen) track("gfs_lola_intro", { page: variant }); }} aria-expanded={lolaOpen}>
           {data?.lola.avatar ? <img src={data.lola.avatar} alt="" /> : <span className="cs-lola-dot" aria-hidden="true">L</span>}
           <span>New here? <strong>LoLA will show you around.</strong></span>
         </button>
