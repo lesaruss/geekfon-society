@@ -201,6 +201,8 @@ export default function CharacterSelect({ initial = null, initialTheme = "dark" 
           src={sized(a.cutout, 260) ?? ""}
           alt=""
           loading="lazy"
+          // Low priority so the twelve tiles do not compete with the skyline and the stage on a slow phone (site health).
+          fetchPriority="low"
           // Bands and duos are wide: show everyone, not a crop of the middle member.
           onLoad={e => { const i = e.currentTarget; if (i.naturalWidth / i.naturalHeight > 0.55) i.classList.add("wide"); }}
         />
