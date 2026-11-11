@@ -9,15 +9,22 @@
 // paint so there is no flash; ?theme=light or ?theme=dark forces one.
 import SiteChrome from "@/components/SiteChrome";
 import CharacterSelect from "@/components/home/CharacterSelect";
+import { loadHomeData } from "@/lib/server/homeData";
+
+// The roster and chat are loaded here on the server (refreshed every 5 minutes, as /api/home
+// is cached) so the first artist is in the HTML. If the database is out of reach the page
+// falls back to loading them in the browser, as before.
+export const revalidate = 300;
 
 const THEME = `(function(){try{var q=new URLSearchParams(location.search).get('theme');var h=new Date().getHours();var t=(q==='light'||q==='dark')?q:(h>=6&&h<19?'light':'dark');document.documentElement.setAttribute('data-gfs-theme',t);}catch(e){}})();`;
 
-export default function HomePage() {
+export default async function HomePage() {
+  const initial = await loadHomeData().catch(() => null);
   return (
     <SiteChrome>
       <script dangerouslySetInnerHTML={{ __html: THEME }} />
       <style>{`html,body{overflow:hidden;background:#020c0a;}html[data-gfs-theme="light"],html[data-gfs-theme="light"] body{background:#fff;}`}</style>
-      <CharacterSelect />
+      <CharacterSelect initial={initial} />
     </SiteChrome>
   );
 }

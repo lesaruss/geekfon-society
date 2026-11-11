@@ -27,7 +27,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRadio } from "@/components/radio/RadioProvider";
 import { useFramed } from "@/components/shell/GfsShell";
-import { CHAT_TO_ROSTER, sized, titleKey, type HomeChatLine, type StageArtist } from "@/lib/roster";
+import { CHAT_TO_ROSTER, sized, titleKey, type HomeChatLine, type HomeData, type StageArtist } from "@/lib/roster";
 import type { RadioTrack } from "@/lib/radioSchedule";
 import { track } from "@/lib/track";
 import "./characterSelect.css";
@@ -66,14 +66,14 @@ const ARTIST_CITY: Record<string, string> = {
 };
 const CHAT_MS = 6500;
 
-type HomeData = { artists: StageArtist[]; chat: HomeChatLine[]; lola: { avatar: string | null } };
 
 
-export default function CharacterSelect() {
+// initial: the same data, loaded on the server by app/page.tsx so the first view is in the HTML.
+export default function CharacterSelect({ initial = null }: { initial?: HomeData | null }) {
   const variant = "home";
   const router = useRouter();
   const radio = useRadio();
-  const [data, setData] = useState<HomeData | null>(null);
+  const [data, setData] = useState<HomeData | null>(initial);
   const [picked, setPicked] = useState<string | null>(null);
   // Cities shown so far stay mounted, so going back to one is instant.
   const [seenCities, setSeenCities] = useState<string[]>([]);
@@ -98,7 +98,7 @@ export default function CharacterSelect() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/home").then(r => (r.ok ? r.json() : null)).then(setData).catch(() => {});
+    if (!initial) fetch("/api/home").then(r => (r.ok ? r.json() : null)).then(setData).catch(() => {});
     void radio.loadSchedule();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -247,7 +247,7 @@ export default function CharacterSelect() {
               <img src="/geekfon-logo.png" alt="" />
             </div>
             {stage?.cutout ? (
-              <img key={stage.slug} className="cs-hero" src={sized(stage.cutout, 900) ?? ""} alt={stage.name} />
+              <img key={stage.slug} className="cs-hero" src={sized(stage.cutout, 900) ?? ""} alt={stage.name} fetchPriority="high" />
             ) : null}
             {/* One pill, two jobs: start the radio, and once anything is playing,
                 pause it (Sean, 2026-10-10: "I don't see a way to stop the radio"). */}

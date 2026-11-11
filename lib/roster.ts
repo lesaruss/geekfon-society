@@ -26,6 +26,8 @@ export const titleKey = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, ""
 
 export type HomeChatLine = { id: string; from: string; name: string; avatar: string | null; accent: string | null; body: string };
 
+export type HomeData = { artists: StageArtist[]; chat: HomeChatLine[]; lola: { avatar: string | null } };
+
 // Supabase storage objects resized on the fly. Transparent PNGs come back as
 // transparent WebP when the browser takes it.
 export function sized(url: string | null, width: number): string | null {
