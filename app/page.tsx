@@ -9,22 +9,48 @@
 // paint so there is no flash; ?theme=light or ?theme=dark forces one.
 import SiteChrome from "@/components/SiteChrome";
 import CharacterSelect from "@/components/home/CharacterSelect";
+import { headers } from "next/headers";
+import { unstable_cache } from "next/cache";
 import { loadHomeData } from "@/lib/server/homeData";
 
-// The roster and chat are loaded here on the server (refreshed every 5 minutes, as /api/home
-// is cached) so the first artist is in the HTML. If the database is out of reach the page
-// falls back to loading them in the browser, as before.
-export const revalidate = 300;
+// The roster and chat are loaded here on the server (cached 5 minutes, as /api/home is) so the
+// first artist is in the HTML; a failed load is never cached and the page falls back to the
+// browser fetch, as before. The page itself is rendered per visit because the skyline behind
+// the stage depends on the visitor's clock: Vercel's x-vercel-ip-timezone gives their local hour,
+// so the right day or night skyline is in the HTML too (site health 2026-11-11: the skyline was
+// the largest thing on screen and showed last). The THEME script below still decides; if it
+// disagrees (a VPN, say) the page switches, as it did before.
+export const dynamic = "force-dynamic";
+const homeData = unstable_cache(
+  async () => {
+    const d = await loadHomeData();
+    if (!d) throw new Error("home data unavailable");
+    return d;
+  },
+  ["gfs-home-data-v1"],
+  { revalidate: 300 },
+);
+function themeFor(tz: string | null, forced: string | undefined): "dark" | "light" {
+  if (forced === "light" || forced === "dark") return forced;
+  try {
+    if (!tz) return "dark";
+    const h = Number(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23" }).format(new Date()));
+    return h >= 6 && h < 19 ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
 
 const THEME = `(function(){try{var q=new URLSearchParams(location.search).get('theme');var h=new Date().getHours();var t=(q==='light'||q==='dark')?q:(h>=6&&h<19?'light':'dark');document.documentElement.setAttribute('data-gfs-theme',t);}catch(e){}})();`;
 
-export default async function HomePage() {
-  const initial = await loadHomeData().catch(() => null);
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ theme?: string }> }) {
+  const [initial, h, sp] = await Promise.all([homeData().catch(() => null), headers(), searchParams]);
+  const initialTheme = themeFor(h.get("x-vercel-ip-timezone"), sp?.theme);
   return (
     <SiteChrome>
       <script dangerouslySetInnerHTML={{ __html: THEME }} />
       <style>{`html,body{overflow:hidden;background:#020c0a;}html[data-gfs-theme="light"],html[data-gfs-theme="light"] body{background:#fff;}`}</style>
-      <CharacterSelect initial={initial} />
+      <CharacterSelect initial={initial} initialTheme={initialTheme} />
     </SiteChrome>
   );
 }

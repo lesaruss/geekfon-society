@@ -69,14 +69,19 @@ const CHAT_MS = 6500;
 
 
 // initial: the same data, loaded on the server by app/page.tsx so the first view is in the HTML.
-export default function CharacterSelect({ initial = null }: { initial?: HomeData | null }) {
+// initialTheme: day or night from the visitor's local hour, worked out on the server (app/page.tsx).
+export default function CharacterSelect({ initial = null, initialTheme = "dark" }: { initial?: HomeData | null; initialTheme?: "dark" | "light" }) {
   const variant = "home";
   const router = useRouter();
   const radio = useRadio();
   const [data, setData] = useState<HomeData | null>(initial);
   const [picked, setPicked] = useState<string | null>(null);
   // Cities shown so far stay mounted, so going back to one is instant.
-  const [seenCities, setSeenCities] = useState<string[]>([]);
+  // The first artist's city starts mounted, so its skyline is in the server HTML.
+  const [seenCities, setSeenCities] = useState<string[]>(() => {
+    const first = initial?.artists[0]?.slug;
+    return first && ARTIST_CITY[first] ? [ARTIST_CITY[first]] : [];
+  });
   const [chatAt, setChatAt] = useState(0);
   const [lolaOpen, setLolaOpen] = useState(false);
   const gestured = useRef(false);
@@ -92,7 +97,7 @@ export default function CharacterSelect({ initial = null }: { initial?: HomeData
   // Light by day, dark by night on the visitor's own clock (Sean, 2026-10-10).
   // app/page.tsx sets html[data-gfs-theme] before paint; the CSS keys off it,
   // and this picks day or night skylines to match.
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">(initialTheme);
   useEffect(() => {
     setTheme(document.documentElement.dataset.gfsTheme === "light" ? "light" : "dark");
   }, []);
@@ -218,7 +223,7 @@ export default function CharacterSelect({ initial = null }: { initial?: HomeData
           return (
             <picture key={key + (day ? "-day" : "-night")} className={"cs-city" + (key === cityKey ? " on" : "")}>
               {!day && c.nightMobile ? <source media="(max-width: 899px)" srcSet={bgSet(c.nightMobile, [600, 900])} sizes="100vw" /> : null}
-              <img src={bgSrc(day ? c.day : c.night, 1600)} srcSet={bgSet(day ? c.day : c.night, [900, 1280, 1600, 2000])} sizes="100vw" alt="" decoding="async" />
+              <img src={bgSrc(day ? c.day : c.night, 1600)} srcSet={bgSet(day ? c.day : c.night, [900, 1280, 1600, 2000])} sizes="100vw" alt="" decoding="async" fetchPriority={key === cityKey ? "high" : "auto"} />
             </picture>
           );
         })}
