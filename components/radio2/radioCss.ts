@@ -21,6 +21,8 @@ body{overflow:hidden}
 .gfr img,.gfr svg{display:block}
 .gfr h1,.gfr h2,.gfr h3,.gfr p{margin:0}
 .gfr :focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:6px}
+/* the site-wide button:focus ring shows on mouse clicks too; here only the keyboard ring */
+.gfr :focus:not(:focus-visible){outline:none}
 .gfr .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* ---------- App shell: three zones + bar ---------- */
@@ -203,7 +205,8 @@ body{overflow:hidden}
 .gfr .artist span{font-size:13px;color:var(--muted);display:block;margin-top:2px}
 .gfr .visit{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-radius:6px;background:var(--text);color:var(--bg);font-weight:700;font-size:14px}
 .gfr .visit:hover{background:#ffffff}
-.gfr .visit small{font-weight:500;opacity:.6;font-size:12px;margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gfr .visit small{font-weight:500;opacity:.6;font-size:12px;margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.gfr .visit > span{white-space:nowrap}
 .gfr .facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .gfr .facts span{font-size:12px;font-weight:600;color:var(--muted);background:var(--surface-3);padding:4px 8px;border-radius:5px}
 .gfr .lyr{background:var(--st);color:var(--st-ink)}
@@ -236,7 +239,7 @@ body{overflow:hidden}
 .gfr .np .tx .tt:hover b{text-decoration:underline}
 .gfr .np .tx .ta{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:flex-start;max-width:100%;text-align:left}
 .gfr .np .tx .ta:hover{color:var(--text);text-decoration:underline}
-.gfr .np .tx .sponsor{color:var(--text);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.gfr .np .tx .sponsor{color:var(--text);font-weight:700;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;gap:5px}
 .gfr .ctr{display:flex;flex-direction:column;align-items:center;gap:6px}
 .gfr .ctr .row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;width:100%;max-width:560px}
 .gfr .live{justify-self:end;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}

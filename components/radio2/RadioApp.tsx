@@ -430,7 +430,7 @@ export default function RadioApp() {
               <button type="button" className="tt" onClick={() => openPanel()}><b>{pv ? pv.song.title : R.onAir?.title || (R.loading ? "Tuning in" : "GeekFon Radio")}</b></button>
               {isSpot && !pv ? (
                 R.onAir?.linkUrl
-                  ? <a className="ta sponsor" href={R.onAir.linkUrl} target="_blank" rel="noopener sponsored">With {R.onAir.sponsor || R.onAir.artist}, visit <IcOut size={12} /></a>
+                  ? <a className="ta sponsor" href={R.onAir.linkUrl} target="_blank" rel="noopener sponsored">Visit {R.onAir.sponsor || R.onAir.artist}<IcOut size={12} /></a>
                   : <span className="ta">{R.onAir?.sponsor ? `With ${R.onAir.sponsor}` : R.onAir?.artist}</span>
               ) : (
                 <button type="button" className="ta" onClick={() => openPanel()} aria-label={barSong ? `${barSong.artist}, what is this?` : "What is this?"}>{barSong?.artist || st.name}</button>
@@ -573,7 +573,7 @@ function WhatPanel(props: {
           </div>
         ) : null}
         {pageSlug ? (
-          <a className="visit" href={`/${pageSlug}`} target="_blank" rel="noopener">Visit artist page<small>geekfon.ai/{pageSlug}</small><IcOut /></a>
+          <a className="visit" href={`/${pageSlug}`} target="_blank" rel="noopener"><span>Visit artist page</span><small>geekfon.ai/{pageSlug}</small><IcOut /></a>
         ) : null}
       </div>
       <div className="card2 lyr">

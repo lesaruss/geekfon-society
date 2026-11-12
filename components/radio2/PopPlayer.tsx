@@ -155,7 +155,7 @@ export default function PopPlayer() {
               <h1 className="song">{R.onAir?.title || (R.loading ? "Tuning in" : "GeekFon Radio")}</h1>
               {isSpot ? (
                 R.onAir?.linkUrl
-                  ? <a className="who sponsor" href={R.onAir.linkUrl} target="_blank" rel="noopener sponsored">With {R.onAir.sponsor || R.onAir.artist}, visit</a>
+                  ? <a className="who sponsor" href={R.onAir.linkUrl} target="_blank" rel="noopener sponsored">Visit {R.onAir.sponsor || R.onAir.artist}</a>
                   : <span className="who">{R.onAir?.sponsor ? `With ${R.onAir.sponsor}` : R.onAir?.artist}</span>
               ) : song ? (
                 <button type="button" className="who" aria-haspopup="dialog" aria-label={`${song.artist}, what is this?`} onClick={() => setSheet("what")}>{song.artist}</button>

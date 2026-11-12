@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   const row = data as { slug: string; name: string | null; profile: Profile | null };
   const p = row.profile ?? {};
   // Stored taglines use " - " as a break; plain copy reads it as a comma.
-  const tagline = p.tagline ? p.tagline.replace(/\s+[-–—]\s+/g, ", ") : null;
+  const tagline = p.tagline ? p.tagline.replace(/\s+[-\u2013\u2014]\s+/g, ", ") : null;
 
   return NextResponse.json(
     {

@@ -20,6 +20,8 @@ body{overflow:hidden}
 .gfp img,.gfp svg{display:block}
 .gfp h1,.gfp h2,.gfp p{margin:0}
 .gfp :focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:6px}
+/* the site-wide button:focus ring shows on mouse clicks too; here only the keyboard ring */
+.gfp :focus:not(:focus-visible){outline:none}
 
 .gfp .tbar{display:flex;align-items:center;gap:9px;height:44px;padding:0 12px;padding-top:env(safe-area-inset-top);box-sizing:content-box;background:var(--rail);flex:none}
 .gfp .tbar img{width:22px;height:22px;border-radius:50%}
