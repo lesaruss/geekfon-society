@@ -25,8 +25,15 @@ import { announcePlay, onOtherTabPlay } from "@/lib/audioFocus";
 export type Station = { slug: string; name: string; tagline: string | null; color?: string | null; ink?: string | null; seasonal?: boolean };
 export type Song = { songId?: string; title: string; artist: string; slug?: string; coverUrl?: string | null; durationSeconds?: number };
 export type Heart = Song & { songId: string; at: number };
-export type Preview = { song: Song & { songId: string }; playing: boolean; ended: boolean; time: number; failed: boolean };
+// A song played on its own, off the radio: the free 30-second preview, or
+// (full: true) the whole song on demand for a supporter of that artist.
+export type Preview = { song: Song & { songId: string }; playing: boolean; ended: boolean; time: number; failed: boolean; full: boolean; duration: number };
 type Schedule = { rotation: RadioTrack[]; overrides: ScheduleOverride[] };
+/** An artist radio ("artist:<slug>", Sean 2026-11-12): "<Artist> Radio" in the artist's accent. */
+export type ArtistStation = Station & { artistSlug: string };
+export const ARTIST_PREFIX = "artist:";
+export const isArtistStation = (slug: string) => slug.startsWith(ARTIST_PREFIX);
+const STATION_SLUG = /^(artist:)?[a-z0-9-]{1,64}$/;
 
 export const MAIN_SLUG = "main";
 export const PREVIEW_SECONDS = 30;
@@ -68,12 +75,12 @@ export function songOf(p: ResolvedPlayhead | null): Song | null {
   return { songId: p.songId, title: p.title, artist: p.artist, slug: p.slug, coverUrl: p.coverUrl ?? null, durationSeconds: p.durationSeconds };
 }
 
-async function fetchSchedule(slug: string): Promise<(Schedule & { stations?: Station[] }) | null> {
+async function fetchSchedule(slug: string): Promise<(Schedule & { stations?: Station[]; info?: ArtistStation }) | null> {
   try {
     const res = await fetch(`/api/radio/rotation?station=${encodeURIComponent(slug)}`);
     if (!res.ok) return null;
-    const b = (await res.json()) as { rotation?: RadioTrack[]; overrides?: ScheduleOverride[]; stations?: Station[] };
-    return { rotation: b.rotation ?? [], overrides: b.overrides ?? [], stations: b.stations };
+    const b = (await res.json()) as { rotation?: RadioTrack[]; overrides?: ScheduleOverride[]; stations?: Station[]; info?: ArtistStation };
+    return { rotation: b.rotation ?? [], overrides: b.overrides ?? [], stations: b.stations, info: b.info };
   } catch {
     return null;
   }
@@ -92,6 +99,7 @@ export function useLiveRadio(opts: { syncUrl?: boolean } = {}) {
   const [recent, setRecent] = useState<Song[]>([]);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [hearts, setHearts] = useState<Heart[]>([]);
+  const [artistStations, setArtistStations] = useState<Record<string, ArtistStation>>({});
 
   const liveRef = useRef<HTMLAudioElement | null>(null);
   const pvRef = useRef<HTMLAudioElement | null>(null);
@@ -167,15 +175,18 @@ export function useLiveRadio(opts: { syncUrl?: boolean } = {}) {
   const writeStationToUrl = useCallback((slug: string) => {
     if (!syncUrl) return;
     try {
+      // Only the home page carries ?station= (artist and roster pages keep their own address).
+      if (window.location.pathname !== "/") return;
       const url = new URL(window.location.href);
       if (slug === MAIN_SLUG) url.searchParams.delete("station"); else url.searchParams.set("station", slug);
       window.history.replaceState(window.history.state, "", url.toString());
     } catch { /* ignore */ }
   }, [syncUrl]);
 
-  const storeSchedule = useCallback((slug: string, s: Schedule) => {
-    schedRef.current = { ...schedRef.current, [slug]: s };
+  const storeSchedule = useCallback((slug: string, s: Schedule & { info?: ArtistStation }) => {
+    schedRef.current = { ...schedRef.current, [slug]: { rotation: s.rotation, overrides: s.overrides } };
     setSchedules(schedRef.current);
+    if (s.info) { const info = s.info; setArtistStations(m => ({ ...m, [slug]: info })); }
   }, []);
 
   /** Tune to a station. Pressing the station already tuned in plays or pauses it. */
@@ -222,7 +233,7 @@ export function useLiveRadio(opts: { syncUrl?: boolean } = {}) {
     let cancelled = false;
     let first = MAIN_SLUG;
     try { first = new URLSearchParams(window.location.search).get("station") || readStore<string>(LS_STATION, MAIN_SLUG) || MAIN_SLUG; } catch { /* main */ }
-    if (!/^[a-z0-9-]{1,64}$/.test(first)) first = MAIN_SLUG;
+    if (!STATION_SLUG.test(first)) first = MAIN_SLUG;
     sessionId.current = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
     setHearts(readStore<Heart[]>(LS_HEARTS, []).filter(h => h && h.songId && h.title));
 
@@ -287,32 +298,52 @@ export function useLiveRadio(opts: { syncUrl?: boolean } = {}) {
       const cur = previewRef.current;
       if (!cur || cur.ended) return;
       const t = p.currentTime || 0;
+      if (cur.full) {
+        const d = isFinite(p.duration) && p.duration > 0 ? p.duration : cur.duration;
+        setPv({ ...cur, time: t, duration: d });
+        return;
+      }
       if (t >= PREVIEW_SECONDS - 0.05) { end(); return; }
       p.volume = t > PREVIEW_SECONDS - 2 ? Math.max(0, (PREVIEW_SECONDS - t) / 2) : 1; // soft end
       setPv({ ...cur, time: Math.min(PREVIEW_SECONDS, t) });
     };
-    p.onended = end;
+    p.onended = () => {
+      const cur = previewRef.current;
+      if (cur?.full) { setPv({ ...cur, playing: false, ended: true, time: cur.duration }); return; }
+      end();
+    };
     p.onplay = () => { const cur = previewRef.current; if (cur) setPv({ ...cur, playing: true }); };
     p.onpause = () => { const cur = previewRef.current; if (cur && !cur.ended) setPv({ ...cur, playing: false }); };
     p.onerror = () => { const cur = previewRef.current; if (cur) setPv({ ...cur, playing: false, failed: true }); };
   }, [liveAudio, pvAudio, tuneToNow, setPv]);
 
   /* ---------- previews (Hearted songs) ---------- */
-  const startPreview = useCallback((song: Song) => {
+  /** Play a song off the radio: its 30-second preview, or with `fullUrl` (a supporter's stream) the whole song on demand. */
+  const startPreview = useCallback((song: Song, fullUrl?: string | null) => {
     if (!song.songId) return;
     const p = pvAudio();
     const cur = previewRef.current;
-    if (cur && sameSong(cur.song, song) && !cur.ended && !cur.failed) {
+    const full = !!fullUrl;
+    if (cur && sameSong(cur.song, song) && cur.full === full && !cur.ended && !cur.failed) {
       if (p.paused) p.play().then(() => announcePlay()).catch(() => {}); else p.pause();
       return;
     }
     if (wantLive.current) stopLive();
     p.pause();
     p.volume = 1;
-    p.src = `/api/songs/${song.songId}/preview`;
-    setPv({ song: { ...song, songId: song.songId }, playing: false, ended: false, time: 0, failed: false });
+    p.src = fullUrl || `/api/songs/${song.songId}/preview`;
+    setPv({ song: { ...song, songId: song.songId }, playing: false, ended: false, time: 0, failed: false, full, duration: full ? song.durationSeconds || 0 : PREVIEW_SECONDS });
     p.play().then(() => announcePlay()).catch(() => {});
   }, [pvAudio, stopLive, setPv]);
+
+  /** Seek within a song played on demand (supporters only; previews and the radio never seek). */
+  const seekPreview = useCallback((sec: number) => {
+    const cur = previewRef.current;
+    if (!cur?.full) return;
+    const p = pvAudio();
+    try { p.currentTime = Math.max(0, Math.min(sec, (cur.duration || sec) - 0.25)); } catch { /* not seekable yet */ }
+    if (cur.ended) { setPv({ ...cur, ended: false, time: p.currentTime }); p.play().then(() => announcePlay()).catch(() => {}); }
+  }, [pvAudio, setPv]);
 
   /** Play or pause the preview, or hear it again from the top once it ended. */
   const togglePreview = useCallback(() => {
@@ -384,7 +415,7 @@ export function useLiveRadio(opts: { syncUrl?: boolean } = {}) {
   }, [live]);
 
   /* ---------- Media Session: lock screen and media keys ---------- */
-  const stationInfo = useMemo(() => stations.find(s => s.slug === station) ?? (station === MAIN_SLUG ? FALLBACK_MAIN : null), [stations, station]);
+  const stationInfo = useMemo<Station | null>(() => stations.find(s => s.slug === station) ?? artistStations[station] ?? (station === MAIN_SLUG ? FALLBACK_MAIN : null), [stations, station, artistStations]);
   const controls = useRef({ startLive, stopLive, togglePreview });
   controls.current = { startLive, stopLive, togglePreview };
   useEffect(() => {
@@ -398,7 +429,7 @@ export function useLiveRadio(opts: { syncUrl?: boolean } = {}) {
       ms.metadata = new MediaMetadata({
         title: x.title,
         artist: x.artist,
-        album: pv ? "30-second preview" : stationInfo?.name || "GeekFon Radio",
+        album: pv ? (pv.full ? "On demand" : "30-second preview") : stationInfo?.name || "GeekFon Radio",
         artwork: [{ src: art, sizes: "720x720" }],
       });
       ms.playbackState = (pv ? pv.playing : live) ? "playing" : "paused";
@@ -418,7 +449,7 @@ export function useLiveRadio(opts: { syncUrl?: boolean } = {}) {
     stations, station, stationInfo, schedules, loading,
     onAir, position, live, recent,
     tune, startLive, stopLive, toggleLive,
-    preview, startPreview, togglePreview, leavePreview,
+    preview, startPreview, togglePreview, leavePreview, seekPreview, artistStations,
     hearts, isHearted, toggleHeart,
   };
 }
