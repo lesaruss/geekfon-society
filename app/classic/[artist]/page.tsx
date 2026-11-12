@@ -1,3 +1,5 @@
+// /classic/<artist>: the previous artist page, moved here when /<artist> became the Seat 2 page (2026-11-12).
+// Not indexed; kept on the preview for comparison until Sean retires it.
 import ArtistPage from "@/components/ArtistPage";
 import { notFound } from "next/navigation";
 import type { ArtistContent, RosterDepot, RosterBible, RosterGallery, ChatPreview } from "@/components/ArtistPage";
@@ -364,8 +366,11 @@ export async function generateMetadata({ params }: Props) {
   const content = await getArtist(slug);
   const name = content?.name || slug;
   return {
-    title: `${name} - GeekFon Society`,
+    title: `${name}, GeekFon Society (classic)`,
     description: content?.tagline || `${name} is an original artist on GeekFon Society.`,
+    // The previous artist page, kept on the preview for comparison only (Sean, 2026-11-12).
+    robots: { index: false, follow: false },
+    alternates: { canonical: `https://geekfon.ai/${slug}` },
   };
 }
 

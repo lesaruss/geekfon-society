@@ -1,10 +1,9 @@
 import SiteChrome from "@/components/SiteChrome";
 import ArtistPlayerProvider from "@/components/roster/ArtistPlayer";
 
-// SiteChrome frames the page in the universal shell once signed in; artist
-// pages then swap their header and tabs for a section nav (ArtistPage). The
-// player lives here so it keeps playing across the artist's sections and
-// articles, and is gone on another artist.
+// Article pages (/<artist>/news/<slug>) keep the previous artist page's frame:
+// SiteChrome, and the artist player across the article and its sections. The
+// artist page itself (/<artist>) is the new Seat 2 page in app/(site)/[artist].
 export default function RosterLayout({ children }: { children: React.ReactNode }) {
   return (
     <SiteChrome>
