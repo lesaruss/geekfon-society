@@ -1,21 +1,21 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import SiteChrome from '@/components/SiteChrome';
 import styles from './page.module.css';
 import { signInWithProvider } from '@/lib/socialAuth';
 import { supabase } from '@/lib/supabase';
-import { rememberReturn, safeReturnPath } from '@/lib/postAuth';
+import { rememberReturn, safeReturnPath, goAfterSignIn } from '@/lib/postAuth';
 
 type State = 'form' | 'sending' | 'code-entry';
 
 function LoginPageInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = safeReturnPath(searchParams?.get('redirect')) || '/dashboard';
+  // ?redirect= wins; otherwise staff go to BrandDesk in HQ and fans to /you (lib/postAuth, 2026-11-12).
+  const redirect = safeReturnPath(searchParams?.get('redirect'));
   // Google/Apple sign-in returns via /auth/callback, which reads this back.
-  useEffect(() => { if (redirect !== '/dashboard') rememberReturn(redirect); }, [redirect]);
+  useEffect(() => { if (redirect) rememberReturn(redirect); }, [redirect]);
 
   const [state, setState] = useState<State>('form');
   const [email, setEmail] = useState('');
@@ -36,20 +36,13 @@ function LoginPageInner() {
   };
 
 
-  // Check if already logged in
+  // Already signed in in this browser: go on. (The browser session, not the auth_token cookie, which can
+  // outlive a Sign out and would bounce a signed-out visitor away from this page.)
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const res = await fetch('/api/auth/session');
-        if (res.ok) {
-          router.push(redirect);
-        }
-      } catch (err) {
-        // Not logged in, continue
-      }
-    };
-    checkSession();
-  }, [redirect, router]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) goAfterSignIn(redirect);
+    }).catch(() => { /* not signed in */ });
+  }, [redirect]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +115,7 @@ function LoginPageInner() {
         await supabase.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token });
       }
 
-      router.push(redirect);
+      await goAfterSignIn(redirect);
     } catch (err) {
       setCodeError(err instanceof Error ? err.message : 'Invalid code');
     } finally {

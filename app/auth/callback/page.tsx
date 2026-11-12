@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { takeReturn } from "@/lib/postAuth";
+import { takeReturn, goAfterSignIn } from "@/lib/postAuth";
 import { useRouter } from "next/navigation";
 import SiteChrome from "@/components/SiteChrome";
 import { supabase } from "@/lib/supabase";
@@ -9,7 +9,8 @@ import { supabase } from "@/lib/supabase";
 // auto-detects the session from the URL fragment on load (detectSessionInUrl
 // defaults to true), so this just waits for that, bridges the session into
 // our auth_token cookie via /api/auth/oauth-session, and routes to
-// /complete-profile (first-time sign-in) or /dashboard. The native flow
+// /complete-profile (first-time sign-in) or on (lib/postAuth: staff to
+// BrandDesk in HQ, fans to /you or the saved return path). The native flow
 // (lib/socialAuth.ts) never lands here - it resolves directly.
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -31,7 +32,8 @@ export default function AuthCallbackPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Sign-in failed");
         if (cancelled) return;
-        router.replace(data.needsProfile ? "/complete-profile" : (takeReturn() || "/dashboard"));
+        if (data.needsProfile) router.replace("/complete-profile");
+        else await goAfterSignIn(takeReturn());
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Sign-in failed");
       }

@@ -1,18 +1,17 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import SiteChrome from '@/components/SiteChrome';
 import styles from './page.module.css';
 import { signInWithProvider } from '@/lib/socialAuth';
 import { supabase } from '@/lib/supabase';
-import { rememberReturn, takeReturn } from '@/lib/postAuth';
+import { rememberReturn, takeReturn, goAfterSignIn } from '@/lib/postAuth';
 
 type State = 'form' | 'sending' | 'code-entry';
 type Tier = 'free' | 'passport' | 'all-access' | 'lifetime';
 
 function RegisterPageInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [state, setState] = useState<State>('form');
@@ -47,20 +46,12 @@ function RegisterPageInner() {
   // Came from an artist page: return there after signing up.
   useEffect(() => { rememberReturn(searchParams?.get('redirect')); }, [searchParams]);
 
-  // Check if already logged in
+  // Already signed in in this browser: go on (staff to BrandDesk in HQ, fans to /you or where they came from).
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const res = await fetch('/api/auth/session');
-        if (res.ok) {
-          router.push(takeReturn() || '/dashboard');
-        }
-      } catch (err) {
-        // Not logged in, continue
-      }
-    };
-    checkSession();
-  }, [router]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) goAfterSignIn(takeReturn());
+    }).catch(() => { /* not signed in */ });
+  }, []);
 
   const calculateAge = (dateString: string) => {
     // dateString is our own YYYY-MM-DD (see buildDateOfBirth). Parse the integers directly
@@ -208,7 +199,8 @@ function RegisterPageInner() {
         await supabase.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token });
       }
 
-      router.push(takeReturn() || '/welcome');
+      // New members go to Your GeekFon, not the retired /welcome tour (2026-11-12).
+      await goAfterSignIn(takeReturn());
     } catch (err) {
       setCodeError(err instanceof Error ? err.message : 'Invalid code');
     } finally {

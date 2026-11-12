@@ -2,21 +2,18 @@
 // /auth/sso?lrsso=<handoff>&next=<path>
 // Lands a member arriving from another LESARUSS brand's universal bar already
 // signed in: trades the handoff for a one-time hash (app/api/shell/sso) and
-// verifies it with the browser client, then goes to `next` (default
-// /dashboard). Any failure goes to the dashboard's normal sign-in screen.
+// verifies it with the browser client, then goes to `next`, or by default
+// (lib/postAuth) staff to BrandDesk in HQ and fans to /you. Any failure goes
+// to the sign-in page.
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-
-function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
-  return raw;
-}
+import { goAfterSignIn, safeReturnPath } from "@/lib/postAuth";
 
 export default function SsoLanding() {
   const [msg, setMsg] = useState("Signing you in…");
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const next = safeNext(params.get("next"));
+    const next = safeReturnPath(params.get("next"));
     const token = params.get("lrsso");
     (async () => {
       try {
@@ -30,10 +27,10 @@ export default function SsoLanding() {
         if (!res.ok || !body.token_hash) throw new Error(body.error || "failed");
         const { error } = await supabase.auth.verifyOtp({ type: "magiclink", token_hash: body.token_hash });
         if (error) throw error;
-        window.location.replace(next);
+        await goAfterSignIn(next);
       } catch {
         setMsg("Couldn't sign you in automatically. Taking you to sign in…");
-        setTimeout(() => window.location.replace("/dashboard"), 1200);
+        setTimeout(() => window.location.replace("/login"), 1200);
       }
     })();
   }, []);

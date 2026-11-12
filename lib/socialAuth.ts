@@ -3,6 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { App as CapacitorApp } from "@capacitor/app";
 import { supabase } from "@/lib/supabase";
+import { goAfterSignIn, takeReturn } from "@/lib/postAuth";
 
 // Google explicitly rejects OAuth sign-in from an embedded webview
 // user-agent ("disallowed_useragent"), and this whole app IS a Capacitor
@@ -43,7 +44,8 @@ async function finishNativeOAuth(url: string) {
       body: JSON.stringify({ access_token, refresh_token }),
     });
     const data = await res.json();
-    window.location.href = data.needsProfile ? "/complete-profile" : "/dashboard";
+    if (data.needsProfile) window.location.href = "/complete-profile";
+    else await goAfterSignIn(takeReturn());
   } catch (err) {
     console.error("[socialAuth] oauth-session failed", err);
   }

@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       const origin = req.headers.get("origin") || "https://geekfon.ai";
       const successUrl = returnUrl
         ? `${origin}${returnUrl}?checkout=success&plan=album&album=${encodeURIComponent(album.id)}`
-        : `${origin}/dashboard?checkout=success&plan=album`;
+        : `${origin}/you?checkout=success&plan=album`;
       const cancelUrl = returnUrl
         ? `${origin}${returnUrl}?checkout=cancelled`
         : `${origin}/${album.artist_slug}?checkout=cancelled`;
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       const origin = req.headers.get("origin") || "https://geekfon.ai";
       const successUrl = returnUrl
         ? `${origin}${returnUrl}?checkout=success&plan=season-pass&season=${encodeURIComponent(season)}`
-        : `${origin}/dashboard?checkout=success&plan=season-pass`;
+        : `${origin}/you?checkout=success&plan=season-pass`;
       const cancelUrl = returnUrl
         ? `${origin}${returnUrl}?checkout=cancelled`
         : `${origin}/passport?checkout=cancelled`;
@@ -207,7 +207,7 @@ export async function POST(req: NextRequest) {
       const origin = req.headers.get("origin") || "https://geekfon.ai";
       const successUrl = returnUrl
         ? `${origin}${returnUrl}?checkout=success&plan=lesars-pack`
-        : `${origin}/dashboard?checkout=success&plan=lesars-pack`;
+        : `${origin}/you?checkout=success&plan=lesars-pack`;
       const cancelUrl = returnUrl
         ? `${origin}${returnUrl}?checkout=cancelled`
         : `${origin}/passport?checkout=cancelled`;
@@ -260,7 +260,7 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get("origin") || "https://geekfon.ai";
     const successUrl = returnUrl
       ? `${origin}${returnUrl}?checkout=success&plan=${plan}`
-      : `${origin}/dashboard?checkout=success&plan=${plan}`;
+      : `${origin}/you?checkout=success&plan=${plan}`;
     const cancelUrl = returnUrl
       ? `${origin}${returnUrl}?checkout=cancelled`
       : `${origin}/passport?checkout=cancelled`;

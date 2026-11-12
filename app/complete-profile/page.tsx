@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SiteChrome from "@/components/SiteChrome";
 import { supabase } from "@/lib/supabase";
+import { goAfterSignIn, takeReturn } from "@/lib/postAuth";
 import styles from "../register/page.module.css";
 
 // First-time Google/Apple sign-ins land here. Reuses the register page's
@@ -108,7 +109,8 @@ export default function CompleteProfilePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save your profile");
-      router.push("/dashboard");
+      // Staff to BrandDesk in HQ, fans to /you or where they came from (2026-11-12).
+      await goAfterSignIn(takeReturn());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save your profile");
     } finally {

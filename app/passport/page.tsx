@@ -248,7 +248,7 @@ export default function PassportPage() {
   const [activePerk, setActivePerk] = useState(0);
   const [cityIdx, setCityIdx] = useState(0);
   const [cityVisible, setCityVisible] = useState(true);
-  const [returnPath, setReturnPath] = useState("/dashboard");
+  const [returnPath, setReturnPath] = useState("/you");
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -320,7 +320,7 @@ export default function PassportPage() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "all-access", userId, returnUrl: "/dashboard" }),
+        body: JSON.stringify({ plan: "all-access", userId, returnUrl: "/you" }),
       });
       const { url, error } = await res.json();
       if (url) { window.location.href = url; return; }
