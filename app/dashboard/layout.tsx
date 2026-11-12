@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { DashboardContext, DashboardCtx, TIER_LABEL, ADMIN_EMAIL } from "./context";
 import SiteChrome from "@/components/SiteChrome";
 import GfsShell from "@/components/shell/GfsShell";
+import { isStaffAccount, FAN_HOME } from "@/lib/postAuth";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [ctx, setCtx] = useState<DashboardCtx>({
@@ -75,8 +76,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+      // The dashboard is staff only now (Sean, 2026-11-12): fans live on the new
+      // site at /you, and the staff tools move to BrandDesk in HQ. Signed out:
+      // sign in, then come back here (a fan is then sent on to /you).
       if (!session?.user) {
-        setCtx((c) => ({ ...c, loading: false }));
+        window.location.replace(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
         return;
       }
       const u = session.user;
@@ -98,6 +102,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           supabase.from("referrals").select("*").eq("referrer_id", u.id).maybeSingle(),
           supabase.from("gfs_members").select("*", { count: "exact", head: true }),
         ]);
+      if (!isStaffAccount(u.email, (memberRes.data as { role?: string | null } | null)?.role ?? null)) {
+        window.location.replace(FAN_HOME);
+        return;
+      }
       setCtx((c) => ({
         ...c,
         userId: u.id,

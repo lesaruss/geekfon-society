@@ -4,9 +4,13 @@ import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAIL } from "@/app/dashboard/context";
 import { navForTier, parseTier, type Tier, type NavItem } from "@/lib/gfsNav";
 import GfsShell from "@/components/shell/GfsShell";
+import { isStaffAccount } from "@/lib/postAuth";
 
-// Every page opens inside the universal frame once signed in (2026-10-04,
-// Sean: "let's make sure all of the pages are in the frame"). The server
+// Staff pages open inside the universal frame once signed in (2026-10-04,
+// Sean: "let's make sure all of the pages are in the frame"). Fans are no
+// longer framed (2026-11-12, Sean: "when you're logged in, it's still the old
+// website"): they keep this public header, with links to the new site
+// (Home, Artists, Your GeekFon) instead of the retired dashboard. The server
 // render is always the public chrome; this pre-paint check hides it when a
 // Supabase session is stored, so a signed-in member does not see the public
 // header flash before the frame mounts. It is shown again if the session
@@ -174,7 +178,7 @@ export default function SiteChrome({
         const displayName = data?.name || u.email || "Member";
         const tier = parseTier(data?.tier || "passport");
         const isAdmin = data?.role === "admin" || data?.role === "super_admin";
-        if (!publicOnly) setFramed({ email: u.email ?? null, rawTier: data?.tier ?? null, name: displayName });
+        if (!publicOnly && isStaffAccount(u.email, data?.role ?? null)) setFramed({ email: u.email ?? null, rawTier: data?.tier ?? null, name: displayName });
         document.documentElement.classList.remove("gfs-authed");
         setAuth({
           loading: false,
@@ -202,10 +206,12 @@ export default function SiteChrome({
   const canSeeMembers = auth.email === ADMIN_EMAIL && !viewAs;
   const canSeeOutreach = auth.email === ADMIN_EMAIL && !viewAs;
   const canSeeProApplications = auth.email === ADMIN_EMAIL && !viewAs;
-  const nav = navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule, canSeeRadioSchedule, canSeeMembers, canSeeOutreach, canSeeProApplications);
+  const isStaff = isStaffAccount(auth.email, auth.isAdmin ? "admin" : null);
+  const nav = !auth.loading && auth.email && !isStaff
+    ? FAN_NAV
+    : navForTier(effectiveTier, auth.isAdmin && !viewAs, canSeeReleaseSchedule, canSeeRadioSchedule, canSeeMembers, canSeeOutreach, canSeeProApplications);
   const isLoggedIn = effectiveTier !== "public" && !auth.loading;
   const tierAccent = TIER_ACCENT[effectiveTier];
-  const tierLabel  = TIER_LABEL[effectiveTier];
 
   // Not simulating - showing the real account, which for admin is "Super Admin", not
   // whatever membership tier happens to be on the underlying gfs_members row (Sean's is
@@ -288,20 +294,16 @@ export default function SiteChrome({
           )}
         </nav>
 
-        {!isLoggedIn && (
-          <a href="/welcome" className="gdrawer-tour-link" onClick={() => setOpen(false)}>
-            Take the Tour
-          </a>
-        )}
-
         {isLoggedIn ? (
           <div className="gdrawer-member">
             <div className="gdm-avatar" style={{ background: tierAccent }}>{auth.initial}</div>
             <div className="gdm-info">
               <div className="gdm-name">{auth.name}</div>
-              <div className="gdm-tier" style={{ color: tierAccent }}>
-                {auth.isAdmin ? "Super Admin" : `${tierLabel} Member`}
-              </div>
+              {isStaff ? (
+                <div className="gdm-tier" style={{ color: tierAccent }}>Super Admin</div>
+              ) : (
+                <a href="/you" className="gdm-tier" style={{ color: tierAccent }} onClick={() => setOpen(false)}>Your GeekFon</a>
+              )}
             </div>
           </div>
         ) : (
@@ -349,6 +351,13 @@ export default function SiteChrome({
     </div>
   );
 }
+
+// A signed-in fan's menu: the new site only (no dashboard, playlist or rankings).
+const FAN_NAV: NavItem[] = [
+  { label: "Home",         href: "/" },
+  { label: "Artists",      href: "/roster" },
+  { label: "Your GeekFon", href: "/you" },
+];
 
 const FRAME_BG_CSS = `
 body { background: #020c0a; }

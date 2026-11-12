@@ -239,7 +239,7 @@ function LoginPageInner() {
 
             <p className={styles.formNote}>
               New to GeekFon Society?{' '}
-              <a href="/passport">Get your membership</a> first.
+              <a href="/register">Create a free account</a>.
             </p>
           </div>
         )}
