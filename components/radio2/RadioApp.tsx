@@ -159,7 +159,7 @@ export default function RadioApp() {
 
   // The tab's title names the song while the radio plays.
   useEffect(() => {
-    const base = "GeekFon Radio";
+    const base = "GeekFon Society";
     document.title = R.live && R.onAir ? `${R.onAir.title} by ${R.onAir.artist} on ${st.name}, ${base}` : base;
   }, [R.live, R.onAir, st.name]);
 
