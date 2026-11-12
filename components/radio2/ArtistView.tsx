@@ -11,6 +11,7 @@
 // for every song. Unlock is $11 one time per artist.
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useShell, artistStation, coversOf } from "./RadioShell";
 import { fmtTime, PREVIEW_SECONDS, readStore, writeStore, type Song } from "./useLiveRadio";
 import { useRosterAccess } from "@/components/roster/useRosterAccess";
@@ -273,7 +274,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
     <div className="aview" style={{ "--ac": A.accent, "--ac-ink": A.ink } as React.CSSProperties}>
       <section className="ahead">
         <div className="atext">
-          <p className="eyebrow">Artist · GeekFon Society</p>
+          <nav className="crumbs" aria-label="Breadcrumb"><Link href="/">GeekFon Society</Link><span aria-hidden="true">›</span><Link href="/roster">Artists</Link></nav>
           <h1 className="aname">{A.name}</h1>
           {A.tagline ? <p className="atag">{A.tagline}</p> : null}
           <div className="apills">

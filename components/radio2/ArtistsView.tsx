@@ -53,6 +53,7 @@ export default function ArtistsView({ initial }: { initial: RosterData }) {
   return (
     <>
       <div className="vhead">
+        <nav className="crumbs" aria-label="Breadcrumb"><Link href="/">GeekFon Society</Link><span aria-hidden="true">›</span><span aria-current="page">Artists</span></nav>
         <h1>Artists</h1>
         <p>Every artist on GeekFon Society. Press play for their own radio: their songs first, then the station they call home. Live and free.</p>
       </div>

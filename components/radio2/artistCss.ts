@@ -6,6 +6,11 @@ export const ARTIST_CSS = `
 .gfr .nav a[aria-current="page"]{background:var(--surface-2)}
 .gfr .track.seek{cursor:pointer}
 .gfr .artist .apic{flex:none}
+.gfr .crumbs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.gfr .crumbs a{color:inherit;text-decoration:none;border-bottom:1px solid transparent}
+.gfr .crumbs a:hover,.gfr .crumbs a:focus-visible{color:var(--text);border-bottom-color:currentColor}
+.gfr .crumbs span[aria-current]{color:var(--text)}
+.gfr .ahead .crumbs{color:var(--text);opacity:.9}
 .gfr .eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
 .gfr .lnk{font-weight:700;color:var(--text);text-decoration:underline;text-underline-offset:3px}
 
