@@ -154,7 +154,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
     const p = byRt.get(r.id);
     const path = p && pathOf(p);
     if (!p || !path) continue;
-    rotation.push({ artist: artistOf(p), slug: p.primary_artist_slug, title: p.title, path, durationSeconds: p.duration_seconds || 180, coverUrl: radioCover(p) });
+    rotation.push({ artist: artistOf(p), slug: p.primary_artist_slug, songId: p.id, title: p.title, path, durationSeconds: p.duration_seconds || 180, coverUrl: radioCover(p) });
   }
 
   type OvRow = { kind: string; label: string | null; ad_src_path: string | null; starts_at: string | null; duration_seconds: number | null; cadence_seconds: number | null; track_id: string | null };
@@ -169,6 +169,7 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
         title: p.title,
         artist: artistOf(p),
         slug: p.primary_artist_slug,
+        songId: p.id,
         coverUrl: radioCover(p),
         startsAtMs: new Date(o.starts_at).getTime(),
         durationSeconds: o.duration_seconds || p.duration_seconds || 180,
@@ -203,19 +204,26 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
 // songs by sort_order, then title), so listeners hear a mix instead of one
 // artist's whole catalog in a row, and every listener's synced clock agrees.
 
-export type RadioStation = { slug: string; name: string; tagline: string | null };
+// Each station's color and ink (text on that color) come from the database
+// (Sean, 2026-11-11), so the GeekFon brand sequence restyles the player
+// without code. `seasonal` is a station that holds its songs (exclusive), like
+// Holiday Radio, shown on its own shelf.
+export type RadioStation = { slug: string; name: string; tagline: string | null; color?: string | null; ink?: string | null; seasonal?: boolean };
 
-export const MAIN_STATION: RadioStation = { slug: MAIN_STATION_SLUG, name: "GeekFon Radio", tagline: "The whole roster" };
+export const MAIN_STATION: RadioStation = { slug: MAIN_STATION_SLUG, name: "GeekFon Radio", tagline: "The whole roster", color: "#ECE22D", ink: "#0B0B0C", seasonal: false };
+
+type StationRow = { slug: string; name: string; tagline: string | null; color: string | null; ink: string | null; exclusive: boolean | null };
+const toStation = (r: StationRow): RadioStation => ({ slug: r.slug, name: r.name, tagline: r.tagline, color: r.color, ink: r.ink, seasonal: !!r.exclusive });
 
 export async function listStations(): Promise<RadioStation[]> {
   const sb = serviceClient();
   if (!sb) return [MAIN_STATION];
   const { data } = await sb
     .from("gfs_radio_stations")
-    .select("slug, name, tagline")
+    .select("slug, name, tagline, color, ink, exclusive")
     .eq("active", true)
     .order("sort_order", { ascending: true });
-  return [MAIN_STATION, ...((data ?? []) as RadioStation[])];
+  return [MAIN_STATION, ...((data ?? []) as StationRow[]).map(toStation)];
 }
 
 // The song's cover art for the radio's center circle (Sean, 2026-10-05), as a
@@ -301,7 +309,7 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
   for (const s of ordered) {
     const path = signedBy.get(s.id) ?? (isSingleRow(s) ? publicStreamUrl(s.src_path!) : undefined);
     if (!path) continue;
-    rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, slug: s.primary_artist_slug, title: s.title, path, durationSeconds: s.duration_seconds || 180, coverUrl: radioCover(s) });
+    rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, slug: s.primary_artist_slug, songId: s.id, title: s.title, path, durationSeconds: s.duration_seconds || 180, coverUrl: radioCover(s) });
   }
   return { rotation: withSpots(rotation, spots, names), overrides: [] };
 }
@@ -313,13 +321,13 @@ export async function stationsFeaturing(artistSlug: string): Promise<RadioStatio
   const sb = serviceClient();
   if (!sb) return [MAIN_STATION];
   const [{ data: stations }, { data: songs }] = await Promise.all([
-    sb.from("gfs_radio_stations").select("slug, name, tagline, artist_slugs, song_ids").eq("active", true).order("sort_order", { ascending: true }),
+    sb.from("gfs_radio_stations").select("slug, name, tagline, color, ink, exclusive, artist_slugs, song_ids").eq("active", true).order("sort_order", { ascending: true }),
     sb.from("pulse_songs").select("id").eq("primary_artist_slug", artistSlug).is("retired_at", null),
   ]);
   const mine = new Set(((songs ?? []) as { id: string }[]).map(s => s.id));
-  type Row = RadioStation & { artist_slugs: string[] | null; song_ids: string[] | null };
+  type Row = StationRow & { artist_slugs: string[] | null; song_ids: string[] | null };
   const featured = ((stations ?? []) as Row[]).filter(s =>
     (s.song_ids?.length ? s.song_ids.some(id => mine.has(id)) : (s.artist_slugs ?? []).includes(artistSlug))
   );
-  return [MAIN_STATION, ...featured.map(({ slug, name, tagline }) => ({ slug, name, tagline }))];
+  return [MAIN_STATION, ...featured.map(toStation)];
 }
