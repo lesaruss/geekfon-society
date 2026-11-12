@@ -12,11 +12,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serviceClient } from "@/lib/server/supabaseAdmin";
 import { depotSlug } from "@/lib/server/depot";
-import { stationsFeaturing } from "@/lib/server/radio";
+import { stationsFeaturing, inkFor } from "@/lib/server/radio";
 
 export const runtime = "nodejs";
 
-type Profile = { tagline?: string; genre?: string; location?: string; chatAvatar?: string; profileUrl?: string; name?: string };
+type Profile = { tagline?: string; genre?: string; location?: string; chatAvatar?: string; profileUrl?: string; cutoutUrl?: string; name?: string; accent?: string };
 
 export async function GET(req: NextRequest) {
   const raw = (req.nextUrl.searchParams.get("slug") || "").toLowerCase();
@@ -46,6 +46,9 @@ export async function GET(req: NextRequest) {
       location: p.location || null,
       avatar: p.chatAvatar || p.profileUrl || null,
       portrait: p.profileUrl || null,
+      cutout: p.cutoutUrl || null,
+      accent: p.accent || null,
+      ink: p.accent ? inkFor(p.accent) : null,
       stations: stations.map(s => ({ slug: s.slug, name: s.name, color: s.color ?? null, ink: s.ink ?? null })),
     },
     { headers: { "Cache-Control": "public, max-age=300, s-maxage=3600" } }

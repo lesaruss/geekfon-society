@@ -19,7 +19,7 @@
 // open decision in the geekfon-launch playbook (radio ideas, V session).
 
 import { serviceClient } from "./supabaseAdmin";
-import { STREAM_BUCKET, publicStreamUrl, titleKey, labelStates, sizedImage, type LabelState } from "./depot";
+import { STREAM_BUCKET, publicStreamUrl, titleKey, labelStates, sizedImage, depotSlug, type LabelState } from "./depot";
 import type { RadioTrack, ScheduleOverride } from "@/lib/radioSchedule";
 
 const SIGNED_TTL_SECONDS = 24 * 60 * 60;
@@ -295,7 +295,19 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
     for (const qu of queues) if (i < qu.length) ordered.push(qu[i]);
   }
 
-  // Singles stream from their public path; everything else is a signed link.
+  const rotation = await tracksFor(sb, ordered, names, singles, states);
+  return { rotation: withSpots(rotation, spots, names), overrides: [] };
+}
+
+// Depot rows to playable radio tracks. Singles stream from their public path;
+// everything else is a signed link (one storage request for all of them).
+async function tracksFor(
+  sb: NonNullable<ReturnType<typeof serviceClient>>,
+  ordered: StationSong[],
+  names: Map<string, string>,
+  singles: Set<string>,
+  states: Map<string, LabelState>,
+): Promise<RadioTrack[]> {
   const isSingleRow = (s: StationSong) =>
     labelSingle(states, s.primary_artist_slug, s.id) ?? singles.has(`${s.primary_artist_slug}|${titleKey(s.title)}`);
   const vault = ordered.filter(s => !isSingleRow(s));
@@ -304,14 +316,101 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
     const { data: signed } = await sb.storage.from(STREAM_BUCKET).createSignedUrls(vault.map(v => v.src_path!), SIGNED_TTL_SECONDS);
     (signed ?? []).forEach((s, i) => { if (s.signedUrl) signedBy.set(vault[i].id, s.signedUrl); });
   }
-
   const rotation: RadioTrack[] = [];
   for (const s of ordered) {
     const path = signedBy.get(s.id) ?? (isSingleRow(s) ? publicStreamUrl(s.src_path!) : undefined);
     if (!path) continue;
     rotation.push({ artist: names.get(s.primary_artist_slug) || s.primary_artist_slug, slug: s.primary_artist_slug, songId: s.id, title: s.title, path, durationSeconds: s.duration_seconds || 180, coverUrl: radioCover(s) });
   }
-  return { rotation: withSpots(rotation, spots, names), overrides: [] };
+  return rotation;
+}
+
+// ---------------------------------------------------------------------------
+// Artist radio (Sean, 2026-11-12: every artist gets their own artist radio).
+// Station slug "artist:<slug>". One synced rotation: the artist's own songs
+// first (no remixes), then the songs of the genre station(s) the artist is on,
+// the closest-sounding company. An artist on no genre station (Rustblood
+// Prophets, Straight & Narrow while Rock Radio is off) is followed by the main
+// GeekFon Radio rotation. Songs a seasonal station holds stay off, as on every
+// other station. The player shows it as "<Artist> Radio" in the artist's
+// accent color (gfs_artists.profile.accent).
+
+export const ARTIST_STATION_PREFIX = "artist:";
+const ARTIST_STATION = /^artist:([a-z0-9-]{1,64})$/;
+
+export function artistStationSlug(slug: string): string { return `${ARTIST_STATION_PREFIX}${slug}`; }
+
+/** Text color that reads on a background color: near-black or white. */
+export function inkFor(hex: string | null | undefined): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return "#FFFFFF";
+  const n = parseInt(m[1], 16);
+  const lin = (c: number) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+  // Pick whichever of the two inks has the higher contrast ratio.
+  return (L + 0.05) / 0.0545 >= 1.05 / (L + 0.05) ? "#0B0B0C" : "#FFFFFF";
+}
+
+export type ArtistStationInfo = RadioStation & { artistSlug: string; basedOn: string[] };
+
+export async function buildArtistSchedule(station: string): Promise<{ rotation: RadioTrack[]; overrides: ScheduleOverride[]; info: ArtistStationInfo } | null> {
+  const m = ARTIST_STATION.exec(station);
+  if (!m) return null;
+  const sb = serviceClient();
+  if (!sb) return null;
+  const slug = depotSlug(m[1]);
+
+  const [{ data: artist }, { data: lineups }, { data: exclusiveRows }, { data: rawSongs }] = await Promise.all([
+    sb.from("gfs_artists").select("slug, name, profile").eq("slug", slug).maybeSingle(),
+    sb.from("gfs_radio_stations").select("slug, name, artist_slugs, exclusive").eq("active", true).contains("artist_slugs", [slug]).order("sort_order", { ascending: true }),
+    sb.from("gfs_radio_stations").select("slug, song_ids").eq("active", true).eq("exclusive", true),
+    sb.from("pulse_songs")
+      .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id, is_remix, sort_order, cover_art_path, thumb_path")
+      .eq("primary_artist_slug", slug).eq("is_remix", false).is("retired_at", null).not("src_path", "is", null),
+  ]);
+  if (!artist) return null;
+  type ArtistRow = { slug: string; name: string | null; profile: { accent?: string; tracks?: { n?: string; v?: string }[] } | null };
+  const a = artist as ArtistRow;
+  const name = a.name || slug;
+  const held = new Set(((exclusiveRows ?? []) as { song_ids: string[] | null }[]).flatMap(r => r.song_ids ?? []));
+  const own = ((rawSongs ?? []) as StationSong[])
+    .filter(s => !held.has(s.id))
+    .sort((x, y) => (x.sort_order ?? 9999) - (y.sort_order ?? 9999) || x.title.localeCompare(y.title));
+
+  const names = new Map<string, string>([[slug, name]]);
+  const singles = new Set<string>();
+  for (const t of a.profile?.tracks ?? []) if (t.v === "public" && t.n) singles.add(`${slug}|${titleKey(t.n)}`);
+  const states = await labelStates([slug]);
+  const mine = await tracksFor(sb, own, names, singles, states);
+
+  // The company: every genre station the artist is on, else GeekFon Radio.
+  const genre = ((lineups ?? []) as { slug: string; name: string; exclusive: boolean | null }[]).filter(s => !s.exclusive);
+  const parts = genre.length
+    ? await Promise.all(genre.map(s => buildStationSchedule(s.slug)))
+    : [await buildRadioSchedule("urls")];
+  const ownIds = new Set(mine.map(t => t.songId));
+  const company: RadioTrack[] = [];
+  const seen = new Set<string>();
+  for (const p of parts) {
+    for (const t of p?.rotation ?? []) {
+      if (t.kind !== "spot" && (t.slug === slug || (t.songId && (ownIds.has(t.songId) || seen.has(t.songId))))) continue;
+      if (t.songId) seen.add(t.songId);
+      company.push(t);
+    }
+  }
+
+  const accent = a.profile?.accent || MAIN_STATION.color || "#ECE22D";
+  const info: ArtistStationInfo = {
+    slug: artistStationSlug(slug),
+    name: `${name} Radio`,
+    tagline: genre.length ? `${name}, then ${genre.map(s => s.name).join(" and ")}` : `${name}, then GeekFon Radio`,
+    color: accent,
+    ink: inkFor(accent),
+    seasonal: false,
+    artistSlug: slug,
+    basedOn: genre.length ? genre.map(s => s.slug) : [MAIN_STATION.slug],
+  };
+  return { rotation: [...mine, ...company], overrides: [], info };
 }
 
 // Stations an artist can be heard on, for the "on GeekFon Radio" strip on

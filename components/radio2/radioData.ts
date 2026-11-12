@@ -8,7 +8,7 @@ import type { Station } from "./useLiveRadio";
 export type Lyrics = { lyricsEn: string | null; lyricsOriginal: string | null; lyricsOriginalLang: string | null };
 export type ArtistCard = {
   slug: string; name: string; tagline: string | null; genre: string | null; location: string | null;
-  avatar: string | null; portrait: string | null; stations: Pick<Station, "slug" | "name" | "color" | "ink">[];
+  avatar: string | null; portrait: string | null; cutout?: string | null; accent?: string | null; ink?: string | null; stations: Pick<Station, "slug" | "name" | "color" | "ink">[];
 };
 
 const lyricCache = new Map<string, Promise<Lyrics | null>>();
