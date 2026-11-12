@@ -7,6 +7,7 @@ import styles from './page.module.css';
 import { signInWithProvider } from '@/lib/socialAuth';
 import { supabase } from '@/lib/supabase';
 import { rememberReturn, safeReturnPath, goAfterSignIn } from '@/lib/postAuth';
+import { startLesaruss } from '@/lib/lesarussClient';
 
 type State = 'form' | 'sending' | 'code-entry';
 
@@ -181,6 +182,14 @@ function LoginPageInner() {
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '13px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: '#fff', color: '#000', fontWeight: 700, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 {socialLoading === 'apple' ? 'Connecting...' : 'Continue with Apple'}
+              </button>
+              <button
+                type="button"
+                onClick={() => startLesaruss(redirect)}
+                disabled={socialLoading !== null}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '13px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Continue with LESARUSS
               </button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0 20px', color: 'rgba(255,255,255,0.35)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>

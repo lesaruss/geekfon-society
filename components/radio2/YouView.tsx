@@ -11,7 +11,8 @@ import { useShell } from "./RadioShell";
 import { HeartRow } from "./HomeView";
 import { IcHeart, IcUser, IcOut, IcArrow } from "./icons";
 import { signInWithProvider } from "@/lib/socialAuth";
-import { STAFF_HOME } from "@/lib/postAuth";
+import { startLesaruss } from "@/lib/lesarussClient";
+import { STAFF_HOME, onStaffHomeClick } from "@/lib/postAuth";
 import type { RosterData, RosterArtist } from "@/lib/artistPage";
 
 const TITLE = "Your GeekFon, GeekFon Society";
@@ -88,6 +89,7 @@ export default function YouView({ roster: initial }: { roster: RosterData }) {
               <button type="button" className="pill" onClick={google} disabled={busy !== null}>
                 <GoogleMark />{busy === "google" ? "Connecting" : "Continue with Google"}
               </button>
+              <button type="button" className="pill ghost" onClick={() => startLesaruss("/you")} disabled={busy !== null}>Continue with LESARUSS</button>
               <a className="pill ghost" href="/login">Sign in with email</a>
             </div>
           </div>
@@ -104,7 +106,7 @@ export default function YouView({ roster: initial }: { roster: RosterData }) {
               {me.plan ? <span className="ytag">{me.plan === "Staff" ? "Staff" : `${me.plan}: every artist in full`}</span> : null}
             </div>
             <div className="yact">
-              {me.staff ? <a className="pill" href={STAFF_HOME}>Open BrandDesk<IcOut size={14} /></a> : null}
+              {me.staff ? <a className="pill" href={STAFF_HOME} onClick={onStaffHomeClick}>Open BrandDesk<IcOut size={14} /></a> : null}
               <button type="button" className="pill ghost" onClick={out} disabled={busy !== null}>{busy === "out" ? "Signing out" : "Sign out"}</button>
             </div>
           </section>

@@ -24,7 +24,7 @@ import { ARTIST_CSS } from "./artistCss";
 import UnlockSheet from "./UnlockSheet";
 import { YOU_CSS } from "./youCss";
 import { useMe, type Me } from "./useMe";
-import { STAFF_HOME } from "@/lib/postAuth";
+import { STAFF_HOME, onStaffHomeClick } from "@/lib/postAuth";
 import type { RadioTrack } from "@/lib/radioSchedule";
 import { useRadio as useOldRadio } from "@/components/radio/RadioProvider";
 import {
@@ -425,13 +425,13 @@ function Face({ me, size }: { me: Extract<Me, { state: "in" }>; size: number }) 
 function RailAccount({ me }: { me: Me }) {
   if (me.state === "loading") return <span className="home" aria-hidden="true" />;
   if (me.state === "out") return <a className="home" href="/login"><IcUser />Sign in</a>;
-  if (me.staff) return <a className="home who" href={STAFF_HOME}><Face me={me} size={22} /><span>BrandDesk</span><IcOut size={12} /></a>;
+  if (me.staff) return <a className="home who" href={STAFF_HOME} onClick={onStaffHomeClick}><Face me={me} size={22} /><span>BrandDesk</span><IcOut size={12} /></a>;
   return <Link className="home who" href="/you"><Face me={me} size={22} /><span>{me.firstName}</span></Link>;
 }
 function TopAccount({ me }: { me: Me }) {
   if (me.state === "loading") return <span className="chip ghostchip" aria-hidden="true" />;
   if (me.state === "out") return <a className="chip" href="/login"><IcUser size={12} />Sign in</a>;
-  if (me.staff) return <a className="chip who" href={STAFF_HOME}><Face me={me} size={18} />BrandDesk<IcOut size={11} /></a>;
+  if (me.staff) return <a className="chip who" href={STAFF_HOME} onClick={onStaffHomeClick}><Face me={me} size={18} />BrandDesk<IcOut size={11} /></a>;
   return <Link className="chip who" href="/you"><Face me={me} size={18} />{me.firstName}</Link>;
 }
 

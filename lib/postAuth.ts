@@ -72,5 +72,44 @@ export async function goAfterSignIn(saved?: string | null): Promise<void> {
       staff = !!me?.staff;
     }
   } catch { /* fall back to the fan home */ }
-  window.location.assign(postAuthDestination({ staff, saved }));
+  const dest = postAuthDestination({ staff, saved });
+  if (dest === STAFF_HOME) { await goStaffHome(); return; }
+  window.location.assign(dest);
+}
+
+/**
+ * Open BrandDesk in HQ already signed in (Sean, 2026-11-12: he had to sign in
+ * on geekfon.ai and then again on HQ). Mints a one-time handoff
+ * (app/api/shell/handoff) and goes through HQ's /api/shell/sso, which sets the
+ * HQ session and lands on BrandDesk. Any failure opens the plain BrandDesk
+ * address, where HQ asks for sign in as before.
+ */
+export async function staffHomeUrl(): Promise<string> {
+  try {
+    const { supabase } = await import("@/lib/supabase");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return STAFF_HOME;
+    const res = await fetch("/api/shell/handoff", { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` }, cache: "no-store" });
+    const body = res.ok ? await res.json().catch(() => null) : null;
+    if (typeof body?.token !== "string" || !body.token) return STAFF_HOME;
+    const { hqHandoffUrl, BRANDDESK_PATH } = await import("@/lib/lesarussSignIn");
+    return hqHandoffUrl(body.token, BRANDDESK_PATH);
+  } catch {
+    return STAFF_HOME;
+  }
+}
+
+export async function goStaffHome(): Promise<void> {
+  window.location.assign(await staffHomeUrl());
+}
+
+/**
+ * Click handler for a BrandDesk link (href STAFF_HOME). A plain click goes
+ * through the handoff; a modified click (new tab or window) keeps the plain
+ * link, since a handoff token is single use and short lived.
+ */
+export function onStaffHomeClick(e: { preventDefault(): void; button: number; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean }): void {
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  void goStaffHome();
 }
