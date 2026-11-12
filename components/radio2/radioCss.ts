@@ -38,8 +38,8 @@ body{overflow:hidden}
 .gfr .brand b{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.02em;line-height:1;display:block}
 .gfr .brand small{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
 .gfr .nav{display:flex;flex-direction:column;gap:2px}
-.gfr .nav button{display:flex;align-items:center;gap:14px;padding:10px;border-radius:6px;font-weight:700;color:var(--muted);text-align:left;font-size:15px}
-.gfr .nav button:hover{color:var(--text);background:var(--surface-2)}
+.gfr .nav button,.gfr .nav a{display:flex;align-items:center;gap:14px;padding:10px;border-radius:6px;font-weight:700;color:var(--muted);text-align:left;font-size:15px}
+.gfr .nav button:hover,.gfr .nav a:hover{color:var(--text);background:var(--surface-2)}
 .gfr .nav button[aria-current="page"]{color:var(--text);background:var(--surface-2)}
 .gfr .nav .count{margin-left:auto;font-size:12px;color:var(--faint);font-weight:600}
 .gfr .rail h3{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:22px 10px 8px;font-weight:700}
@@ -377,8 +377,8 @@ body{overflow:hidden}
   .gfr .rt{gap:0}
   .gfr .mini-prog{display:block;position:absolute;left:8px;right:8px;bottom:0;height:2px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden}
   .gfr .mini-prog i{display:block;height:100%;width:0;background:var(--text);transition:width .5s linear}
-  .gfr .mtabs{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:19;height:calc(var(--tabs-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:linear-gradient(transparent, rgba(0,0,0,.92) 36%, #000)}
-  .gfr .mtabs button{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;padding-bottom:10px;font-size:11px;font-weight:600;color:var(--muted)}
+  .gfr .mtabs{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:19;height:calc(var(--tabs-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:linear-gradient(transparent, rgba(0,0,0,.92) 36%, #000)}
+  .gfr .mtabs button,.gfr .mtabs a{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;padding-bottom:10px;font-size:11px;font-weight:600;color:var(--muted)}
   .gfr .mtabs button[aria-current="page"]{color:var(--text)}
 
   /* panel becomes a bottom sheet */

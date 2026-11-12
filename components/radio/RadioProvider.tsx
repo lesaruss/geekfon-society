@@ -241,7 +241,8 @@ export default function RadioProvider({ children }: { children: React.ReactNode 
 
   // /radio runs its own full player.
   useEffect(() => {
-    if (pathname?.startsWith("/radio")) stop();
+    // The new GeekFon home (/) and /radio/pop run their own live player (components/radio2), so this one steps aside there.
+    if (pathname === "/" || pathname?.startsWith("/radio")) stop();
   }, [pathname, stop]);
 
   const now = useMemo(() => {

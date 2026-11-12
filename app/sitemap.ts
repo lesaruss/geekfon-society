@@ -8,7 +8,7 @@ import { ARTIST_ORDER } from "@/lib/roster";
 const BASE = "https://geekfon.ai";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ["", "/radio", "/story", "/pro", "/privacy"];
+  const pages = ["", "/story", "/pro", "/privacy"];
   return [
     ...pages.map(p => ({ url: BASE + p, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.6 })),
     ...ARTIST_ORDER.map(slug => ({ url: `${BASE}/${slug}`, changeFrequency: "weekly" as const, priority: 0.8 })),

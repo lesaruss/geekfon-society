@@ -45,3 +45,9 @@ export const IcInstall = ({ size = 14 }: P) => (
 export const Eq = ({ still }: { still?: boolean }) => (
   <span className={"eq" + (still ? " still" : "")} aria-hidden="true"><i /><i /><i /></span>
 );
+export const IcArtists = ({ size = 22 }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="8" r="3.6" /><circle cx="17" cy="9.2" r="2.8" /><path d="M2.5 19.5c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6v.5h-13zM16 20v-.5c0-1.8-.6-3.4-1.6-4.6.8-.4 1.7-.6 2.6-.6 2.8 0 4.5 1.9 4.5 4.8v.9z" /></svg>
+);
+export const IcUser = ({ size = 16 }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 20.5c0-4.1 3.6-6.5 8-6.5s8 2.4 8 6.5v.5H4z" /></svg>
+);

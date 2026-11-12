@@ -17,7 +17,7 @@ import { useArtist, useLyrics, lyricLines, lyricPreview, langName, NEW_TALENT, s
 import { RADIO_CSS } from "./radioCss";
 import type { RadioTrack } from "@/lib/radioSchedule";
 import {
-  IcPlay, IcPause, IcHeart, IcHeartSolid, IcLyrics, IcX, IcBack, IcRadio, IcHome, IcArrow, IcOut, IcPopOut, Eq,
+  IcPlay, IcPause, IcHeart, IcHeartSolid, IcLyrics, IcX, IcBack, IcRadio, IcHome, IcArrow, IcOut, IcPopOut, Eq, IcArtists, IcUser,
 } from "./icons";
 
 type View = "home" | "stations" | "hearted";
@@ -370,12 +370,13 @@ export default function RadioApp() {
       <div className="app">
         <nav className="rail" aria-label="GeekFon Radio">
           <button type="button" className="brand" onClick={() => go("home")}>
-            <img className="wm" src={WORDMARK} alt="GeekFon Society" /><small>Radio</small>
+            <img className="wm" src={WORDMARK} alt="GeekFon Society" />
           </button>
           <div className="nav">
             <button type="button" aria-current={view === "home" ? "page" : undefined} onClick={() => go("home")}><IcHome />Home</button>
             <button type="button" aria-current={view === "stations" ? "page" : undefined} onClick={() => go("stations")}><IcRadio />Stations</button>
             <button type="button" aria-current={view === "hearted" ? "page" : undefined} onClick={() => go("hearted")}><IcHeartSolid />Hearted songs<span className="count">{R.hearts.length}</span></button>
+            <a href="/roster"><IcArtists />Artists</a>
           </div>
           <h3>On the dial</h3>
           <div className="dial">
@@ -395,13 +396,13 @@ export default function RadioApp() {
               <span><span className="nm">{NEW_TALENT.name}</span><span className="sub">Coming</span></span>
             </div>
           </div>
-          <a className="home" href="/"><IcBack />GeekFon home</a>
+          <a className="home" href="/login"><IcUser />Sign in</a>
         </nav>
 
         <main className="main" ref={mainRef}>
           <div className="top">
-            <button type="button" className="mlogo" onClick={() => go("home")}><img className="wm" src={WORDMARK} alt="GeekFon Society" /><small>Radio</small></button>
-            <a className="chip" href="/"><IcBack size={12} />GeekFon home</a>
+            <button type="button" className="mlogo" onClick={() => go("home")}><img className="wm" src={WORDMARK} alt="GeekFon Society" /></button>
+            <a className="chip" href="/login"><IcUser size={12} />Sign in</a>
           </div>
           <div className="view">
             {view === "home" ? renderHome() : view === "stations" ? renderStations() : renderHearted()}
@@ -469,6 +470,7 @@ export default function RadioApp() {
           <button type="button" aria-current={view === "home" ? "page" : undefined} onClick={() => go("home")}><IcHome size={24} />Home</button>
           <button type="button" aria-current={view === "stations" ? "page" : undefined} onClick={() => go("stations")}><IcRadio size={24} />Stations</button>
           <button type="button" aria-current={view === "hearted" ? "page" : undefined} onClick={() => go("hearted")}><IcHeartSolid size={24} />Hearts</button>
+          <a href="/roster"><IcArtists size={24} />Artists</a>
         </nav>
       </div>
 

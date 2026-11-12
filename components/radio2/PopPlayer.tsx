@@ -194,7 +194,7 @@ export default function PopPlayer() {
             <button type="button" className="inst" onClick={install}><IcInstall />Install app</button>
           )}
           <span>Free, no sign up</span>
-          <a href="/radio" target="_blank" rel="noopener">Open GeekFon</a>
+          <a href="/" target="_blank" rel="noopener">Open GeekFon</a>
         </div>
       </div>
 
@@ -211,7 +211,7 @@ export default function PopPlayer() {
               <div><b>{artist?.name || song.artist}</b><span>{artist?.tagline || "From the GeekFon Society roster"}</span></div>
             </div>
             {artist?.stations?.length ? <div className="facts">{artist.stations.map(s => <span key={s.slug}>{s.name}</span>)}</div> : null}
-            <a className="visit" href="/radio" target="_blank" rel="noopener" aria-label="Go deeper: open GeekFon, opens in a new tab">
+            <a className="visit" href="/" target="_blank" rel="noopener" aria-label="Go deeper: open GeekFon, opens in a new tab">
               Go deeper: open GeekFon<small>geekfon.ai</small><IcOut />
             </a>
             <p className="visit-note">Opens the full site in a new tab. This window keeps playing.</p>
