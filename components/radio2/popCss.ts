@@ -176,4 +176,5 @@ body{overflow:hidden}
 @media (prefers-reduced-motion: reduce){
   .gfp *,.gfp *::before,.gfp *::after{animation:none !important;transition:none !important}
 }
+.gfp .inote{margin:0 0 12px;font-size:13.5px;line-height:1.45;color:var(--text)}
 `;

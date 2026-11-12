@@ -51,18 +51,28 @@ export default function PopPlayer() {
     window.addEventListener("appinstalled", onInstalled);
     return () => { window.removeEventListener("beforeinstallprompt", onPrompt); window.removeEventListener("appinstalled", onInstalled); };
   }, []);
+  // A small pop-up window (opened by Pop out) has no address bar, and browsers do not install apps from it:
+  // there the button explains that and opens the player in a full window (Sean, 2026-11-12: "when I click
+  // install app, nothing happens... something flash[es] for a few seconds").
+  const [inPopup, setInPopup] = useState(false);
+  useEffect(() => {
+    try { setInPopup(window.name === "gfradio" || window.toolbar?.visible === false || window.menubar?.visible === false); } catch { /* ignore */ }
+  }, []);
   const install = useCallback(async () => {
-    if (installEvt) {
+    if (!inPopup && installEvt) {
+      let accepted = false;
       try {
         await installEvt.prompt();
         const choice = await installEvt.userChoice;
-        if (choice.outcome === "accepted") setInstalled(true);
+        accepted = choice.outcome === "accepted";
+        if (accepted) setInstalled(true);
       } catch { /* dismissed */ }
       setInstallEvt(null);
+      if (!accepted) setSheet("install");
       return;
     }
     setSheet("install");
-  }, [installEvt]);
+  }, [installEvt, inPopup]);
 
   /* ---------- toast ---------- */
   useEffect(() => {
@@ -233,9 +243,15 @@ export default function PopPlayer() {
         <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="gfp-inst">
           <div className="grab" aria-hidden="true" />
           <div className="sh-h"><h2 id="gfp-inst">Install GeekFon Radio</h2><button type="button" className="ib" ref={sheetClose} onClick={closeSheet} aria-label="Close"><IcX size={18} /></button></div>
+          {inPopup ? (
+            <div className="card2">
+              <p className="inote">This small window can&apos;t install apps. Open GeekFon Radio in a full browser window, then press Install app there.</p>
+              <a className="visit" href="/radio/pop" target="_blank" rel="noopener"><span>Open in a full window</span><IcOut /></a>
+            </div>
+          ) : null}
           <div className="card2">
             <ul className="steps">
-              <li><b>Chrome or Edge</b>The install icon in the address bar.</li>
+              <li><b>Chrome or Edge</b>The install icon at the right end of the address bar, or Install in the browser menu.</li>
               <li><b>Safari on Mac</b>File, Add to Dock.</li>
               <li><b>iPhone or iPad</b>Share, then Add to Home Screen.</li>
             </ul>
