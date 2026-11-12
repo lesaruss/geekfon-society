@@ -12,7 +12,8 @@ import type { RadioTrack } from "@/lib/radioSchedule";
 import { POP_CSS } from "./popCss";
 import { IcPlay, IcPause, IcHeart, IcLyrics, IcX, IcOut, IcInstall, Eq } from "./icons";
 
-const LOGO = "/geekfon-logo.png";
+// The brand kit's vector wheel (BrandDesk > GeekFon Society > Logo).
+const LOGO = "/brands/geekfon-society/geekfon-wheel.svg";
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
 const coverOf = (rot?: RadioTrack[]) => (rot ?? []).find(t => t.kind !== "spot" && t.coverUrl)?.coverUrl ?? null;

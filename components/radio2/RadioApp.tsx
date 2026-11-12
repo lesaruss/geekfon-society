@@ -22,7 +22,9 @@ import {
 
 type View = "home" | "stations" | "hearted";
 const VIEWS: View[] = ["home", "stations", "hearted"];
-const LOGO = "/geekfon-logo.png";
+// The brand kit's logo files (BrandDesk > GeekFon Society > Logo): the wordmark on night for the brand spots, the vector wheel elsewhere.
+const LOGO = "/brands/geekfon-society/geekfon-wheel.svg";
+const WORDMARK = "/brands/geekfon-society/geekfon-wordmark-reverse.svg";
 
 function readView(): View {
   try {
@@ -368,7 +370,7 @@ export default function RadioApp() {
       <div className="app">
         <nav className="rail" aria-label="GeekFon Radio">
           <button type="button" className="brand" onClick={() => go("home")}>
-            <img src={LOGO} alt="" /><span><b>GeekFon</b><small>Radio</small></span>
+            <img className="wm" src={WORDMARK} alt="GeekFon Society" /><small>Radio</small>
           </button>
           <div className="nav">
             <button type="button" aria-current={view === "home" ? "page" : undefined} onClick={() => go("home")}><IcHome />Home</button>
@@ -398,7 +400,7 @@ export default function RadioApp() {
 
         <main className="main" ref={mainRef}>
           <div className="top">
-            <button type="button" className="mlogo" onClick={() => go("home")}><img src={LOGO} alt="" /><b>GeekFon Radio</b></button>
+            <button type="button" className="mlogo" onClick={() => go("home")}><img className="wm" src={WORDMARK} alt="GeekFon Society" /><small>Radio</small></button>
             <a className="chip" href="/"><IcBack size={12} />GeekFon home</a>
           </div>
           <div className="view">

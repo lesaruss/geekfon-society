@@ -33,8 +33,8 @@ body{overflow:hidden}
 .gfr .bar{grid-area:bar}
 
 /* ---------- Rail ---------- */
-.gfr .brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px;text-align:left}
-.gfr .brand img{width:36px;height:36px;border-radius:50%}
+.gfr .brand{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:2px 8px 18px;text-align:left}
+.gfr .brand img.wm{width:100%;max-width:188px;height:auto;display:block}
 .gfr .brand b{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.02em;line-height:1;display:block}
 .gfr .brand small{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
 .gfr .nav{display:flex;flex-direction:column;gap:2px}
@@ -318,8 +318,9 @@ body{overflow:hidden}
   .gfr .rail{display:none}
   .gfr .main{border-radius:0;overflow:visible;min-height:100dvh;padding-bottom:calc(var(--bar-h) + var(--tabs-h) + 28px + env(safe-area-inset-bottom))}
   .gfr .top{padding:12px 16px;background:linear-gradient(var(--surface) 60%, transparent)}
-  .gfr .mlogo{display:flex;align-items:center;gap:8px}
-  .gfr .mlogo img{width:30px;height:30px;border-radius:50%}
+  .gfr .mlogo{display:flex;align-items:center;gap:8px;min-width:0}
+  .gfr .mlogo img.wm{height:30px;width:auto;display:block}
+  .gfr .mlogo small{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;align-self:flex-end;margin-bottom:2px}
   .gfr .mlogo b{font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:-.02em}
   .gfr .view{padding:0 16px 24px}
   .gfr .hero{margin:-62px -16px 0;padding:70px 16px 18px}
