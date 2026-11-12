@@ -128,35 +128,7 @@ export default function HomeView() {
     </>
   );
 
-  const songRow = (h: Heart) => {
-    const home = homeStationOf(h.slug);
-    const on = !!pv && pv.song.songId === h.songId;
-    const playing = on && pv!.playing && !pv!.ended;
-    const len = h.durationSeconds ? fmtTime(h.durationSeconds) : "";
-    const t = on ? pv!.time : 0;
-    return (
-      <div key={h.songId} className={"sng" + (on ? " on" : "")} style={{ "--ac": stColor(home), "--ac-ink": stInk(home) } as React.CSSProperties}>
-        <button type="button" className="pvb" onClick={() => R.startPreview(h)} aria-label={`${playing ? "Pause" : "Play"} 30-second preview of ${h.title}`}>
-          {playing ? <IcPause /> : <IcPlay />}
-        </button>
-        {h.coverUrl ? <img src={h.coverUrl} alt="" loading="lazy" /> : <span className="ph" />}
-        <div className="st">
-          <div className="tl"><b>{h.title}</b><span className="ptag">Preview</span></div>
-          <span className="sub">
-            {h.slug ? <Link className="alink" href={artistHref(h.slug)}>{h.artist}</Link> : <span>{h.artist}</span>}
-            {len ? <span className="mlen">{on ? `${fmtTime(t)} / 0:30` : len}</span> : null}
-          </span>
-        </div>
-        <span className="sx">{h.slug ? <button type="button" className="unl" onClick={() => openUnlock(h.slug!)}>Hear the full song: unlock {h.artist}, $11</button> : null}</span>
-        <span className="len">{on ? `${fmtTime(t)} / 0:30` : len}</span>
-        <span className="ops">
-          <button type="button" className="ib hearted" onClick={() => heart(h)} aria-pressed="true" aria-label={`Remove heart from ${h.title}`}><IcHeart on /></button>
-          <button type="button" className="ib" onClick={() => openLyrics(h)} aria-label={`Lyrics for ${h.title}, free`}><IcLyrics size={18} /></button>
-        </span>
-        <i className="rp" aria-hidden="true"><i style={{ width: on ? `${(t / PREVIEW_SECONDS) * 100}%` : 0 }} /></i>
-      </div>
-    );
-  };
+  const songRow = (h: Heart) => <HeartRow key={h.songId} h={h} />;
 
   const renderHearted = () => {
     const groups: { slug: string; artist: string; items: Heart[] }[] = [];
@@ -200,4 +172,41 @@ export default function HomeView() {
   };
 
   return view === "home" ? renderHome() : view === "stations" ? renderStations() : renderHearted();
+}
+
+/** One hearted song: a 30-second preview, the artist, the $11 unlock, the heart and the lyrics. Shared by Hearted songs and Your GeekFon. */
+export function HeartRow({ h }: { h: Heart }) {
+  const { R, openLyrics, heart, openUnlock, homeStationOf, me } = useShell();
+  const pv = R.preview;
+  // Unlocked already (one by one, or every artist): the full song is on the artist's page.
+  const full = !!h.slug && me.state === "in" && (me.allArtists || me.unlocked.includes(h.slug));
+    const home = homeStationOf(h.slug);
+  const on = !!pv && pv.song.songId === h.songId;
+  const playing = on && pv!.playing && !pv!.ended;
+  const len = h.durationSeconds ? fmtTime(h.durationSeconds) : "";
+  const t = on ? pv!.time : 0;
+  return (
+    <div className={"sng" + (on ? " on" : "")} style={{ "--ac": stColor(home), "--ac-ink": stInk(home) } as React.CSSProperties}>
+      <button type="button" className="pvb" onClick={() => R.startPreview(h)} aria-label={`${playing ? "Pause" : "Play"} 30-second preview of ${h.title}`}>
+        {playing ? <IcPause /> : <IcPlay />}
+      </button>
+      {h.coverUrl ? <img src={h.coverUrl} alt="" loading="lazy" /> : <span className="ph" />}
+      <div className="st">
+        <div className="tl"><b>{h.title}</b><span className="ptag">Preview</span></div>
+        <span className="sub">
+          {h.slug ? <Link className="alink" href={artistHref(h.slug)}>{h.artist}</Link> : <span>{h.artist}</span>}
+          {len ? <span className="mlen">{on ? `${fmtTime(t)} / 0:30` : len}</span> : null}
+        </span>
+      </div>
+      <span className="sx">{h.slug ? (full
+    ? <Link className="unl" href={artistHref(h.slug)}>Full song on {h.artist}&apos;s page</Link>
+    : <button type="button" className="unl" onClick={() => openUnlock(h.slug!)}>Hear the full song: unlock {h.artist}, $11</button>) : null}</span>
+      <span className="len">{on ? `${fmtTime(t)} / 0:30` : len}</span>
+      <span className="ops">
+        <button type="button" className="ib hearted" onClick={() => heart(h)} aria-pressed="true" aria-label={`Remove heart from ${h.title}`}><IcHeart on /></button>
+        <button type="button" className="ib" onClick={() => openLyrics(h)} aria-label={`Lyrics for ${h.title}, free`}><IcLyrics size={18} /></button>
+      </span>
+      <i className="rp" aria-hidden="true"><i style={{ width: on ? `${(t / PREVIEW_SECONDS) * 100}%` : 0 }} /></i>
+    </div>
+  );
 }

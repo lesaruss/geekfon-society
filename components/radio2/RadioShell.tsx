@@ -22,6 +22,9 @@ import { useArtist, useLyrics, lyricLines, lyricPreview, langName, NEW_TALENT, s
 import { RADIO_CSS } from "./radioCss";
 import { ARTIST_CSS } from "./artistCss";
 import UnlockSheet from "./UnlockSheet";
+import { YOU_CSS } from "./youCss";
+import { useMe, type Me } from "./useMe";
+import { STAFF_HOME } from "@/lib/postAuth";
 import type { RadioTrack } from "@/lib/radioSchedule";
 import { useRadio as useOldRadio } from "@/components/radio/RadioProvider";
 import {
@@ -76,6 +79,9 @@ type ShellCtx = {
   homeStationOf: (slug?: string) => Station | null;
   /** The tab title while nothing plays (each page sets its own). */
   setBaseTitle: (t: string) => void;
+  /** Who is signed in (Your GeekFon, the rail and the top bar). */
+  me: Me;
+  signOut: () => Promise<void>;
 };
 const Ctx = createContext<ShellCtx | null>(null);
 export function useShell(): ShellCtx {
@@ -89,7 +95,9 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname() || "/";
   const router = useRouter();
   const onHome = pathname === "/";
-  const onArtists = pathname === "/roster" || (!onHome && pathname.split("/").filter(Boolean).length === 1);
+  const onYou = pathname === "/you";
+  const onArtists = pathname === "/roster" || (!onHome && !onYou && pathname.split("/").filter(Boolean).length === 1);
+  const { me, signOut } = useMe();
   const [view, setView] = useState<View>("home");
   const [hello, setHello] = useState("Good evening");
   const [panelOpen, setPanelOpen] = useState(false);
@@ -245,14 +253,15 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   const heartOn = R.isHearted(barSong);
   const cover = pv ? pv.song.coverUrl : R.onAir?.coverUrl;
 
-  const ctx = useMemo<ShellCtx>(() => ({ R, view, go, hello, openPanel, openLyrics, heart, tuneTo, showToast, openUnlock, homeStationOf, setBaseTitle }),
-    [R, view, go, hello, openPanel, openLyrics, heart, tuneTo, showToast, openUnlock, homeStationOf]);
+  const ctx = useMemo<ShellCtx>(() => ({ R, view, go, hello, openPanel, openLyrics, heart, tuneTo, showToast, openUnlock, homeStationOf, setBaseTitle, me, signOut }),
+    [R, view, go, hello, openPanel, openLyrics, heart, tuneTo, showToast, openUnlock, homeStationOf, me, signOut]);
 
   return (
     <Ctx.Provider value={ctx}>
       <div className={"gfr" + (pv ? " pv" : "")} style={rootStyle}>
         <style>{RADIO_CSS}</style>
         <style>{ARTIST_CSS}</style>
+        <style>{YOU_CSS}</style>
         <div className="app">
           <nav className="rail" aria-label="GeekFon Society">
             <Link className="brand" href="/" onClick={e => { if (onHome) { e.preventDefault(); go("home"); } }}>
@@ -263,6 +272,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
               <button type="button" aria-current={onHome && view === "stations" ? "page" : undefined} onClick={() => go("stations")}><IcRadio />Stations</button>
               <button type="button" aria-current={onHome && view === "hearted" ? "page" : undefined} onClick={() => go("hearted")}><IcHeartSolid />Hearted songs<span className="count">{R.hearts.length}</span></button>
               <Link href="/roster" aria-current={onArtists ? "page" : undefined}><IcArtists />Artists</Link>
+              <Link href="/you" aria-current={onYou ? "page" : undefined}><IcUser size={22} />You</Link>
             </div>
             <h3>On the dial</h3>
             <div className="dial">
@@ -283,13 +293,13 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
                 <span><span className="nm">{NEW_TALENT.name}</span><span className="sub">Coming</span></span>
               </div>
             </div>
-            <a className="home" href="/login"><IcUser />Sign in</a>
+            <RailAccount me={me} />
           </nav>
 
           <main className="main" ref={mainRef}>
             <div className="top">
               <Link className="mlogo" href="/" onClick={e => { if (onHome) { e.preventDefault(); go("home"); } }}><img className="wm" src={WORDMARK} alt="GeekFon Society" /></Link>
-              <a className="chip" href="/login"><IcUser size={12} />Sign in</a>
+              <TopAccount me={me} />
             </div>
             <div className="view">{children}</div>
           </main>
@@ -357,8 +367,8 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
           <nav className="mtabs" aria-label="Sections">
             <button type="button" aria-current={onHome && view === "home" ? "page" : undefined} onClick={() => go("home")}><IcHome size={24} />Home</button>
             <button type="button" aria-current={onHome && view === "stations" ? "page" : undefined} onClick={() => go("stations")}><IcRadio size={24} />Stations</button>
-            <button type="button" aria-current={onHome && view === "hearted" ? "page" : undefined} onClick={() => go("hearted")}><IcHeartSolid size={24} />Hearts</button>
             <Link href="/roster" aria-current={onArtists ? "page" : undefined}><IcArtists size={24} />Artists</Link>
+            <Link href="/you" aria-current={onYou || (onHome && view === "hearted") ? "page" : undefined}><IcUser size={24} />You</Link>
           </nav>
         </div>
 
@@ -400,6 +410,29 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
       </div>
     </Ctx.Provider>
   );
+}
+
+/* ---------- the signed-in person, in the rail and the phone top bar ---------- */
+// Signed out: Sign in. A fan: their picture (or first letter) and first name,
+// opening Your GeekFon. Staff: BrandDesk in HQ, where the staff tools live.
+function Face({ me, size }: { me: Extract<Me, { state: "in" }>; size: number }) {
+  return (
+    <span className="face" style={{ width: size, height: size }} aria-hidden="true">
+      {me.avatar ? <img src={me.avatar} alt="" referrerPolicy="no-referrer" /> : me.firstName.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+function RailAccount({ me }: { me: Me }) {
+  if (me.state === "loading") return <span className="home" aria-hidden="true" />;
+  if (me.state === "out") return <a className="home" href="/login"><IcUser />Sign in</a>;
+  if (me.staff) return <a className="home who" href={STAFF_HOME}><Face me={me} size={22} /><span>BrandDesk</span><IcOut size={12} /></a>;
+  return <Link className="home who" href="/you"><Face me={me} size={22} /><span>{me.firstName}</span></Link>;
+}
+function TopAccount({ me }: { me: Me }) {
+  if (me.state === "loading") return <span className="chip ghostchip" aria-hidden="true" />;
+  if (me.state === "out") return <a className="chip" href="/login"><IcUser size={12} />Sign in</a>;
+  if (me.staff) return <a className="chip who" href={STAFF_HOME}><Face me={me} size={18} />BrandDesk<IcOut size={11} /></a>;
+  return <Link className="chip who" href="/you"><Face me={me} size={18} />{me.firstName}</Link>;
 }
 
 /* ---------- "What is this?" ---------- */

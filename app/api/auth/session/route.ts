@@ -31,3 +31,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'No session' }, { status: 401 });
   }
 }
+
+// Sign out (2026-11-12): clears the auth_token cookie the email-code and
+// Google/Apple sign-in set, alongside supabase.auth.signOut() in the browser,
+// so /login no longer sees an old session after Sign out.
+export async function DELETE() {
+  // The cookie is set without a Path, so it lives under /api/auth; clear that
+  // one and any copy at the site root.
+  const res = NextResponse.json({ ok: true });
+  res.headers.append('Set-Cookie', 'auth_token=; Path=/api/auth; Max-Age=0; HttpOnly; SameSite=Strict');
+  res.headers.append('Set-Cookie', 'auth_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict');
+  return res;
+}
