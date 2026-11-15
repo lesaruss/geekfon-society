@@ -25,8 +25,9 @@ export default function HomeView() {
     return () => { on = false; };
   }, []);
 
+  // New Talent as one full-width strip, not a lone card in an empty row (Sean, 2026-11-15). No button: artist submissions are not built yet.
   const comingCard = (
-    <div key={NEW_TALENT.slug} className="card coming" style={{ "--c": NEW_TALENT.color, "--i": NEW_TALENT.ink } as React.CSSProperties} aria-label={`${NEW_TALENT.name}, coming soon`}>
+    <div key={NEW_TALENT.slug} className="card coming strip" style={{ "--c": NEW_TALENT.color, "--i": NEW_TALENT.ink } as React.CSSProperties} aria-label={`${NEW_TALENT.name}, coming soon`}>
       <span className="ring" />
       <span className="name">{NEW_TALENT.name}</span>
       <span className="line">{NEW_TALENT.tagline}</span>

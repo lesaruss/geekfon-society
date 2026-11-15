@@ -108,6 +108,11 @@ body{overflow:hidden}
 .gfr .card.coming .name{color:var(--c)}
 .gfr .card.coming .ring{position:absolute;right:-30%;bottom:-30%;width:90%;aspect-ratio:1;border-radius:50%;border:22px solid color-mix(in srgb, var(--c) 30%, transparent);box-shadow:0 0 0 22px color-mix(in srgb, var(--c) 14%, transparent)}
 .gfr .card.coming .tag{position:absolute;left:16px;bottom:16px;background:var(--c);color:var(--i)}
+.gfr .card.coming.strip{grid-column:1/-1;aspect-ratio:auto;min-height:0;padding:24px 28px;justify-content:center}
+.gfr .card.coming.strip .name{max-width:none}
+.gfr .card.coming.strip .line{max-width:min(520px,70%);font-size:14px}
+.gfr .card.coming.strip .tag{position:relative;left:auto;bottom:auto;align-self:flex-start;margin-top:14px;z-index:2}
+.gfr .card.coming.strip .ring{right:-40px;bottom:-150px;width:300px}
 
 .gfr .recent{display:flex;gap:16px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
 .gfr .rc{flex:0 0 150px;text-align:left}
