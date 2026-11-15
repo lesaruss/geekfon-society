@@ -5,8 +5,11 @@
 // (RadioShell) owns it, the rail and the player, so this only draws.
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { ArtistCard } from "./ArtistsView";
+import type { RosterArtist } from "@/lib/artistPage";
 import { useShell, songsOf, coversOf, artistHref } from "./RadioShell";
-import { fmtTime, PREVIEW_SECONDS, type Station, type Heart } from "./useLiveRadio";
+import { fmtTime, PREVIEW_SECONDS, type Heart } from "./useLiveRadio";
 import { NEW_TALENT, stColor, stInk } from "./radioData";
 import { IcPlay, IcPause, IcHeart, IcHeartSolid, IcLyrics, IcRadio, Eq } from "./icons";
 
@@ -14,30 +17,13 @@ export default function HomeView() {
   const S = useShell();
   const { R, view, go, tuneTo, openPanel, openLyrics, heart, openUnlock, homeStationOf, hello } = S;
   const pv = R.preview;
-  const regular = R.stations.filter(s => !s.seasonal);
-  const seasonal = R.stations.filter(s => s.seasonal);
-
-  const stationCard = (s: Station, wide = false) => {
-    const on = s.slug === R.station && !pv;
-    const playing = on && R.live;
-    const covers = coversOf(R.schedules[s.slug]?.rotation, 3);
-    return (
-      <button
-        key={s.slug}
-        type="button"
-        className={"card" + (wide ? " wide" : "") + (on ? " on" : "")}
-        style={{ "--c": stColor(s), "--i": stInk(s) } as React.CSSProperties}
-        onClick={() => tuneTo(s.slug)}
-        aria-label={s.name + (on ? (playing ? ", playing, press to pause" : ", tuned in, press to play") : ", press to listen")}
-      >
-        <span className="name">{s.name}</span>
-        {s.tagline ? <span className="line">{s.tagline}</span> : null}
-        <span className="collage">{covers.map(c => <img key={c} src={c} alt="" loading="lazy" />)}</span>
-        <span className="go">{playing ? <IcPause /> : <IcPlay />}</span>
-        <span className="air"><Eq still={!playing} />{playing ? "On air" : "Tuned in"}</span>
-      </button>
-    );
-  };
+  // Meet the artists (Sean, 2026-11-15 panel): the cast on the home page, one row, in the Artists page card.
+  const [cast, setCast] = useState<RosterArtist[]>([]);
+  useEffect(() => {
+    let on = true;
+    fetch("/api/radio/roster").then(r => (r.ok ? r.json() : null)).then(d => { if (on && d?.artists?.length) setCast(d.artists); }).catch(() => {});
+    return () => { on = false; };
+  }, []);
 
   const comingCard = (
     <div key={NEW_TALENT.slug} className="card coming" style={{ "--c": NEW_TALENT.color, "--i": NEW_TALENT.ink } as React.CSSProperties} aria-label={`${NEW_TALENT.name}, coming soon`}>
@@ -70,13 +56,15 @@ export default function HomeView() {
           </button>
         </div>
       </section>
+      {cast.length ? (
+        <section className="shelf meet">
+          <div className="shelf-h"><h2>Meet the artists</h2><Link className="more" href="/roster">Show all</Link></div>
+          <div className="agrid">{cast.slice(0, 4).map(a => <ArtistCard key={a.slug} a={a} />)}</div>
+        </section>
+      ) : null}
       <section className="shelf">
-        <div className="shelf-h"><h2>Stations</h2><button type="button" className="more" onClick={() => go("stations")}>Show all</button></div>
-        <div className="grid">{regular.map(s => stationCard(s))}</div>
-      </section>
-      <section className="shelf">
-        <div className="shelf-h"><h2>{seasonal.length ? "Holiday shelf" : "Coming to the dial"}</h2>{seasonal.length ? <span className="tag">Seasonal</span> : null}</div>
-        <div className="grid">{seasonal.map(s => stationCard(s, true))}{comingCard}</div>
+        <div className="shelf-h"><h2>Coming to the dial</h2></div>
+        <div className="grid">{comingCard}</div>
       </section>
       <section className="shelf">
         <div className="shelf-h"><h2>Recently played</h2></div>
