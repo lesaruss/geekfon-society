@@ -46,7 +46,8 @@ body{overflow:hidden}
 .gfr .dial{display:flex;flex-direction:column;gap:2px;overflow-y:auto;min-height:0}
 .gfr .dial button,.gfr .dial .soon{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;text-align:left}
 .gfr .dial button:hover{background:var(--surface-2)}
-.gfr .dial .soon{opacity:.55}
+.gfr .dial .soon{opacity:.55;color:inherit;text-decoration:none}
+.gfr .dial a.soon:hover,.gfr .dial a.soon[aria-current="page"]{opacity:1;background:var(--surface-2)}
 .gfr .dial .sw{width:36px;height:36px;border-radius:5px;flex:none;display:grid;place-items:center;overflow:hidden;position:relative}
 .gfr .dial .sw img{width:26px;height:26px;border-radius:3px;transform:rotate(-8deg);box-shadow:0 2px 6px rgba(0,0,0,.35);object-fit:cover}
 .gfr .dial .nm{font-weight:600;font-size:14px;line-height:1.15;display:block}

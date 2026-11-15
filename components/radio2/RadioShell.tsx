@@ -23,6 +23,7 @@ import { RADIO_CSS } from "./radioCss";
 import { ARTIST_CSS } from "./artistCss";
 import UnlockSheet from "./UnlockSheet";
 import { YOU_CSS } from "./youCss";
+import { NT_CSS } from "./ntCss";
 import { useMe, type Me } from "./useMe";
 import { STAFF_HOME, onStaffHomeClick } from "@/lib/postAuth";
 import type { RadioTrack } from "@/lib/radioSchedule";
@@ -96,7 +97,8 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const onHome = pathname === "/";
   const onYou = pathname === "/you";
-  const onArtists = pathname === "/roster" || (!onHome && !onYou && pathname.split("/").filter(Boolean).length === 1);
+  const onNewTalent = pathname === "/new-talent";
+  const onArtists = pathname === "/roster" || (!onHome && !onYou && !onNewTalent && pathname.split("/").filter(Boolean).length === 1);
   const { me, signOut } = useMe();
   const [view, setView] = useState<View>("home");
   const [hello, setHello] = useState("Good evening");
@@ -262,6 +264,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
         <style>{RADIO_CSS}</style>
         <style>{ARTIST_CSS}</style>
         <style>{YOU_CSS}</style>
+        <style>{NT_CSS}</style>
         <div className="app">
           <nav className="rail" aria-label="GeekFon Society">
             <Link className="brand" href="/" onClick={e => { if (onHome) { e.preventDefault(); go("home"); } }}>
@@ -288,10 +291,10 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
                   </button>
                 );
               })}
-              <div className="soon" aria-label={`${NEW_TALENT.name}, coming`}>
+              <Link href="/new-talent" className="soon" aria-current={onNewTalent ? "page" : undefined} aria-label={`${NEW_TALENT.name}, coming. Send your music`}>
                 <span className="sw" style={{ boxShadow: `inset 0 0 0 2px ${NEW_TALENT.color}` }} />
-                <span><span className="nm">{NEW_TALENT.name}</span><span className="sub">Coming</span></span>
-              </div>
+                <span><span className="nm">{NEW_TALENT.name}</span><span className="sub">Coming · Send your music</span></span>
+              </Link>
             </div>
             <RailAccount me={me} />
           </nav>

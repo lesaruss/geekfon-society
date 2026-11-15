@@ -25,14 +25,14 @@ export default function HomeView() {
     return () => { on = false; };
   }, []);
 
-  // New Talent as one full-width strip, not a lone card in an empty row (Sean, 2026-11-15). No button: artist submissions are not built yet.
+  // New Talent as one full-width strip (Sean, 2026-11-15), opening /new-talent where artists send their music.
   const comingCard = (
-    <div key={NEW_TALENT.slug} className="card coming strip" style={{ "--c": NEW_TALENT.color, "--i": NEW_TALENT.ink } as React.CSSProperties} aria-label={`${NEW_TALENT.name}, coming soon`}>
+    <Link key={NEW_TALENT.slug} href="/new-talent" className="card coming strip" style={{ "--c": NEW_TALENT.color, "--i": NEW_TALENT.ink } as React.CSSProperties}>
       <span className="ring" />
       <span className="name">{NEW_TALENT.name}</span>
-      <span className="line">{NEW_TALENT.tagline}</span>
-      <span className="tag">Coming</span>
-    </div>
+      <span className="line">{NEW_TALENT.tagline}. Free to send.</span>
+      <span className="ntcta">Send your music</span>
+    </Link>
   );
 
   const renderHome = () => (
