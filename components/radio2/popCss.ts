@@ -24,7 +24,7 @@ body{overflow:hidden}
 .gfp :focus:not(:focus-visible){outline:none}
 
 .gfp .tbar{display:flex;align-items:center;gap:9px;height:44px;padding:0 12px;padding-top:env(safe-area-inset-top);box-sizing:content-box;background:var(--rail);flex:none}
-.gfp .tbar img{width:22px;height:22px;border-radius:50%}
+.gfp .tbar img.wm{height:26px;width:auto;display:block}
 .gfp .tbar b{font-family:var(--display);font-weight:800;font-size:15.5px;letter-spacing:-.02em;white-space:nowrap}
 
 .gfp .wbody{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;

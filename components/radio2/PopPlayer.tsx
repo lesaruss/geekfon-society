@@ -14,6 +14,7 @@ import { IcPlay, IcPause, IcHeart, IcLyrics, IcX, IcOut, IcInstall, Eq } from ".
 
 // The brand kit's vector wheel (BrandDesk > GeekFon Society > Logo).
 const LOGO = "/brands/geekfon-society/geekfon-wheel.svg";
+const WORDMARK = "/brands/geekfon-society/geekfon-wordmark-reverse.svg";
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
 const coverOf = (rot?: RadioTrack[]) => (rot ?? []).find(t => t.kind !== "spot" && t.coverUrl)?.coverUrl ?? null;
@@ -122,9 +123,10 @@ export default function PopPlayer() {
   return (
     <div className={"gfp" + (R.live ? " playing" : "") + (lyrOpen ? " lyr" : "")} style={{ "--st": stColor(st), "--st-ink": stInk(st) } as React.CSSProperties}>
       <style>{POP_CSS}</style>
+      {/* The brand kit's wordmark on night, the same logo as the site (Sean, 16 Nov 2026: the pop-out still showed the old
+          wheel-and-typed-name setup). */}
       <header className="tbar">
-        <img src={LOGO} alt="" />
-        <b>GeekFon Radio</b>
+        <img className="wm" src={WORDMARK} alt="GeekFon Society" />
       </header>
 
       <div className="wbody">
