@@ -11,7 +11,7 @@
 // whether it was there.
 
 import { serviceClient, SUPABASE_URL } from "./supabaseAdmin";
-import { loadArtistDepot, depotSlug, type PublicAlbum } from "./depot";
+import { loadArtistDepot, depotSlug, LABEL_ARTISTS, type PublicAlbum } from "./depot";
 import { loadGallery, featuredGallery } from "./gallery";
 import { stationsFeaturing, listStations, inkFor, MAIN_STATION } from "./radio";
 import { ARTIST_ORDER } from "@/lib/roster";
@@ -76,9 +76,12 @@ export function sellableAlbum(albums: PublicAlbum[]): { id: string; title: strin
   return a ? { id: a.id, title: a.title } : null;
 }
 
-/** Albums with at least one live song, oldest first. Label artists keep their single-album model (empty list). */
-function albumCards(albums: PublicAlbum[], liveIds: string[]): AlbumCard[] {
-  if (albums.some(a => a.label)) return [];
+/** Albums with at least one live song, oldest first. Label-model artists
+ *  (LABEL_ARTISTS, e.g. Roxanne) keep their single-album model (empty list).
+ *  Note: PublicAlbum.label is true for every artist on artist pages (HQ
+ *  release state drives access for all), so it cannot be used here. */
+function albumCards(albums: PublicAlbum[], liveIds: string[], slug: string): AlbumCard[] {
+  if (LABEL_ARTISTS.has(slug)) return [];
   const live = new Set(liveIds);
   return albums
     .map(a => {
@@ -92,8 +95,8 @@ function albumCards(albums: PublicAlbum[], liveIds: string[]): AlbumCard[] {
 }
 
 /** What the $11 buys by default: with two or more albums, the newest one (Sean, 2026-11-17); otherwise as before. */
-function sellFor(albums: PublicAlbum[], liveIds: string[]): SellAlbum | null {
-  const cards = albumCards(albums, liveIds);
+function sellFor(albums: PublicAlbum[], liveIds: string[], slug: string): SellAlbum | null {
+  const cards = albumCards(albums, liveIds, slug);
   if (cards.length >= 2) { const n = cards[cards.length - 1]; return { id: n.id, title: n.title, inProgress: n.inProgress }; }
   return sellableAlbum(albums);
 }
@@ -182,8 +185,8 @@ export async function loadArtistPage(rawSlug: string): Promise<ArtistPageData | 
     homeStation: homeStation ? chip(homeStation) : null,
     press,
     gallery: { items, lockedCount: galleryPublic.lockedCount },
-    album: sellFor(depot.albums, depot.songs.map(x => x.id)),
-    albums: albumCards(depot.albums, depot.songs.map(x => x.id)),
+    album: sellFor(depot.albums, depot.songs.map(x => x.id), depotSlug(slug)),
+    albums: albumCards(depot.albums, depot.songs.map(x => x.id), depotSlug(slug)),
   };
 }
 
