@@ -11,10 +11,15 @@ import { useArtist } from "./radioData";
 import { startSupportCheckout } from "@/components/roster/checkout";
 import { IcX } from "./icons";
 import { IcFull, IcPic, IcTalk, IcSpark, IcLock } from "./artistIcons";
+import { useT } from "@/components/i18n/I18n";
+
+const PRICE = "$11";
+const LIFETIME_PRICE = "$111";
 
 type Album = { id: string; title: string; inProgress?: boolean } | null;
 
 export default function UnlockSheet({ slug, album, onClose }: { slug: string; album?: Album; onClose: () => void }) {
+  const t = useT();
   const A = useArtist(slug);
   const [sell, setSell] = useState<Album | undefined>(album);
   const [busy, setBusy] = useState(false);
@@ -63,11 +68,13 @@ export default function UnlockSheet({ slug, album, onClose }: { slug: string; al
   const art = A?.cutout || A?.portrait || A?.avatar || null;
   const cut = !!A?.cutout;
   const perks: [React.ReactNode, string][] = [
-    [<IcFull key="f" />, sell ? `Every song on ${sell.title} in full, on demand. Play any song, any time, and move around in it.` : "Every song in full, on demand. Play any song, any time, and move around in it."],
-    [<IcPic key="p" />, "The Gallery: the photos and wallpapers made for supporters."],
-    [<IcTalk key="t" />, "Join the Chat: comment and reply."],
-    [<IcSpark key="s" />, sell?.inProgress ? `${sell.title} is still being made: each new song unlocks as it lands, with a Founding Fan badge.` : "New songs as they are released."],
+    [<IcFull key="f" />, sell ? t("unlock.perkSongsAlbum", { title: sell.title }) : t("unlock.perkSongs")],
+    [<IcPic key="p" />, t("unlock.perkGallery")],
+    [<IcTalk key="t" />, t("unlock.perkChat")],
+    [<IcSpark key="s" />, sell?.inProgress ? t("unlock.perkInProgress", { title: sell.title }) : t("unlock.perkNewSongs")],
   ];
+  // The price sits in bold inside the sentence: split the translated line around it.
+  const [pricePre, pricePost = ""] = t("unlock.priceOneTime", { price: "{price}" }).split("{price}");
 
   return (
     <div className="sheet" onKeyDown={trap}>
@@ -76,21 +83,21 @@ export default function UnlockSheet({ slug, album, onClose }: { slug: string; al
         <div className="sh-in uk" style={{ "--ac": accent, "--ac-ink": ink } as React.CSSProperties}>
           <div className={"uk-art " + (cut ? "cut" : "sq")}>{art ? <img src={art} alt="" /> : null}</div>
           <div className="uk-body">
-            <button type="button" className="sh-x" data-close onClick={onClose} aria-label="Close"><IcX /></button>
-            <p className="eyebrow">One artist, yours to keep</p>
-            <h2 className="uk-h" id="ukTitle">{name ? `Unlock ${name}` : "Unlock"}</h2>
-            <p className="uk-price"><b>$11</b>, one time.{sell ? ` Includes ${sell.title}.` : ""}</p>
+            <button type="button" className="sh-x" data-close onClick={onClose} aria-label={t("unlock.close")}><IcX /></button>
+            <p className="eyebrow">{t("unlock.eyebrow")}</p>
+            <h2 className="uk-h" id="ukTitle">{name ? t("unlock.title", { name }) : t("unlock.titleNoName")}</h2>
+            <p className="uk-price">{pricePre}<b>{PRICE}</b>{pricePost}{sell ? ` ${t("unlock.includes", { title: sell.title })}` : ""}</p>
             <ul className="perks">
-              {perks.map(([ic, t]) => <li key={t}><span className="pk">{ic}</span><span>{t}</span></li>)}
+              {perks.map(([ic, txt]) => <li key={txt}><span className="pk">{ic}</span><span>{txt}</span></li>)}
             </ul>
             <div className="uk-cta">
               <button type="button" className="pill uk-go" onClick={buy} disabled={busy || sell === undefined || !A}>
-                {busy ? "Starting checkout" : <><IcLock />Unlock for $11</>}
+                {busy ? t("unlock.startingCheckout") : <><IcLock />{t("unlock.unlockFor", { price: PRICE })}</>}
               </button>
               {error ? <p className="uk-err" role="alert">{error}</p> : null}
-              <p className="uk-life">Every artist with Lifetime, $111: opening soon.</p>
+              <p className="uk-life">{t("unlock.lifetime", { price: LIFETIME_PRICE })}</p>
             </div>
-            <p className="uk-fine">Radio stays free and live for everyone. Lyrics are free for every song.</p>
+            <p className="uk-fine">{t("unlock.fine")}</p>
           </div>
         </div>
       </div>

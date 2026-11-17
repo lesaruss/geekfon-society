@@ -164,10 +164,10 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
 
   /* ---------- greeting by the listener's own clock ---------- */
   useEffect(() => {
-    setHello(greeting());
-    const t = setInterval(() => setHello(greeting()), 60000);
-    return () => clearInterval(t);
-  }, []);
+    setHello(greeting(t));
+    const iv = setInterval(() => setHello(greeting(t)), 60000);
+    return () => clearInterval(iv);
+  }, [t]);
 
   const showToast = useCallback((text: string) => setToast(t => ({ text, n: (t?.n ?? 0) + 1 })), []);
   useEffect(() => {

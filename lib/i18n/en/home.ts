@@ -15,7 +15,7 @@ const home = {
   stations: "Stations",
   stationsIntro: "Live and free. Every station is already on air when you tune in.",
   seasonal: "Seasonal",
-  inRotation_one: "{count} songs in rotation",
+  inRotation_one: "{count} song in rotation",
   inRotation_other: "{count} songs in rotation",
   pause: "Pause",
   play: "Play",
