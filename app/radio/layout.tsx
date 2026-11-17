@@ -8,6 +8,7 @@
 // optical-size axis comes back as an extensionless URL and the build fails).
 import type { Metadata, Viewport } from "next";
 import SiteFonts from "@/components/radio2/SiteFonts";
+import { I18nProvider } from "@/components/i18n/I18n";
 
 
 
@@ -23,5 +24,5 @@ export const viewport: Viewport = {
 };
 
 export default function RadioLayout({ children }: { children: React.ReactNode }) {
-  return <SiteFonts>{children}</SiteFonts>;
+  return <SiteFonts><I18nProvider>{children}</I18nProvider></SiteFonts>;
 }

@@ -7,6 +7,7 @@
 import type { Viewport } from "next";
 import SiteFonts from "@/components/radio2/SiteFonts";
 import RadioShell from "@/components/radio2/RadioShell";
+import { I18nProvider } from "@/components/i18n/I18n";
 import LesarussQuietCheck from "@/components/LesarussQuietCheck";
 
 export const viewport: Viewport = { themeColor: "#09090A", viewportFit: "cover", colorScheme: "dark" };
@@ -15,7 +16,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   return (
     <SiteFonts>
       <LesarussQuietCheck />
-      <RadioShell>{children}</RadioShell>
+      <I18nProvider><RadioShell>{children}</RadioShell></I18nProvider>
     </SiteFonts>
   );
 }
