@@ -20,6 +20,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useLiveRadio, songOf, sameSong, fmtTime, PREVIEW_SECONDS, FALLBACK_MAIN, isArtistStation, type Song, type Station, type LiveRadio } from "./useLiveRadio";
 import { useArtist, useLyrics, useLyricView, lyricPreview, NEW_TALENT, stColor, stInk, greeting } from "./radioData";
 import { LyricToggle } from "./LyricToggle";
+import { LanguagePicker, useT } from "@/components/i18n/I18n";
 import { RADIO_CSS } from "./radioCss";
 import { ARTIST_CSS } from "./artistCss";
 import UnlockSheet from "./UnlockSheet";
@@ -98,6 +99,7 @@ export function useShell(): ShellCtx {
 
 export default function RadioShell({ children }: { children: React.ReactNode }) {
   const R = useLiveRadio();
+  const t = useT();
   const pathname = usePathname() || "/";
   const router = useRouter();
   const onHome = pathname === "/";
@@ -229,8 +231,8 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   const heart = useCallback((s: Song | null) => {
     if (!s?.songId) return;
     const on = R.toggleHeart(s);
-    showToast(on ? "Saved to Hearted songs on this device" : "Removed from Hearted songs");
-  }, [R, showToast]);
+    showToast(on ? t("shell.heartSaved") : t("shell.heartRemoved"));
+  }, [R, showToast, t]);
 
   const tuneTo = useCallback((slug: string) => { setPinned(null); R.tune(slug, true); }, [R]);
   const openUnlock = useCallback((slug: string, album?: { id: string; title: string } | null) => { setPanelOpen(false); setUnlock({ slug, album }); }, []);
@@ -246,8 +248,8 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
 
   // The tab's title names the song while the radio plays; otherwise the page's own.
   useEffect(() => {
-    document.title = R.live && R.onAir ? `${R.onAir.title} by ${R.onAir.artist} on ${st.name}, ${BASE_TITLE}` : baseTitle;
-  }, [R.live, R.onAir, st.name, baseTitle]);
+    document.title = R.live && R.onAir ? t("shell.tabTitle", { title: R.onAir.title, artist: R.onAir.artist, station: st.name, site: BASE_TITLE }) : baseTitle;
+  }, [R.live, R.onAir, st.name, baseTitle, t]);
 
   // Pop out: a small window of its own (fallback: the link opens a tab).
   const popStation = R.station;
@@ -287,13 +289,13 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
               <img className="wm" src={WORDMARK} alt="GeekFon Society" />
             </Link>
             <div className="nav">
-              <button type="button" aria-current={onHome && view === "home" ? "page" : undefined} onClick={() => go("home")}><IcHome />Home</button>
-              <button type="button" aria-current={onHome && view === "stations" ? "page" : undefined} onClick={() => go("stations")}><IcRadio />Stations</button>
-              <button type="button" aria-current={onHome && view === "hearted" ? "page" : undefined} onClick={() => go("hearted")}><IcHeartSolid />Hearted songs<span className="count">{R.hearts.length}</span></button>
-              <Link href="/roster" aria-current={onArtists ? "page" : undefined}><IcArtists />Artists</Link>
-              <Link href="/you" aria-current={onYou ? "page" : undefined}><IcUser size={22} />You</Link>
+              <button type="button" aria-current={onHome && view === "home" ? "page" : undefined} onClick={() => go("home")}><IcHome />{t("shell.home")}</button>
+              <button type="button" aria-current={onHome && view === "stations" ? "page" : undefined} onClick={() => go("stations")}><IcRadio />{t("shell.stationsNav")}</button>
+              <button type="button" aria-current={onHome && view === "hearted" ? "page" : undefined} onClick={() => go("hearted")}><IcHeartSolid />{t("shell.heartedSongs")}<span className="count">{R.hearts.length}</span></button>
+              <Link href="/roster" aria-current={onArtists ? "page" : undefined}><IcArtists />{t("shell.artists")}</Link>
+              <Link href="/you" aria-current={onYou ? "page" : undefined}><IcUser size={22} />{t("shell.you")}</Link>
             </div>
-            <h3>On the dial</h3>
+            <h3>{t("shell.onTheDial")}</h3>
             <div className="dial">
               {dial.map(s => {
                 const on = s.slug === R.station;
@@ -302,14 +304,14 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
                 return (
                   <button key={s.slug} type="button" aria-pressed={on} style={{ "--hl": art ? "var(--text)" : stColor(s) } as React.CSSProperties} onClick={() => tuneTo(s.slug)}>
                     <span className="sw" style={{ background: stColor(s) }}>{c ? <img src={c} alt="" /> : null}</span>
-                    <span><span className="nm">{s.name}</span><span className="sub">{art ? "Artist radio" : s.seasonal ? "Seasonal" : "Live"}</span></span>
+                    <span><span className="nm">{s.name}</span><span className="sub">{art ? t("shell.artistRadio") : s.seasonal ? t("shell.seasonal") : t("shell.live")}</span></span>
                     {on && !pv ? <span className="eqw" style={{ color: art ? "var(--text)" : stColor(s) }}><Eq still={!R.live} /></span> : null}
                   </button>
                 );
               })}
-              <div className="soon" aria-label={`${NEW_TALENT.name}, coming`}>
+              <div className="soon" aria-label={t("shell.nameComing", { name: NEW_TALENT.name })}>
                 <span className="sw" style={{ boxShadow: `inset 0 0 0 2px ${NEW_TALENT.color}` }} />
-                <span><span className="nm">{NEW_TALENT.name}</span><span className="sub">Coming</span></span>
+                <span><span className="nm">{NEW_TALENT.name}</span><span className="sub">{t("shell.coming")}</span></span>
               </div>
             </div>
             <RailAccount me={me} />
@@ -318,12 +320,13 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
           <main className="main" ref={mainRef}>
             <div className="top">
               <Link className="mlogo" href="/" onClick={e => { if (onHome) { e.preventDefault(); go("home"); } }}><img className="wm" src={WORDMARK} alt="GeekFon Society" /></Link>
+              <LanguagePicker className="toplang" />
               <TopAccount me={me} />
             </div>
             <div className="view">{children}</div>
           </main>
 
-          <aside className={"panel" + (panelOpen ? " open" : "") + (flash ? " flash" : "")} key={`panel-${flash}`} ref={panelRef} aria-label="What is this?">
+          <aside className={"panel" + (panelOpen ? " open" : "") + (flash ? " flash" : "")} key={`panel-${flash}`} ref={panelRef} aria-label={t("shell.whatIsThis")}>
             <WhatPanel
               song={panelSong}
               pinned={!!pinned}
@@ -341,19 +344,19 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
             />
           </aside>
 
-          <div className="bar" role="region" aria-label="Now playing">
+          <div className="bar" role="region" aria-label={t("shell.nowPlaying")}>
             <div className="np">
-              <button type="button" className="cv" onClick={() => (isSpot && !pv ? undefined : openPanel())} aria-label="What is this?">
-                {cover ? <img src={cover} alt={barSong ? `Cover of ${barSong.title}` : ""} /> : <img className="logo" src={LOGO} alt="" />}
+              <button type="button" className="cv" onClick={() => (isSpot && !pv ? undefined : openPanel())} aria-label={t("shell.whatIsThis")}>
+                {cover ? <img src={cover} alt={barSong ? t("shell.coverOf", { title: barSong.title }) : ""} /> : <img className="logo" src={LOGO} alt="" />}
               </button>
               <div className="tx">
-                <button type="button" className="tt" onClick={() => openPanel()}><b>{pv ? pv.song.title : R.onAir?.title || (R.loading ? "Tuning in" : st.name)}</b></button>
+                <button type="button" className="tt" onClick={() => openPanel()}><b>{pv ? pv.song.title : R.onAir?.title || (R.loading ? t("shell.tuningIn") : st.name)}</b></button>
                 {isSpot && !pv ? (
                   R.onAir?.linkUrl
-                    ? <a className="ta sponsor" href={R.onAir.linkUrl} target="_blank" rel="noopener sponsored">Visit {R.onAir.sponsor || R.onAir.artist}<IcOut size={12} /></a>
-                    : <span className="ta">{R.onAir?.sponsor ? `With ${R.onAir.sponsor}` : R.onAir?.artist}</span>
+                    ? <a className="ta sponsor" href={R.onAir.linkUrl} target="_blank" rel="noopener sponsored">{t("shell.visitName", { name: R.onAir.sponsor || R.onAir.artist })}<IcOut size={12} /></a>
+                    : <span className="ta">{R.onAir?.sponsor ? t("shell.withSponsor", { sponsor: R.onAir.sponsor }) : R.onAir?.artist}</span>
                 ) : (
-                  <button type="button" className="ta" onClick={() => openPanel()} aria-label={barSong ? `${barSong.artist}, what is this?` : "What is this?"}>{barSong?.artist || st.name}</button>
+                  <button type="button" className="ta" onClick={() => openPanel()} aria-label={barSong ? t("shell.artistWhatIsThis", { artist: barSong.artist }) : t("shell.whatIsThis")}>{barSong?.artist || st.name}</button>
                 )}
               </div>
               {barSong?.songId ? (
@@ -362,11 +365,11 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
             </div>
             <div className="ctr">
               <div className="row">
-                <span className={"live" + (pv ? " pvm" : R.live ? " on" : "")}><i />{pv ? (pv.full ? "On demand" : "Preview") : R.onAir?.type === "pinned" ? "Premiere" : "Live"}</span>
-                <button type="button" className="play" onClick={barPlay} disabled={!pv && R.loading && !R.onAir} aria-label={pv ? (barPlaying ? "Pause" : "Play") : R.live ? "Pause" : "Play"}>
+                <span className={"live" + (pv ? " pvm" : R.live ? " on" : "")}><i />{pv ? (pv.full ? t("shell.onDemand") : t("shell.preview")) : R.onAir?.type === "pinned" ? t("shell.premiere") : t("shell.live")}</span>
+                <button type="button" className="play" onClick={barPlay} disabled={!pv && R.loading && !R.onAir} aria-label={pv ? (barPlaying ? t("shell.pause") : t("shell.play")) : R.live ? t("shell.pause") : t("shell.play")}>
                   {barPlaying ? <IcPause /> : <IcPlay />}
                 </button>
-                <span className="stname">{pv ? "Radio paused" : st.name}</span>
+                <span className="stname">{pv ? t("shell.radioPaused") : st.name}</span>
               </div>
               <div className="prog" aria-hidden="true">
                 <span>{fmtTime(at)}</span>
@@ -377,10 +380,10 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
             <div className="rt">
               {/* Quiet controls (Sean, 2026-11-17): Back to live sits here while a preview plays, beside a labeled Pop out,
                   instead of a big floating "Radio paused" bar. */}
-              {pv ? <button type="button" className="rtb live-b" onClick={() => R.leavePreview(true)} aria-label="Back to live radio" title="Back to live radio"><IcRadio size={16} /><span className="t">Back to live</span></button> : null}
-              <a className="rtb hide-m" href="/radio/pop" target="_blank" rel="noopener" onClick={popOut} aria-label="Pop out the player" title="Pop out the player"><IcPopOut size={16} /><span className="t">Pop out</span></a>
-              <button type="button" className="wit" onClick={() => openPanel()}><span className="q" aria-hidden="true">?</span><span className="t">What is this?</span></button>
-              <button type="button" className="ib" onClick={() => (typeof window !== "undefined" && window.innerWidth <= 760 ? openPanel(barSong) : openLyrics())} disabled={!barSong?.songId} aria-label="Lyrics and song info" title="Lyrics"><IcLyrics /></button>
+              {pv ? <button type="button" className="rtb live-b" onClick={() => R.leavePreview(true)} aria-label={t("shell.backToLiveRadio")} title={t("shell.backToLiveRadio")}><IcRadio size={16} /><span className="t">{t("shell.backToLive")}</span></button> : null}
+              <a className="rtb hide-m" href="/radio/pop" target="_blank" rel="noopener" onClick={popOut} aria-label={t("shell.popOutPlayer")} title={t("shell.popOutPlayer")}><IcPopOut size={16} /><span className="t">{t("shell.popOut")}</span></a>
+              <button type="button" className="wit" onClick={() => openPanel()}><span className="q" aria-hidden="true">?</span><span className="t">{t("shell.whatIsThis")}</span></button>
+              <button type="button" className="ib" onClick={() => (typeof window !== "undefined" && window.innerWidth <= 760 ? openPanel(barSong) : openLyrics())} disabled={!barSong?.songId} aria-label={t("shell.lyricsAndInfo")} title={t("shell.lyrics")}><IcLyrics /></button>
               {barSong?.songId ? (
                 <button type="button" className={"ib show-m" + (heartOn ? " hearted" : "")} onClick={() => heart(barSong)} aria-pressed={heartOn} aria-label={heartOn ? "Remove heart" : "Heart this song"}><IcHeart on={heartOn} /></button>
               ) : null}
@@ -388,11 +391,11 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
             <div className="mini-prog" aria-hidden="true"><i style={{ width: `${pct}%` }} /></div>
           </div>
 
-          <nav className="mtabs" aria-label="Sections">
-            <button type="button" aria-current={onHome && view === "home" ? "page" : undefined} onClick={() => go("home")}><IcHome size={24} />Home</button>
-            <button type="button" aria-current={onHome && view === "stations" ? "page" : undefined} onClick={() => go("stations")}><IcRadio size={24} />Stations</button>
-            <Link href="/roster" aria-current={onArtists ? "page" : undefined}><IcArtists size={24} />Artists</Link>
-            <Link href="/you" aria-current={onYou || (onHome && view === "hearted") ? "page" : undefined}><IcUser size={24} />You</Link>
+          <nav className="mtabs" aria-label={t("shell.sections")}>
+            <button type="button" aria-current={onHome && view === "home" ? "page" : undefined} onClick={() => go("home")}><IcHome size={24} />{t("shell.home")}</button>
+            <button type="button" aria-current={onHome && view === "stations" ? "page" : undefined} onClick={() => go("stations")}><IcRadio size={24} />{t("shell.stationsNav")}</button>
+            <Link href="/roster" aria-current={onArtists ? "page" : undefined}><IcArtists size={24} />{t("shell.artists")}</Link>
+            <Link href="/you" aria-current={onYou || (onHome && view === "hearted") ? "page" : undefined}><IcUser size={24} />{t("shell.you")}</Link>
           </nav>
         </div>
 
@@ -412,18 +415,18 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
           return (
             <div className="pvnote" role="status" aria-live="polite" style={{ "--ac": stColor(home), "--ac-ink": stInk(home) } as React.CSSProperties}>
               {pv.failed ? (
-                <span>This song could not play.</span>
+                <span>{t("shell.songCouldNotPlay")}</span>
               ) : pv.full ? (
-                <><Eq still={!pv.playing} /><span>{pv.ended ? "That was the full song." : "Radio paused while you listen on demand"}</span></>
+                <><Eq still={!pv.playing} /><span>{pv.ended ? t("shell.fullSongEnded") : t("shell.pausedOnDemand")}</span></>
               ) : pv.ended ? (
                 <>
-                  <span>That was the 30-second preview.</span>
-                  {pv.song.slug ? <button type="button" className="pvn-u" onClick={() => openUnlock(pv.song.slug!)}>Hear it all: unlock {pv.song.artist}, $11</button> : null}
+                  <span>{t("shell.previewEnded")}</span>
+                  {pv.song.slug ? <button type="button" className="pvn-u" onClick={() => openUnlock(pv.song.slug!)}>{t("shell.hearItAll", { artist: pv.song.artist })}</button> : null}
                 </>
               ) : (
-                <><Eq still={!pv.playing} /><span>Radio paused while you preview</span></>
+                <><Eq still={!pv.playing} /><span>{t("shell.pausedPreview")}</span></>
               )}
-              <button type="button" className="pvn-b" onClick={() => R.leavePreview(true)}><IcRadio size={16} />Back to live</button>
+              <button type="button" className="pvn-b" onClick={() => R.leavePreview(true)}><IcRadio size={16} />{t("shell.backToLive")}</button>
             </div>
           );
         })() : null}
@@ -447,14 +450,16 @@ function Face({ me, size }: { me: Extract<Me, { state: "in" }>; size: number }) 
   );
 }
 function RailAccount({ me }: { me: Me }) {
+  const t = useT();
   if (me.state === "loading") return <span className="home" aria-hidden="true" />;
-  if (me.state === "out") return <a className="home" href="/login"><IcUser />Sign in</a>;
+  if (me.state === "out") return <a className="home" href="/login"><IcUser />{t("shell.signIn")}</a>;
   if (me.staff) return <a className="home who" href={STAFF_HOME} onClick={onStaffHomeClick}><Face me={me} size={22} /><span>BrandDesk</span><IcOut size={12} /></a>;
   return <Link className="home who" href="/you"><Face me={me} size={22} /><span>{me.firstName}</span></Link>;
 }
 function TopAccount({ me }: { me: Me }) {
+  const t = useT();
   if (me.state === "loading") return <span className="chip ghostchip" aria-hidden="true" />;
-  if (me.state === "out") return <a className="chip" href="/login"><IcUser size={12} />Sign in</a>;
+  if (me.state === "out") return <a className="chip" href="/login"><IcUser size={12} />{t("shell.signIn")}</a>;
   if (me.staff) return <a className="chip who" href={STAFF_HOME} onClick={onStaffHomeClick}><Face me={me} size={18} />BrandDesk<IcOut size={11} /></a>;
   return <Link className="chip who" href="/you"><Face me={me} size={18} />{me.firstName}</Link>;
 }
@@ -466,6 +471,7 @@ function WhatPanel(props: {
   onBack: () => void; onClose: () => void; onLyrics: (s: Song) => void; onPick: (s: Song) => void; onVisit: () => void;
 }) {
   const { song: x, pinned, station, spot, recent } = props;
+  const t = useT();
   const artist = useArtist(spot ? null : x?.slug);
   const lyrics = useLyrics(spot ? null : x?.songId);
   const lv = useLyricView(lyrics);
@@ -474,8 +480,8 @@ function WhatPanel(props: {
 
   const head = (
     <div className="ph-h">
-      <h2>{props.onAir ? "What is this?" : "About this song"}</h2>
-      <button type="button" className="ib x" onClick={props.onClose} aria-label="Close"><IcX /></button>
+      <h2>{props.onAir ? t("shell.whatIsThis") : t("shell.aboutThisSong")}</h2>
+      <button type="button" className="ib x" onClick={props.onClose} aria-label={t("shell.close")}><IcX /></button>
     </div>
   );
 
@@ -484,11 +490,11 @@ function WhatPanel(props: {
       <div className="panel-in">
         {head}
         <div className="pcover" style={{ display: "grid", placeItems: "center" }}><img src={LOGO} alt="" style={{ width: "50%", height: "50%", objectFit: "contain" }} /></div>
-        <div className="pmeta"><p className="song">{spot.title}</p><div className="who">{spot.sponsor ? `A word from ${spot.sponsor}` : spot.artist} · on {station.name}</div></div>
+        <div className="pmeta"><p className="song">{spot.title}</p><div className="who">{spot.sponsor ? t("shell.wordFrom", { sponsor: spot.sponsor }) : spot.artist} · {t("shell.onStation", { station: station.name })}</div></div>
         <div className="card2">
-          <p className="lab">On air between songs</p>
-          <p style={{ color: "var(--muted)", fontSize: 14 }}>{spot.sponsor ? "Sponsors keep GeekFon Radio free. The next song starts right after this." : `A quick hello from ${spot.artist}. The next song starts right after this.`}</p>
-          {spot.linkUrl ? <a className="spot" href={spot.linkUrl} target="_blank" rel="noopener sponsored">Visit {spot.sponsor || "the sponsor"}<IcOut /></a> : null}
+          <p className="lab">{t("shell.onAirBetween")}</p>
+          <p style={{ color: "var(--muted)", fontSize: 14 }}>{spot.sponsor ? t("shell.sponsorNote") : t("shell.helloNote", { artist: spot.artist })}</p>
+          {spot.linkUrl ? <a className="spot" href={spot.linkUrl} target="_blank" rel="noopener sponsored">{spot.sponsor ? t("shell.visitName", { name: spot.sponsor }) : t("shell.visitTheSponsor")}<IcOut /></a> : null}
         </div>
         <div style={{ height: 16 }} />
       </div>
@@ -499,7 +505,7 @@ function WhatPanel(props: {
     return (
       <div className="panel-in">
         {head}
-        <div className="card2"><p style={{ color: "var(--muted)" }}>{props.loading ? "Tuning in to the station." : "Press Play on any station. The song on air shows up here, with who sang it and the lyrics."}</p></div>
+        <div className="card2"><p style={{ color: "var(--muted)" }}>{props.loading ? t("shell.tuningInStation") : t("shell.pressPlay")}</p></div>
       </div>
     );
   }
@@ -507,11 +513,11 @@ function WhatPanel(props: {
   return (
     <div className="panel-in">
       {head}
-      {pinned ? <button type="button" className="pback" onClick={props.onBack}><IcBack />Back</button> : null}
-      <div className="pcover">{x.coverUrl ? <img src={x.coverUrl} alt={`Cover of ${x.title} by ${x.artist}`} /> : null}</div>
-      <div className="pmeta"><p className="song">{x.title}</p><div className="who">{x.artist}{props.onAir ? ` · on ${station.name}` : ""}</div></div>
+      {pinned ? <button type="button" className="pback" onClick={props.onBack}><IcBack />{t("shell.back")}</button> : null}
+      <div className="pcover">{x.coverUrl ? <img src={x.coverUrl} alt={t("shell.coverOfBy", { title: x.title, artist: x.artist })} /> : null}</div>
+      <div className="pmeta"><p className="song">{x.title}</p><div className="who">{x.artist}{props.onAir ? ` · ${t("shell.onStation", { station: station.name })}` : ""}</div></div>
       <div className="card2">
-        <p className="lab">About the artist</p>
+        <p className="lab">{t("shell.aboutArtist")}</p>
         <div className="artist">
           {pageSlug ? (
             <Link href={`/${pageSlug}`} onClick={props.onVisit} aria-label={artist?.name || x.artist} className="apic">
@@ -520,7 +526,7 @@ function WhatPanel(props: {
           ) : <span className="ph" />}
           <div>
             {pageSlug ? <Link href={`/${pageSlug}`} onClick={props.onVisit}><b>{artist?.name || x.artist}</b></Link> : <b>{x.artist}</b>}
-            <span>{artist?.tagline || "From the GeekFon Society roster"}</span>
+            <span>{artist?.tagline || t("shell.fromRoster")}</span>
           </div>
         </div>
         {artist ? (
@@ -532,28 +538,28 @@ function WhatPanel(props: {
         ) : null}
         {/* No "Visit artist page" on that artist's own page (Sean, 2026-11-17): it would go nowhere. */}
         {pageSlug && pageSlug !== props.hereSlug ? (
-          <Link className="visit" href={`/${pageSlug}`} onClick={props.onVisit}><span>Visit artist page</span><small>Songs, chat and more</small><IcArrow /></Link>
+          <Link className="visit" href={`/${pageSlug}`} onClick={props.onVisit}><span>{t("shell.visitArtistPage")}</span><small>{t("shell.songsChatMore")}</small><IcArrow /></Link>
         ) : null}
       </div>
       <div className="card2 lyr">
-        <p className="lab">Lyrics</p>
-        {lv.both ? <div className="lyh"><p className="lang">Sung in {lang}.{lv.showing === "en" ? " Shown in English." : ""}</p><LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /></div> : lang ? <p className="lang">Sung in {lang}. Shown in English.</p> : null}
+        <p className="lab">{t("shell.lyrics")}</p>
+        {lv.both ? <div className="lyh"><p className="lang">{lv.showing === "en" ? t("shell.sungInShownEnglish", { lang: lang ?? "" }) : t("shell.sungIn", { lang: lang ?? "" })}</p><LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /></div> : lang ? <p className="lang">{t("shell.sungInShownEnglish", { lang })}</p> : null}
         {lyrics === undefined && x.songId ? (
-          <p className="none">Loading the lyrics.</p>
+          <p className="none">{t("shell.loadingLyrics")}</p>
         ) : lines.length ? (
           <>
             <div className="lprev" lang={lv.showing === "orig" ? lv.code || undefined : undefined}>
               {lyricPreview(lines, 7).map((l, i) => l.kind === "sec" ? <p key={i} className="sec">{l.text}</p> : <p key={i} className="ln">{l.text}</p>)}
             </div>
-            <button type="button" className="full" onClick={() => props.onLyrics(x)}><IcLyrics size={18} />Show full lyrics</button>
+            <button type="button" className="full" onClick={() => props.onLyrics(x)}><IcLyrics size={18} />{t("shell.showFullLyrics")}</button>
           </>
         ) : (
-          <p className="none">No lyrics for this song yet.</p>
+          <p className="none">{t("shell.noLyrics")}</p>
         )}
       </div>
       {recent.length ? (
         <div className="card2 recentp">
-          <p className="lab">Recently played</p>
+          <p className="lab">{t("shell.recentlyPlayed")}</p>
           {recent.slice(0, 4).map(r => (
             <button type="button" key={(r.songId || r.title) + r.artist} className="it" onClick={() => props.onPick(r)}>
               {r.coverUrl ? <img src={r.coverUrl} alt="" /> : <span className="ph" />}
@@ -568,6 +574,7 @@ function WhatPanel(props: {
 
 /* ---------- full-screen lyrics ---------- */
 function LyricsOverlay({ song, onClose, onWhat, closeRef }: { song: Song; onClose: () => void; onWhat: () => void; closeRef: React.RefObject<HTMLButtonElement | null> }) {
+  const t = useT();
   const lyrics = useLyrics(song.songId);
   const artist = useArtist(song.slug);
   const lv = useLyricView(lyrics);
@@ -575,26 +582,26 @@ function LyricsOverlay({ song, onClose, onWhat, closeRef }: { song: Song; onClos
   const pageSlug = artist?.slug || song.slug;
   const pic = artist?.avatar || song.coverUrl;
   return (
-    <div className="lyrics" role="dialog" aria-modal="true" aria-label={`Lyrics for ${song.title}`}>
+    <div className="lyrics" role="dialog" aria-modal="true" aria-label={t("shell.lyricsFor", { title: song.title })}>
       <div className="lh">
         {song.coverUrl ? <img src={song.coverUrl} alt="" /> : null}
         <div><b>{song.title}</b><span>{song.artist}</span></div>
-        <button type="button" className="wit" onClick={onWhat}><span className="q" aria-hidden="true">?</span><span className="t">What is this?</span></button>
-        <button type="button" className="cl" ref={closeRef} onClick={onClose} aria-label="Close lyrics"><IcX /></button>
+        <button type="button" className="wit" onClick={onWhat}><span className="q" aria-hidden="true">?</span><span className="t">{t("shell.whatIsThis")}</span></button>
+        <button type="button" className="cl" ref={closeRef} onClick={onClose} aria-label={t("shell.closeLyrics")}><IcX /></button>
       </div>
       <div className="lb">
         <div className="lb-in">
           <div>
-            {lv.both ? <div className="lyh"><p className="note">Sung in {lang}.{lv.showing === "en" ? " Shown in English." : ""}</p><LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /></div> : lang ? <p className="note">Sung in {lang}. Shown in English.</p> : null}
-            {lyrics === undefined ? <p className="note">Loading the lyrics.</p>
+            {lv.both ? <div className="lyh"><p className="note">{lv.showing === "en" ? t("shell.sungInShownEnglish", { lang: lang ?? "" }) : t("shell.sungIn", { lang: lang ?? "" })}</p><LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /></div> : lang ? <p className="note">{t("shell.sungInShownEnglish", { lang })}</p> : null}
+            {lyrics === undefined ? <p className="note">{t("shell.loadingLyrics")}</p>
               : lines.length ? lines.map((l, i) => l.kind === "sec" ? <p key={i} className="sec">{l.text}</p> : <p key={i} className="ln">{l.text}</p>)
-              : <p className="note">No lyrics for this song yet. Lyrics are free for every song as they arrive.</p>}
+              : <p className="note">{t("shell.noLyricsFree")}</p>}
           </div>
           <aside className="side">
             {pic ? (pageSlug ? <Link href={`/${pageSlug}`} onClick={onClose} aria-label={artist?.name || song.artist}><img src={pic} alt="" /></Link> : <img src={pic} alt="" />) : null}
             <b>{artist?.name || song.artist}</b>
-            <span>{artist?.tagline || "From the GeekFon Society roster"}</span>
-            {pageSlug ? <Link href={`/${pageSlug}`} onClick={onClose}>Visit artist page<IcArrow /></Link> : null}
+            <span>{artist?.tagline || t("shell.fromRoster")}</span>
+            {pageSlug ? <Link href={`/${pageSlug}`} onClick={onClose}>{t("shell.visitArtistPage")}<IcArrow /></Link> : null}
           </aside>
         </div>
       </div>

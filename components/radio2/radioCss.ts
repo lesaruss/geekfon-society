@@ -61,6 +61,12 @@ body{overflow:hidden}
 .gfr .chip{font-size:12px;font-weight:600;padding:5px 10px;border-radius:6px;background:var(--surface-3);color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
 .gfr .chip:hover{color:var(--text)}
 .gfr .top .chip{margin-left:auto}
+.gfr .top .toplang{margin-left:auto}
+.gfr .top .toplang + .chip{margin-left:0}
+.gfr .langpick{position:relative;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 8px;border-radius:6px;background:var(--surface-3);color:var(--muted)}
+.gfr .langpick select{all:unset;cursor:pointer;color:inherit;font:inherit;padding-right:2px}
+.gfr .langpick select option{color:#111;background:#fff}
+.gfr .langpick:focus-within{outline:2px solid var(--text);outline-offset:1px}
 .gfr .mlogo{display:none}
 .gfr .view{padding:4px 28px 40px}
 .gfr .hero{position:relative;margin:-64px -28px 0;padding:76px 28px 22px;background:linear-gradient(180deg, color-mix(in srgb, var(--st) 38%, var(--surface)) 0%, var(--surface) 100%);transition:background .6s}
