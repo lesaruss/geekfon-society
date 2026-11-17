@@ -136,7 +136,23 @@ export default function Storefront(p: Props) {
   // Label artists sell their current album; other artists sell any album
   // they have, and with none the Support tour sells the artist's season pass.
   const labelAlbums = p.albums.filter(a => a.label).length ? p.albums.filter(a => a.label) : p.albums;
-  const album = labelAlbums.find(a => !a.out) ?? labelAlbums[labelAlbums.length - 1] ?? null;
+  // Album grid (Sean, 2026-11-17): once an artist has two distinct albums,
+  // Music opens on one square per album (newest first) and each album is its
+  // own $11. The album picked here is the one the Support tour sells; with
+  // none picked, the newest album is the offer. One album: unchanged.
+  const gridAlbums = useMemo(() => {
+    if (p.albums.some(a => a.label)) return [];
+    const ids = new Set(p.songs.map(s => s.id));
+    const withSongs = p.albums.filter(a => a.tracks.some(t => ids.has(t.songId)));
+    return withSongs.length >= 2 ? [...withSongs].reverse() : [];
+  }, [p.albums, p.songs]);
+  const [pickedAlbum, setPickedAlbum] = useState<string | null>(null);
+  const picked = gridAlbums.find(a => a.id === pickedAlbum) ?? null;
+  const album = gridAlbums.length
+    ? picked ?? gridAlbums[0]
+    : labelAlbums.find(a => !a.out) ?? labelAlbums[labelAlbums.length - 1] ?? null;
+  const owned = p.access.ownedAlbums;
+  const owns = (id: string) => owned === "all" || owned.includes(id);
   const albumOf = useMemo(() => {
     const m = new Map<string, string>();
     for (const a of p.albums) for (const t of a.tracks) if (!m.has(t.songId)) m.set(t.songId, a.title);
@@ -149,12 +165,17 @@ export default function Storefront(p: Props) {
     const seen = new Set<string>();
     const out: PublicSong[] = [];
     const push = (s?: PublicSong) => { if (s && !seen.has(s.id)) { seen.add(s.id); out.push(s); } };
+    if (picked) {
+      const tr = [...picked.tracks].sort((x, y) => x.position - y.position).map(t => byId.get(t.songId)).filter((x): x is PublicSong => !!x);
+      tr.filter(x => !x.isRemix).forEach(push); tr.filter(x => x.isRemix).forEach(push);
+      return out;
+    }
     for (const a of labelAlbums) [...a.tracks].sort((x, y) => x.position - y.position).forEach(t => { const s = byId.get(t.songId); if (s && !s.isRemix) push(s); });
     p.songs.filter(s => !s.isRemix).forEach(push);
     p.songs.filter(s => s.isRemix).forEach(push);
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.songs, p.albums]);
+  }, [p.songs, p.albums, picked]);
 
 
   // Where LoLA is in her tour video, in seconds; null while she isn't playing.
@@ -199,7 +220,48 @@ export default function Storefront(p: Props) {
             {list.some(x => x.access === "single") && (
               <ListenOn artistName={p.artistName} single={[...list].reverse().find(x => x.access === "single" && !x.isRemix)?.title ?? null} links={p.platformLinks} />
             )}
-            <Music {...p} list={list} albumOf={albumOf} album={album} />
+            {gridAlbums.length && !picked ? (
+              <div className="sf-music">
+                <div className="sf-music-note">
+                  {owned === "all"
+                    ? `You're a supporter. Every ${p.artistName} album plays in full.`
+                    : gridAlbums.some(a => owns(a.id))
+                      ? `${gridAlbums.filter(a => owns(a.id)).map(a => a.title).join(" and ")} ${gridAlbums.filter(a => owns(a.id)).length === 1 ? "is" : "are"} yours in full. Each album is its own $11.`
+                      : "Pick an album. Every song previews here, and the radio plays them all. Each album is its own $11."}
+                </div>
+                <div className="sf-albums">
+                  {gridAlbums.map(a => {
+                    const n = a.tracks.filter(t => t.kind !== "remix" && p.songs.some(s => s.id === t.songId)).length;
+                    return (
+                      <button key={a.id} type="button" className="sf-albums-card" onClick={() => setPickedAlbum(a.id)} aria-label={`Open ${a.title}`}>
+                        <span className="sf-albums-art">
+                          {a.coverUrl ? <img src={a.coverUrl} alt="" loading="lazy" /> : null}
+                          {owns(a.id) && <span className="sf-albums-owned">Owned</span>}
+                          {!owns(a.id) && a.status !== "released" && <span className="sf-albums-new">New</span>}
+                        </span>
+                        <span className="sf-albums-title">{a.title}</span>
+                        <span className="sf-albums-meta">{a.status === "released" ? `Album · ${n} ${n === 1 ? "song" : "songs"}` : `New album · ${n} of ${a.trackTarget} so far`}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <>
+                {picked && (
+                  <div className="sf-album-head">
+                    <button type="button" className="sf-btn" onClick={() => setPickedAlbum(null)} aria-label="Back to all albums">← Albums</button>
+                    <div>
+                      <div className="sf-album-name">{picked.title}</div>
+                      <div className="sf-albums-meta">
+                        {owns(picked.id) ? "You own this album." : picked.status === "released" ? "Album · $11" : "New album · in progress · get it early for $11"}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <Music {...p} supporter={picked ? owns(picked.id) : p.supporter} list={list} albumOf={albumOf} album={album} />
+              </>
+            )}
           </>
         ) : p.mode === "chat" ? (
           <div className="sf-chat">

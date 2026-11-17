@@ -646,3 +646,17 @@ html.artist-docked .gw-body,html.artist-docked .gbody{padding-bottom:0}
   .sf.sf-is-music .sf-music{margin-top:0}
   .sf.sf-is-music .am-player.am-docked{margin:0}
 }
+
+/* Album grid (2026-11-17): one square per album once an artist has two. */
+.sf-albums{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin:10px 0 18px}
+.sf-albums-card{appearance:none;border:0;background:none;padding:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;color:inherit;font:inherit;min-width:0}
+.sf-albums-art{position:relative;display:block;aspect-ratio:1;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.08);box-shadow:0 6px 18px rgba(0,0,0,.18);transition:transform .15s ease}
+.sf-albums-card:hover .sf-albums-art,.sf-albums-card:focus-visible .sf-albums-art{transform:translateY(-3px)}
+.sf-albums-art img{width:100%;height:100%;object-fit:cover;display:block}
+.sf-albums-owned,.sf-albums-new{position:absolute;top:8px;left:8px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;color:#fff;background:#111}
+.sf-albums-new{background:var(--rx,#e91e8c)}
+.sf-albums-title{font-weight:900;font-size:15px;line-height:1.2}
+.sf-albums-meta{font-size:12px;opacity:.7}
+.sf-album-head{display:flex;align-items:center;gap:12px;margin:8px 0 10px}
+.sf-album-name{font-weight:900;font-size:18px;line-height:1.2}
+@media(max-width:420px){.sf-albums{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
