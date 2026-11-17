@@ -325,6 +325,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
               song={panelSong}
               pinned={!!pinned}
               onAir={panelOnAir}
+              hereSlug={pageFocus?.slug ?? null}
               station={st}
               spot={!pinned && !pv && !pageFocus && isSpot ? R.onAir : null}
               recent={R.recent}
@@ -454,7 +455,7 @@ function TopAccount({ me }: { me: Me }) {
 
 /* ---------- "What is this?" ---------- */
 function WhatPanel(props: {
-  song: Song | null; pinned: boolean; onAir: boolean; station: Station; spot: { title: string; artist: string; sponsor?: string; linkUrl?: string } | null;
+  song: Song | null; pinned: boolean; onAir: boolean; hereSlug: string | null; station: Station; spot: { title: string; artist: string; sponsor?: string; linkUrl?: string } | null;
   recent: Song[]; loading: boolean;
   onBack: () => void; onClose: () => void; onLyrics: (s: Song) => void; onPick: (s: Song) => void; onVisit: () => void;
 }) {
@@ -523,7 +524,8 @@ function WhatPanel(props: {
             {artist.location ? <span>{artist.location}</span> : null}
           </div>
         ) : null}
-        {pageSlug ? (
+        {/* No "Visit artist page" on that artist's own page (Sean, 2026-11-17): it would go nowhere. */}
+        {pageSlug && pageSlug !== props.hereSlug ? (
           <Link className="visit" href={`/${pageSlug}`} onClick={props.onVisit}><span>Visit artist page</span><small>Songs, chat and more</small><IcArrow /></Link>
         ) : null}
       </div>
