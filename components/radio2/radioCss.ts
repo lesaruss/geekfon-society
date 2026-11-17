@@ -66,6 +66,7 @@ body{overflow:hidden}
 .gfr .langpick{position:relative;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 8px;border-radius:6px;background:var(--surface-3);color:var(--muted)}
 .gfr .langpick select{all:unset;cursor:pointer;color:inherit;font:inherit;padding-right:2px}
 .gfr .langpick select option{color:#111;background:#fff}
+.gfr .langpick .lpcode{display:none}
 .gfr .langpick:focus-within{outline:2px solid var(--text);outline-offset:1px}
 .gfr .mlogo{display:none}
 .gfr .view{padding:4px 28px 40px}
@@ -333,6 +334,8 @@ body{overflow:hidden}
   .gfr .rail{display:none}
   .gfr .main{border-radius:0;overflow:visible;min-height:100dvh;padding-bottom:calc(var(--bar-h) + var(--tabs-h) + 28px + env(safe-area-inset-bottom))}
   .gfr .top{padding:12px 16px;background:linear-gradient(var(--surface) 60%, transparent)}
+  .gfr .langpick .lpcode{display:inline}
+  .gfr .langpick select{position:absolute;inset:0;opacity:0;width:100%}
   .gfr .mlogo{display:flex;align-items:center;gap:8px;min-width:0}
   .gfr .mlogo img.wm{height:30px;width:auto;display:block}
   .gfr .mlogo small{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;align-self:flex-end;margin-bottom:2px}

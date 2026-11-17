@@ -45,6 +45,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 export const useI18n = () => useContext(I18nCtx);
 export const useT = () => useContext(I18nCtx).t;
 
+const SHORT: Record<Locale, string> = { en: "EN", es: "ES", "pt-BR": "PT", de: "DE", ja: "日本語", ko: "한국어" };
+
 /** Language picker: a compact native select, labelled with each language's own name. */
 export function LanguagePicker({ className }: { className?: string }) {
   const { locale, setLocale, t } = useI18n();
@@ -52,6 +54,7 @@ export function LanguagePicker({ className }: { className?: string }) {
     <label className={"langpick" + (className ? " " + className : "")} title={t("common.language")}>
       <span className="sr">{t("common.language")}</span>
       <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
+      <span className="lpcode" aria-hidden="true">{SHORT[locale]}</span>
       <select value={locale} onChange={e => setLocale(e.target.value as Locale)} aria-label={t("common.language")}>
         {LOCALES.map(l => <option key={l.code} value={l.code} lang={l.code}>{l.name}</option>)}
       </select>
