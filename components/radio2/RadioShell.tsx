@@ -181,7 +181,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   // listener is previewing or playing on demand; on an artist page, that
   // artist's song on air, else the page's default; everywhere else, what is on air.
   const focusSong: Song | null = pv ? pv.song
-    : pageFocus ? (onAirSong && onAirSong.slug === pageFocus.slug ? onAirSong : pageFocus.song ?? onAirSong)
+    : pageFocus ? (R.live && onAirSong && onAirSong.slug === pageFocus.slug ? onAirSong : pageFocus.song ?? onAirSong)
     : onAirSong;
   const panelSong: Song | null = pinned ?? focusSong;
   const panelOnAir = !!panelSong && !!onAirSong && !pv && sameSong(panelSong, onAirSong);
