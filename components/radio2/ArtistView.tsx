@@ -10,7 +10,7 @@
 // (full streams come only from /api/roster/<artist>/access). Lyrics are free
 // for every song. Unlock is $11 one time per artist.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useShell, artistStation, coversOf } from "./RadioShell";
 import { fmtTime, PREVIEW_SECONDS, readStore, writeStore, type Song } from "./useLiveRadio";
@@ -38,7 +38,7 @@ function readTab(): Tab {
 }
 
 export default function ArtistView({ initial }: { initial: ArtistPageData }) {
-  const { R, tuneTo, openLyrics, heart, openUnlock, showToast, setBaseTitle } = useShell();
+  const { R, tuneTo, openLyrics, heart, openUnlock, showToast, setBaseTitle, setPageFocus } = useShell();
   const [A, setA] = useState<ArtistPageData>(initial);
   const [tab, setTab] = useState<Tab>("music");
   const [saved, setSaved] = useState(false);
@@ -103,6 +103,42 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
     setSaved(on);
     showToast(on ? "Artist saved on this device" : "Removed from saved artists");
   };
+
+  // The artist's name never breaks inside a word (Sean, 2026-11-17: "Shamanic"
+  // was splitting as "Shaman / ic"). The CSS forbids mid-word breaks; this
+  // shrinks the font until the longest word fits, so names wrap only between
+  // words ("Shamanic / Resin") or sit on one line.
+  const nameRef = useRef<HTMLHeadingElement | null>(null);
+  const [nameSize, setNameSize] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const el = nameRef.current;
+    if (!el) return;
+    const fit = () => {
+      el.style.fontSize = "";
+      let size = parseFloat(getComputedStyle(el).fontSize) || 64;
+      while (el.scrollWidth > el.clientWidth + 1 && size > 22) { size -= 2; el.style.fontSize = `${size}px`; }
+      setNameSize(el.style.fontSize ? size : null);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el.parentElement || el);
+    return () => ro.disconnect();
+  }, [A.name]);
+
+  // The right panel follows this artist (Sean, 2026-11-17): by default their
+  // latest release (the newest album's lead song, else their first song);
+  // an opened album points it at that album's lead song. A song being
+  // previewed or played on demand takes over from the shell.
+  useEffect(() => {
+    const albumsNewest = [...(A.albums || [])].reverse();
+    const pick = (ids: string[]) => ids.map(id => A.songs.find(x => x.id === id)).find(x => x && !x.isRemix) ?? null;
+    const opened = openAlbum ? albumsNewest.find(a => a.id === openAlbum) : null;
+    const lead = (opened ? pick(opened.songIds) : null)
+      ?? (albumsNewest.length ? pick(albumsNewest[0].songIds) : null)
+      ?? A.songs.find(x => x.single && !x.isRemix) ?? A.songs.find(x => !x.isRemix) ?? null;
+    setPageFocus({ slug: A.slug, song: lead ? { songId: lead.id, title: lead.title, artist: A.name, slug: A.slug, coverUrl: lead.coverUrl, durationSeconds: lead.durationSeconds ?? undefined } : null });
+  }, [A.slug, A.name, A.songs, A.albums, openAlbum, setPageFocus]);
+  useEffect(() => () => setPageFocus(null), [setPageFocus]);
 
   const myRadio = artistStation(A.slug);
   const radioOn = R.station === myRadio && !R.preview;
@@ -328,7 +364,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
       <section className="ahead">
         <div className="atext">
           <nav className="crumbs" aria-label="Breadcrumb"><Link href="/">GeekFon Society</Link><span aria-hidden="true">›</span><Link href="/roster">Artists</Link></nav>
-          <h1 className="aname">{A.name}</h1>
+          <h1 className="aname" ref={nameRef} style={nameSize ? { fontSize: nameSize } : undefined}>{A.name}</h1>
           {A.tagline ? <p className="atag">{A.tagline}</p> : null}
           <div className="apills">
             {A.pills.map(p => <span key={p}>{p}</span>)}

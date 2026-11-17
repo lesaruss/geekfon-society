@@ -41,7 +41,7 @@ export const ARTIST_CSS = `
 .gfr .ahead{position:relative;margin:-64px -28px 0;padding:88px 292px 26px 28px;min-height:390px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;background:linear-gradient(180deg, color-mix(in srgb, var(--ac) 64%, var(--surface)) 0%, color-mix(in srgb, var(--ac) 24%, var(--surface)) 72%, var(--surface) 100%)}
 .gfr .ahead .eyebrow{color:var(--text);opacity:.85}
 .gfr .atext{position:relative;z-index:2;min-width:0}
-.gfr .aname{font-family:var(--display);font-weight:800;font-size:clamp(52px,7vw,100px);letter-spacing:-.045em;line-height:.86;margin:0;overflow-wrap:anywhere}
+.gfr .aname{font-family:var(--display);font-weight:800;font-size:clamp(52px,7vw,100px);letter-spacing:-.045em;line-height:.86;margin:0;overflow-wrap:normal;word-break:normal;hyphens:none;max-width:100%}
 .gfr .atag{font-family:var(--display);font-weight:700;font-size:clamp(17px,1.6vw,21px);letter-spacing:-.01em;line-height:1.22;margin:14px 0 0;max-width:30ch}
 .gfr .apills{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
 .gfr .apills span{font-size:12px;font-weight:700;padding:5px 9px;border-radius:5px;background:rgba(0,0,0,.3);color:var(--text);display:inline-flex;align-items:center;gap:5px}

@@ -82,6 +82,9 @@ type ShellCtx = {
   /** Who is signed in (Your GeekFon, the rail and the top bar). */
   me: Me;
   signOut: () => Promise<void>;
+  /** An artist page names its artist and the song the panel shows by default
+   *  (their latest release). null when leaving the page. */
+  setPageFocus: (f: { slug: string; song: Song | null } | null) => void;
 };
 const Ctx = createContext<ShellCtx | null>(null);
 export function useShell(): ShellCtx {
@@ -103,6 +106,10 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   const [panelOpen, setPanelOpen] = useState(false);
   const [flash, setFlash] = useState(0);
   const [pinned, setPinned] = useState<Song | null>(null);
+  // Artist page focus (Sean, 2026-11-17): on an artist's page the panel stays
+  // on that artist: the song being previewed or played on demand, else their
+  // own song on air, else the page's default (their latest release).
+  const [pageFocus, setPageFocus] = useState<{ slug: string; song: Song | null } | null>(null);
   const [lyricsFor, setLyricsFor] = useState<Song | null>(null);
   const [toast, setToast] = useState<{ text: string; n: number } | null>(null);
   const [unlock, setUnlock] = useState<{ slug: string; album?: { id: string; title: string } | null } | null>(null);
@@ -122,6 +129,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     setView(readView());
     setPanelOpen(false);
+    setPinned(null);
     setLyricsFor(null);
     setUnlock(null);
     if (mainRef.current) mainRef.current.scrollTop = 0;
@@ -169,6 +177,14 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   const isSpot = R.onAir?.type === "ad";
   const pv = R.preview;
   const barSong: Song | null = pv ? pv.song : onAirSong;
+  // What the panel shows: a song picked in the panel; then the song the
+  // listener is previewing or playing on demand; on an artist page, that
+  // artist's song on air, else the page's default; everywhere else, what is on air.
+  const focusSong: Song | null = pv ? pv.song
+    : pageFocus ? (onAirSong && onAirSong.slug === pageFocus.slug ? onAirSong : pageFocus.song ?? onAirSong)
+    : onAirSong;
+  const panelSong: Song | null = pinned ?? focusSong;
+  const panelOnAir = !!panelSong && !!onAirSong && !pv && sameSong(panelSong, onAirSong);
   // The dial: the stations, with an artist radio on top while it is tuned in.
   const tunedArtist = isArtistStation(R.station) ? R.stationInfo : null;
   const dial: Station[] = tunedArtist ? [tunedArtist, ...R.stations] : R.stations;
@@ -183,10 +199,10 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   /* ---------- panel and lyrics ---------- */
   const isDrawer = () => typeof window !== "undefined" && window.innerWidth <= 1180;
   const openPanel = useCallback((song?: Song | null) => {
-    setPinned(song && !sameSong(song, onAirSong) ? song : null);
+    setPinned(song && !(focusSong && sameSong(song, focusSong)) ? song : null);
     if (isDrawer()) setPanelOpen(true);
     else { if (panelRef.current) panelRef.current.scrollTop = 0; setFlash(f => f + 1); }
-  }, [onAirSong]);
+  }, [focusSong]);
   const closePanel = useCallback(() => setPanelOpen(false), []);
   const openLyrics = useCallback((song?: Song | null) => {
     const s = song ?? barSong;
@@ -253,7 +269,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
   const heartOn = R.isHearted(barSong);
   const cover = pv ? pv.song.coverUrl : R.onAir?.coverUrl;
 
-  const ctx = useMemo<ShellCtx>(() => ({ R, view, go, hello, openPanel, openLyrics, heart, tuneTo, showToast, openUnlock, homeStationOf, setBaseTitle, me, signOut }),
+  const ctx = useMemo<ShellCtx>(() => ({ R, view, go, hello, openPanel, openLyrics, heart, tuneTo, showToast, openUnlock, homeStationOf, setBaseTitle, me, signOut, setPageFocus }),
     [R, view, go, hello, openPanel, openLyrics, heart, tuneTo, showToast, openUnlock, homeStationOf, me, signOut]);
 
   return (
@@ -306,15 +322,16 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
 
           <aside className={"panel" + (panelOpen ? " open" : "") + (flash ? " flash" : "")} key={`panel-${flash}`} ref={panelRef} aria-label="What is this?">
             <WhatPanel
-              song={pinned ?? onAirSong}
+              song={panelSong}
               pinned={!!pinned}
+              onAir={panelOnAir}
               station={st}
-              spot={!pinned && isSpot ? R.onAir : null}
+              spot={!pinned && !pv && !pageFocus && isSpot ? R.onAir : null}
               recent={R.recent}
               onBack={() => setPinned(null)}
               onClose={closePanel}
               onLyrics={openLyrics}
-              onPick={s => setPinned(sameSong(s, onAirSong) ? null : s)}
+              onPick={s => setPinned(focusSong && sameSong(s, focusSong) ? null : s)}
               onVisit={closePanel}
               loading={R.loading}
             />
@@ -356,7 +373,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
             <div className="rt">
               <a className="ib hide-m" href="/radio/pop" target="_blank" rel="noopener" onClick={popOut} aria-label="Pop out the player" title="Pop out the player"><IcPopOut /></a>
               <button type="button" className="wit" onClick={() => openPanel()}><span className="q" aria-hidden="true">?</span><span className="t">What is this?</span></button>
-              <button type="button" className="ib" onClick={() => openLyrics()} disabled={!barSong?.songId} aria-label="Lyrics" title="Lyrics"><IcLyrics /></button>
+              <button type="button" className="ib" onClick={() => (typeof window !== "undefined" && window.innerWidth <= 760 ? openPanel(barSong) : openLyrics())} disabled={!barSong?.songId} aria-label="Lyrics and song info" title="Lyrics"><IcLyrics /></button>
               {barSong?.songId ? (
                 <button type="button" className={"ib show-m" + (heartOn ? " hearted" : "")} onClick={() => heart(barSong)} aria-pressed={heartOn} aria-label={heartOn ? "Remove heart" : "Heart this song"}><IcHeart on={heartOn} /></button>
               ) : null}
@@ -437,7 +454,7 @@ function TopAccount({ me }: { me: Me }) {
 
 /* ---------- "What is this?" ---------- */
 function WhatPanel(props: {
-  song: Song | null; pinned: boolean; station: Station; spot: { title: string; artist: string; sponsor?: string; linkUrl?: string } | null;
+  song: Song | null; pinned: boolean; onAir: boolean; station: Station; spot: { title: string; artist: string; sponsor?: string; linkUrl?: string } | null;
   recent: Song[]; loading: boolean;
   onBack: () => void; onClose: () => void; onLyrics: (s: Song) => void; onPick: (s: Song) => void; onVisit: () => void;
 }) {
@@ -450,7 +467,7 @@ function WhatPanel(props: {
 
   const head = (
     <div className="ph-h">
-      <h2>{pinned ? "About this song" : "What is this?"}</h2>
+      <h2>{props.onAir ? "What is this?" : "About this song"}</h2>
       <button type="button" className="ib x" onClick={props.onClose} aria-label="Close"><IcX /></button>
     </div>
   );
@@ -483,9 +500,9 @@ function WhatPanel(props: {
   return (
     <div className="panel-in">
       {head}
-      {pinned ? <button type="button" className="pback" onClick={props.onBack}><IcBack />Back to what is playing</button> : null}
+      {pinned ? <button type="button" className="pback" onClick={props.onBack}><IcBack />Back</button> : null}
       <div className="pcover">{x.coverUrl ? <img src={x.coverUrl} alt={`Cover of ${x.title} by ${x.artist}`} /> : null}</div>
-      <div className="pmeta"><p className="song">{x.title}</p><div className="who">{x.artist}{pinned ? "" : ` · on ${station.name}`}</div></div>
+      <div className="pmeta"><p className="song">{x.title}</p><div className="who">{x.artist}{props.onAir ? ` · on ${station.name}` : ""}</div></div>
       <div className="card2">
         <p className="lab">About the artist</p>
         <div className="artist">
