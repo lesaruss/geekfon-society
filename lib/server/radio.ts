@@ -327,15 +327,24 @@ async function tracksFor(
 
 // ---------------------------------------------------------------------------
 // Artist radio (Sean, 2026-11-12: every artist gets their own artist radio).
-// Station slug "artist:<slug>". One synced rotation: the artist's own songs
-// first (no remixes), then the songs of the genre station(s) the artist is on,
-// the closest-sounding company. An artist on no genre station (Rustblood
-// Prophets, Straight & Narrow while Rock Radio is off) is followed by the main
-// GeekFon Radio rotation. Songs a seasonal station holds stay off, as on every
-// other station. The player shows it as "<Artist> Radio" in the artist's
+// Station slug "artist:<slug>". One synced rotation of the artist's own songs
+// only (no remixes), shuffled daily and looped (Sean, 2026-11-17; it used to
+// continue into their genre station). Songs a seasonal station holds stay
+// off, as on every other station. The player shows it as "<Artist> Radio" in the artist's
 // accent color (gfs_artists.profile.accent).
 
 export const ARTIST_STATION_PREFIX = "artist:";
+
+/** Deterministic shuffle: the same order for every listener for a given seed (FNV-1a hash into mulberry32). */
+function seededShuffle<T>(list: T[], seed: string): T[] {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
+  let t = h >>> 0;
+  const rand = () => { t = (t + 0x6D2B79F5) >>> 0; let r = Math.imul(t ^ (t >>> 15), 1 | t); r ^= r + Math.imul(r ^ (r >>> 7), 61 | r); return ((r ^ (r >>> 14)) >>> 0) / 4294967296; };
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
+}
 const ARTIST_STATION = /^artist:([a-z0-9-]{1,64})$/;
 
 export function artistStationSlug(slug: string): string { return `${ARTIST_STATION_PREFIX}${slug}`; }
@@ -383,34 +392,32 @@ export async function buildArtistSchedule(station: string): Promise<{ rotation: 
   const states = await labelStates([slug]);
   const mine = await tracksFor(sb, own, names, singles, states);
 
-  // The company: every genre station the artist is on, else GeekFon Radio.
+  // Only the artist (Sean, 2026-11-17): "when I click on the radio station
+  // for that particular artist ... I should just hear their songs in a loop."
+  // The old rotation appended the whole genre station after the artist's few
+  // songs; live radio joins wherever the clock is in the loop, so listeners
+  // usually landed in the borrowed part (often Roxanne on Anime Radio). Now:
+  // the artist's songs only, shuffled, the same order for every listener
+  // (seeded by artist and UTC day, so it reshuffles daily), looped. Spots
+  // tagged for this station ("artist:<slug>" in radio_spots.station_slugs),
+  // e.g. short artist drops, play between songs.
   const genre = ((lineups ?? []) as { slug: string; name: string; exclusive: boolean | null }[]).filter(s => !s.exclusive);
-  const parts = genre.length
-    ? await Promise.all(genre.map(s => buildStationSchedule(s.slug)))
-    : [await buildRadioSchedule("urls")];
-  const ownIds = new Set(mine.map(t => t.songId));
-  const company: RadioTrack[] = [];
-  const seen = new Set<string>();
-  for (const p of parts) {
-    for (const t of p?.rotation ?? []) {
-      if (t.kind !== "spot" && (t.slug === slug || (t.songId && (ownIds.has(t.songId) || seen.has(t.songId))))) continue;
-      if (t.songId) seen.add(t.songId);
-      company.push(t);
-    }
-  }
+  const day = new Date().toISOString().slice(0, 10);
+  const shuffled = seededShuffle(mine, `${slug}|${day}`);
+  const spots = await stationSpots(sb, artistStationSlug(slug));
 
   const accent = a.profile?.accent || MAIN_STATION.color || "#ECE22D";
   const info: ArtistStationInfo = {
     slug: artistStationSlug(slug),
     name: `${name} Radio`,
-    tagline: genre.length ? `${name}, then ${genre.map(s => s.name).join(" and ")}` : `${name}, then GeekFon Radio`,
+    tagline: `Only ${name}, on shuffle`,
     color: accent,
     ink: inkFor(accent),
     seasonal: false,
     artistSlug: slug,
     basedOn: genre.length ? genre.map(s => s.slug) : [MAIN_STATION.slug],
   };
-  return { rotation: [...mine, ...company], overrides: [], info };
+  return { rotation: withSpots(shuffled, spots, names), overrides: [], info };
 }
 
 // Stations an artist can be heard on, for the "on GeekFon Radio" strip on

@@ -167,7 +167,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
           <div>
             <p className="eyebrow">Artist radio</p>
             <b>{A.name} Radio</b>
-            <span className="s">{radioPlaying ? "On air. Live and free." : `${A.name}, then ${company}. Live and free.`}</span>
+            <span className="s">{radioPlaying ? "On air. Live and free." : `Only ${A.name}, on shuffle. Live and free.`}</span>
           </div>
           <button type="button" className="oa-play" onClick={() => tuneTo(myRadio)} aria-label={radioPlaying ? `Pause ${A.name} Radio` : `Play ${A.name} Radio`}>{radioPlaying ? <IcPause /> : <IcPlay />}</button>
         </div>
@@ -344,7 +344,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
           ? <span className="pill sup"><IcCheck />{access.allArtists ? "Lifetime: unlocked" : "Unlocked"}</span>
           : <button type="button" className="pill" onClick={unlock}><IcLock />Unlock {A.name} · $11</button>}
       </div>
-      <p className="anote">{A.name} Radio is free and live: {A.name}, then {company}. Saving an artist stays on this device.</p>
+      <p className="anote">{A.name} Radio is free and live: only {A.name}, on shuffle. Saving an artist stays on this device.</p>
       <div className="atabs" role="tablist" aria-label={`${A.name} sections`}>
         {TABS.map(t => (
           <button key={t} type="button" role="tab" id={`atab-${t}`} className="atab" aria-selected={t === tab} aria-controls="apanel" tabIndex={t === tab ? 0 : -1} onClick={() => pickTab(t)} onKeyDown={e => tabKey(e, t)}>{TAB_NAMES[t]}</button>
