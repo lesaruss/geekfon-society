@@ -400,7 +400,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
           />
         ) : null}
 
-        {pv ? (() => {
+        {pv && !panelOpen ? (() => {
           const home = homeStationOf(pv.song.slug);
           return (
             <div className="pvnote" role="status" aria-live="polite" style={{ "--ac": stColor(home), "--ac-ink": stInk(home) } as React.CSSProperties}>
