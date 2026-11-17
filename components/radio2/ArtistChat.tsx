@@ -15,12 +15,22 @@ import type { ChatMessage, ChatPerson, ChatLockedDay } from "@/app/api/roster/[a
 import type { EngageCan, EngageCounts, ThreadComment } from "@/app/api/roster/[artist]/chat/engage/route";
 import { IcHeart, IcPlay } from "./icons";
 import { IcChat, IcLock, IcComment, IcCamera, IcSpeaker, IcTranslate } from "./artistIcons";
+import { useI18n } from "@/components/i18n/I18n";
 
 type Data = { day: string; days: string[]; today: string; messages: ChatMessage[]; locked: ChatLockedDay | null; freeDays: string[]; supporter: boolean; people: Record<string, ChatPerson>; staff: boolean; opensOn?: string | null };
 
 const ROSTER = new Set<string>(ARTIST_ORDER);
-const LANGS: Record<string, string> = { ja: "Japanese", ko: "Korean", es: "Spanish", fr: "French", pt: "Portuguese", zh: "Chinese", de: "German", zu: "Zulu" };
-const MEDIA_LABEL: Record<string, string> = { image: "View photo", video: "Watch video", audio: "Listen" };
+type T = (key: string, vars?: Record<string, string | number>) => string;
+// Keys in lib/i18n/en/chat.ts for each language code and media kind.
+const LANGS: Record<string, string> = { ja: "langJa", ko: "langKo", es: "langEs", fr: "langFr", pt: "langPt", zh: "langZh", de: "langDe", zu: "langZu" };
+const MEDIA_LABEL: Record<string, string> = { image: "viewPhoto", video: "watchVideo", audio: "listen" };
+const mediaLabel = (t: T, kind: string) => t(`chat.${MEDIA_LABEL[kind]}`);
+const mediaFrom = (t: T, kind: string, name: string) => t(`chat.${MEDIA_LABEL[kind]}From`, { name });
+// Splits a translated sentence at {link} so a link element can sit inside it.
+function withLink(s: string, link: React.ReactNode): React.ReactNode {
+  const i = s.indexOf("{link}");
+  return i < 0 ? s : <>{s.slice(0, i)}{link}{s.slice(i + 6)}</>;
+}
 
 async function authHeaders(): Promise<Record<string, string>> {
   try {
@@ -31,20 +41,20 @@ async function authHeaders(): Promise<Record<string, string>> {
   }
 }
 
-function dayLabel(day: string, today: string): string {
-  if (day === today) return "Today";
-  const t = new Date(`${today}T12:00:00Z`).getTime();
-  if (t - new Date(`${day}T12:00:00Z`).getTime() === 86400000) return "Yesterday";
-  return new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+function dayLabel(t: T, locale: string, day: string, today: string): string {
+  if (day === today) return t("chat.today");
+  const now = new Date(`${today}T12:00:00Z`).getTime();
+  if (now - new Date(`${day}T12:00:00Z`).getTime() === 86400000) return t("chat.yesterday");
+  return new Date(`${day}T12:00:00Z`).toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: "UTC" });
 }
 // Times show in the reader's own time zone; the story's days stay LA days.
-const timeLabel = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-function ago(iso: string): string {
+const timeLabel = (locale: string, iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+function ago(t: T, iso: string): string {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
-  if (s < 60) return "just now";
-  if (s < 3600) return `${Math.floor(s / 60)}m`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h`;
-  return `${Math.floor(s / 86400)}d`;
+  if (s < 60) return t("chat.justNow");
+  if (s < 3600) return t("chat.minutesAgo", { n: Math.floor(s / 60) });
+  if (s < 86400) return t("chat.hoursAgo", { n: Math.floor(s / 3600) });
+  return t("chat.daysAgo", { n: Math.floor(s / 86400) });
 }
 function groupReactions(list: { emoji: string; from: string }[]): { emoji: string; from: string[] }[] {
   const out = new Map<string, string[]>();
@@ -56,6 +66,7 @@ function signInHref(): string {
 }
 
 export default function ArtistChat({ slug, artistName, onUnlock }: { slug: string; artistName: string; onUnlock: () => void }) {
+  const { t, locale } = useI18n();
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState(false);
   const [translated, setTranslated] = useState<Set<string>>(new Set());
@@ -100,8 +111,8 @@ export default function ArtistChat({ slug, artistName, onUnlock }: { slug: strin
 
   const chips = useMemo(() => (data ? [...data.days].reverse().slice(0, 3) : []), [data]);
 
-  if (error) return <div className="empty"><IcChat /><span>The chat did not load. Try again in a moment.</span></div>;
-  if (!data) return <div className="empty"><IcChat /><span>Loading the chat.</span></div>;
+  if (error) return <div className="empty"><IcChat /><span>{t("chat.loadError")}</span></div>;
+  if (!data) return <div className="empty"><IcChat /><span>{t("chat.loading")}</span></div>;
 
   const person = (s: string): ChatPerson => data.people[s] || { name: s, avatar: null, accent: null };
   const avatar = (s: string, cls = "mav") => {
@@ -115,30 +126,30 @@ export default function ArtistChat({ slug, artistName, onUnlock }: { slug: strin
   return (
     <div className="chat">
       <div className="chat-h">
-        <div className="days" role="group" aria-label="Pick a day">
+        <div className="days" role="group" aria-label={t("chat.pickDay")}>
           {chips.map(d => (
-            <button key={d} type="button" className="dchip" aria-pressed={data.day === d} onClick={() => load(d)}>{dayLabel(d, data.today)}</button>
+            <button key={d} type="button" className="dchip" aria-pressed={data.day === d} onClick={() => load(d)}>{dayLabel(t, locale, d, data.today)}</button>
           ))}
           {data.days.length > 3 ? (
             <label className="dsel">
-              <span className="sr">Earlier days</span>
-              <select value={chips.includes(data.day) ? "" : data.day} onChange={e => e.target.value && load(e.target.value)} aria-label="Earlier days">
-                <option value="">Earlier days</option>
-                {[...data.days].reverse().slice(3).map(d => <option key={d} value={d}>{dayLabel(d, data.today)}</option>)}
+              <span className="sr">{t("chat.earlierDays")}</span>
+              <select value={chips.includes(data.day) ? "" : data.day} onChange={e => e.target.value && load(e.target.value)} aria-label={t("chat.earlierDays")}>
+                <option value="">{t("chat.earlierDays")}</option>
+                {[...data.days].reverse().slice(3).map(d => <option key={d} value={d}>{dayLabel(t, locale, d, data.today)}</option>)}
               </select>
             </label>
           ) : null}
         </div>
-        <p className="cnote">Every day is free to read. Times are in your time.</p>
+        <p className="cnote">{t("chat.freeNote")}</p>
       </div>
 
       {data.locked ? (
-        <div className="empty" style={{ marginTop: 18 }}><IcLock /><span>{data.locked.cast.map(s => person(s).name).join(", ")} talked this day. Unlock {artistName} to read every day. <button type="button" className="lnk" onClick={onUnlock}>Unlock {artistName}, $11</button></span></div>
+        <div className="empty" style={{ marginTop: 18 }}><IcLock /><span>{t("chat.lockedDay", { cast: data.locked.cast.map(s => person(s).name).join(", "), name: artistName })} <button type="button" className="lnk" onClick={onUnlock}>{t("chat.unlockPrice", { name: artistName })}</button></span></div>
       ) : !data.messages.length ? (
         <div className="empty" style={{ marginTop: 18 }}><IcChat /><span>
           {data.opensOn && data.opensOn > data.today
-            ? <>The story begins {new Date(`${data.opensOn}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" })}. Come back then.</>
-            : <>Nobody has said anything yet this day.</>}
+            ? <>{t("chat.storyBegins", { date: new Date(`${data.opensOn}T12:00:00Z`).toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }) })}</>
+            : <>{t("chat.nothingYet")}</>}
         </span></div>
       ) : (
         <ol className="msgs">
@@ -150,9 +161,9 @@ export default function ArtistChat({ slug, artistName, onUnlock }: { slug: strin
               const p = person(m.from);
               return (
                 <li key={m.id} className="drop">
-                  {m.drop?.cover ? <img src={m.drop.cover} alt={m.drop?.title ? `Cover of ${m.drop.title}` : ""} /> : <span className="dph" />}
+                  {m.drop?.cover ? <img src={m.drop.cover} alt={m.drop?.title ? t("chat.coverOf", { title: m.drop.title }) : ""} /> : <span className="dph" />}
                   <div>
-                    <p className="eyebrow">{m.drop?.label || "New drop"}</p>
+                    <p className="eyebrow">{m.drop?.label || t("chat.newDrop")}</p>
                     <b>{m.drop?.title || m.body}</b>
                     <span className="s">{p.name}{m.drop?.title && m.body ? `: ${m.body}` : ""}</span>
                   </div>
@@ -164,9 +175,9 @@ export default function ArtistChat({ slug, artistName, onUnlock }: { slug: strin
               <li key={m.id} className={"msg" + (me ? " me" : "") + (grouped ? " grouped" : "")}>
                 {!me ? (grouped ? <span className="mav gap" /> : avatar(m.from)) : null}
                 <div className="mb">
-                  {!grouped ? <span className="mw">{me ? null : nameOf(m.from)}<time>{timeLabel(m.postedAt)}{m.scheduled ? " · scheduled" : ""}</time></span> : null}
+                  {!grouped ? <span className="mw">{me ? null : nameOf(m.from)}<time>{timeLabel(locale, m.postedAt)}{m.scheduled ? ` · ${t("chat.scheduled")}` : ""}</time></span> : null}
                   {m.media?.kind === "image" ? (
-                    <button type="button" className="bub bph" onClick={() => setViewing(m)} aria-label={`${MEDIA_LABEL.image} from ${person(m.from).name}`}>
+                    <button type="button" className="bub bph" onClick={() => setViewing(m)} aria-label={mediaFrom(t, "image", person(m.from).name)}>
                       <img src={m.media.url} alt="" loading="lazy" />
                       <span>{showOriginal ? m.original : m.body}</span>
                     </button>
@@ -174,7 +185,7 @@ export default function ArtistChat({ slug, artistName, onUnlock }: { slug: strin
                     <div className="brow">
                       <p className="bub">{showOriginal ? m.original : m.body}</p>
                       {m.media ? (
-                        <button type="button" className="mmed" onClick={() => setViewing(m)} aria-label={`${MEDIA_LABEL[m.media.kind]} from ${person(m.from).name}`} title={MEDIA_LABEL[m.media.kind]}>
+                        <button type="button" className="mmed" onClick={() => setViewing(m)} aria-label={mediaFrom(t, m.media.kind, person(m.from).name)} title={mediaLabel(t, m.media.kind)}>
                           {m.media.kind === "video" ? <IcPlay size={15} /> : m.media.kind === "audio" ? <IcSpeaker /> : <IcCamera />}
                         </button>
                       ) : null}
@@ -190,16 +201,16 @@ export default function ArtistChat({ slug, artistName, onUnlock }: { slug: strin
                   <div className="mops">
                     {m.original ? (
                       <button type="button" className="like" onClick={() => setTranslated(s => { const n = new Set(s); if (n.has(m.id)) n.delete(m.id); else n.add(m.id); return n; })}>
-                        <IcTranslate />{showOriginal ? `Translate${m.originalLang && LANGS[m.originalLang] ? ` from ${LANGS[m.originalLang]}` : ""}` : "Show original"}
+                        <IcTranslate />{showOriginal ? (m.originalLang && LANGS[m.originalLang] ? t("chat.translateFrom", { lang: t(`chat.${LANGS[m.originalLang]}`) }) : t("chat.translate")) : t("chat.showOriginal")}
                       </button>
                     ) : null}
                     {engage && (!m.scheduled || data.staff) ? (
                       <>
-                        <button type="button" className="like" onClick={() => toggleLike(m.id)} aria-pressed={c.liked} aria-label={c.liked ? "Unlike this line" : "Like this line"}>
-                          <IcHeart size={14} on={c.liked} /><span>{c.likes > 0 ? c.likes : "Like"}</span>
+                        <button type="button" className="like" onClick={() => toggleLike(m.id)} aria-pressed={c.liked} aria-label={c.liked ? t("chat.unlikeLine") : t("chat.likeLine")}>
+                          <IcHeart size={14} on={c.liked} /><span>{c.likes > 0 ? c.likes : t("chat.like")}</span>
                         </button>
                         <button type="button" className="like" onClick={() => setOpenThread(t => (t === m.id ? null : m.id))} aria-expanded={openThread === m.id}>
-                          <IcComment /><span>{c.comments > 0 ? c.comments : "Comment"}</span>
+                          <IcComment /><span>{c.comments > 0 ? c.comments : t("chat.comment")}</span>
                         </button>
                       </>
                     ) : null}
@@ -219,27 +230,27 @@ export default function ArtistChat({ slug, artistName, onUnlock }: { slug: strin
         <div className="compose">
           <IcLock />
           <p>
-            {can.why === "signin" ? <>Reading is free. <a className="lnk" href={signInHref()}>Sign in</a> to like a line. Supporters of {artistName} comment and reply.</>
-              : can.why === "minor" ? <>Comments are for members 18 and over. You can still like.</>
-              : <>Supporters of {artistName} can comment and reply.</>}
+            {can.why === "signin" ? withLink(t("chat.readingFreeSignInLine", { name: artistName }), <a className="lnk" href={signInHref()}>{t("chat.signIn")}</a>)
+              : can.why === "minor" ? <>{t("chat.minorNote")}</>
+              : <>{t("chat.supportersCan", { name: artistName })}</>}
           </p>
-          {can.why !== "minor" ? <button type="button" className="pill acp" onClick={onUnlock}>Unlock {artistName}, $11</button> : null}
+          {can.why !== "minor" ? <button type="button" className="pill acp" onClick={onUnlock}>{t("chat.unlockPrice", { name: artistName })}</button> : null}
         </div>
       ) : null}
       <p className="cnote after">
-        A scripted look inside the crew&apos;s group chat, written with AI and approved by GeekFon. New lines land every day. Anyone signed in can like a line; comments are held for approval.
-        {data.staff ? <> <a className="lnk" href="/dashboard/chat-room">Edit in the Writers&apos; Room</a></> : null}
+        {t("chat.footer")}
+        {data.staff ? <> <a className="lnk" href="/dashboard/chat-room">{t("chat.editInRoom")}</a></> : null}
       </p>
 
       {viewing?.media ? (
-        <div className="lbox" role="dialog" aria-modal="true" aria-label={MEDIA_LABEL[viewing.media.kind]} onClick={() => setViewing(null)}>
+        <div className="lbox" role="dialog" aria-modal="true" aria-label={mediaLabel(t, viewing.media.kind)} onClick={() => setViewing(null)}>
           <div className="lbox-in" onClick={e => e.stopPropagation()}>
             {viewing.media.kind === "video" ? <video src={viewing.media.url} controls autoPlay playsInline />
               : viewing.media.kind === "audio" ? <audio src={viewing.media.url} controls autoPlay />
               : <img src={viewing.media.url} alt={viewing.body} />}
             <div className="lbox-bar">
               <span><b>{person(viewing.from).name}</b> {viewing.body}</span>
-              <button type="button" className="pill" onClick={() => setViewing(null)}>Close</button>
+              <button type="button" className="pill" onClick={() => setViewing(null)}>{t("chat.close")}</button>
             </div>
           </div>
         </div>
@@ -254,6 +265,7 @@ export default function ArtistChat({ slug, artistName, onUnlock }: { slug: strin
 function Thread({ slug, artistName, messageId, can, onUnlock, onCount }: {
   slug: string; artistName: string; messageId: string; can: EngageCan; onUnlock: () => void; onCount: (d: number) => void;
 }) {
+  const { t } = useI18n();
   const [list, setList] = useState<ThreadComment[] | null>(null);
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<ThreadComment | null>(null);
@@ -276,10 +288,10 @@ function Thread({ slug, artistName, messageId, can, onUnlock, onCount }: {
   }
   async function remove(c: ThreadComment) {
     const kids = (list ?? []).filter(x => x.parentId === c.id).length;
-    if (!window.confirm(kids ? "Delete this comment and its replies?" : "Delete this comment?")) return;
+    if (!window.confirm(kids ? t("chat.confirmDeleteWithReplies") : t("chat.confirmDelete"))) return;
     const res = await fetch(api, { method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) }, body: JSON.stringify({ action: "delete", id: c.id }) });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok && res.status !== 404) { setMsg(out.error || "Could not delete that."); return; }
+    if (!res.ok && res.status !== 404) { setMsg(out.error || t("chat.deleteFailed")); return; }
     setList(l => (l ?? []).filter(x => x.id !== c.id && x.parentId !== c.id));
     if (out.removedApproved) onCount(-out.removedApproved);
   }
@@ -290,11 +302,11 @@ function Thread({ slug, artistName, messageId, can, onUnlock, onCount }: {
     const res = await fetch(api, { method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) }, body: JSON.stringify({ action: "comment", messageId, body, parentId: replyTo?.id }) });
     const out = await res.json().catch(() => ({}));
     setBusy(false);
-    if (!res.ok) { setMsg(out.error || "Could not post that."); return; }
+    if (!res.ok) { setMsg(out.error || t("chat.postFailed")); return; }
     setText(""); setReplyTo(null);
     const c = out.comment as ThreadComment;
     setList(l => [...(l ?? []), c]);
-    if (c.pending) setNote("Thanks. Your comment is waiting for approval and shows here once it is approved.");
+    if (c.pending) setNote(t("chat.pendingNote"));
     else onCount(1);
   }
 
@@ -302,35 +314,35 @@ function Thread({ slug, artistName, messageId, can, onUnlock, onCount }: {
   const replies = (id: string) => (list ?? []).filter(c => c.parentId === id);
   const row = (c: ThreadComment, isReply: boolean) => (
     <div key={c.id} className={"cm" + (isReply ? " reply" : "")}>
-      <div className="cm-h"><b>{c.name}</b><span>{ago(c.createdAt)}</span>{c.pending ? <em>Waiting for approval</em> : null}</div>
+      <div className="cm-h"><b>{c.name}</b><span>{ago(t, c.createdAt)}</span>{c.pending ? <em>{t("chat.waitingApproval")}</em> : null}</div>
       <p>{c.body}</p>
       <div className="cm-ops">
-        {!c.pending ? <button type="button" className="like" onClick={() => like(c)} aria-pressed={c.liked} aria-label={c.liked ? "Unlike" : "Like"}><IcHeart size={13} on={c.liked} />{c.likes > 0 ? <span>{c.likes}</span> : null}</button> : null}
-        {!c.pending && can.comment && !isReply ? <button type="button" className="like" onClick={() => { setReplyTo(c); setText(""); }}>Reply</button> : null}
-        {c.mine || can.staff ? <button type="button" className="like" onClick={() => remove(c)}>Delete</button> : null}
+        {!c.pending ? <button type="button" className="like" onClick={() => like(c)} aria-pressed={c.liked} aria-label={c.liked ? t("chat.unlike") : t("chat.like")}><IcHeart size={13} on={c.liked} />{c.likes > 0 ? <span>{c.likes}</span> : null}</button> : null}
+        {!c.pending && can.comment && !isReply ? <button type="button" className="like" onClick={() => { setReplyTo(c); setText(""); }}>{t("chat.reply")}</button> : null}
+        {c.mine || can.staff ? <button type="button" className="like" onClick={() => remove(c)}>{t("chat.delete")}</button> : null}
       </div>
     </div>
   );
 
   return (
     <div className="thread">
-      {list === null ? <p className="cm-empty">Loading the comments.</p> : top.length === 0 ? <p className="cm-empty">No comments yet.</p> : null}
+      {list === null ? <p className="cm-empty">{t("chat.loadingComments")}</p> : top.length === 0 ? <p className="cm-empty">{t("chat.noComments")}</p> : null}
       {top.map(c => <div key={c.id}>{row(c, false)}{replies(c.id).map(r => row(r, true))}</div>)}
       {can.comment ? (
         <div className="cm-new">
-          {replyTo ? <p className="cm-rep">Replying to {replyTo.name} <button type="button" className="lnk" onClick={() => setReplyTo(null)}>Cancel</button></p> : null}
-          <textarea value={text} onChange={e => setText(e.target.value)} maxLength={500} rows={2} placeholder={replyTo ? "Write a reply" : "Add a comment"} aria-label="Comment" />
+          {replyTo ? <p className="cm-rep">{t("chat.replyingTo", { name: replyTo.name })} <button type="button" className="lnk" onClick={() => setReplyTo(null)}>{t("chat.cancel")}</button></p> : null}
+          <textarea value={text} onChange={e => setText(e.target.value)} maxLength={500} rows={2} placeholder={replyTo ? t("chat.writeReply") : t("chat.addComment")} aria-label={t("chat.comment")} />
           <div className="cm-send">
             <span>{text.length}/500</span>
-            <button type="button" className="pill acp" disabled={busy || !text.trim()} onClick={post}>{busy ? "Posting" : replyTo ? "Reply" : "Comment"}</button>
+            <button type="button" className="pill acp" disabled={busy || !text.trim()} onClick={post}>{busy ? t("chat.posting") : replyTo ? t("chat.reply") : t("chat.comment")}</button>
           </div>
           {msg ? <p className="cm-err" role="alert">{msg}</p> : null}
           {note ? <p className="cm-note">{note}</p> : null}
         </div>
       ) : can.why === "support" ? (
-        <p className="cm-gate">Supporters of {artistName} comment and reply. <button type="button" className="lnk" onClick={onUnlock}>Unlock {artistName}, $11</button></p>
+        <p className="cm-gate">{t("chat.supportersDo", { name: artistName })} <button type="button" className="lnk" onClick={onUnlock}>{t("chat.unlockPrice", { name: artistName })}</button></p>
       ) : can.why === "signin" ? (
-        <p className="cm-gate">Reading is free. <a className="lnk" href={signInHref()}>Sign in</a> to like.</p>
+        <p className="cm-gate">{withLink(t("chat.readingFreeSignIn"), <a className="lnk" href={signInHref()}>{t("chat.signIn")}</a>)}</p>
       ) : null}
     </div>
   );
