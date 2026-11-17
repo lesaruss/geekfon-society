@@ -290,5 +290,5 @@ export const ARTIST_CSS = `
 .gfr .albh-row{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:center}
 .gfr .albh-row img,.gfr .albh-row .ph{width:160px;height:160px;border-radius:10px;object-fit:cover;display:block;background:var(--surface-3)}
 .gfr .albh-row h2{font-size:clamp(24px,4vw,34px);line-height:1.05;margin:0}
-@media (max-width:560px){.gfr .albh-row{grid-template-columns:1fr}.gfr .albh-row img,.gfr .albh-row .ph{width:100%;height:auto;aspect-ratio:1;max-width:260px}.gfr .albg{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+@media (max-width:560px){.gfr .albh-row{grid-template-columns:1fr}.gfr .albh-row img,.gfr .albh-row .ph{width:100%;height:auto;aspect-ratio:1;max-width:none}.gfr .albg{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.gfr .albg .albc:last-child:nth-child(odd){grid-column:1/-1}}
 `;
