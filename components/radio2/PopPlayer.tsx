@@ -12,6 +12,7 @@ import { LyricToggle } from "./LyricToggle";
 import type { RadioTrack } from "@/lib/radioSchedule";
 import { POP_CSS } from "./popCss";
 import { IcPlay, IcPause, IcHeart, IcLyrics, IcX, IcOut, IcInstall, Eq } from "./icons";
+import { useT } from "@/components/i18n/I18n";
 
 // The brand kit's vector wheel (BrandDesk > GeekFon Society > Logo).
 const LOGO = "/brands/geekfon-society/geekfon-wheel.svg";
@@ -21,6 +22,7 @@ type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{
 const coverOf = (rot?: RadioTrack[]) => (rot ?? []).find(t => t.kind !== "spot" && t.coverUrl)?.coverUrl ?? null;
 
 export default function PopPlayer() {
+  const t = useT();
   const R = useLiveRadio();
   const [lyrOpen, setLyrOpen] = useState(false);
   const [sheet, setSheet] = useState<"what" | "install" | null>(null);
@@ -112,13 +114,13 @@ export default function PopPlayer() {
   }, [sheet, lyrOpen, closeSheet, R]);
 
   useEffect(() => {
-    document.title = R.live && R.onAir ? `${R.onAir.title}, ${R.onAir.artist}: GeekFon Radio` : "GeekFon Radio";
-  }, [R.live, R.onAir]);
+    document.title = R.live && R.onAir ? t("pop.docTitle", { title: R.onAir.title, artist: R.onAir.artist }) : "GeekFon Radio";
+  }, [R.live, R.onAir, t]);
 
   const toggleHeart = () => {
     if (!song?.songId) return;
     const on = R.toggleHeart(song);
-    setToast(on ? "Added to Hearted songs" : "Removed from Hearted songs");
+    setToast(on ? t("pop.heartAdded") : t("pop.heartRemoved"));
   };
 
   return (
@@ -131,7 +133,7 @@ export default function PopPlayer() {
       </header>
 
       <div className="wbody">
-        <div className="tiles" ref={tilesRef} role="group" aria-label="Stations">
+        <div className="tiles" ref={tilesRef} role="group" aria-label={t("pop.stations")}>
           {R.stations.map(s => {
             const on = s.slug === R.station;
             const c = coverOf(R.schedules[s.slug]?.rotation);
@@ -144,70 +146,70 @@ export default function PopPlayer() {
                 aria-pressed={on}
                 style={{ "--c": stColor(s), "--i": stInk(s) } as React.CSSProperties}
                 onClick={() => R.tune(s.slug, on ? true : R.live)}
-                aria-label={s.name + (on ? (R.live ? ", on air, press to pause" : ", tuned in, press to play") : ", press to tune in")}
+                aria-label={t(on ? (R.live ? "pop.tileOnAir" : "pop.tileTunedIn") : "pop.tileTuneIn", { name: s.name })}
               >
                 <span className="nm">{s.name.replace(/ Radio$/, "")}</span>
-                {s.seasonal ? <span className="sea">Seasonal</span> : null}
+                {s.seasonal ? <span className="sea">{t("pop.seasonal")}</span> : null}
                 {c ? <img src={c} alt="" /> : null}
-                <span className="air">{on ? <><Eq still={!R.live} />{R.live ? "On air" : "Tuned in"}</> : null}</span>
+                <span className="air">{on ? <><Eq still={!R.live} />{R.live ? t("pop.onAir") : t("pop.tunedIn")}</> : null}</span>
               </button>
             );
           })}
-          <div className="tile coming" aria-label={`${NEW_TALENT.name}, coming`} style={{ "--c": NEW_TALENT.color, "--i": NEW_TALENT.ink } as React.CSSProperties}>
-            <span className="ring" /><span className="nm">{NEW_TALENT.name}</span><span className="tag">Coming</span>
+          <div className="tile coming" aria-label={t("pop.comingLabel", { name: NEW_TALENT.name })} style={{ "--c": NEW_TALENT.color, "--i": NEW_TALENT.ink } as React.CSSProperties}>
+            <span className="ring" /><span className="nm">{NEW_TALENT.name}</span><span className="tag">{t("pop.coming")}</span>
           </div>
         </div>
 
         <div className="np">
           <div className="cvw">
-            {R.onAir?.coverUrl ? <img src={R.onAir.coverUrl} alt={song ? `Cover of ${song.title} by ${song.artist}` : ""} /> : <img className="logo" src={LOGO} alt="" />}
-            <span className="livechip"><i />{R.onAir?.type === "pinned" ? "Premiere" : "Live"}<span>{st.name}</span></span>
+            {R.onAir?.coverUrl ? <img src={R.onAir.coverUrl} alt={song ? t("pop.coverOf", { title: song.title, artist: song.artist }) : ""} /> : <img className="logo" src={LOGO} alt="" />}
+            <span className="livechip"><i />{R.onAir?.type === "pinned" ? t("pop.premiere") : t("pop.live")}<span>{st.name}</span></span>
           </div>
           <div className="meta">
             {R.onAir?.coverUrl ? <img className="thumb" src={R.onAir.coverUrl} alt="" /> : null}
             <div className="tx">
-              <h1 className="song">{R.onAir?.title || (R.loading ? "Tuning in" : "GeekFon Radio")}</h1>
+              <h1 className="song">{R.onAir?.title || (R.loading ? t("pop.tuningIn") : "GeekFon Radio")}</h1>
               {isSpot ? (
                 R.onAir?.linkUrl
-                  ? <a className="who sponsor" href={R.onAir.linkUrl} target="_blank" rel="noopener sponsored">Visit {R.onAir.sponsor || R.onAir.artist}</a>
-                  : <span className="who">{R.onAir?.sponsor ? `With ${R.onAir.sponsor}` : R.onAir?.artist}</span>
+                  ? <a className="who sponsor" href={R.onAir.linkUrl} target="_blank" rel="noopener sponsored">{t("pop.visitSponsor", { name: R.onAir.sponsor || R.onAir.artist })}</a>
+                  : <span className="who">{R.onAir?.sponsor ? t("pop.withSponsor", { name: R.onAir.sponsor }) : R.onAir?.artist}</span>
               ) : song ? (
-                <button type="button" className="who" aria-haspopup="dialog" aria-label={`${song.artist}, what is this?`} onClick={() => setSheet("what")}>{song.artist}</button>
+                <button type="button" className="who" aria-haspopup="dialog" aria-label={t("pop.artistWhat", { artist: song.artist })} onClick={() => setSheet("what")}>{song.artist}</button>
               ) : null}
-              <div className="lv"><i /><span>Live on {st.name}</span></div>
+              <div className="lv"><i /><span>{t("pop.liveOn", { station: st.name })}</span></div>
             </div>
           </div>
         </div>
 
         {lyrOpen ? (
-          <div className="lyrics" aria-label="Lyrics">
-            <div className="lyr-h"><b>Lyrics</b>{lv.both ? <LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /> : <span>{lang ? `Sung in ${lang}. Shown in English.` : "Free for everyone"}</span>}</div>
-            <div className="lyr-s" tabIndex={0} aria-label="Lyrics, scrolls">
-              {lyrics === undefined && song?.songId ? <p className="fine">Loading the lyrics.</p>
+          <div className="lyrics" aria-label={t("pop.lyrics")}>
+            <div className="lyr-h"><b>{t("pop.lyrics")}</b>{lv.both ? <LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /> : <span>{lang ? t("pop.sungInShownEn", { lang }) : t("pop.freeForEveryone")}</span>}</div>
+            <div className="lyr-s" tabIndex={0} aria-label={t("pop.lyricsScrolls")}>
+              {lyrics === undefined && song?.songId ? <p className="fine">{t("pop.loadingLyrics")}</p>
                 : lines.length ? lines.map((l, i) => l.kind === "sec" ? <p key={i} className="sec">{l.text}</p> : <p key={i} className="ln">{l.text}</p>)
-                : <p className="fine">{isSpot ? (R.onAir?.sponsor ? "A word from a sponsor. Lyrics are back with the next song." : `A quick hello from ${R.onAir?.artist}. Lyrics are back with the next song.`) : "No lyrics for this song yet."}</p>}
-              {lines.length ? <p className="fine">Lyrics are free for everyone.</p> : null}
+                : <p className="fine">{isSpot ? (R.onAir?.sponsor ? t("pop.sponsorWord") : t("pop.quickHello", { artist: R.onAir?.artist ?? "" })) : t("pop.noLyrics")}</p>}
+              {lines.length ? <p className="fine">{t("pop.lyricsFree")}</p> : null}
             </div>
           </div>
         ) : null}
 
         <div className="ctl">
           <div className="l">
-            <button type="button" className={"ib" + (heartOn ? " hearted" : "")} onClick={toggleHeart} disabled={!song?.songId} aria-pressed={heartOn} aria-label={heartOn ? "Remove heart" : "Heart this song"}><IcHeart on={heartOn} size={22} /></button>
-            <button type="button" className="ib" onClick={() => setLyrOpen(o => !o)} aria-expanded={lyrOpen} aria-label="Lyrics" title="Lyrics"><IcLyrics /></button>
+            <button type="button" className={"ib" + (heartOn ? " hearted" : "")} onClick={toggleHeart} disabled={!song?.songId} aria-pressed={heartOn} aria-label={heartOn ? t("pop.removeHeart") : t("pop.heartSong")}><IcHeart on={heartOn} size={22} /></button>
+            <button type="button" className="ib" onClick={() => setLyrOpen(o => !o)} aria-expanded={lyrOpen} aria-label={t("pop.lyrics")} title={t("pop.lyrics")}><IcLyrics /></button>
           </div>
-          <button type="button" className="play" onClick={R.toggleLive} disabled={R.loading && !R.onAir} aria-label={R.live ? "Pause" : "Play"}>{R.live ? <IcPause /> : <IcPlay />}</button>
-          <button type="button" ref={whatBtn} className="wit r" aria-haspopup="dialog" aria-expanded={sheet === "what"} onClick={() => setSheet("what")} disabled={!song}><span className="q" aria-hidden="true">?</span>What is this?</button>
+          <button type="button" className="play" onClick={R.toggleLive} disabled={R.loading && !R.onAir} aria-label={R.live ? t("pop.pause") : t("pop.play")}>{R.live ? <IcPause /> : <IcPlay />}</button>
+          <button type="button" ref={whatBtn} className="wit r" aria-haspopup="dialog" aria-expanded={sheet === "what"} onClick={() => setSheet("what")} disabled={!song}><span className="q" aria-hidden="true">?</span>{t("pop.whatIsThis")}</button>
         </div>
 
         <div className="prog" aria-hidden="true"><span>{fmtTime(at)}</span><div className="track"><i style={{ width: `${pct}%` }} /></div><span>{fmtTime(dur)}</span></div>
 
         <div className="wfoot">
-          {installed ? <span style={{ flex: "none", textAlign: "left" }}>GeekFon Radio app</span> : (
-            <button type="button" className="inst" onClick={install}><IcInstall />Install app</button>
+          {installed ? <span style={{ flex: "none", textAlign: "left" }}>{t("pop.appName")}</span> : (
+            <button type="button" className="inst" onClick={install}><IcInstall />{t("pop.installApp")}</button>
           )}
-          <span>Free, no sign up</span>
-          <a href="/" target="_blank" rel="noopener">Open GeekFon</a>
+          <span>{t("pop.freeNoSignUp")}</span>
+          <a href="/" target="_blank" rel="noopener">{t("pop.openGeekFon")}</a>
         </div>
       </div>
 
@@ -216,28 +218,28 @@ export default function PopPlayer() {
       {sheet === "what" && song ? (
         <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="gfp-what">
           <div className="grab" aria-hidden="true" />
-          <div className="sh-h"><h2 id="gfp-what">What is this?</h2><button type="button" className="ib" ref={sheetClose} onClick={closeSheet} aria-label="Close"><IcX size={18} /></button></div>
+          <div className="sh-h"><h2 id="gfp-what">{t("pop.whatIsThis")}</h2><button type="button" className="ib" ref={sheetClose} onClick={closeSheet} aria-label={t("pop.close")}><IcX size={18} /></button></div>
           <div className="card2">
-            <p className="lab">About the artist</p>
+            <p className="lab">{t("pop.aboutArtist")}</p>
             <div className="artist">
               {artist?.avatar || song.coverUrl ? <img src={(artist?.avatar || song.coverUrl)!} alt="" /> : null}
-              <div><b>{artist?.name || song.artist}</b><span>{artist?.tagline || "From the GeekFon Society roster"}</span></div>
+              <div><b>{artist?.name || song.artist}</b><span>{artist?.tagline || t("pop.fromRoster")}</span></div>
             </div>
             {artist?.stations?.length ? <div className="facts">{artist.stations.map(s => <span key={s.slug}>{s.name}</span>)}</div> : null}
-            <a className="visit" href="/" target="_blank" rel="noopener" aria-label="Go deeper: open GeekFon, opens in a new tab">
-              Go deeper: open GeekFon<small>geekfon.ai</small><IcOut />
+            <a className="visit" href="/" target="_blank" rel="noopener" aria-label={t("pop.goDeeperLabel")}>
+              {t("pop.goDeeper")}<small>geekfon.ai</small><IcOut />
             </a>
-            <p className="visit-note">Opens the full site in a new tab. This window keeps playing.</p>
+            <p className="visit-note">{t("pop.visitNote")}</p>
           </div>
           <div className="card2 lyrc">
-            <p className="lab">Lyrics</p>
-            {lv.both ? <div className="lyh"><p className="lang">Sung in {lang}.{lv.showing === "en" ? " Shown in English." : ""}</p><LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /></div> : <p className="lang">{lang ? `Sung in ${lang}. Shown in English.` : "Free for everyone."}</p>}
+            <p className="lab">{t("pop.lyrics")}</p>
+            {lv.both ? <div className="lyh"><p className="lang">{t(lv.showing === "en" ? "pop.sungInShownEn" : "pop.sungIn", { lang: lang ?? "" })}</p><LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /></div> : <p className="lang">{lang ? t("pop.sungInShownEn", { lang }) : t("pop.freeForEveryoneDot")}</p>}
             {lines.length ? (
               <>
                 <div className="lprev">{lyricPreview(lines, 5).map((l, i) => l.kind === "sec" ? <p key={i} className="sec">{l.text}</p> : <p key={i} className="ln">{l.text}</p>)}</div>
-                <button type="button" className="full" onClick={() => { setSheet(null); setLyrOpen(true); }}><IcLyrics size={18} />Show full lyrics</button>
+                <button type="button" className="full" onClick={() => { setSheet(null); setLyrOpen(true); }}><IcLyrics size={18} />{t("pop.showFullLyrics")}</button>
               </>
-            ) : <p className="none">{lyrics === undefined ? "Loading the lyrics." : "No lyrics for this song yet."}</p>}
+            ) : <p className="none">{lyrics === undefined ? t("pop.loadingLyrics") : t("pop.noLyrics")}</p>}
           </div>
         </div>
       ) : null}
@@ -245,18 +247,18 @@ export default function PopPlayer() {
       {sheet === "install" ? (
         <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="gfp-inst">
           <div className="grab" aria-hidden="true" />
-          <div className="sh-h"><h2 id="gfp-inst">Install GeekFon Radio</h2><button type="button" className="ib" ref={sheetClose} onClick={closeSheet} aria-label="Close"><IcX size={18} /></button></div>
+          <div className="sh-h"><h2 id="gfp-inst">{t("pop.installTitle")}</h2><button type="button" className="ib" ref={sheetClose} onClick={closeSheet} aria-label={t("pop.close")}><IcX size={18} /></button></div>
           {inPopup ? (
             <div className="card2">
-              <p className="inote">This small window can&apos;t install apps. Open GeekFon Radio in a full browser window, then press Install app there.</p>
-              <a className="visit" href="/radio/pop" target="_blank" rel="noopener"><span>Open in a full window</span><IcOut /></a>
+              <p className="inote">{t("pop.popupNote")}</p>
+              <a className="visit" href="/radio/pop" target="_blank" rel="noopener"><span>{t("pop.openFullWindow")}</span><IcOut /></a>
             </div>
           ) : null}
           <div className="card2">
             <ul className="steps">
-              <li><b>Chrome or Edge</b>The install icon at the right end of the address bar, or Install in the browser menu.</li>
-              <li><b>Safari on Mac</b>File, Add to Dock.</li>
-              <li><b>iPhone or iPad</b>Share, then Add to Home Screen.</li>
+              <li><b>{t("pop.stepChrome")}</b>{t("pop.stepChromeHow")}</li>
+              <li><b>{t("pop.stepSafari")}</b>{t("pop.stepSafariHow")}</li>
+              <li><b>{t("pop.stepIos")}</b>{t("pop.stepIosHow")}</li>
             </ul>
           </div>
         </div>
