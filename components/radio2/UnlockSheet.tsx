@@ -12,7 +12,7 @@ import { startSupportCheckout } from "@/components/roster/checkout";
 import { IcX } from "./icons";
 import { IcFull, IcPic, IcTalk, IcSpark, IcLock } from "./artistIcons";
 
-type Album = { id: string; title: string } | null;
+type Album = { id: string; title: string; inProgress?: boolean } | null;
 
 export default function UnlockSheet({ slug, album, onClose }: { slug: string; album?: Album; onClose: () => void }) {
   const A = useArtist(slug);
@@ -63,10 +63,10 @@ export default function UnlockSheet({ slug, album, onClose }: { slug: string; al
   const art = A?.cutout || A?.portrait || A?.avatar || null;
   const cut = !!A?.cutout;
   const perks: [React.ReactNode, string][] = [
-    [<IcFull key="f" />, "Every song in full, on demand. Play any song, any time, and move around in it."],
+    [<IcFull key="f" />, sell ? `Every song on ${sell.title} in full, on demand. Play any song, any time, and move around in it.` : "Every song in full, on demand. Play any song, any time, and move around in it."],
     [<IcPic key="p" />, "The Gallery: the photos and wallpapers made for supporters."],
     [<IcTalk key="t" />, "Join the Chat: comment and reply."],
-    [<IcSpark key="s" />, "New songs as they are released."],
+    [<IcSpark key="s" />, sell?.inProgress ? `${sell.title} is still being made: each new song unlocks as it lands, with a Founding Fan badge.` : "New songs as they are released."],
   ];
 
   return (

@@ -273,4 +273,22 @@ export const ARTIST_CSS = `
   .gfr .uk-body{padding:22px 16px 20px}
   .gfr .uk-h{font-size:34px}
 }
+
+/* Albums (2026-11-17): one square per album once an artist has two; each is its own $11. */
+.gfr .albg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px;margin:4px 0 8px}
+.gfr .albc{display:flex;flex-direction:column;gap:6px;text-align:left;padding:10px;border-radius:10px;background:var(--surface-2);color:var(--text);min-width:0;transition:background .2s}
+.gfr .albc:hover,.gfr .albc:focus-visible{background:var(--surface-3)}
+.gfr .albc-art{position:relative;display:block;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--surface-3)}
+.gfr .albc-art img{width:100%;height:100%;object-fit:cover;display:block}
+.gfr .albc-b{position:absolute;top:8px;left:8px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;background:var(--bg);color:var(--text)}
+.gfr .albc-b.new{background:var(--text);color:var(--bg)}
+.gfr .albc b{font-size:15px;line-height:1.2}
+.gfr .albc .s{font-size:12px;color:var(--muted)}
+.gfr .albh{margin:26px 0 4px}
+.gfr .albh-back{font-size:13px;font-weight:700;color:var(--muted);padding:4px 0;margin:0 0 12px}
+.gfr .albh-back:hover,.gfr .albh-back:focus-visible{color:var(--text)}
+.gfr .albh-row{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:center}
+.gfr .albh-row img,.gfr .albh-row .ph{width:160px;height:160px;border-radius:10px;object-fit:cover;display:block;background:var(--surface-3)}
+.gfr .albh-row h2{font-size:clamp(24px,4vw,34px);line-height:1.05;margin:0}
+@media (max-width:560px){.gfr .albh-row{grid-template-columns:1fr}.gfr .albh-row img,.gfr .albh-row .ph{width:100%;height:auto;aspect-ratio:1;max-width:260px}.gfr .albg{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
 `;

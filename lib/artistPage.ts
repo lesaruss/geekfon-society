@@ -61,7 +61,21 @@ export type ArtistPageData = {
   press: PressItem[];
   gallery: { items: GalleryTile[]; lockedCount: number };
   /** The album the $11 buys today; null sells the artist's season pass (same $11 unlock). */
-  album: { id: string; title: string } | null;
+  album: SellAlbum | null;
+  /** The artist's albums, oldest first (Sean, 2026-11-17: once there are two, Music shows one square per album, each its own $11). */
+  albums: AlbumCard[];
+};
+
+export type SellAlbum = { id: string; title: string; inProgress?: boolean };
+
+export type AlbumCard = {
+  id: string;
+  title: string;
+  coverUrl: string | null;
+  inProgress: boolean;
+  trackTarget: number;
+  /** Album songs in album order (originals, then remixes). */
+  songIds: string[];
 };
 
 /** Stored copy uses " - " as a break; plain copy reads it as a comma (no dashes in visible text). */

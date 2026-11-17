@@ -18,7 +18,7 @@ import { useRosterAccess } from "@/components/roster/useRosterAccess";
 import ArtistChat from "./ArtistChat";
 import { IcPlay, IcPause, IcHeart, IcLyrics, IcArrow, IcRadio } from "./icons";
 import { IcLock, IcPin, IcChat, IcCheck } from "./artistIcons";
-import type { ArtistPageData, ArtistSong, GalleryTile } from "@/lib/artistPage";
+import type { AlbumCard, ArtistPageData, ArtistSong, GalleryTile } from "@/lib/artistPage";
 
 type Tab = "music" | "chat" | "press" | "gallery" | "about";
 const TABS: Tab[] = ["music", "chat", "press", "gallery", "about"];
@@ -55,7 +55,13 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
     return () => { on = false; };
   }, [initial.complete, initial.slug]);
 
-  const unlock = useCallback(() => openUnlock(A.slug, A.album), [openUnlock, A.slug, A.album]);
+  // Albums (Sean, 2026-11-17): with two or more, Music opens on one square per
+  // album, newest first; each album is its own $11. One album: unchanged.
+  const gridAlbums: AlbumCard[] = (A.albums || []).length >= 2 ? [...A.albums].reverse() : [];
+  const [openAlbum, setOpenAlbum] = useState<string | null>(null);
+  const picked = gridAlbums.find(a => a.id === openAlbum) ?? null;
+  const owns = (id: string) => access.ownedAlbums === "all" || access.ownedAlbums.includes(id);
+  const unlock = useCallback(() => openUnlock(A.slug, picked ? { id: picked.id, title: picked.title, inProgress: picked.inProgress } : A.album), [openUnlock, A.slug, A.album, picked]);
 
   // Arrival: the tab from the address; ?tab=support (the old Support link) opens the unlock sheet; back from checkout says thanks.
   useEffect(() => {
@@ -146,8 +152,10 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
     );
   };
 
-  const originals = A.songs.filter(s => !s.isRemix);
-  const remixes = A.songs.filter(s => s.isRemix);
+  const inAlbum = (s: ArtistSong) => !picked || picked.songIds.includes(s.id);
+  const order = (list: ArtistSong[]) => picked ? [...list].sort((x, y) => picked.songIds.indexOf(x.id) - picked.songIds.indexOf(y.id)) : list;
+  const originals = order(A.songs.filter(s => !s.isRemix && inAlbum(s)));
+  const remixes = order(A.songs.filter(s => s.isRemix && inAlbum(s)));
   const radioCovers = coversOf(R.schedules[myRadio]?.rotation, 2);
   const covers = radioCovers.length ? radioCovers : A.songs.map(s => s.thumbUrl || s.coverUrl).filter((u): u is string => !!u).slice(0, 2);
 
@@ -169,10 +177,54 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
           <IcArrow />
         </button>
       </div>
-      <div className="shelf-h" style={{ margin: "28px 0 12px" }}><h2>Songs</h2><span className="tag">{supporter ? "Unlocked" : "Previews free"}</span></div>
-      <p className="msub">{supporter
+      {gridAlbums.length && !picked ? (
+        <>
+          <div className="shelf-h" style={{ margin: "28px 0 12px" }}><h2>Albums</h2><span className="tag">$11 each</span></div>
+          <p className="msub">{access.ownedAlbums === "all"
+            ? `Every ${A.name} album in full, on demand.`
+            : gridAlbums.some(a => owns(a.id))
+              ? `${gridAlbums.filter(a => owns(a.id)).map(a => a.title).join(" and ")} ${gridAlbums.filter(a => owns(a.id)).length === 1 ? "is" : "are"} yours in full. Each album is its own $11.`
+              : `Pick an album. Every song plays a free 30-second preview, and the radio plays them all. Each album is its own $11.`}</p>
+          <div className="albg">
+            {gridAlbums.map(a => {
+              const n = a.songIds.filter(id => originals.some(o => o.id === id)).length;
+              return (
+                <button key={a.id} type="button" className="albc" onClick={() => setOpenAlbum(a.id)} aria-label={`Open ${a.title}`}>
+                  <span className="albc-art">
+                    {a.coverUrl ? <img src={a.coverUrl} alt="" loading="lazy" /> : <span className="ph" />}
+                    {owns(a.id) ? <span className="albc-b">Owned</span> : a.inProgress ? <span className="albc-b new">New</span> : null}
+                  </span>
+                  <b>{a.title}</b>
+                  <span className="s">{a.inProgress ? `New album · ${n} of ${a.trackTarget} so far` : `Album · ${n} ${n === 1 ? "song" : "songs"}`}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
+      {picked ? (
+        <div className="albh">
+          <button type="button" className="albh-back" onClick={() => setOpenAlbum(null)}>&larr; All albums</button>
+          <div className="albh-row">
+            {picked.coverUrl ? <img src={picked.coverUrl} alt="" /> : <span className="ph" />}
+            <div>
+              <p className="eyebrow">{picked.inProgress ? "New album · in progress" : "Album"}</p>
+              <h2>{picked.title}</h2>
+              <p className="msub" style={{ margin: "4px 0 10px" }}>{owns(picked.id)
+                ? "You own this album. Every song in full, on demand."
+                : picked.inProgress
+                  ? "Get it early: every song on it so far, and each new one as it lands, with a Founding Fan badge."
+                  : "Every song in full, on demand, with its remixes."}</p>
+              {owns(picked.id) ? <span className="lockb ok"><IcCheck size={13} />Owned</span> : <button type="button" className="pill" onClick={unlock}><IcLock />{picked.inProgress ? "Get it early · $11" : `Unlock ${picked.title} · $11`}</button>}
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {gridAlbums.length && !picked ? null : <>
+      <div className="shelf-h" style={{ margin: "28px 0 12px" }}><h2>{picked ? "Songs" : "Songs"}</h2><span className="tag">{(picked ? owns(picked.id) : supporter) ? "Unlocked" : "Previews free"}</span></div>
+      {picked ? null : <p className="msub">{supporter
         ? `Every song in full, on demand. Lyrics are free for every song.`
-        : `Free: a 30-second preview of every song, and every lyric. Unlock ${A.name} to play every song in full, on demand.`}</p>
+        : `Free: a 30-second preview of every song, and every lyric. Unlock ${A.name} to play every song in full, on demand.`}</p>}
       {originals.length ? <div className="slist">{originals.map(songRow)}</div> : <div className="empty"><IcRadio size={24} /><span>No songs in the catalog yet. {A.name} Radio plays what is on the air today.</span></div>}
       {remixes.length ? (
         <>
@@ -180,7 +232,8 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
           <div className="slist">{remixes.map(songRow)}</div>
         </>
       ) : null}
-      {originals.length ? <p className="foot">{originals.length} {originals.length === 1 ? "song" : "songs"} in the catalog{remixes.length ? `, plus ${remixes.length} ${remixes.length === 1 ? "remix" : "remixes"}` : ""}.</p> : null}
+      </>}
+      {!gridAlbums.length && originals.length ? <p className="foot">{originals.length} {originals.length === 1 ? "song" : "songs"} in the catalog{remixes.length ? `, plus ${remixes.length} ${remixes.length === 1 ? "remix" : "remixes"}` : ""}.</p> : null}
     </>
   );
 

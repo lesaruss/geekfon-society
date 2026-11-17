@@ -15,7 +15,7 @@ import { loadArtistDepot, depotSlug, type PublicAlbum } from "./depot";
 import { loadGallery, featuredGallery } from "./gallery";
 import { stationsFeaturing, listStations, inkFor, MAIN_STATION } from "./radio";
 import { ARTIST_ORDER } from "@/lib/roster";
-import { plainDashes, type ArtistPageData, type RosterArtist, type RosterData, type StationChip, type PressItem, type GalleryTile } from "@/lib/artistPage";
+import { plainDashes, type ArtistPageData, type RosterArtist, type RosterData, type StationChip, type PressItem, type GalleryTile, type AlbumCard, type SellAlbum } from "@/lib/artistPage";
 
 type Profile = {
   name?: string; tagline?: string; bio?: string | string[]; shortBio?: string; quote?: string; genre?: string; location?: string;
@@ -74,6 +74,28 @@ export function sellableAlbum(albums: PublicAlbum[]): { id: string; title: strin
   const pool = albums.filter(a => a.label).length ? albums.filter(a => a.label) : albums;
   const a = pool.find(x => !x.out) ?? pool[pool.length - 1] ?? null;
   return a ? { id: a.id, title: a.title } : null;
+}
+
+/** Albums with at least one live song, oldest first. Label artists keep their single-album model (empty list). */
+function albumCards(albums: PublicAlbum[], liveIds: string[]): AlbumCard[] {
+  if (albums.some(a => a.label)) return [];
+  const live = new Set(liveIds);
+  return albums
+    .map(a => {
+      const t = [...a.tracks].filter(x => live.has(x.songId)).sort((x, y) => x.position - y.position);
+      return {
+        id: a.id, title: a.title, coverUrl: a.coverUrl, inProgress: a.status !== "released", trackTarget: a.trackTarget,
+        songIds: [...t.filter(x => x.kind !== "remix"), ...t.filter(x => x.kind === "remix")].map(x => x.songId),
+      };
+    })
+    .filter(a => a.songIds.length);
+}
+
+/** What the $11 buys by default: with two or more albums, the newest one (Sean, 2026-11-17); otherwise as before. */
+function sellFor(albums: PublicAlbum[], liveIds: string[]): SellAlbum | null {
+  const cards = albumCards(albums, liveIds);
+  if (cards.length >= 2) { const n = cards[cards.length - 1]; return { id: n.id, title: n.title, inProgress: n.inProgress }; }
+  return sellableAlbum(albums);
 }
 
 /** Press: the artist's profile.news (each has its own page at /<artist>/news/<slug>), with the shared Pulse store's blurb and art where it has them. */
@@ -160,7 +182,8 @@ export async function loadArtistPage(rawSlug: string): Promise<ArtistPageData | 
     homeStation: homeStation ? chip(homeStation) : null,
     press,
     gallery: { items, lockedCount: galleryPublic.lockedCount },
-    album: sellableAlbum(depot.albums),
+    album: sellFor(depot.albums, depot.songs.map(x => x.id)),
+    albums: albumCards(depot.albums, depot.songs.map(x => x.id)),
   };
 }
 
