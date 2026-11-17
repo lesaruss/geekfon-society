@@ -19,7 +19,8 @@ type Props = {
   songs: PublicSong[];
   albums: PublicAlbum[];
   access: RosterAccess;
-  onSupport: () => void;
+  // albumId: the album the viewer chose to buy (album grid); omitted = the page's default offer.
+  onSupport: (albumId?: string) => void;
 };
 
 function fmt(s: number | null | undefined): string {
@@ -41,6 +42,10 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
   const [time, setTime] = useState(0);
   const [lyricsOpen, setLyricsOpen] = useState<string | null>(null);
   const [lyricsLang, setLyricsLang] = useState<"en" | "original">("en");
+  // Album grid (Sean, 2026-11-17): once an artist has two distinct albums the
+  // Discography opens on one square per album; tap one to see its songs.
+  // Each album is its own $11 purchase. Artists with one album are unchanged.
+  const [openAlbum, setOpenAlbum] = useState<string | null>(null);
 
   const byId = useMemo(() => new Map(songs.map(s => [s.id, s])), [songs]);
 
@@ -65,6 +70,15 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
     if (remixes.length) out.push({ key: "remixes", title: "Remixes", sub: "GeekFon exclusives", songs: remixes });
     return out;
   }, [albums, songs, byId]);
+
+  const gridAlbums = useMemo(() => {
+    if (albums.some(a => a.label)) return [];
+    const withSongs = albums.filter(a => a.tracks.some(t => byId.has(t.songId)));
+    return withSongs.length >= 2 ? [...withSongs].reverse() : []; // newest first
+  }, [albums, byId]);
+  const useGrid = gridAlbums.length >= 2;
+  const owns = (albumId: string) => access.ownedAlbums === "all" || access.ownedAlbums.includes(albumId);
+  const ownedNames = gridAlbums.filter(a => owns(a.id)).map(a => a.title);
 
   const singles = songs.filter(s => s.access === "single").length;
   const vault = songs.length - singles;
@@ -199,7 +213,7 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
                   </div>
                   {capped && isCur && (
                     <div className="rs-capnote">
-                      30-second preview. <button className="rs-link" onClick={onSupport}>Support {artistName}</button> for the full song.
+                      30-second preview. <button className="rs-link" onClick={() => onSupport()}>Support {artistName}</button> for the full song.
                     </div>
                   )}
                   {open && (lyr.en || lyr.original) && (
@@ -245,7 +259,23 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
         </span>
       </div>
 
-      {access.supporter ? (
+      {useGrid ? (
+        access.supporter && ownedNames.length ? (
+          <div className="rs-banner rs-banner-on">
+            <strong>You&apos;re a supporter.</strong>{" "}
+            {access.ownedAlbums === "all"
+              ? `Every ${artistName} album is unlocked${access.download ? ", with downloads" : ""}.`
+              : `${ownedNames.join(" and ")} ${ownedNames.length === 1 ? "is" : "are"} unlocked${access.download ? ", with downloads" : ""}. Each album is its own $11.`}
+          </div>
+        ) : (
+          <div className="rs-banner">
+            <div>
+              <strong>Each album is $11.</strong> Every song previews here, and the radio plays them all. Buy an album to hear it in full,
+              with its remixes, lyrics and {artistName}&apos;s full Bible.
+            </div>
+          </div>
+        )
+      ) : access.supporter ? (
         <div className="rs-banner rs-banner-on">
           <strong>You&apos;re a supporter.</strong>{" "}
           {labelAlbum
@@ -261,7 +291,7 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
               : `Hear all of ${labelAlbum.title} in full before it's out everywhere`}
             , plus the Gallery, Chat, lyrics and {artistName}&apos;s full story. Everything else plays as a 30-second preview.
           </div>
-          <button className="rs-cta" onClick={onSupport}>Support {artistName}</button>
+          <button className="rs-cta" onClick={() => onSupport()}>Support {artistName}</button>
         </div>
       ) : (
         <div className="rs-banner">
@@ -269,28 +299,85 @@ export default function Discography({ artistName, songs, albums, access, onSuppo
             <strong>The vault is for supporters.</strong> Singles play free. Support {artistName} to hear every unreleased and
             in-development song in full, read the lyrics and the full Bible, and get each new song as it lands.
           </div>
-          <button className="rs-cta" onClick={onSupport}>Support {artistName}</button>
+          <button className="rs-cta" onClick={() => onSupport()}>Support {artistName}</button>
         </div>
       )}
 
-      {sections.map(sec => (
+      {useGrid && !openAlbum && (
+        <div className="rs-albums">
+          {gridAlbums.map(a => {
+            const list = a.tracks.map(t => byId.get(t.songId)).filter((x): x is PublicSong => !!x);
+            const n = list.filter(x => !x.isRemix).length;
+            return (
+              <button key={a.id} className="rs-albums-card" onClick={() => setOpenAlbum(a.id)} aria-label={`Open ${a.title}`}>
+                <span className="rs-albums-art">
+                  {a.coverUrl ? <img src={a.coverUrl} alt="" loading="lazy" /> : <span className="rs-cover-blank" />}
+                  {owns(a.id) && <span className="rs-albums-owned">Owned</span>}
+                </span>
+                <span className="rs-albums-title">{a.title}</span>
+                <span className="rs-albums-meta">
+                  {a.status === "released" ? `Album · ${n} ${n === 1 ? "song" : "songs"}` : `New album · ${n} of ${a.trackTarget} so far`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {(useGrid
+        ? sections.filter(sec => (openAlbum ? sec.key === openAlbum : !gridAlbums.some(a => a.id === sec.key)))
+        : sections).map(sec => (
         <div key={sec.key} className="rs-section">
-          {sec.album ? (
+          {useGrid && sec.key === openAlbum ? (() => {
+            const a = gridAlbums.find(x => x.id === sec.key)!;
+            const n = sec.songs.filter(x => !x.isRemix).length;
+            return (
+              <>
+                <button className="rs-back" onClick={() => setOpenAlbum(null)}>&larr; All albums</button>
+                <div className="rs-album">
+                  <div className="rs-album-cover rs-album-still">
+                    {a.coverUrl ? <img src={a.coverUrl} alt="" /> : <span className="rs-cover-blank" />}
+                  </div>
+                  <div>
+                    <div className="rs-album-kicker">{a.status === "released" ? "Album" : "New album · In progress"}</div>
+                    <h3 className="rs-album-title">{a.title}</h3>
+                    <p className="rs-album-meta">
+                      {a.status === "released" ? `${n} ${n === 1 ? "song" : "songs"}` : `${n} of ${a.trackTarget} songs so far. New songs land here as they're finished.`}
+                    </p>
+                    {owns(a.id)
+                      ? <p className="rs-album-out"><strong>You own this album.</strong></p>
+                      : <button className="rs-cta" onClick={() => onSupport(a.id)}>
+                          {a.status === "released" ? `Get ${a.title} · $11` : `Get it early · $11`}
+                        </button>}
+                    {!owns(a.id) && a.status !== "released" && (
+                      <p className="rs-album-out" style={{ marginTop: 8 }}>Buy now and every new song on this album unlocks as it lands, with a Founding Fan badge.</p>
+                    )}
+                  </div>
+                </div>
+              </>
+            );
+          })() : sec.album ? (
             <AlbumHero
               album={sec.album}
               songs={sec.songs}
               playing={playing && !!current && sec.songs.some(x => x.id === current)}
               onPlay={() => { const first = sec.songs.find(x => x.access === "single") ?? sec.songs[0]; if (first) toggle(first); }}
             />
-          ) : (
+          ) : useGrid && gridAlbums.some(a => a.id === sec.key) ? null : (
             <div className="rs-section-head">
               <h3 className="rs-section-title">{sec.title}</h3>
               {sec.sub && <span className={"rs-section-sub" + (sec.inProgress ? " rs-progress" : "")}>{sec.sub}</span>}
             </div>
           )}
           <div className="rs-rows">
-            {sec.songs.map(renderRow)}
+            {(useGrid && sec.key === openAlbum ? sec.songs.filter(x => !x.isRemix) : sec.songs).map(renderRow)}
           </div>
+          {useGrid && sec.key === openAlbum && sec.songs.some(x => x.isRemix) && (
+            <>
+              <h4 className="rs-subhead">Remixes · GeekFon exclusives</h4>
+              <div className="rs-rows">{sec.songs.filter(x => x.isRemix).map(renderRow)}</div>
+            </>
+          )}
           {sec.remixes && sec.remixes.length > 0 && (
             <>
               <h4 className="rs-subhead">Remixes · GeekFon exclusives</h4>

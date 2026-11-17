@@ -642,6 +642,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
   // Server-decided supporter access for this artist (streams, lyrics, Bible).
   const rosterAccess = useRosterAccess(slug || "", !!depot);
   const [supportOpen, setSupportOpen] = useState(false);
+  // The album chosen on the Discography album grid (null = the default offer).
+  const [supportAlbumId, setSupportAlbumId] = useState<string | null>(null);
   // Every artist with songs gets the storefront (portrait + music + support
   // tour) in place of the header and Discography: first label artists
   // (2026-10-04, Sean), then every artist ("the whole style that we created
@@ -685,7 +687,8 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
     if (new URLSearchParams(window.location.search).get("tab") === "support") openSupport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  function openSupport() {
+  function openSupport(albumId?: string) {
+    setSupportAlbumId(albumId ?? null);
     // Inside another site's frame (seanarussell.com/media), joining and supporting happens on geekfon.ai itself.
     if (isEmbedded() && slug) { openTop(`/${slug}?tab=support`); return; }
     if (storefront) {
@@ -1939,7 +1942,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   songs={depot.songs}
                   albums={depot.albums}
                   access={rosterAccess}
-                  onSupport={() => openSupport()}
+                  onSupport={(albumId) => openSupport(albumId)}
                 />
               )}
               {tab === "discography" && depot && radioStations && (
@@ -1959,6 +1962,7 @@ export default function ArtistPage({ content, cityBg, activeArticle, slug, depot
                   artistName={name || ""}
                   slug={slug || ""}
                   albums={depot.albums}
+                  albumId={supportAlbumId}
                   signedIn={rosterAccess.signedIn}
                   onClose={() => setSupportOpen(false)}
                   showcase={{

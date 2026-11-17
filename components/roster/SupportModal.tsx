@@ -18,20 +18,23 @@ type Props = {
   artistName: string;
   slug: string;
   albums: PublicAlbum[];
+  // The album picked on the Discography album grid; when set, that album is the one sold.
+  albumId?: string | null;
   signedIn: boolean;
   onClose: () => void;
   // Label-model artists: what to show in the "what you get" showcase.
   showcase?: { heroUrl?: string; songs: PublicSong[]; stations: RadioStation[]; bibleLabels: string[]; galleryCount: number };
 };
 
-export default function SupportModal({ artistName, slug, albums, signedIn, onClose, showcase }: Props) {
+export default function SupportModal({ artistName, slug, albums, albumId, signedIn, onClose, showcase }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Sell the album that is building now if there is one (a pre-order makes
   // the buyer a Founding Fan), otherwise the newest released album.
   // Label-model artists sell the album that is coming (or the latest out).
   const labelAlbums = albums.filter(a => a.label);
-  const album = labelAlbums.length
+  const chosen = albumId ? albums.find(a => a.id === albumId) ?? null : null;
+  const album = chosen ? chosen : labelAlbums.length
     ? labelAlbums.find(a => !a.out) ?? labelAlbums[labelAlbums.length - 1]
     : albums.find(a => a.status !== "released") ?? [...albums].reverse().find(a => a.status === "released") ?? null;
 

@@ -104,6 +104,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
       songs,
       downloads,
       staff: ent.reason === "staff",
+      // Which albums this viewer owns (2026-11-17, albums as their own $11
+      // purchases): "all" for staff, Lifetime, Pro and artist-wide unlocks.
+      ownedAlbums: ent.supporter ? (ent.albumIds ? [...ent.albumIds] : "all") : [],
       ...(bible ? { bible } : {}),
       ...(gallery ? { gallery } : {}),
     },

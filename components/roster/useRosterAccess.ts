@@ -26,10 +26,12 @@ export type RosterAccess = {
   downloads: Record<string, string>;
   bible?: FanBibleModule[];
   staff: boolean;
+  // Albums this viewer owns: "all" (staff, Lifetime, Pro, artist-wide unlock) or album ids.
+  ownedAlbums: string[] | "all";
   gallery?: { items: GalleryItem[]; lockedCount: number };
 };
 
-const EMPTY: RosterAccess = { loaded: false, signedIn: false, supporter: false, allArtists: false, download: false, songs: {}, downloads: {}, staff: false };
+const EMPTY: RosterAccess = { loaded: false, signedIn: false, supporter: false, allArtists: false, download: false, songs: {}, downloads: {}, staff: false, ownedAlbums: [] };
 
 export function useRosterAccess(slug: string, enabled = true): RosterAccess & { refresh: () => void } {
   const [access, setAccess] = useState<RosterAccess>(EMPTY);
@@ -54,6 +56,7 @@ export function useRosterAccess(slug: string, enabled = true): RosterAccess & { 
         downloads: body.downloads || {},
         bible: body.bible,
         staff: !!body.staff,
+        ownedAlbums: body.ownedAlbums === "all" ? "all" : Array.isArray(body.ownedAlbums) ? body.ownedAlbums : [],
         gallery: body.gallery,
       });
     } catch {

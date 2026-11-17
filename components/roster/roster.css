@@ -158,3 +158,16 @@
 .rs-tile{background:#f2f2f2}
 .rs-tile-title{opacity:0;transition:opacity .15s}
 .rs-tile:hover .rs-tile-title,.rs-tile:focus-visible .rs-tile-title{opacity:1}
+
+/* Album grid (2026-11-17): one square per album once an artist has two. */
+.rs-albums{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px;margin:6px 0 22px}
+.rs-albums-card{appearance:none;border:0;background:none;padding:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;color:inherit;font:inherit;min-width:0}
+.rs-albums-art{position:relative;display:block;aspect-ratio:1;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.06);box-shadow:0 6px 18px rgba(0,0,0,.12);transition:transform .15s ease}
+.rs-albums-card:hover .rs-albums-art,.rs-albums-card:focus-visible .rs-albums-art{transform:translateY(-3px)}
+.rs-albums-art img{width:100%;height:100%;object-fit:cover;display:block}
+.rs-albums-owned{position:absolute;top:8px;left:8px;background:#111;color:#fff;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px}
+.rs-albums-title{font-weight:900;font-size:16px;color:#1a1a1a;line-height:1.2}
+.rs-albums-meta{font-size:12px;color:rgba(26,26,26,.6)}
+.rs-back{appearance:none;border:0;background:none;padding:4px 0;margin:0 0 10px;font:inherit;font-weight:800;font-size:13px;color:var(--rx,#7c3aed);cursor:pointer}
+.rs-album-still{cursor:default}
+@media(max-width:420px){.rs-albums{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
