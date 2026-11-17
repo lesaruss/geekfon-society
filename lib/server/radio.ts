@@ -33,12 +33,12 @@ const MAIN_STATION_SLUG = "main";
 // part of the rotation keeps the synced clock identical for every listener.
 // Managed from the admin Radio Schedule page (Spots).
 
-type SpotRow = { label: string; sponsor_name: string; voiced_by: string | null; src_url: string; duration_seconds: number; click_url: string | null; every_n_songs: number; starts_at: string | null; ends_at: string | null };
+type SpotRow = { label: string; kind?: string | null; sponsor_name: string; voiced_by: string | null; src_url: string; duration_seconds: number; click_url: string | null; every_n_songs: number; starts_at: string | null; ends_at: string | null };
 
 async function stationSpots(sb: NonNullable<ReturnType<typeof serviceClient>>, slug: string): Promise<SpotRow[]> {
   const { data } = await sb
     .from("radio_spots")
-    .select("label, sponsor_name, voiced_by, src_url, duration_seconds, click_url, every_n_songs, starts_at, ends_at")
+    .select("label, kind, sponsor_name, voiced_by, src_url, duration_seconds, click_url, every_n_songs, starts_at, ends_at")
     .eq("is_active", true)
     .contains("station_slugs", [slug])
     .order("sort_order", { ascending: true });
@@ -63,7 +63,8 @@ function withSpots(rotation: RadioTrack[], spots: SpotRow[], names: Map<string, 
       artist: (s.voiced_by && names.get(s.voiced_by)) || s.sponsor_name,
       durationSeconds: Number(s.duration_seconds),
       linkUrl: s.click_url || undefined,
-      sponsor: s.sponsor_name,
+      // Artist drops (kind "drop") carry no sponsor: the player shows them as the artist saying hello.
+      sponsor: s.kind === "drop" ? undefined : s.sponsor_name,
     });
   });
   return out;

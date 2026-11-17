@@ -482,10 +482,10 @@ function WhatPanel(props: {
       <div className="panel-in">
         {head}
         <div className="pcover" style={{ display: "grid", placeItems: "center" }}><img src={LOGO} alt="" style={{ width: "50%", height: "50%", objectFit: "contain" }} /></div>
-        <div className="pmeta"><p className="song">{spot.title}</p><div className="who">A word from {spot.sponsor || spot.artist} · on {station.name}</div></div>
+        <div className="pmeta"><p className="song">{spot.title}</p><div className="who">{spot.sponsor ? `A word from ${spot.sponsor}` : spot.artist} · on {station.name}</div></div>
         <div className="card2">
           <p className="lab">On air between songs</p>
-          <p style={{ color: "var(--muted)", fontSize: 14 }}>Sponsors keep GeekFon Radio free. The next song starts right after this.</p>
+          <p style={{ color: "var(--muted)", fontSize: 14 }}>{spot.sponsor ? "Sponsors keep GeekFon Radio free. The next song starts right after this." : `A quick hello from ${spot.artist}. The next song starts right after this.`}</p>
           {spot.linkUrl ? <a className="spot" href={spot.linkUrl} target="_blank" rel="noopener sponsored">Visit {spot.sponsor || "the sponsor"}<IcOut /></a> : null}
         </div>
         <div style={{ height: 16 }} />

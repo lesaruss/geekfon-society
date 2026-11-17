@@ -185,7 +185,7 @@ export default function PopPlayer() {
             <div className="lyr-s" tabIndex={0} aria-label="Lyrics, scrolls">
               {lyrics === undefined && song?.songId ? <p className="fine">Loading the lyrics.</p>
                 : lines.length ? lines.map((l, i) => l.kind === "sec" ? <p key={i} className="sec">{l.text}</p> : <p key={i} className="ln">{l.text}</p>)
-                : <p className="fine">{isSpot ? "A word from a sponsor. Lyrics are back with the next song." : "No lyrics for this song yet."}</p>}
+                : <p className="fine">{isSpot ? (R.onAir?.sponsor ? "A word from a sponsor. Lyrics are back with the next song." : `A quick hello from ${R.onAir?.artist}. Lyrics are back with the next song.`) : "No lyrics for this song yet."}</p>}
               {lines.length ? <p className="fine">Lyrics are free for everyone.</p> : null}
             </div>
           </div>
