@@ -2,7 +2,7 @@
 // Lyrics and the artist card for GeekFon Radio, fetched once per song or
 // artist and kept for the visit. Both answers are public and CDN cached.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { Station } from "./useLiveRadio";
 
 export type Lyrics = { lyricsEn: string | null; lyricsOriginal: string | null; lyricsOriginalLang: string | null };
@@ -100,4 +100,51 @@ export const stInk = (s?: { ink?: string | null } | null) => s?.ink || "#ffffff"
 export function greeting(d = new Date()): string {
   const h = d.getHours();
   return h < 5 ? "Good evening" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+}
+
+/* ---------- lyric language (Sean, 2026-11-17) ----------
+   English shows first. A listener can flip to the language it was sung in, and
+   that choice sticks for every song on this device, in every player. */
+export type LyricShow = "en" | "orig";
+const LYR_KEY = "gf.lyricLang";
+const lyrSubs = new Set<() => void>();
+let lyrShow: LyricShow | null = null;
+function readLyr(): LyricShow {
+  if (lyrShow) return lyrShow;
+  try { lyrShow = localStorage.getItem(LYR_KEY) === "orig" ? "orig" : "en"; } catch { lyrShow = "en"; }
+  return lyrShow;
+}
+export function setLyricShow(v: LyricShow) {
+  lyrShow = v;
+  try { localStorage.setItem(LYR_KEY, v); } catch { /* private window */ }
+  lyrSubs.forEach(f => f());
+}
+function subLyr(f: () => void) {
+  lyrSubs.add(f);
+  const onStore = (e: StorageEvent) => { if (e.key === LYR_KEY) { lyrShow = null; f(); } };
+  window.addEventListener("storage", onStore);
+  return () => { lyrSubs.delete(f); window.removeEventListener("storage", onStore); };
+}
+
+/** "ko" -> "한국어": the language named in itself, for the toggle. */
+export function nativeLangName(code: string | null | undefined): string | null {
+  if (!code) return null;
+  const c = code.trim();
+  if (!c || c.length > 3) return langName(c);
+  try {
+    const n = new Intl.DisplayNames([c], { type: "language" }).of(c);
+    if (n && n.toLowerCase() !== c.toLowerCase()) return n.charAt(0).toLocaleUpperCase(c) + n.slice(1);
+  } catch { /* old browser */ }
+  return langName(c);
+}
+
+/** What a lyric view shows: English by default, the original when picked and present. */
+export function useLyricView(lyrics: Lyrics | null | undefined) {
+  const pick = useSyncExternalStore(subLyr, readLyr, () => "en" as LyricShow);
+  const code = lyrics?.lyricsOriginalLang?.trim().toLowerCase() || null;
+  const both = !!(lyrics?.lyricsEn && lyrics?.lyricsOriginal && code && code !== "en");
+  const showing: LyricShow = both && pick === "orig" ? "orig" : "en";
+  const text = showing === "orig" ? lyrics?.lyricsOriginal : lyrics?.lyricsEn || lyrics?.lyricsOriginal;
+  const lines = useMemo(() => lyricLines(text), [text]);
+  return { lines, both, showing, lang: langName(code), native: nativeLangName(code), code };
 }

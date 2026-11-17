@@ -18,7 +18,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useLiveRadio, songOf, sameSong, fmtTime, PREVIEW_SECONDS, FALLBACK_MAIN, isArtistStation, type Song, type Station, type LiveRadio } from "./useLiveRadio";
-import { useArtist, useLyrics, lyricLines, lyricPreview, langName, NEW_TALENT, stColor, stInk, greeting } from "./radioData";
+import { useArtist, useLyrics, useLyricView, lyricPreview, NEW_TALENT, stColor, stInk, greeting } from "./radioData";
+import { LyricToggle } from "./LyricToggle";
 import { RADIO_CSS } from "./radioCss";
 import { ARTIST_CSS } from "./artistCss";
 import UnlockSheet from "./UnlockSheet";
@@ -465,8 +466,8 @@ function WhatPanel(props: {
   const { song: x, pinned, station, spot, recent } = props;
   const artist = useArtist(spot ? null : x?.slug);
   const lyrics = useLyrics(spot ? null : x?.songId);
-  const lines = useMemo(() => lyricLines(lyrics?.lyricsEn), [lyrics]);
-  const lang = langName(lyrics?.lyricsOriginalLang);
+  const lv = useLyricView(lyrics);
+  const { lines, lang } = lv;
   const pageSlug = artist?.slug || x?.slug;
 
   const head = (
@@ -534,12 +535,12 @@ function WhatPanel(props: {
       </div>
       <div className="card2 lyr">
         <p className="lab">Lyrics</p>
-        {lang ? <p className="lang">Sung in {lang}. Shown in English.</p> : null}
+        {lv.both ? <div className="lyh"><p className="lang">Sung in {lang}.{lv.showing === "en" ? " Shown in English." : ""}</p><LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /></div> : lang ? <p className="lang">Sung in {lang}. Shown in English.</p> : null}
         {lyrics === undefined && x.songId ? (
           <p className="none">Loading the lyrics.</p>
         ) : lines.length ? (
           <>
-            <div className="lprev">
+            <div className="lprev" lang={lv.showing === "orig" ? lv.code || undefined : undefined}>
               {lyricPreview(lines, 7).map((l, i) => l.kind === "sec" ? <p key={i} className="sec">{l.text}</p> : <p key={i} className="ln">{l.text}</p>)}
             </div>
             <button type="button" className="full" onClick={() => props.onLyrics(x)}><IcLyrics size={18} />Show full lyrics</button>
@@ -567,8 +568,8 @@ function WhatPanel(props: {
 function LyricsOverlay({ song, onClose, onWhat, closeRef }: { song: Song; onClose: () => void; onWhat: () => void; closeRef: React.RefObject<HTMLButtonElement | null> }) {
   const lyrics = useLyrics(song.songId);
   const artist = useArtist(song.slug);
-  const lines = useMemo(() => lyricLines(lyrics?.lyricsEn), [lyrics]);
-  const lang = langName(lyrics?.lyricsOriginalLang);
+  const lv = useLyricView(lyrics);
+  const { lines, lang } = lv;
   const pageSlug = artist?.slug || song.slug;
   const pic = artist?.avatar || song.coverUrl;
   return (
@@ -582,7 +583,7 @@ function LyricsOverlay({ song, onClose, onWhat, closeRef }: { song: Song; onClos
       <div className="lb">
         <div className="lb-in">
           <div>
-            {lang ? <p className="note">Sung in {lang}. Shown in English.</p> : null}
+            {lv.both ? <div className="lyh"><p className="note">Sung in {lang}.{lv.showing === "en" ? " Shown in English." : ""}</p><LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /></div> : lang ? <p className="note">Sung in {lang}. Shown in English.</p> : null}
             {lyrics === undefined ? <p className="note">Loading the lyrics.</p>
               : lines.length ? lines.map((l, i) => l.kind === "sec" ? <p key={i} className="sec">{l.text}</p> : <p key={i} className="ln">{l.text}</p>)
               : <p className="note">No lyrics for this song yet. Lyrics are free for every song as they arrive.</p>}

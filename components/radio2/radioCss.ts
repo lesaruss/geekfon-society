@@ -416,4 +416,10 @@ body{overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   .gfr *,.gfr *::before,.gfr *::after{transition:none !important;animation:none !important;scroll-behavior:auto !important}
 }
+.gfr .lyh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.gfr .lyh > p{margin:0 !important}
+.gfr .lytg{display:inline-flex;padding:2px;border-radius:999px;background:rgba(127,127,127,.18);flex:none}
+.gfr .lytg button{all:unset;cursor:pointer;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;opacity:.7;line-height:1.2}
+.gfr .lytg button[aria-pressed="true"]{background:rgba(0,0,0,.78);color:#fff;opacity:1}
+.gfr .lytg button:focus-visible{outline:2px solid currentColor;outline-offset:1px}
 `;

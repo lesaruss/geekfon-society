@@ -177,4 +177,10 @@ body{overflow:hidden}
   .gfp *,.gfp *::before,.gfp *::after{animation:none !important;transition:none !important}
 }
 .gfp .inote{margin:0 0 12px;font-size:13.5px;line-height:1.45;color:var(--text)}
+.gfp .lyh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.gfp .lyh > p{margin:0 !important}
+.gfp .lytg{display:inline-flex;padding:2px;border-radius:999px;background:rgba(127,127,127,.18);flex:none}
+.gfp .lytg button{all:unset;cursor:pointer;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;opacity:.7;line-height:1.2}
+.gfp .lytg button[aria-pressed="true"]{background:rgba(0,0,0,.78);color:#fff;opacity:1}
+.gfp .lytg button:focus-visible{outline:2px solid currentColor;outline-offset:1px}
 `;

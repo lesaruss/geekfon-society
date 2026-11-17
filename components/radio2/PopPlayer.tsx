@@ -7,7 +7,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLiveRadio, songOf, fmtTime, FALLBACK_MAIN, type Station } from "./useLiveRadio";
-import { useArtist, useLyrics, lyricLines, lyricPreview, langName, NEW_TALENT, stColor, stInk } from "./radioData";
+import { useArtist, useLyrics, useLyricView, lyricPreview, NEW_TALENT, stColor, stInk } from "./radioData";
+import { LyricToggle } from "./LyricToggle";
 import type { RadioTrack } from "@/lib/radioSchedule";
 import { POP_CSS } from "./popCss";
 import { IcPlay, IcPause, IcHeart, IcLyrics, IcX, IcOut, IcInstall, Eq } from "./icons";
@@ -35,8 +36,8 @@ export default function PopPlayer() {
   const isSpot = R.onAir?.type === "ad";
   const lyrics = useLyrics(song?.songId);
   const artist = useArtist(sheet === "what" ? song?.slug : null);
-  const lines = useMemo(() => lyricLines(lyrics?.lyricsEn), [lyrics]);
-  const lang = langName(lyrics?.lyricsOriginalLang);
+  const lv = useLyricView(lyrics);
+  const { lines, lang } = lv;
   const heartOn = R.isHearted(song);
   const dur = R.onAir?.durationSeconds || 0;
   const at = Math.min(R.position, dur);
@@ -180,7 +181,7 @@ export default function PopPlayer() {
 
         {lyrOpen ? (
           <div className="lyrics" aria-label="Lyrics">
-            <div className="lyr-h"><b>Lyrics</b><span>{lang ? `Sung in ${lang}. Shown in English.` : "Free for everyone"}</span></div>
+            <div className="lyr-h"><b>Lyrics</b>{lv.both ? <LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /> : <span>{lang ? `Sung in ${lang}. Shown in English.` : "Free for everyone"}</span>}</div>
             <div className="lyr-s" tabIndex={0} aria-label="Lyrics, scrolls">
               {lyrics === undefined && song?.songId ? <p className="fine">Loading the lyrics.</p>
                 : lines.length ? lines.map((l, i) => l.kind === "sec" ? <p key={i} className="sec">{l.text}</p> : <p key={i} className="ln">{l.text}</p>)
@@ -230,7 +231,7 @@ export default function PopPlayer() {
           </div>
           <div className="card2 lyrc">
             <p className="lab">Lyrics</p>
-            <p className="lang">{lang ? `Sung in ${lang}. Shown in English.` : "Free for everyone."}</p>
+            {lv.both ? <div className="lyh"><p className="lang">Sung in {lang}.{lv.showing === "en" ? " Shown in English." : ""}</p><LyricToggle showing={lv.showing} native={lv.native} lang={lang} code={lv.code} /></div> : <p className="lang">{lang ? `Sung in ${lang}. Shown in English.` : "Free for everyone."}</p>}
             {lines.length ? (
               <>
                 <div className="lprev">{lyricPreview(lines, 5).map((l, i) => l.kind === "sec" ? <p key={i} className="sec">{l.text}</p> : <p key={i} className="ln">{l.text}</p>)}</div>
