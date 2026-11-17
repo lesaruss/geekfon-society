@@ -19,14 +19,16 @@ import ArtistChat from "./ArtistChat";
 import { IcPlay, IcPause, IcHeart, IcLyrics, IcArrow, IcRadio } from "./icons";
 import { IcLock, IcPin, IcChat, IcCheck } from "./artistIcons";
 import type { AlbumCard, ArtistPageData, ArtistSong, GalleryTile } from "@/lib/artistPage";
+import { useT } from "@/components/i18n/I18n";
 
 type Tab = "music" | "chat" | "press" | "gallery" | "about";
 const TABS: Tab[] = ["music", "chat", "press", "gallery", "about"];
-const TAB_NAMES: Record<Tab, string> = { music: "Music", chat: "Chat", press: "Press", gallery: "Gallery", about: "About" };
+const TAB_KEYS: Record<Tab, string> = { music: "artist.tabMusic", chat: "artist.tabChat", press: "artist.tabPress", gallery: "artist.tabGallery", about: "artist.tabAbout" };
+const PRICE = "$11";
 const LS_SAVED = "gfr-saved-artists-v1";
 
 /** "Roxanne's", "Rustblood Prophets'". */
-const possessive = (name: string) => (/s$/i.test(name) ? `${name}\u2019` : `${name}\u2019s`);
+const possessive = (t: ReturnType<typeof useT>, name: string) => t(/s$/i.test(name) ? "artist.possessiveS" : "artist.possessive", { name });
 
 function readTab(): Tab {
   try {
@@ -38,6 +40,7 @@ function readTab(): Tab {
 }
 
 export default function ArtistView({ initial }: { initial: ArtistPageData }) {
+  const t = useT();
   const { R, tuneTo, openLyrics, heart, openUnlock, showToast, setBaseTitle, setPageFocus } = useShell();
   const [A, setA] = useState<ArtistPageData>(initial);
   const [tab, setTab] = useState<Tab>("music");
@@ -46,7 +49,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
   const supporter = access.supporter;
 
   useEffect(() => { setA(initial); }, [initial]);
-  useEffect(() => { setBaseTitle(`${A.name}, GeekFon Society`); }, [A.name, setBaseTitle]);
+  useEffect(() => { setBaseTitle(t("artist.pageTitle", { name: A.name })); }, [A.name, setBaseTitle, t]);
   // The server could not reach the catalog (no service key): ask the API.
   useEffect(() => {
     if (initial.complete) return;
@@ -70,7 +73,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
     try {
       const q = new URLSearchParams(window.location.search);
       if (q.get("tab") === "support") openUnlock(initial.slug, initial.album);
-      if (q.get("checkout") === "success") showToast("Thank you. Unlocking now.");
+      if (q.get("checkout") === "success") showToast(t("artist.checkoutThanks"));
     } catch { /* ignore */ }
     const onPop = () => setTab(readTab());
     window.addEventListener("popstate", onPop);
@@ -101,7 +104,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
     const on = !list.includes(A.slug);
     writeStore(LS_SAVED, on ? [A.slug, ...list] : list.filter(s => s !== A.slug));
     setSaved(on);
-    showToast(on ? "Artist saved on this device" : "Removed from saved artists");
+    showToast(on ? t("artist.savedToast") : t("artist.removedToast"));
   };
 
   // The artist's name never breaks inside a word (Sean, 2026-11-17: "Shamanic"
@@ -156,34 +159,34 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
     const on = !!pv && pv.song.songId === s.id;
     const playing = on && pv!.playing && !pv!.ended;
     const len = s.durationSeconds ? fmtTime(s.durationSeconds) : "";
-    const t = on ? pv!.time : 0;
+    const time = on ? pv!.time : 0;
     const total = on && pv!.full ? pv!.duration || s.durationSeconds || 0 : PREVIEW_SECONDS;
-    const lenText = on ? `${fmtTime(t)} / ${fmtTime(total)}` : len;
+    const lenText = on ? `${fmtTime(time)} / ${fmtTime(total)}` : len;
     const x = song(s);
     const hearted = R.isHearted(x);
     return (
       <div key={s.id} className={"sng" + (on ? " on" : "")}>
-        <button type="button" className="pvb" onClick={() => R.startPreview(x, full)} aria-label={`${playing ? "Pause" : "Play"} ${full ? "" : "30-second preview of "}${s.title}`}>
+        <button type="button" className="pvb" onClick={() => R.startPreview(x, full)} aria-label={t(full ? (playing ? "artist.pauseSong" : "artist.playSong") : (playing ? "artist.pausePreview" : "artist.playPreview"), { title: s.title })}>
           {playing ? <IcPause /> : <IcPlay />}
         </button>
         {s.thumbUrl || s.coverUrl ? <img src={(s.thumbUrl || s.coverUrl)!} alt="" loading="lazy" /> : <span className="ph" />}
         <div className="st">
-          <div className="tl"><b>{s.title}</b><span className="ptag">{full ? "On demand" : "Preview"}</span></div>
+          <div className="tl"><b>{s.title}</b><span className="ptag">{full ? t("artist.onDemand") : t("artist.preview")}</span></div>
           <span className="sub">
-            <span>{s.isRemix ? "Remix" : s.single ? "Single" : A.name}</span>
+            <span>{s.isRemix ? t("artist.remix") : s.single ? t("artist.single") : A.name}</span>
             {len ? <span className="mlen">{lenText}</span> : null}
-            {!full ? <span className="mlock" title="Full song with Unlock"><IcLock size={12} /></span> : null}
+            {!full ? <span className="mlock" title={t("artist.fullSongWithUnlock")}><IcLock size={12} /></span> : null}
           </span>
         </div>
         <span className="sx lk">
-          {full ? <span className="lockb ok"><IcCheck size={13} />Full song</span> : <button type="button" className="lockb" onClick={unlock} title={`Unlock ${A.name} to play the full song, on demand`}><IcLock size={13} />Full song with Unlock</button>}
+          {full ? <span className="lockb ok"><IcCheck size={13} />{t("artist.fullSong")}</span> : <button type="button" className="lockb" onClick={unlock} title={t("artist.unlockFullSongTitle", { name: A.name })}><IcLock size={13} />{t("artist.fullSongWithUnlock")}</button>}
         </span>
         <span className="len">{lenText}</span>
         <span className="ops">
-          <button type="button" className={"ib" + (hearted ? " hearted" : "")} onClick={() => heart(x)} aria-pressed={hearted} aria-label={`${hearted ? "Remove heart from" : "Heart"} ${s.title}`}><IcHeart on={hearted} /></button>
-          <button type="button" className="ib" onClick={() => openLyrics(x)} aria-label={`Lyrics for ${s.title}, free`}><IcLyrics size={18} /></button>
+          <button type="button" className={"ib" + (hearted ? " hearted" : "")} onClick={() => heart(x)} aria-pressed={hearted} aria-label={t(hearted ? "artist.removeHeart" : "artist.heartSong", { title: s.title })}><IcHeart on={hearted} /></button>
+          <button type="button" className="ib" onClick={() => openLyrics(x)} aria-label={t("artist.lyricsFor", { title: s.title })}><IcLyrics size={18} /></button>
         </span>
-        <i className="rp" aria-hidden="true"><i style={{ width: on && total ? `${Math.min(100, (t / total) * 100)}%` : 0 }} /></i>
+        <i className="rp" aria-hidden="true"><i style={{ width: on && total ? `${Math.min(100, (time / total) * 100)}%` : 0 }} /></i>
       </div>
     );
   };
@@ -201,37 +204,37 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
         <div className="onair" style={{ "--c": A.accent, "--i": A.ink } as React.CSSProperties}>
           <div className="oa-art">{covers.map(c => <img key={c} src={c} alt="" />)}</div>
           <div>
-            <p className="eyebrow">Artist radio</p>
-            <b>{A.name} Radio</b>
-            <span className="s">{radioPlaying ? "On air. Live and free." : `Only ${A.name}, on shuffle. Live and free.`}</span>
+            <p className="eyebrow">{t("artist.artistRadio")}</p>
+            <b>{t("artist.radioName", { name: A.name })}</b>
+            <span className="s">{radioPlaying ? t("artist.onAirLive") : t("artist.onlyOnShuffle", { name: A.name })}</span>
           </div>
-          <button type="button" className="oa-play" onClick={() => tuneTo(myRadio)} aria-label={radioPlaying ? `Pause ${A.name} Radio` : `Play ${A.name} Radio`}>{radioPlaying ? <IcPause /> : <IcPlay />}</button>
+          <button type="button" className="oa-play" onClick={() => tuneTo(myRadio)} aria-label={t(radioPlaying ? "artist.pauseRadio" : "artist.playRadio", { name: A.name })}>{radioPlaying ? <IcPause /> : <IcPlay />}</button>
         </div>
         <button type="button" className="cteaser" onClick={() => pickTab("chat")}>
           <span className="avs">{A.avatar ? <img src={A.avatar} alt="" /> : null}</span>
-          <span><b>The crew is talking today.</b><span className="s">Read the group chat from {possessive(A.name)} side</span></span>
+          <span><b>{t("artist.crewTalking")}</b><span className="s">{t("artist.chatTeaserSub", { name: A.name, who: possessive(t, A.name) })}</span></span>
           <IcArrow />
         </button>
       </div>
       {gridAlbums.length && !picked ? (
         <>
-          <div className="shelf-h" style={{ margin: "28px 0 12px" }}><h2>Albums</h2><span className="tag">$11 each</span></div>
+          <div className="shelf-h" style={{ margin: "28px 0 12px" }}><h2>{t("artist.albums")}</h2><span className="tag">{t("artist.priceEach", { price: PRICE })}</span></div>
           <p className="msub">{access.ownedAlbums === "all"
-            ? `Every ${A.name} album in full, on demand.`
+            ? t("artist.everyAlbumFull", { name: A.name })
             : gridAlbums.some(a => owns(a.id))
-              ? `${gridAlbums.filter(a => owns(a.id)).map(a => a.title).join(" and ")} ${gridAlbums.filter(a => owns(a.id)).length === 1 ? "is" : "are"} yours in full. Each album is its own $11.`
-              : `Pick an album. Every song plays a free 30-second preview, and the radio plays them all. Each album is its own $11.`}</p>
+              ? t("artist.ownedAlbums", { count: gridAlbums.filter(a => owns(a.id)).length, titles: gridAlbums.filter(a => owns(a.id)).map(a => a.title).join(` ${t("artist.and")} `), price: PRICE })
+              : t("artist.pickAlbum", { price: PRICE })}</p>
           <div className="albg">
             {gridAlbums.map(a => {
               const n = a.songIds.filter(id => originals.some(o => o.id === id)).length;
               return (
-                <button key={a.id} type="button" className="albc" onClick={() => setOpenAlbum(a.id)} aria-label={`Open ${a.title}`}>
+                <button key={a.id} type="button" className="albc" onClick={() => setOpenAlbum(a.id)} aria-label={t("artist.openAlbum", { title: a.title })}>
                   <span className="albc-art">
                     {a.coverUrl ? <img src={a.coverUrl} alt="" loading="lazy" /> : <span className="ph" />}
-                    {owns(a.id) ? <span className="albc-b">Owned</span> : a.inProgress ? <span className="albc-b new">New</span> : null}
+                    {owns(a.id) ? <span className="albc-b">{t("artist.owned")}</span> : a.inProgress ? <span className="albc-b new">{t("artist.new")}</span> : null}
                   </span>
                   <b>{a.title}</b>
-                  <span className="s">{a.inProgress ? `New album · ${n} of ${a.trackTarget} so far` : `Album · ${n} ${n === 1 ? "song" : "songs"}`}</span>
+                  <span className="s">{a.inProgress ? t("artist.albumProgress", { n, target: a.trackTarget }) : t("artist.albumSongs", { songs: t("artist.songCount", { count: n }) })}</span>
                 </button>
               );
             })}
@@ -240,36 +243,36 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
       ) : null}
       {picked ? (
         <div className="albh">
-          <button type="button" className="albh-back" onClick={() => setOpenAlbum(null)}>&larr; All albums</button>
+          <button type="button" className="albh-back" onClick={() => setOpenAlbum(null)}>&larr; {t("artist.allAlbums")}</button>
           <div className="albh-row">
             {picked.coverUrl ? <img src={picked.coverUrl} alt="" /> : <span className="ph" />}
             <div>
-              <p className="eyebrow">{picked.inProgress ? "New album · in progress" : "Album"}</p>
+              <p className="eyebrow">{picked.inProgress ? t("artist.albumInProgress") : t("artist.album")}</p>
               <h2>{picked.title}</h2>
               <p className="msub" style={{ margin: "4px 0 10px" }}>{owns(picked.id)
-                ? "You own this album. Every song in full, on demand."
+                ? t("artist.youOwnAlbum")
                 : picked.inProgress
-                  ? "Get it early: every song on it so far, and each new one as it lands, with a Founding Fan badge."
-                  : "Every song in full, on demand, with its remixes."}</p>
-              {owns(picked.id) ? <span className="lockb ok"><IcCheck size={13} />Owned</span> : <button type="button" className="pill" onClick={unlock}><IcLock />{picked.inProgress ? "Get it early · $11" : `Unlock ${picked.title} · $11`}</button>}
+                  ? t("artist.getItEarlyDesc")
+                  : t("artist.albumFullDesc")}</p>
+              {owns(picked.id) ? <span className="lockb ok"><IcCheck size={13} />{t("artist.owned")}</span> : <button type="button" className="pill" onClick={unlock}><IcLock />{picked.inProgress ? t("artist.getItEarly", { price: PRICE }) : t("artist.unlockFor", { name: picked.title, price: PRICE })}</button>}
             </div>
           </div>
         </div>
       ) : null}
       {gridAlbums.length && !picked ? null : <>
-      <div className="shelf-h" style={{ margin: "28px 0 12px" }}><h2>{picked ? "Songs" : "Songs"}</h2><span className="tag">{(picked ? owns(picked.id) : supporter) ? "Unlocked" : "Previews free"}</span></div>
+      <div className="shelf-h" style={{ margin: "28px 0 12px" }}><h2>{picked ? t("artist.songs") : t("artist.songs")}</h2><span className="tag">{(picked ? owns(picked.id) : supporter) ? t("artist.unlocked") : t("artist.previewsFree")}</span></div>
       {picked ? null : <p className="msub">{supporter
-        ? `Every song in full, on demand. Lyrics are free for every song.`
-        : `Free: a 30-second preview of every song, and every lyric. Unlock ${A.name} to play every song in full, on demand.`}</p>}
-      {originals.length ? <div className="slist">{originals.map(songRow)}</div> : <div className="empty"><IcRadio size={24} /><span>No songs in the catalog yet. {A.name} Radio plays what is on the air today.</span></div>}
+        ? t("artist.supporterSongsNote")
+        : t("artist.freeSongsNote", { name: A.name })}</p>}
+      {originals.length ? <div className="slist">{originals.map(songRow)}</div> : <div className="empty"><IcRadio size={24} /><span>{t("artist.noSongs", { name: A.name })}</span></div>}
       {remixes.length ? (
         <>
-          <div className="shelf-h" style={{ margin: "26px 0 8px" }}><h2>Remixes</h2></div>
+          <div className="shelf-h" style={{ margin: "26px 0 8px" }}><h2>{t("artist.remixes")}</h2></div>
           <div className="slist">{remixes.map(songRow)}</div>
         </>
       ) : null}
       </>}
-      {!gridAlbums.length && originals.length ? <p className="foot">{originals.length} {originals.length === 1 ? "song" : "songs"} in the catalog{remixes.length ? `, plus ${remixes.length} ${remixes.length === 1 ? "remix" : "remixes"}` : ""}.</p> : null}
+      {!gridAlbums.length && originals.length ? <p className="foot">{remixes.length ? t("artist.catalogFootRemixes", { songs: t("artist.songCount", { count: originals.length }), remixes: t("artist.remixCount", { count: remixes.length }) }) : t("artist.catalogFoot", { songs: t("artist.songCount", { count: originals.length }) })}</p> : null}
     </>
   );
 
@@ -285,7 +288,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
               <h3>{p.title}</h3>
               {p.date ? <time>{p.date}</time> : null}
               {p.blurb ? <p>{p.blurb}</p> : null}
-              {p.href ? <span className="rdl">Read<IcArrow /></span> : null}
+              {p.href ? <span className="rdl">{t("artist.read")}<IcArrow /></span> : null}
             </span>
           </>
         );
@@ -294,7 +297,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
           : <div key={p.title} className="pc">{inner}</div>;
       })}
     </div>
-  ) : <div className="empty"><IcChat /><span>No press yet. Articles about {A.name} show up here as they are published.</span></div>;
+  ) : <div className="empty"><IcChat /><span>{t("artist.noPress", { name: A.name })}</span></div>;
 
   /* ---------- Gallery ---------- */
   const supporterItems: GalleryTile[] = (access.gallery?.items ?? []).map(g => ({ id: g.id, title: g.title, url: g.url, thumb: g.thumb ?? null, kind: g.kind }));
@@ -306,20 +309,20 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
       {shownGallery.length || lockedN ? (
         <div className="gal">
           {shownGallery.map(g => (
-            <a key={g.id} className="gi" href={g.url} target="_blank" rel="noopener" aria-label={g.title || "Open picture"}>
+            <a key={g.id} className="gi" href={g.url} target="_blank" rel="noopener" aria-label={g.title || t("artist.openPicture")}>
               <img src={g.thumb || g.url} alt={g.title || ""} loading="lazy" />
               {g.title ? <span className="cap">{g.title}</span> : null}
             </a>
           ))}
           {Array.from({ length: lockedN }).map((_, i) => (
-            <button key={`lk${i}`} type="button" className="gi lk" onClick={unlock} aria-label={`Picture for supporters only. Unlock ${A.name}`}>
+            <button key={`lk${i}`} type="button" className="gi lk" onClick={unlock} aria-label={t("artist.lockedPictureLabel", { name: A.name })}>
               {blurSrc.length ? <img src={blurSrc[i % blurSrc.length]} alt="" loading="lazy" /> : null}
-              <span className="gl"><span className="lc"><IcLock size={18} /></span>Supporters only</span>
+              <span className="gl"><span className="lc"><IcLock size={18} /></span>{t("artist.supportersOnly")}</span>
             </button>
           ))}
         </div>
-      ) : <div className="empty"><IcLock /><span>No pictures yet. {A.name}&apos;s Gallery fills in here.</span></div>}
-      {lockedN ? <p className="foot">{lockedN} {lockedN === 1 ? "picture is" : "pictures are"} for supporters. Unlock {A.name} to see every one.</p> : null}
+      ) : <div className="empty"><IcLock /><span>{t("artist.noPictures", { name: A.name })}</span></div>}
+      {lockedN ? <p className="foot">{t("artist.lockedPictures", { count: lockedN, name: A.name })}</p> : null}
     </>
   );
 
@@ -328,28 +331,28 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
   const catalog = originals.length;
   const tabAbout = () => (
     <>
-      <section className="aspot" aria-label="Artist Spotlight">
-        <div className="aspot-h"><small>Artist Spotlight</small><span>Video coming soon</span></div>
+      <section className="aspot" aria-label={t("artist.artistSpotlight")}>
+        <div className="aspot-h"><small>{t("artist.artistSpotlight")}</small><span>{t("artist.videoComingSoon")}</span></div>
         <div className={"sv" + (A.videoThumb ? "" : " fit")}>
           {spotImg ? <img src={spotImg} alt="" loading="lazy" /> : null}
-          <div className="bug"><i />GeekFon Pulse · Artist Spotlight</div>
-          <div className="samp">Placeholder</div>
+          <div className="bug"><i />{t("artist.pulseSpotlight")}</div>
+          <div className="samp">{t("artist.placeholder")}</div>
         </div>
-        <p className="spot-note">Artist Spotlight video coming soon: {A.name}, in their own words.</p>
+        <p className="spot-note">{t("artist.spotNote", { name: A.name })}</p>
       </section>
       <div className="about">
         <div>
-          <h2 className="ab-h">Bio</h2>
-          {A.bio.length ? A.bio.map((p, i) => <p key={i} className="bio">{p}</p>) : <p className="bio dim">No bio yet.</p>}
+          <h2 className="ab-h">{t("artist.bio")}</h2>
+          {A.bio.length ? A.bio.map((p, i) => <p key={i} className="bio">{p}</p>) : <p className="bio dim">{t("artist.noBio")}</p>}
           {A.quote ? <blockquote className="aq"><p>&ldquo;{A.quote}&rdquo;</p><cite>{A.name}</cite></blockquote> : null}
           <dl className="facts2">
-            <div><dt>Genre</dt><dd>{A.genre || "Not listed yet"}</dd></div>
-            <div><dt>From</dt><dd>{A.location || "Not listed yet"}</dd></div>
-            <div><dt>On the radio</dt><dd>
-              <button type="button" onClick={() => tuneTo(myRadio)}>{A.name} Radio</button>
+            <div><dt>{t("artist.genre")}</dt><dd>{A.genre || t("artist.notListed")}</dd></div>
+            <div><dt>{t("artist.from")}</dt><dd>{A.location || t("artist.notListed")}</dd></div>
+            <div><dt>{t("artist.onTheRadio")}</dt><dd>
+              <button type="button" onClick={() => tuneTo(myRadio)}>{t("artist.radioName", { name: A.name })}</button>
               {A.stations.map(s => <button key={s.slug} type="button" onClick={() => tuneTo(s.slug)}>{s.name}</button>)}
             </dd></div>
-            <div><dt>Catalog</dt><dd>{catalog ? `${catalog} ${catalog === 1 ? "song" : "songs"}` : "No songs yet"}</dd></div>
+            <div><dt>{t("artist.catalog")}</dt><dd>{catalog ? t("artist.songCount", { count: catalog }) : t("artist.noSongsYet")}</dd></div>
           </dl>
         </div>
         {art ? <div className="ab-art"><img src={art} alt="" loading="lazy" /></div> : null}
@@ -363,7 +366,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
     <div className="aview" style={{ "--ac": A.accent, "--ac-ink": A.ink } as React.CSSProperties}>
       <section className="ahead">
         <div className="atext">
-          <nav className="crumbs" aria-label="Breadcrumb"><Link href="/">GeekFon Society</Link><span aria-hidden="true">›</span><Link href="/roster">Artists</Link></nav>
+          <nav className="crumbs" aria-label={t("artist.breadcrumb")}><Link href="/">GeekFon Society</Link><span aria-hidden="true">›</span><Link href="/roster">{t("artist.artists")}</Link></nav>
           <h1 className="aname" ref={nameRef} style={nameSize ? { fontSize: nameSize } : undefined}>{A.name}</h1>
           {A.tagline ? <p className="atag">{A.tagline}</p> : null}
           <div className="apills">
@@ -371,23 +374,23 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
             {A.location ? <span><IcPin />{A.location}</span> : null}
           </div>
         </div>
-        {art ? <div className={"aart " + (A.cutout ? "cut" : "sq")}><img src={art} alt={`${A.name}, illustration`} /></div> : null}
+        {art ? <div className={"aart " + (A.cutout ? "cut" : "sq")}><img src={art} alt={t("artist.illustrationAlt", { name: A.name })} /></div> : null}
       </section>
       <div className="aact">
-        <button type="button" className="pill acp" onClick={() => tuneTo(myRadio)}>{radioPlaying ? <><IcPause />Pause {A.name} Radio</> : <><IcPlay />Play {A.name} Radio</>}</button>
-        <button type="button" className="pill ghost" onClick={toggleSave} aria-pressed={saved}><IcHeart on={saved} />{saved ? "Saved" : "Save artist"}</button>
+        <button type="button" className="pill acp" onClick={() => tuneTo(myRadio)}>{radioPlaying ? <><IcPause />{t("artist.pauseRadio", { name: A.name })}</> : <><IcPlay />{t("artist.playRadio", { name: A.name })}</>}</button>
+        <button type="button" className="pill ghost" onClick={toggleSave} aria-pressed={saved}><IcHeart on={saved} />{saved ? t("artist.saved") : t("artist.saveArtist")}</button>
         {supporter
-          ? <span className="pill sup"><IcCheck />{access.allArtists ? "Lifetime: unlocked" : "Unlocked"}</span>
-          : <button type="button" className="pill" onClick={unlock}><IcLock />Unlock {A.name} · $11</button>}
+          ? <span className="pill sup"><IcCheck />{access.allArtists ? t("artist.lifetimeUnlocked") : t("artist.unlocked")}</span>
+          : <button type="button" className="pill" onClick={unlock}><IcLock />{t("artist.unlockFor", { name: A.name, price: PRICE })}</button>}
       </div>
-      <p className="anote">{A.name} Radio is free and live: only {A.name}, on shuffle. Saving an artist stays on this device.</p>
-      <div className="atabs" role="tablist" aria-label={`${A.name} sections`}>
-        {TABS.map(t => (
-          <button key={t} type="button" role="tab" id={`atab-${t}`} className="atab" aria-selected={t === tab} aria-controls="apanel" tabIndex={t === tab ? 0 : -1} onClick={() => pickTab(t)} onKeyDown={e => tabKey(e, t)}>{TAB_NAMES[t]}</button>
+      <p className="anote">{t("artist.actionsNote", { name: A.name })}</p>
+      <div className="atabs" role="tablist" aria-label={t("artist.sections", { name: A.name })}>
+        {TABS.map(k => (
+          <button key={k} type="button" role="tab" id={`atab-${k}`} className="atab" aria-selected={k === tab} aria-controls="apanel" tabIndex={k === tab ? 0 : -1} onClick={() => pickTab(k)} onKeyDown={e => tabKey(e, k)}>{t(TAB_KEYS[k])}</button>
         ))}
       </div>
       <div className="apanel" id="apanel" role="tabpanel" aria-labelledby={`atab-${tab}`}>{body}</div>
-      {radioOn ? <span className="sr" aria-live="polite">{A.name} Radio {R.live ? "playing" : "paused"}</span> : null}
+      {radioOn ? <span className="sr" aria-live="polite">{t(R.live ? "artist.radioPlayingSr" : "artist.radioPausedSr", { name: A.name })}</span> : null}
     </div>
   );
 }

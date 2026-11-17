@@ -97,9 +97,13 @@ export const NEW_TALENT = { slug: "new-talent", name: "New Talent", tagline: "Br
 export const stColor = (s?: { color?: string | null } | null) => s?.color || "#3a3a3a";
 export const stInk = (s?: { ink?: string | null } | null) => s?.ink || "#ffffff";
 
-export function greeting(d = new Date()): string {
+type TFn = (key: string, vars?: Record<string, string | number>) => string;
+const GREET_EN: Record<string, string> = { "home.goodMorning": "Good morning", "home.goodAfternoon": "Good afternoon", "home.goodEvening": "Good evening" };
+/** Greeting by the clock. Pass `t` to translate; without it the English text is used (RadioShell still calls greeting()). */
+export function greeting(t?: TFn, d = new Date()): string {
   const h = d.getHours();
-  return h < 5 ? "Good evening" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const key = h < 5 ? "home.goodEvening" : h < 12 ? "home.goodMorning" : h < 18 ? "home.goodAfternoon" : "home.goodEvening";
+  return t ? t(key) : GREET_EN[key];
 }
 
 /* ---------- lyric language (Sean, 2026-11-17) ----------

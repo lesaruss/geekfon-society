@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useShell, artistStation } from "./RadioShell";
 import { IcPlay, IcPause, Eq } from "./icons";
+import { useT } from "@/components/i18n/I18n";
 import type { RosterData, RosterArtist } from "@/lib/artistPage";
 
 const MAIN_GROUP = "geekfon";
@@ -18,10 +19,11 @@ function readGroup(): string {
 
 export default function ArtistsView({ initial }: { initial: RosterData }) {
   const { setBaseTitle } = useShell();
+  const t = useT();
   const [data, setData] = useState<RosterData>(initial);
   const [group, setGroup] = useState("all");
 
-  useEffect(() => { setBaseTitle("Artists, GeekFon Society"); }, [setBaseTitle]);
+  useEffect(() => { setBaseTitle(t("artists.title")); }, [setBaseTitle, t]);
   useEffect(() => { setGroup(readGroup()); }, []);
   // The server could not reach the catalog (no service key): ask the API.
   useEffect(() => {
@@ -45,19 +47,19 @@ export default function ArtistsView({ initial }: { initial: RosterData }) {
     group === "all" ? true : group === MAIN_GROUP ? onMainOnly(a) : a.stations.some(s => s.slug === group)), [data.artists, group]);
   const anyMainOnly = data.artists.some(onMainOnly);
   const chips = [
-    { slug: "all", name: "All" },
+    { slug: "all", name: t("artists.all") },
     ...data.groups.map(g => ({ slug: g.slug, name: g.name.replace(/ Radio$/, "") })),
-    ...(anyMainOnly ? [{ slug: MAIN_GROUP, name: "On GeekFon Radio" }] : []),
+    ...(anyMainOnly ? [{ slug: MAIN_GROUP, name: t("artists.onGeekfonRadio") }] : []),
   ];
 
   return (
     <>
       <div className="vhead">
-        <nav className="crumbs" aria-label="Breadcrumb"><Link href="/">GeekFon Society</Link><span aria-hidden="true">›</span><span aria-current="page">Artists</span></nav>
-        <h1>Artists</h1>
-        <p>Every artist on GeekFon Society. Press play for their own radio: only their songs, on shuffle. Live and free.</p>
+        <nav className="crumbs" aria-label={t("artists.breadcrumb")}><Link href="/">GeekFon Society</Link><span aria-hidden="true">›</span><span aria-current="page">{t("artists.heading")}</span></nav>
+        <h1>{t("artists.heading")}</h1>
+        <p>{t("artists.intro")}</p>
       </div>
-      <div className="filters" role="group" aria-label="Filter by station">
+      <div className="filters" role="group" aria-label={t("artists.filterLabel")}>
         {chips.map(c => (
           <button key={c.slug} type="button" className="fchip" aria-pressed={group === c.slug} onClick={() => pick(c.slug)}>{c.name}</button>
         ))}
@@ -67,9 +69,9 @@ export default function ArtistsView({ initial }: { initial: RosterData }) {
           {shown.map(a => <ArtistCard key={a.slug} a={a} />)}
         </div>
       ) : (
-        <div className="empty" style={{ marginTop: 18 }}><span>No artists on this station yet.</span></div>
+        <div className="empty" style={{ marginTop: 18 }}><span>{t("artists.empty")}</span></div>
       )}
-      <p className="foot">Every artist is on GeekFon Radio too. Artist radio is live, like every station: no skip and no rewind.</p>
+      <p className="foot">{t("artists.foot")}</p>
     </>
   );
 }
@@ -78,6 +80,7 @@ export default function ArtistsView({ initial }: { initial: RosterData }) {
  *  Shared by Artists (/roster) and Meet the artists on the home page. */
 export function ArtistCard({ a }: { a: RosterArtist }) {
   const { R, tuneTo } = useShell();
+  const t = useT();
   const st = artistStation(a.slug);
   const on = R.station === st && !R.preview;
   const playing = on && R.live;
@@ -88,10 +91,10 @@ export function ArtistCard({ a }: { a: RosterArtist }) {
         <Link className="apic" href={`/${a.slug}`} aria-label={a.name}>
           {a.picture ? <img src={a.picture} alt="" loading="lazy" /> : <span className="ini" aria-hidden="true">{a.name.charAt(0)}</span>}
         </Link>
-        <button type="button" className="aplay" onClick={() => tuneTo(st)} aria-label={playing ? `Pause ${a.name} Radio` : `Play ${a.name} Radio`}>
+        <button type="button" className="aplay" onClick={() => tuneTo(st)} aria-label={playing ? t("artists.pauseRadio", { name: a.name }) : t("artists.playRadio", { name: a.name })}>
           {playing ? <IcPause size={20} /> : <IcPlay size={20} />}
         </button>
-        {on ? <span className="aair"><Eq still={!R.live} />{R.live ? "On air" : "Tuned in"}</span> : null}
+        {on ? <span className="aair"><Eq still={!R.live} />{R.live ? t("artists.onAir") : t("artists.tunedIn")}</span> : null}
       </div>
       <div className="ameta">
         <Link href={`/${a.slug}`} className="an">{a.name}</Link>

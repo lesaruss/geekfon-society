@@ -14,8 +14,7 @@ import { signInWithProvider } from "@/lib/socialAuth";
 import { startLesaruss } from "@/lib/lesarussClient";
 import { STAFF_HOME, onStaffHomeClick } from "@/lib/postAuth";
 import type { RosterData, RosterArtist } from "@/lib/artistPage";
-
-const TITLE = "Your GeekFon, GeekFon Society";
+import { useT } from "@/components/i18n/I18n";
 
 function titleCase(slug: string): string {
   return slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -23,10 +22,11 @@ function titleCase(slug: string): string {
 
 export default function YouView({ roster: initial }: { roster: RosterData }) {
   const { R, me, signOut, setBaseTitle, showToast } = useShell();
+  const t = useT();
   const [roster, setRoster] = useState<RosterData>(initial);
   const [busy, setBusy] = useState<"google" | "out" | null>(null);
 
-  useEffect(() => { setBaseTitle(TITLE); }, [setBaseTitle]);
+  useEffect(() => { setBaseTitle(t("you.title")); }, [setBaseTitle, t]);
   // The server could not reach the catalog (no service key): ask the API.
   useEffect(() => {
     if (initial.complete) return;
@@ -52,20 +52,20 @@ export default function YouView({ roster: initial }: { roster: RosterData }) {
     setBusy("out");
     await signOut();
     setBusy(null);
-    showToast("Signed out");
+    showToast(t("you.signedOut"));
   };
 
   const n = R.hearts.length;
   const hearted = (
     <section className="ysec" aria-labelledby="yHearts">
       <div className="ysec-h">
-        <h2 id="yHearts">Hearted songs</h2>
-        <span className="ycount">{n} {n === 1 ? "song" : "songs"}, saved on this device</span>
+        <h2 id="yHearts">{t("you.heartedSongs")}</h2>
+        <span className="ycount">{t("you.heartedCount", { count: n })}</span>
       </div>
       {n ? (
         <div className="slist">{R.hearts.map(h => <HeartRow key={h.songId} h={h} />)}</div>
       ) : (
-        <div className="empty"><IcHeart size={26} /><span>Tap the heart on any song while it plays. It saves here, on this device, with a 30-second preview.</span></div>
+        <div className="empty"><IcHeart size={26} /><span>{t("you.heartsEmpty")}</span></div>
       )}
     </section>
   );
@@ -73,48 +73,48 @@ export default function YouView({ roster: initial }: { roster: RosterData }) {
   return (
     <div className="you">
       <div className="vhead">
-        <nav className="crumbs" aria-label="Breadcrumb"><Link href="/">GeekFon Society</Link><span aria-hidden="true">›</span><span aria-current="page">You</span></nav>
-        <h1>Your GeekFon</h1>
+        <nav className="crumbs" aria-label={t("you.breadcrumb")}><Link href="/">GeekFon Society</Link><span aria-hidden="true">›</span><span aria-current="page">{t("you.crumb")}</span></nav>
+        <h1>{t("you.heading")}</h1>
       </div>
 
       {me.state === "loading" ? (
-        <p className="yload" role="status">Loading your GeekFon.</p>
+        <p className="yload" role="status">{t("you.loading")}</p>
       ) : me.state === "out" ? (
         <section className="ycard" aria-labelledby="ySign">
           <span className="yic" aria-hidden="true"><IcUser size={28} /></span>
           <div className="ybody">
-            <h2 id="ySign">Sign in</h2>
-            <p>See the artists you have unlocked and play their full songs. Radio and lyrics stay free, no sign in needed.</p>
+            <h2 id="ySign">{t("you.signIn")}</h2>
+            <p>{t("you.signInBody")}</p>
             <div className="yact">
               <button type="button" className="pill" onClick={google} disabled={busy !== null}>
-                <GoogleMark />{busy === "google" ? "Connecting" : "Continue with Google"}
+                <GoogleMark />{busy === "google" ? t("you.connecting") : t("you.continueGoogle")}
               </button>
-              <button type="button" className="pill ghost" onClick={() => startLesaruss("/you")} disabled={busy !== null}>Continue with LESARUSS</button>
-              <a className="pill ghost" href="/login">Sign in with email</a>
+              <button type="button" className="pill ghost" onClick={() => startLesaruss("/you")} disabled={busy !== null}>{t("you.continueLesaruss")}</button>
+              <a className="pill ghost" href="/login">{t("you.signInEmail")}</a>
             </div>
           </div>
         </section>
       ) : (
         <>
-          <section className="ycard yme" aria-label="Your account">
+          <section className="ycard yme" aria-label={t("you.account")}>
             <span className="yface" aria-hidden="true">
               {me.avatar ? <img src={me.avatar} alt="" referrerPolicy="no-referrer" /> : me.firstName.charAt(0).toUpperCase()}
             </span>
             <div className="ybody">
               <h2>{me.name}</h2>
               {me.email ? <p className="ymail">{me.email}</p> : null}
-              {me.plan ? <span className="ytag">{me.plan === "Staff" ? "Staff" : `${me.plan}: every artist in full`}</span> : null}
+              {me.plan ? <span className="ytag">{me.plan === "Staff" ? t("you.staff") : t("you.planAll", { plan: me.plan })}</span> : null}
             </div>
             <div className="yact">
-              {me.staff ? <a className="pill" href={STAFF_HOME} onClick={onStaffHomeClick}>Open BrandDesk<IcOut size={14} /></a> : null}
-              <button type="button" className="pill ghost" onClick={out} disabled={busy !== null}>{busy === "out" ? "Signing out" : "Sign out"}</button>
+              {me.staff ? <a className="pill" href={STAFF_HOME} onClick={onStaffHomeClick}>{t("you.openBrandDesk")}<IcOut size={14} /></a> : null}
+              <button type="button" className="pill ghost" onClick={out} disabled={busy !== null}>{busy === "out" ? t("you.signingOut") : t("you.signOut")}</button>
             </div>
           </section>
 
           <section className="ysec" aria-labelledby="yArtists">
             <div className="ysec-h">
-              <h2 id="yArtists">Your artists</h2>
-              <span className="ycount">{me.allArtists ? "Every artist, every song in full" : mine.length ? "Full songs on demand on each artist's page" : ""}</span>
+              <h2 id="yArtists">{t("you.yourArtists")}</h2>
+              <span className="ycount">{me.allArtists ? t("you.everyArtist") : mine.length ? t("you.fullOnDemand") : ""}</span>
             </div>
             {mine.length ? (
               <div className="agrid">
@@ -128,15 +128,15 @@ export default function YouView({ roster: initial }: { roster: RosterData }) {
                     <div className="ameta">
                       <Link href={`/${a.slug}`} className="an">{a.name}</Link>
                       <span className="ag">{[a.genre, a.location].filter(Boolean).join(" · ") || "GeekFon Society"}</span>
-                      <Link href={`/${a.slug}`} className="ygo">Play full songs<IcArrow size={14} /></Link>
+                      <Link href={`/${a.slug}`} className="ygo">{t("you.playFull")}<IcArrow size={14} /></Link>
                     </div>
                   </article>
                 ))}
               </div>
             ) : (
               <div className="empty">
-                <span>No artists unlocked yet. Open any artist and press Unlock: $11, one time, and every song plays in full.</span>
-                <Link className="pill ghost" href="/roster">See the artists</Link>
+                <span>{t("you.noArtists")}</span>
+                <Link className="pill ghost" href="/roster">{t("you.seeArtists")}</Link>
               </div>
             )}
           </section>
