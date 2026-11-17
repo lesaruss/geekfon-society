@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { Station } from "./useLiveRadio";
+import { useI18n } from "@/components/i18n/I18n";
 
 export type Lyrics = { lyricsEn: string | null; lyricsOriginal: string | null; lyricsOriginalLang: string | null };
 export type ArtistCard = {
@@ -80,13 +81,13 @@ export function lyricPreview(lines: LyricLine[], limit: number): LyricLine[] {
 
 const LANG_FALLBACK: Record<string, string> = { ja: "Japanese", ko: "Korean", es: "Spanish", de: "German", zu: "Zulu", fr: "French", pt: "Portuguese" };
 /** "ja" -> "Japanese". Stored values are codes; a full name passes through. */
-export function langName(code: string | null | undefined): string | null {
+export function langName(code: string | null | undefined, ui = "en"): string | null {
   if (!code) return null;
   const c = code.trim();
   if (!c) return null;
   if (c.length > 3) return c;
   try {
-    const n = new Intl.DisplayNames(["en"], { type: "language" }).of(c);
+    const n = new Intl.DisplayNames([ui, "en"], { type: "language" }).of(c);
     if (n && n.toLowerCase() !== c.toLowerCase()) return n;
   } catch { /* old browser */ }
   return LANG_FALLBACK[c.toLowerCase()] || c;
@@ -150,5 +151,6 @@ export function useLyricView(lyrics: Lyrics | null | undefined) {
   const showing: LyricShow = both && pick === "orig" ? "orig" : "en";
   const text = showing === "orig" ? lyrics?.lyricsOriginal : lyrics?.lyricsEn || lyrics?.lyricsOriginal;
   const lines = useMemo(() => lyricLines(text), [text]);
-  return { lines, both, showing, lang: langName(code), native: nativeLangName(code), code };
+  const { locale } = useI18n();
+  return { lines, both, showing, lang: langName(code, locale), native: nativeLangName(code), code };
 }
