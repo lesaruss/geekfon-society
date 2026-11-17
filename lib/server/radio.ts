@@ -418,7 +418,14 @@ export async function buildArtistSchedule(station: string): Promise<{ rotation: 
     artistSlug: slug,
     basedOn: genre.length ? genre.map(s => s.slug) : [MAIN_STATION.slug],
   };
-  return { rotation: withSpots(shuffled, spots, names), overrides: [], info };
+  // An artist station is a short loop (8 to 12 songs), so one pass only reaches
+  // the first two or three drops. Repeat the day's shuffle until every drop
+  // fits once per loop, so all of them get airtime (Sean, 2026-11-17, drops on air).
+  const every = spots.length ? Math.max(1, Math.min(...spots.map(x => x.every_n_songs || 4))) : 1;
+  const perPass = Math.max(1, Math.floor(shuffled.length / every));
+  const passes = spots.length && shuffled.length ? Math.min(6, Math.ceil(spots.length / perPass)) : 1;
+  const looped = passes > 1 ? Array.from({ length: passes }, () => shuffled).flat() : shuffled;
+  return { rotation: withSpots(looped, spots, names), overrides: [], info };
 }
 
 // Stations an artist can be heard on, for the "on GeekFon Radio" strip on

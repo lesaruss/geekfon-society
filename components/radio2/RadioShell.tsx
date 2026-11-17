@@ -51,7 +51,9 @@ function readView(): View {
 
 /** The songs a station has on the air (no sponsor spots), first one first. */
 export function songsOf(rotation: RadioTrack[] | undefined): RadioTrack[] {
-  return (rotation ?? []).filter(t => t.kind !== "spot");
+  // Artist stations repeat their shuffle so every drop gets airtime; list each song once.
+  const seen = new Set<string>();
+  return (rotation ?? []).filter(t => t.kind !== "spot" && !seen.has(t.path) && (seen.add(t.path), true));
 }
 export function coversOf(rotation: RadioTrack[] | undefined, n: number): string[] {
   const out: string[] = [];
