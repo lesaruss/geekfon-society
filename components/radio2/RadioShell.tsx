@@ -372,7 +372,10 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
               </div>
             </div>
             <div className="rt">
-              <a className="ib hide-m" href="/radio/pop" target="_blank" rel="noopener" onClick={popOut} aria-label="Pop out the player" title="Pop out the player"><IcPopOut /></a>
+              {/* Quiet controls (Sean, 2026-11-17): Back to live sits here while a preview plays, beside a labeled Pop out,
+                  instead of a big floating "Radio paused" bar. */}
+              {pv ? <button type="button" className="rtb live-b" onClick={() => R.leavePreview(true)} aria-label="Back to live radio" title="Back to live radio"><IcRadio size={16} /><span className="t">Back to live</span></button> : null}
+              <a className="rtb hide-m" href="/radio/pop" target="_blank" rel="noopener" onClick={popOut} aria-label="Pop out the player" title="Pop out the player"><IcPopOut size={16} /><span className="t">Pop out</span></a>
               <button type="button" className="wit" onClick={() => openPanel()}><span className="q" aria-hidden="true">?</span><span className="t">What is this?</span></button>
               <button type="button" className="ib" onClick={() => (typeof window !== "undefined" && window.innerWidth <= 760 ? openPanel(barSong) : openLyrics())} disabled={!barSong?.songId} aria-label="Lyrics and song info" title="Lyrics"><IcLyrics /></button>
               {barSong?.songId ? (
@@ -401,7 +404,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
           />
         ) : null}
 
-        {pv && !panelOpen ? (() => {
+        {pv && !panelOpen && (pv.ended || pv.failed) ? (() => {
           const home = homeStationOf(pv.song.slug);
           return (
             <div className="pvnote" role="status" aria-live="polite" style={{ "--ac": stColor(home), "--ac-ink": stInk(home) } as React.CSSProperties}>

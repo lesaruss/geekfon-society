@@ -261,6 +261,10 @@ body{overflow:hidden}
 .gfr .track i{position:absolute;inset:0 auto 0 0;width:0;background:var(--text);border-radius:2px;transition:width .5s linear}
 .gfr .bar:hover .track i{background:var(--st)}
 .gfr .rt{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.gfr .rtb{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:6px;font-size:12.5px;font-weight:700;color:var(--muted);background:transparent;border:1px solid var(--surface-3);white-space:nowrap;text-decoration:none}
+.gfr .rtb:hover,.gfr .rtb:focus-visible{color:var(--text);border-color:color-mix(in srgb, var(--text) 35%, var(--surface-3))}
+.gfr .rtb.live-b{color:var(--text)}
+.gfr .rtb.live-b svg{color:var(--heart)}
 .gfr .mtabs{display:none}
 .gfr .mini-prog{display:none}
 .gfr .show-m{display:none}
@@ -290,7 +294,7 @@ body{overflow:hidden}
 .gfr .toast{position:fixed;left:50%;bottom:calc(var(--bar-h) + 22px);transform:translate(-50%,20px);background:var(--text);color:var(--bg);font-weight:700;font-size:14px;padding:10px 16px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:60;white-space:nowrap}
 .gfr .toast.show{opacity:1;transform:translate(-50%,0)}
 .gfr.pv .toast{bottom:calc(var(--bar-h) + 80px)}
-.gfr .pvnote{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bar-h) + 18px);z-index:45;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 14px;border-radius:8px;background:var(--surface-3);box-shadow:0 14px 36px rgba(0,0,0,.55);font-size:13.5px;font-weight:600;max-width:calc(100vw - 32px)}
+.gfr .pvnote{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bar-h) + 12px);z-index:45;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 12px;border-radius:8px;background:var(--surface-2);border:1px solid var(--surface-3);box-shadow:0 6px 18px rgba(0,0,0,.35);font-size:12.5px;font-weight:600;max-width:calc(100vw - 32px)}
 .gfr .pvnote .eq{color:var(--heart)}
 .gfr .pvn-b{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:6px;background:var(--text);color:var(--bg);font-weight:700;white-space:nowrap}
 .gfr .pvn-b svg{width:16px;height:16px}
@@ -377,6 +381,8 @@ body{overflow:hidden}
   .gfr .rt .wit{background:transparent;padding:0;width:36px;height:40px;justify-content:center}
   .gfr .rt .wit .q{width:22px;height:22px;font-size:13px;background:var(--text);color:var(--bg)}
   .gfr .rt .ib{width:36px}
+  .gfr .rtb{border:0;padding:0;width:36px;height:40px;justify-content:center}
+  .gfr .rtb .t{display:none}
   .gfr .play{width:44px;height:44px;background:transparent;color:var(--text)}
   .gfr .play svg{width:26px;height:26px}
   .gfr .rt{gap:0}
