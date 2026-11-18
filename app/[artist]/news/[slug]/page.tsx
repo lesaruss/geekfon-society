@@ -37,11 +37,15 @@ async function getArtistAndArticle(artistSlug: string, newsSlug: string) {
   if (!rows?.length) return null;
 
   const profile: ArtistContent = rows[0].profile || {};
-  const news = (profile.news || []) as Array<{ slug?: string; [k: string]: unknown }>;
+  // Scheduled press stays private until it publishes (2026-11-18): drop drafts before anything reaches the
+  // browser, so neither the page nor its data carries an unreleased article, and a draft's own URL 404s.
+  const news = ((profile.news || []) as Array<{ slug?: string; draft?: unknown; [k: string]: unknown }>).filter(
+    (n) => n.draft !== true && n.draft !== "true"
+  );
   const article = news.find((n) => n.slug === newsSlug);
   if (!article) return null;
 
-  return { content: profile, article };
+  return { content: { ...profile, news } as ArtistContent, article };
 }
 
 type Props = { params: Promise<{ artist: string; slug: string }> };
