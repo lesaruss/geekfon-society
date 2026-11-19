@@ -409,8 +409,8 @@
           "b": 440
         }
       },
-      "credits": 41.5,
-      "gate": "G1 Sean approves the script before any audio; G2 look PROOF on the still; G3 Sean watches the final; nothing that matters outside the safe area (proof sheet red box)",
+      "credits": 19,
+      "gate": "G1 Sean approves the script; voice = Sean's booth takes (HQ Voices set); G2 look PROOF on the still and storyboard approved by Sean; G3 Sean watches the final",
       "params": {
         "script": null,
         "script_approved": false
@@ -433,8 +433,8 @@
           "b": 440
         }
       },
-      "credits": 41.5,
-      "gate": "G1 Sean approves the script before any audio; G2 look PROOF on the still; G3 Sean watches the final; nothing that matters outside the safe area (proof sheet red box)",
+      "credits": 19,
+      "gate": "G1 Sean approves the script; voice = Sean's booth takes (HQ Voices set); G2 look PROOF on the still and storyboard approved by Sean; G3 Sean watches the final",
       "params": {
         "script": null,
         "script_approved": false

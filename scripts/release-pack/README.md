@@ -118,8 +118,15 @@ beside it, and gates.
    - Sean approves the stills and the storyboards before any voice or clip is made.
 10. **Teasers (credits).** Use the Support-tour pipeline (`../support-tour/README.md`),
    with these changes:
-   - The script is the one Sean approved in the release file (G1). Keep it to about
-     15 s, so it is one voice part and one clip.
+   - **Voice: Sean records it** (canon-guide-voices-sean-performs). Add the approved script to
+     HQ `lib/voiceBooth.ts` as a set, one line per storyboard beat (pilot: `gfs-hasta-teasers`).
+     HQ deploys from `main`, so the set needs Sean's OK to ship. Sean records each line in
+     BrandDesk > Voices, and the booth turns his take into LoLA's voice. Use his keepers, not
+     `tts`, unless Sean asks for text-to-speech.
+   - **Clips:** render Wan clips only for the beats where LoLA is on camera
+     (`on_camera_lines`), from the 3:4 start frame cropped to her card. The voice runs on
+     under the cut-aways. That's about 15 s of Wan per release (about 37.5 credits), not two
+     full 15 s clips.
    - Render the still and the clip at 9:16. Run `stitch.py ... --size 1080x1920`.
    - In `lipcheck.py`, pass `--crop` for the 9:16 frame.
    - The bed is this song's instrumental (`stems`, `two_stems_v1`), through `music_bed.sh`.
@@ -127,8 +134,10 @@ beside it, and gates.
      against the script.
    - The shirt is still the artist's Printify Face Tee. If the artist has none, stop and
      ask Sean. Run G2 as usual.
-   - Cost: Wan 2.7 about 37.5 credits for 15 s at 9:16, nano_banana_pro about 4 credits.
-     That makes about 41.5 credits a teaser, plus Sync.so sync-3 at about $4 a minute.
+   - Cost: Wan 2.7 about 2.5 credits a second, nano_banana_pro about 4 credits a still,
+     plus Sync.so sync-3 at about $4 a minute.
+   - Before using the song's vocal-removed stem as a bed, scan it for drop-outs where the
+     original was a cappella (canon `score_bed_rule`).
    - Save the result as `pack/teaser/lola-teaser-N.mp4`.
 11. **Check (PROOF).** Run `python3 build_pack.py check releases/<release>.json --out pack`.
    - It checks size, length, audio, slide count, WAV format and clipping, and the caption count.

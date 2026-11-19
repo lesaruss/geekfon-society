@@ -34,16 +34,18 @@
       "answer": "Sean 2026-11-19: yes, try the AI upscale and see. Tried (Higgsfield bytedance 4k, 2 credits, job 0c173525): it redrew the art (Momo's expression changed, outlines thinner and scratchy, noise in the whites), failing the v4 style gate. Lanczos keeps the line art; used it. Sean can still override."
     },
     "thumbnail": {
-      "status": "open",
+      "status": "approved",
       "question": "Which YouTube thumbnail, all in the launch-reel look: A (band in the doorway + stacked title), B (Aoi close-up + big title) or C (all four members in cards + title)?",
       "recommendation": "C for the MV: every member, readable at list size, and no reveal, so it also works before MV day. A shows the doorway reveal (MV day only). B is the strongest single face.",
-      "files": "design.py output: yt-A.jpg, yt-B.jpg, yt-C.jpg; Reel cover reel-cover.jpg"
+      "files": "design.py output: yt-A.jpg, yt-B.jpg, yt-C.jpg; Reel cover reel-cover.jpg",
+      "answer": "Sean 2026-11-19: C (all four members in cards + title). Reel cover: the white-panel cover."
     },
     "teaser_look": {
-      "status": "open",
+      "status": "approved",
       "question": "Approve the two LoLA teaser storyboards (launch-reel look) and stills before any voice or clips are made?",
       "recommendation": "Approve. Sean 2026-11-19: build it in the design of the launch-week reels (similar, not identical). Done: LIVE bar, colour fields with dots, yellow highlighter captions, art in black-bordered cards, name plates, AI line, all inside the safe area; LoLA from her locked references; cut-aways from before the reveal (studio, closed door, pitch boards, straining-door storyboard).",
-      "files": "teaser-1-board.jpg, teaser-2-board.jpg; stills Higgsfield e53a3d8a (teaser 1, lip highlight painted out) and 3ae9f3e8 (teaser 2)"
+      "files": "teaser-1-board.jpg, teaser-2-board.jpg; stills Higgsfield e53a3d8a (teaser 1, lip highlight painted out) and 3ae9f3e8 (teaser 2)",
+      "answer": "Sean 2026-11-19: go ahead with the teasers (storyboards, stills and scripts approved)."
     }
   },
   "youtube": {
@@ -146,13 +148,38 @@
     },
     "teaser_1": {
       "script": "Hi, it's LoLA. Shamanic Resin used to sing with their breath held, in a tiny room. That's about to change. The new single is called Hasta La Vista Maybe. The door is about to open. Stay close.",
-      "script_approved": false,
-      "still_job": "e53a3d8a-582d-408e-a2a5-969c43d68461"
+      "script_approved": true,
+      "still_job": "e53a3d8a-582d-408e-a2a5-969c43d68461",
+      "voice_set": "gfs-hasta-teasers",
+      "voice_lines": [
+        "t1-hi",
+        "t1-change",
+        "t1-single",
+        "t1-door",
+        "t1-close"
+      ],
+      "on_camera_lines": [
+        "t1-hi",
+        "t1-single"
+      ],
+      "start_frame": "teaser/frames/t1-start-3x4.jpg"
     },
     "teaser_2": {
       "script": "LoLA again. Weeks of work went into the Hasta La Vista Maybe video, and GeekFon members get to watch it come together first: the storyboards, the early cuts, all of it. Join at geekfon.ai and see how it was made.",
-      "script_approved": false,
-      "still_job": "3ae9f3e8-bd56-4c00-96c4-292896c6b3f9"
+      "script_approved": true,
+      "still_job": "3ae9f3e8-bd56-4c00-96c4-292896c6b3f9",
+      "voice_set": "gfs-hasta-teasers",
+      "voice_lines": [
+        "t2-again",
+        "t2-members",
+        "t2-boards",
+        "t2-join"
+      ],
+      "on_camera_lines": [
+        "t2-again",
+        "t2-join"
+      ],
+      "start_frame": "teaser/frames/t2-start-3x4.jpg"
     },
     "bts_versions": {
       "t0": "1:04.0",
