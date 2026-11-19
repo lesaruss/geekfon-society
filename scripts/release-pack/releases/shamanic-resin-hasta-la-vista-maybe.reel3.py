@@ -50,6 +50,18 @@ def beat(color, headline, art, size=104, plate=None, fy=0.3):
     footer(im); return im
 
 
+def cover_beat(color, headline, cov):
+    """The full single cover, big and square (Sean 2026-11-19: "a full album cover shot somewhere in there")."""
+    im = halftone(W, H, REEL[color]); top_bar(im)
+    y = highlight(im, headline, (60, 200, W - 60, H), 104) + 80
+    side = 900; card(im, cov, ((W - side) // 2, y, (W + side) // 2, y + side), fit='stretch', border=12, shadow=18)
+    d = ImageDraw.Draw(im); f = BRIC(70)
+    for k, line in enumerate((TITLE, ARTIST)):
+        ff = f if k == 0 else FIG(52); tw = d.textlength(line, font=ff)
+        d.text(((W - tw) / 2, y + side + 60 + k * 96), line, font=ff, fill=INK)
+    footer(im); return im
+
+
 def radio(art, lyric):
     """Reel 2's radio screen: station cards, LIVE station art, NOW PLAYING, lyric, title, progress."""
     bg = art.resize((W, round(art.height * W / art.width))).crop((0, 0, W, H)).filter(ImageFilter.GaussianBlur(50))
@@ -119,10 +131,11 @@ frames = [
     ('4-8 s  LoLA (new line): "Do you like rock? What about anime?... Hold on."', beat('pink', 'Do you like rock? What about anime?', A('lola-q.png'), 104, fy=0.2)),
     ('8-12 s  native vertical highlight: Aoi on the chorus. Song: "Hasta la vista..."', beat('magenta', 'Hasta la vista, goodbye for now', A('aoi.png'), 96, plate=PLATE, fy=0.2)),
     ('12-15 s  native vertical highlight: the band in the studio', beat('green', "Even if we're shaking, we're going", A('band.png'), 96, plate=PLATE, fy=0.35)),
-    ('15-26 s  radio, NOW PLAYING, Momo in the station art, English lyric captions', radio(A('momo.png'), "Kick the door open and go, we're here!")),
-    ('26-30 s  the close. LoLA: "Tune in. It\'s free. geekfon.ai" (your Reel 1 take)', close(Image.open(COVER).convert('RGB'))),
+    ('15-18 s  the full single cover (new)', cover_beat('orange', 'New single', Image.open(COVER).convert('RGB'))),
+    ('18-27 s  radio, NOW PLAYING, Momo in the station art, English lyric captions', radio(A('momo.png'), "Kick the door open and go, we're here!")),
+    ('27-31 s  the close. LoLA: "Tune in. It\'s free. geekfon.ai" (your Reel 1 take)', close(Image.open(COVER).convert('RGB'))),
 ]
-tw_, th_, pad = 300, 533, 14
+tw_, th_, pad = 270, 480, 12
 sheet = Image.new('RGB', (len(frames) * (tw_ + pad) + pad, th_ + 150), (24, 24, 28)); d = ImageDraw.Draw(sheet)
 d.text((pad, 10), 'REEL 3: Shamanic Resin, Hasta La Vista Maybe   (as it will post, in the Reel 2 frame)', font=FIG(22), fill=WHITE)
 for i, (label, im) in enumerate(frames):
