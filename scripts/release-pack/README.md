@@ -12,7 +12,8 @@ beside it, and gates.
 |---|---|
 | `slots.json` | The slot list for **every** release: output path, spec, method, credits, gate. Add a slot here and every release shows it as missing until it is built. |
 | `releases/<release>.json` | One per release. It holds the sources, cut times, scripts and open decisions only. It never adds or drops slots. |
-| `build_pack.py` | `plan`, `build`, `check` and `align`. Free work only (ffmpeg and Pillow). Anything that costs credits is printed as a next step behind its gate. |
+| `design_kit.py` | The brand pieces for designed slots, in the end-card design language. |
+| `build_pack.py` | `plan`, `build`, `check`, `proof` and `align`. Free work only (ffmpeg and Pillow). Anything that costs credits is printed as a next step behind its gate. |
 
 ## Rules
 
@@ -25,6 +26,19 @@ beside it, and gates.
   Ask him before a release goes over 100 credits (`credit_budget_ask_above`).
 - Cut-downs that show the MV's ending reveal are marked `publish: mv-day`. Nothing
   posted before the MV is public shows the reveal.
+- **Safe margins (Sean 2026-11-19).** Words, faces, logos and graphics stay inside each
+  slot's `spec.safe` area. Only background may run to the edge.
+  - Why: the same post is framed differently in each place it shows up. Sean's repost
+    of the first GeekFon post zoomed in and cut off half the R in Roxanne's name tag and
+    the end of "Now playing", while the original on the GeekFon page looked fine.
+    Instagram's grid crops posts and Reels to 3:4, and Reels, TikTok and Stories put
+    buttons and captions over the edges.
+  - `pad` mode fits the source inside the safe area, and overlays are placed inside it.
+  - `proof` draws the area in red, and nothing that matters may cross it.
+  - The numbers live in `slots.json` under `safe_zones` and each slot's `spec.safe`.
+- **Cover upscales:** the AI upscaler can redraw the art. On the pilot it changed Momo's
+  expression and thinned the outlines. Compare at 100% against a Lanczos resize, and use
+  Lanczos when the AI version drifts.
 
 ## Gates
 
@@ -33,7 +47,7 @@ beside it, and gates.
 | D0 title | Sean | The title is spelled the same in the catalog, the brief and on the MV before metadata is built. |
 | D1 cover | Sean | How the cover gets to 3000 px. |
 | G1 script | Sean | He approves each LoLA teaser script before any audio (Support-tour G1). |
-| G2 look | Logan, PROOF | The teaser still, as in Support-tour G2. |
+| G2 look | Logan, PROOF, then Sean | The teaser stills, as in Support-tour G2, plus a storyboard of each teaser. Sean sees both before any audio or clips are made. |
 | PROOF | Logan | `check` must pass, then the eye check written in each slot's `gate` in `slots.json`. |
 | G3 final | Sean | He sees the whole pack before anything is uploaded to DistroKid, YouTube or social. |
 
@@ -56,11 +70,13 @@ beside it, and gates.
 4. **Plan.** Run `python3 build_pack.py plan releases/<release>.json --out pack`.
    - Show Sean the slot list, the credit total, the open decisions and the teaser scripts.
    - Record his answers in the release file. A decision is open until its `status` is `approved`.
-5. **Cover (D1).** For an AI upscale:
-   - Upload `cover.png` to Higgsfield and quote `upscale_image` (4k).
-   - Run it and save the result as `src/cover-upscaled.png`.
-   - `build` scales it to exactly 3000 px.
-   - With `"method": "lanczos"`, `build` scales the original instead, at no cost.
+5. **Cover (D1).** Make both versions and compare them at 100%:
+   - AI: import `cover.png` to Higgsfield (`media_import_url` from the public URL) and run
+     `upscale_image` at 4k (2 credits). Save the result as `src/cover-upscaled.png`
+     (`"method": "ai"`).
+   - Lanczos: `"method": "lanczos"` scales the original. It's free and keeps the line art.
+   - Ship the AI version only if faces, expressions and outline weight are unchanged.
+     On the pilot they changed, so it shipped Lanczos.
 6. **Caption timings.** Do this in the Higgsfield sandbox, which has faster-whisper.
    - Transcribe the MV audio with word timestamps into `segs.json`, a list of
      `{start, end, text, words: [{word, start, end}]}`.
@@ -72,7 +88,23 @@ beside it, and gates.
 7. **Build.** Run `python3 build_pack.py build releases/<release>.json --src src --out pack`.
    - It makes every free slot that is not blocked and says why it skipped the rest.
    - `--only id,id` rebuilds just those slots.
-8. **Teasers (credits).** Use the Support-tour pipeline (`../support-tour/README.md`),
+8. **Designed art.** Copy `releases/shamanic-resin-hasta-la-vista-maybe.design.py` for
+   the release. It uses `design_kit.py`: the end-card design language, the GeekFon lockup,
+   Montserrat, the rainbow bar and the orange title.
+   - Make three thumbnail options: one in the end-card family, one led by the art, one
+     led by a face. Check each at full size and at YouTube's 168x94 list size.
+   - Make a Reel cover in the same family, with the title and faces inside the 3:4 grid crop.
+   - Sean picks one. Copy the pick into `src/design/` (`yt-thumbnail.jpg`, `reel-cover.jpg`).
+   - Never ship a raw frame as a thumbnail, and never let a platform choose a Reel cover
+     (Sean 2026-11-19).
+9. **Teaser look (before credits).** Render one LoLA still per teaser with nano_banana_pro 4k
+   (about 4 credits each), using her locked references (`lola_identity_lock`) and the band
+   art as style anchor. Run the GeekFon style gate and PROOF on each.
+   - Build a storyboard for each teaser: LoLA's shot, frozen MV cut-aways, a closing card
+     from the design kit, and the captions, all inside the safe area.
+   - Cut-aways come from before the MV's reveal.
+   - Sean approves the stills and the storyboards before any voice or clip is made.
+10. **Teasers (credits).** Use the Support-tour pipeline (`../support-tour/README.md`),
    with these changes:
    - The script is the one Sean approved in the release file (G1). Keep it to about
      15 s, so it is one voice part and one clip.
@@ -86,22 +118,22 @@ beside it, and gates.
    - Cost: Wan 2.7 about 37.5 credits for 15 s at 9:16, nano_banana_pro about 4 credits.
      That makes about 41.5 credits a teaser, plus Sync.so sync-3 at about $4 a minute.
    - Save the result as `pack/teaser/lola-teaser-N.mp4`.
-9. **Check (PROOF).** Run `python3 build_pack.py check releases/<release>.json --out pack`.
+11. **Check (PROOF).** Run `python3 build_pack.py check releases/<release>.json --out pack`.
    - It checks size, length, audio, slide count, WAV format and clipping, and the caption count.
-   - Then do each slot's eye check. Make a 1-frame-a-second contact sheet of every video:
-     ```sh
-     ffmpeg -i x.mp4 -vf "fps=1,scale=180:-1,tile=15x1" -frames:v 1 sheet.jpg
-     ```
-     Look for stray graphics at crop edges, subjects cut off, and wrong names on slides.
-10. **Store.** Insert each file through `gfs_art_imports` to
+   - Then run `python3 build_pack.py proof releases/<release>.json --out pack`. It makes
+     one sheet per slot in `pack/_proof/`, with up to 16 frames per video and the safe
+     area drawn in red.
+   - Look for words, faces or graphics crossing the red box, stray graphics at crop edges
+     (MV name cards), subjects cut off, and wrong names on slides.
+12. **Store.** Insert each file through `gfs_art_imports` to
     `artists/<artist>/release-pack/<release>/<slot out path>`.
     - The WAV stays in `geekfon-masters`.
     - Mark the `bts` slots members-only wherever they are surfaced.
-11. **G3.** Sean reviews the pack.
-12. **Ship.** Upload to DistroKid with the metadata sheet. Upload the MV with the YouTube sheet.
+13. **G3.** Sean reviews the pack.
+14. **Ship.** Upload to DistroKid with the metadata sheet. Upload the MV with the YouTube sheet.
     - Schedule the social cuts by their `publish` window.
     - Update the brief: `cover_art_status`, `distrokid_status`, `distrokid_release_id`, `release_date`.
-13. **Log.** Write a `stream_events` row tagged `release-pack` and the release slug,
+15. **Log.** Write a `stream_events` row tagged `release-pack` and the release slug,
     saying what shipped and what is still open.
 
 ## Adding a slot

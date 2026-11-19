@@ -5,6 +5,7 @@ release file (releases/<release>.json) for the sources, times and decisions.
   plan   <release.json> [--out DIR]          every slot, its state, gate and credits; stops at open decisions
   build  <release.json> --src DIR --out DIR [--only id,id]   makes every free slot that is unblocked
   check  <release.json> --out DIR            PROOF on every built file against its spec
+  proof  <release.json> --out DIR            eye-check sheets with each slot's safe area drawn in red
   align  <release.json> --src DIR --whisper segs.json        official lyric lines -> timings.json
 
 --src holds the exported inputs (see README step 1): song.json (pulse_songs row),
@@ -94,10 +95,19 @@ def x_expr(x, xs):
     return e
 
 
-def vf_fit(w, h, fit, x=0.5):
-    if fit == 'pad':  # whole frame, blurred copy of itself behind it
+def safe_box(sp):
+    """(left, top, right, bottom) of the area where words, faces and graphics must sit.
+    Outside it, platforms crop (Instagram's 3:4 grid) or cover (buttons, captions)."""
+    s = sp.get('safe', {})
+    return s.get('l', 0), s.get('t', 0), sp['w'] - s.get('r', 0), sp['h'] - s.get('b', 0)
+
+
+def vf_fit(w, h, fit, x=0.5, safe=None):
+    if fit == 'pad':  # the whole source frame, inside the safe area, on a blurred copy of itself
+        l, t, r, b = safe or (0, 0, w, h)
+        fw, fh = r - l, b - t
         return (f'split[a][b];[a]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},boxblur=30:2,eq=brightness=-0.08[bg];'
-                f'[b]scale={w}:{h}:force_original_aspect_ratio=decrease[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1')
+                f'[b]scale={fw}:{fh}:force_original_aspect_ratio=decrease[fg];[bg][fg]overlay={l}+({fw}-w)/2:{t}+({fh}-h)/2,setsar=1')
     return f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h}:'(iw-{w})*({x})':(ih-{h})/2,setsar=1"
 
 
@@ -105,7 +115,7 @@ def make_cut(slot, src, dst):
     p, sp = slot['params'], slot['spec']
     t0, t1 = ts(p['t0']), ts(p['t1'])
     d = t1 - t0
-    vf = vf_fit(sp['w'], sp['h'], p.get('fit', 'crop'), x_expr(p.get('x', 0.5), p.get('xs')))
+    vf = vf_fit(sp['w'], sp['h'], p.get('fit', 'crop'), x_expr(p.get('x', 0.5), p.get('xs')), safe_box(sp))
     cmd = ['ffmpeg', '-v', 'error', '-y', '-ss', f'{t0:.3f}', '-t', f'{d:.3f}', '-i', src]
     lf = p.get('loop_fade')
     if lf:  # loop: cross-fade the tail into the head so the cut has no hard jump
@@ -127,12 +137,13 @@ def frame(src, t, path):
     run(['ffmpeg', '-v', 'error', '-y', '-ss', f'{ts(t):.3f}', '-i', src, '-frames:v', '1', path])
 
 
-def fit_image(im, w, h, fit='crop', x=0.5):
+def fit_image(im, w, h, fit='crop', x=0.5, safe=None):
     from PIL import Image, ImageFilter
     if fit == 'pad':
+        l, t, r, b = safe or (0, 0, w, h)
         bg = fit_image(im, w, h, 'crop').filter(ImageFilter.GaussianBlur(40))
-        fg = im.copy(); fg.thumbnail((w, h), Image.LANCZOS)
-        bg.paste(fg, ((w - fg.width) // 2, (h - fg.height) // 2))
+        fg = im.copy(); fg.thumbnail((r - l, b - t), Image.LANCZOS)
+        bg.paste(fg, (l + (r - l - fg.width) // 2, t + (b - t - fg.height) // 2))
         return bg
     s = max(w / im.width, h / im.height)
     im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
@@ -256,27 +267,30 @@ How it was made: {ai}
         canvas = fit_image(cover, W, H, 'crop')
         from PIL import ImageFilter
         canvas = canvas.filter(ImageFilter.GaussianBlur(50)).point(lambda v: int(v * 0.45))
-        side = 900; art = cover.resize((side, side), Image.LANCZOS)
-        canvas.paste(art, ((W - side) // 2, 90))
+        sl, st, sr, sb = safe_box(sp)
+        side = min(sr - sl, sb - st - 290); art = cover.resize((side, side), Image.LANCZOS)
+        canvas.paste(art, ((W - side) // 2, st))
         d = ImageDraw.Draw(canvas)
-        for txt, y, size in [(p['line'].upper(), 1015, 34), (rel['artist_name'].upper(), 1062, 58), (title, 1135, 48), (p['handle'], 1250, 30)]:
+        y0 = st + side + 22
+        for txt, y, size in [(p['line'].upper(), y0, 34), (rel['artist_name'].upper(), y0 + 46, 58), (title, y0 + 118, 48), (p['handle'], y0 + 228, 30)]:
             f = font(size, bold=size > 40)
             d.text(((W - d.textlength(txt, font=f)) / 2, y), txt, font=f, fill=(255, 255, 255))
         canvas.save(dst, quality=93)
     elif m == 'carousel':
         W, H = sp['w'], sp['h']
         cover = Image.open(os.path.join(src, 'cover.png')).convert('RGB')
-        fit_image(cover, W, H, 'pad').save(os.path.join(dst, '01-cover.jpg'), quality=93)
+        sl, st, sr, sb = safe_box(sp)
+        fit_image(cover, W, H, 'pad', safe=(sl, st, sr, sb)).save(os.path.join(dst, '01-cover.jpg'), quality=93)
         for i, mem in enumerate(p['members'], 2):
             tmp = os.path.join(dst, '_f.png'); frame(mv, mem['t'], tmp)
             im = fit_image(Image.open(tmp).convert('RGB'), W, H, 'crop', mem.get('x', 0.5)); os.remove(tmp)
             d = ImageDraw.Draw(im); f = font(54)
             tw = d.textlength(mem['name'], font=f)
-            d.rounded_rectangle(((W - tw) / 2 - 28, H - 150, (W + tw) / 2 + 28, H - 64), 20, fill=(0, 0, 0))
-            d.text(((W - tw) / 2, H - 140), mem['name'], font=f, fill=(255, 255, 255))
+            d.rounded_rectangle(((W - tw) / 2 - 28, sb - 92, (W + tw) / 2 + 28, sb - 6), 20, fill=(0, 0, 0))
+            d.text(((W - tw) / 2, sb - 82), mem['name'], font=f, fill=(255, 255, 255))
             if mem.get('role'):
                 f2 = font(38); rw = d.textlength(mem['role'], font=f2)
-                d.text(((W - rw) / 2, H - 210), mem['role'], font=f2, fill=(255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0))
+                d.text(((W - rw) / 2, sb - 152), mem['role'], font=f2, fill=(255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0))
             im.save(os.path.join(dst, f'{i:02d}-{mem["slug"]}.jpg'), quality=93)
     elif m == 'ladder':
         vs = p['versions']; t0, t1 = ts(p['t0']), ts(p['t1'])
@@ -295,6 +309,17 @@ How it was made: {ai}
         chains.append(''.join(labels) + f"xstack=inputs={len(vs)}:layout={layout}:fill=black,scale={sp['w']}:{sp['h']},format=yuv420p[v]")
         run(cmd + ['-filter_complex', ';'.join(chains), '-map', '[v]', '-map', f'{len(vs) - 1}:a?', '-c:v', 'libx264', '-crf', '20',
                    '-c:a', 'aac', '-shortest', '-movflags', '+faststart', dst])
+    elif m == 'design':  # a designed piece Sean picked, made with design_kit.py
+        from PIL import Image
+        im = Image.open(os.path.join(src, p['file'])).convert('RGB')
+        if im.size != (sp['w'], sp['h']):
+            return f"{p['file']} is {im.size[0]}x{im.size[1]}, want {sp['w']}x{sp['h']}"
+        q = 92
+        while True:
+            im.save(dst, quality=q)
+            if os.path.getsize(dst) < sp.get('max_mb', 99) * 1e6 or q < 60:
+                break
+            q -= 6
     elif m == 'gallery':
         for f in p['files']:
             shutil.copyfile(os.path.join(src, f), os.path.join(dst, os.path.basename(f)))
@@ -318,7 +343,7 @@ def check_slot(slot, out):
         has_a = any(s['codec_type'] == 'audio' for s in info['streams'])
         if sp.get('audio', True) != has_a and slot['method'] != 'ladder':
             probs.append('audio present' if has_a else 'no audio')
-    elif slot['method'] in ('cover', 'frame', 'announce'):
+    elif slot['method'] in ('cover', 'frame', 'announce', 'design'):
         from PIL import Image
         im = Image.open(p)
         if im.size != (sp['w'], sp['h']):
@@ -349,6 +374,39 @@ def check_slot(slot, out):
         n = len(re.findall(r'-->', open(p).read()))
         probs.append(f'info: {n} cues')
     return probs
+
+
+def proof(slots, out, sheets):
+    """Eye-check sheets: every video at 1 frame a second, every image, with the
+    safe area drawn in red. Anything that matters (words, faces, graphics) must sit
+    inside the red box."""
+    from PIL import Image, ImageDraw
+    os.makedirs(sheets, exist_ok=True)
+    for s in slots:
+        sp = s.get('spec', {})
+        if 'safe' not in sp or not exists(out, s):
+            continue
+        p = os.path.join(out, s['out'])
+        files = [os.path.join(p, f) for f in sorted(os.listdir(p)) if f.endswith('.jpg')] if p.endswith('/') else [p]
+        frames = []
+        for f in files:
+            if f.endswith('.mp4'):
+                d = seconds(f); n = max(1, min(16, int(d)))
+                for i in range(n):
+                    tmp = os.path.join(sheets, '_f.png'); frame(f, d * (i + 0.5) / n, tmp)
+                    frames.append(Image.open(tmp).convert('RGB')); os.remove(tmp)
+            else:
+                frames.append(Image.open(f).convert('RGB'))
+        l, t, r, b = safe_box(sp)
+        th = 360; tw = round(sp['w'] * th / sp['h']); k = th / sp['h']
+        cols = min(8, len(frames)); rows = -(-len(frames) // cols)
+        sheet = Image.new('RGB', (cols * (tw + 6), rows * (th + 6)), 'black')
+        for i, im in enumerate(frames):
+            im = im.resize((tw, th)); d = ImageDraw.Draw(im)
+            d.rectangle((l * k, t * k, r * k - 1, b * k - 1), outline=(255, 0, 0), width=2)
+            sheet.paste(im, ((i % cols) * (tw + 6), (i // cols) * (th + 6)))
+        dst = os.path.join(sheets, s['id'] + '.jpg'); sheet.save(dst, quality=88)
+        print(dst)
 
 
 # ---------- lyric alignment ----------
@@ -411,7 +469,7 @@ def main():
             for s in [s for s in slots if s['group'] == g]:
                 done = out and exists(out, s)
                 why = blocked(s, rel)
-                state = 'BUILT' if done else ('blocked: ' + why if why else 'ready')
+                state = ('blocked: ' + why) if why and why.startswith('waiting on Sean') else ('BUILT' if done else ('blocked: ' + why if why else 'ready'))
                 c = s['credits'] if isinstance(s['credits'], (int, float)) else 0
                 total += 0 if done else c
                 print(f"  {s['id']:<20} {state:<46} credits {s['credits'] if c else 0}")
@@ -438,6 +496,9 @@ def main():
         for i, w in skipped:
             print(f'skipped {i}: {w}')
         return
+
+    if cmd == 'proof':
+        return proof(slots, out, opt('--sheets', os.path.join(out, '_proof')))
 
     if cmd == 'check':
         bad = 0

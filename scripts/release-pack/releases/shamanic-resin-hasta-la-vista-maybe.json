@@ -21,15 +21,27 @@
   "mv_audio_offset": 0.0,
   "decisions": {
     "title": {
-      "status": "open",
-      "question": "Rename 'Asta' to 'Hasta' in the catalog (pulse_songs, the remix row, radio_tracks) before distribution?",
-      "recommendation": "Yes. The MV title card, the end card and the new brief already say Hasta; the catalog is the odd one out. Slugs stay as they are so no links break."
+      "status": "approved",
+      "question": "Rename 'Asta' to 'Hasta' in the catalog before distribution?",
+      "answer": "Sean 2026-11-19: yes. Done: pulse_songs x2, radio_tracks x2, gfs_albums Album 2, two press pieces; slugs unchanged; verified live on geekfon.ai/shamanic-resin (0 Asta)."
     },
     "cover_upscale": {
+      "status": "approved",
+      "method": "lanczos",
+      "question": "Upscale the v2 cover to 3000 px?",
+      "answer": "Sean 2026-11-19: yes, try the AI upscale and see. Tried (Higgsfield bytedance 4k, 2 credits, job 0c173525): it redrew the art (Momo's expression changed, outlines thinner and scratchy, noise in the whites), failing the v4 style gate. Lanczos keeps the line art; used it. Sean can still override."
+    },
+    "thumbnail": {
       "status": "open",
-      "method": "ai",
-      "question": "Upscale the v2 cover from 2048 to 3000 px for DistroKid?",
-      "recommendation": "Yes, with the Higgsfield 4K upscale, then Lanczos down to exactly 3000. Flat cost, quoted at upload. Plain Lanczos is free but softens the line art."
+      "question": "Which YouTube thumbnail: A (end-card family, all four members), B (silhouettes in the door light) or C (Aoi close-up, big title)?",
+      "recommendation": "A. It matches the end card you approved, shows the whole band, and reads at list size. B shows the reveal moment, so only after MV day. C is the strongest click but shows one member.",
+      "files": "design.py output: yt-A-endcard.jpg, yt-B-silhouettes.jpg, yt-C-face.jpg; Reel cover reel-cover-A.jpg"
+    },
+    "teaser_look": {
+      "status": "open",
+      "question": "Approve the LoLA teaser look (the two stills and the storyboards) and the designer before any audio or clips are made?",
+      "recommendation": "Approve. LoLA is drawn from her locked Support-tour references (the Roxanne video look), the cards and type are in the end-card design language (the 'your-week' design from the design team, approved on the MV end card), and the cut-aways are frozen MV frames, so the teasers match the MV. Default if Sean names a different designer: rebuild the cards in theirs, LoLA stills unchanged.",
+      "files": "teaser-1-board.jpg, teaser-2-board.jpg; stills Higgsfield jobs e53a3d8a (teaser 1, lip highlight painted out by hand) and 3ae9f3e8 (teaser 2)"
     }
   },
   "youtube": {
@@ -66,11 +78,11 @@
       "loop_fade": 0.4
     },
     "yt_thumbnail": {
-      "t": "1:13.0"
+      "decision": "thumbnail"
     },
     "cut_hook_916": {
       "t0": "0:13.0",
-      "t1": "0:28.0",
+      "t1": "0:20.0",
       "xs": [
         [
           0,
@@ -79,14 +91,6 @@
         [
           3,
           0.66
-        ],
-        [
-          7,
-          0.5
-        ],
-        [
-          12,
-          0.45
         ]
       ]
     },
@@ -140,11 +144,13 @@
     },
     "teaser_1": {
       "script": "Hi, it's LoLA. Shamanic Resin used to sing with their breath held, in a tiny room. That's about to change. The new single is called Hasta La Vista Maybe. The door is about to open. Stay close.",
-      "script_approved": false
+      "script_approved": false,
+      "still_job": "e53a3d8a-582d-408e-a2a5-969c43d68461"
     },
     "teaser_2": {
       "script": "LoLA again. Weeks of work went into the Hasta La Vista Maybe video, and GeekFon members get to watch it come together first: the storyboards, the early cuts, all of it. Join at geekfon.ai and see how it was made.",
-      "script_approved": false
+      "script_approved": false,
+      "still_job": "3ae9f3e8-bd56-4c00-96c4-292896c6b3f9"
     },
     "bts_versions": {
       "t0": "1:04.0",
@@ -189,6 +195,9 @@
         "v3-proof-sheet.jpg",
         "v4-proof-sheet.jpg"
       ]
+    },
+    "reel_cover": {
+      "decision": "thumbnail"
     }
   }
 }
