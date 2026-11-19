@@ -1,0 +1,50 @@
+{
+ "artist": "Shamanic Resin",
+ "title": "Real Dream",
+ "station": "Anime Radio",
+ "start": 39.6,
+ "end": 66.6,
+ "song_seconds": 198,
+ "lines": [
+  [
+   40.0,
+   "When I woke from the dream, there you were"
+  ],
+  [
+   43.2,
+   "Inside this fantasy that feels so real"
+  ],
+  [
+   46.5,
+   "Shining bright, rules meant just for the two of us"
+  ],
+  [
+   50.0,
+   "Everything alive here is family"
+  ],
+  [
+   53.0,
+   "The Shamanic Resin casts its magic spell"
+  ],
+  [
+   57.8,
+   "Don't cry; today is a brand new start"
+  ],
+  [
+   60.0,
+   "Even if you stumble, just get up and dance again"
+  ],
+  [
+   63.0,
+   "This very moment... maybe it's a real dream"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-shamanic-real-dream.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

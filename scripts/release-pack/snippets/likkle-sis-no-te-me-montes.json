@@ -1,0 +1,70 @@
+{
+ "artist": "Likkle Sis",
+ "title": "No Te Me Montes",
+ "station": "Riddim Radio",
+ "start": 62.3,
+ "end": 92.3,
+ "song_seconds": 191,
+ "lines": [
+  [
+   62.62,
+   "Look close at what's in front of you"
+  ],
+  [
+   65.38,
+   "before you push"
+  ],
+  [
+   67.42,
+   "Sometimes that same detour"
+  ],
+  [
+   70.02,
+   "comes to set you right"
+  ],
+  [
+   72.38,
+   "Don't get worked up, don't get worked up"
+  ],
+  [
+   74.9,
+   "What weighs on you will teach you"
+  ],
+  [
+   77.3,
+   "Take it easy, take it easy"
+  ],
+  [
+   80.1,
+   "Fighting isn't the answer"
+  ],
+  [
+   82.22,
+   "Take it easy"
+  ],
+  [
+   83.42,
+   "Don't get worked up"
+  ],
+  [
+   84.98,
+   "Even the bad brings you"
+  ],
+  [
+   87.34,
+   "a gift, a gift"
+  ],
+  [
+   89.86,
+   "Turn it around and it will shine"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-likkle-sis-no-te-me-montes.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

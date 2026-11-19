@@ -1,0 +1,34 @@
+{
+ "artist": "Vuka",
+ "title": "Fall Into Rhythm",
+ "station": "Riddim Radio",
+ "start": 26.2,
+ "end": 47.8,
+ "song_seconds": 242,
+ "lines": [
+  [
+   26.64,
+   "Fall into rhythm, fall into rhythm"
+  ],
+  [
+   31.8,
+   "We've got one life, we ride it"
+  ],
+  [
+   38.4,
+   "Fall into rhythm, fall into rhythm"
+  ],
+  [
+   42.8,
+   "Tonight feels right, let the good times spin"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-vuka-fall-into-rhythm.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

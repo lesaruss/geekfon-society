@@ -1,0 +1,50 @@
+{
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "artist": "Likkle Bro",
+ "title": "High Vibe Life",
+ "station": "Riddim Radio",
+ "start": 67.6,
+ "end": 96.6,
+ "song_seconds": 228,
+ "close_seconds": 3.6,
+ "lines": [
+  [
+   68.06,
+   "High vibe life, that's me"
+  ],
+  [
+   71.92,
+   "High vibe life, can't drain me"
+  ],
+  [
+   76.36,
+   "Brixton smile, I stay free"
+  ],
+  [
+   78.92,
+   "High vibe life, that's me"
+  ],
+  [
+   82.38,
+   "High vibe life, that's me"
+  ],
+  [
+   86.06,
+   "High vibe life, can't drain me"
+  ],
+  [
+   89.48,
+   "If you bring dark, I step away"
+  ],
+  [
+   92.8,
+   "I choose joy every day"
+  ]
+ ],
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-likkle-bro-high-vibe-life.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

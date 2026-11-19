@@ -1,0 +1,54 @@
+{
+ "artist": "Logan Russell",
+ "title": "Enough",
+ "station": "Hip Hop Radio",
+ "start": 34.3,
+ "end": 53.5,
+ "song_seconds": 163,
+ "lines": [
+  [
+   34.74,
+   "You are enough, enough"
+  ],
+  [
+   37.36,
+   "You are enough, enough"
+  ],
+  [
+   39.1,
+   "Perfect in the rough"
+  ],
+  [
+   40.36,
+   "Yeah, you are enough"
+  ],
+  [
+   45.54,
+   "You are enough, enough"
+  ],
+  [
+   47.14,
+   "Stand up, hands up"
+  ],
+  [
+   48.6,
+   "We rise as one"
+  ],
+  [
+   49.96,
+   "Yeah, you are enough"
+  ],
+  [
+   51.34,
+   "Yeah, you are enough"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-mr-russell-enough.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

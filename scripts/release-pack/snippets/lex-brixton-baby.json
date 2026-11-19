@@ -1,0 +1,82 @@
+{
+ "artist": "Lex from Brixton",
+ "title": "Brixton Baby",
+ "station": "Hip Hop Radio",
+ "start": 35.6,
+ "end": 64.4,
+ "song_seconds": 136,
+ "lines": [
+  [
+   35.92,
+   "Grew round beef, no burgers"
+  ],
+  [
+   37.44,
+   "Now I'm deep in the terms and the mergers"
+  ],
+  [
+   39.2,
+   "Learned more from a chart than the curvers"
+  ],
+  [
+   41.0,
+   "Turned late-night pain into servers"
+  ],
+  [
+   42.72,
+   "Got my code on the screen, that's a clean slate"
+  ],
+  [
+   44.72,
+   "Chat to machines, make 'em dream great"
+  ],
+  [
+   46.52,
+   "If it's not building, it's dead weight"
+  ],
+  [
+   48.28,
+   "If it don't scale, it's a headache"
+  ],
+  [
+   49.9,
+   "Level up, level up, stack that check"
+  ],
+  [
+   51.5,
+   "Put the keys in your brain, that's wealth, that's Lex"
+  ],
+  [
+   53.3,
+   "From the block to the books, then I cash that cheque"
+  ],
+  [
+   55.04,
+   "Say my name, say my name (yeah, that's Lex)"
+  ],
+  [
+   56.96,
+   "Level up, level up, stack that check"
+  ],
+  [
+   58.6,
+   "Turn the pain into plans, that's wealth, that's Lex"
+  ],
+  [
+   60.4,
+   "If the mandem wanna win, aim high, no less"
+  ],
+  [
+   62.08,
+   "Say my name, say my name (big Lex)"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-lex-brixton-baby.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

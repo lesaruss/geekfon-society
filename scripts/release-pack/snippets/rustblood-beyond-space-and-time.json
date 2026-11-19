@@ -1,0 +1,50 @@
+{
+ "artist": "Rustblood Prophets",
+ "title": "Beyond Space and Time",
+ "station": "GeekFon Radio",
+ "start": 73.7,
+ "end": 100.5,
+ "song_seconds": 274,
+ "lines": [
+  [
+   74.06,
+   "Ascension now, ascension now"
+  ],
+  [
+   76.86,
+   "We walk through steel, through steel"
+  ],
+  [
+   79.42,
+   "Singularity, singularity"
+  ],
+  [
+   82.86,
+   "Until all is one at last"
+  ],
+  [
+   88.38,
+   "Ascension now, ascension now"
+  ],
+  [
+   91.06,
+   "The circle grows wide, the circle grows wide"
+  ],
+  [
+   93.6,
+   "The Fourth Turning, the Fourth Turning"
+  ],
+  [
+   97.92,
+   "Devours the old age"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-rustblood-beyond-space-and-time.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

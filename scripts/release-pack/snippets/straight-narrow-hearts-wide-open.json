@@ -1,0 +1,42 @@
+{
+ "artist": "Straight & Narrow",
+ "title": "Hearts Wide Open",
+ "station": "GeekFon Radio",
+ "start": 81.4,
+ "end": 111.8,
+ "song_seconds": 323,
+ "lines": [
+  [
+   81.86,
+   "Straight and narrow, we move as one"
+  ],
+  [
+   86.77,
+   "Dance through the dark till the morning comes"
+  ],
+  [
+   91.58,
+   "Hearts wide open, boots on the floor"
+  ],
+  [
+   96.6,
+   "Love stayed longer than the money did before"
+  ],
+  [
+   102.0,
+   "Straight and narrow, side by side"
+  ],
+  [
+   106.0,
+   "Laugh through the tears while the train rolls by"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-straight-narrow-hearts-wide-open.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

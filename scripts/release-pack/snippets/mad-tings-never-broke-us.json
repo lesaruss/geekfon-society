@@ -1,0 +1,58 @@
+{
+ "artist": "Mad Tings",
+ "title": "Never Broke Us",
+ "station": "Hip Hop Radio",
+ "start": 27.0,
+ "end": 59.3,
+ "song_seconds": 209,
+ "lines": [
+  [
+   27.38,
+   "Brixton never broke us"
+  ],
+  [
+   29.82,
+   "Even when the fridge bare, frost all over"
+  ],
+  [
+   33.2,
+   "We still step clean, head high, stay focused"
+  ],
+  [
+   36.52,
+   "Had nothing, but we turned out something, now the door bust open"
+  ],
+  [
+   41.0,
+   "Brixton never broke us (Tell them again)"
+  ],
+  [
+   46.0,
+   "Yeah, ice in the veins now"
+  ],
+  [
+   48.0,
+   "Brixton never broke us"
+  ],
+  [
+   51.0,
+   "Hood still love when the mandem roll up"
+  ],
+  [
+   53.0,
+   "From flats to the stage, same block that grow us"
+  ],
+  [
+   55.0,
+   "Had nothing, but we turned out something now, now the door bust open"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-mad-tings-never-broke-us.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

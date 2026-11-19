@@ -1,0 +1,50 @@
+{
+ "artist": "Riku Hayasaka",
+ "title": "Make My Body Move",
+ "station": "Anime Radio",
+ "start": 41.2,
+ "end": 68.6,
+ "song_seconds": 188,
+ "lines": [
+  [
+   41.62,
+   "Girl, you make my body move"
+  ],
+  [
+   45.06,
+   "I chase you without even trying"
+  ],
+  [
+   46.68,
+   "I ain't got a choice"
+  ],
+  [
+   49.44,
+   "pulled into your groove"
+  ],
+  [
+   53.52,
+   "with every step, my heartbeat copies yours"
+  ],
+  [
+   55.4,
+   "Oh, you make my body move"
+  ],
+  [
+   57.92,
+   "You make my body move"
+  ],
+  [
+   65.92,
+   "You make my body move"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-riku-make-my-body-move.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

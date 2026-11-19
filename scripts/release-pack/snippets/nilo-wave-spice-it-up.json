@@ -1,0 +1,42 @@
+{
+ "artist": "Nilo Wave",
+ "title": "Spice It Up",
+ "station": "Riddim Radio",
+ "start": 33.4,
+ "end": 64.4,
+ "song_seconds": 284,
+ "lines": [
+  [
+   33.8,
+   "Spice up your life, mami, pour it on, pour it on"
+  ],
+  [
+   41.46,
+   "Better too much than to die empty"
+  ],
+  [
+   47.36,
+   "If I fall ten times, I laugh on twelve"
+  ],
+  [
+   51.96,
+   "I wasn't born to live on \"what if\""
+  ],
+  [
+   57.44,
+   "Spice up your life, papi, pour it on, pour it on"
+  ],
+  [
+   61.86,
+   "Memories that precious don't stay hidden"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-nilo-wave-spice-it-up.mp4",
+ "sources": {
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
+ }
+}

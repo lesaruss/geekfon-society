@@ -35,11 +35,8 @@
    "\"Act like an adult\" - quit nagging me"
   ]
  ],
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-roxanne-lifes-tough.mp4",
  "sources": {
-  "audio": "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/roxanne/stream/roxanne-life-s-tough-1-1790291878521.mp3",
-  "cover": "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-media/artists/roxanne/covers/lifes-tough.png",
-  "logo": "geekfon brand logo.png",
-  "song": "pulse_songs 5028689d-1eb8-4009-bee7-9587e20e7c10",
-  "timings": "faster-whisper small, ja, word timestamps on the full mix (sandbox); English lines from pulse_songs.lyrics_en"
+  "note": "audio = geekfon-radio-audio stream for the song; cover = geekfon-media artists/<artist>/covers"
  }
 }
