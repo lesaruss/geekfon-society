@@ -10,6 +10,8 @@ scaled to 82% inside a soft, blurred copy of itself, so everything sits inside t
 
 usage: python3 releases/shamanic-resin-hasta-la-vista-maybe.reel3.py ART OUT LOGO COVER
   ART: lola-hook.png, lola-q.png (with the tee print), aoi.png, momo.png, band.png (9:16)
+The board (stills for Sean) is the CLI; assemble_reel.py imports this module, calls setup() and
+renders each beat in BEATS once per video frame, with the Wan clip frame as the art, then post().
 """
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -17,9 +19,19 @@ from design_kit import *
 import design_kit as K
 from PIL import ImageFilter, ImageEnhance
 
-ART, OUT, LOGO, COVER = sys.argv[1:5]
-os.makedirs(OUT, exist_ok=True); set_logo(LOGO)
-A = lambda n: Image.open(os.path.join(ART, n)).convert('RGB')
+ART = COVER_IM = None
+_cache = {}
+
+
+def setup(art, logo, cover):
+    global ART, COVER_IM
+    ART = art; set_logo(logo); COVER_IM = Image.open(cover).convert('RGB')
+
+
+def A(n):
+    if n not in _cache:
+        _cache[n] = Image.open(os.path.join(ART, n)).convert('RGB')
+    return _cache[n]
 W, H = 1080, 1920
 TITLE, ARTIST = 'Hasta La Vista Maybe', 'Shamanic Resin'
 PLATE = ('SHAMANIC RESIN', 'Rock · Anime · GeekFon Society')
@@ -40,8 +52,15 @@ def footer(im):
     d.rounded_rectangle((W - 40 - tw - 32, H - 76, W - 40, H - 28), radius=10, fill=(30, 18, 40)); d.text((W - 40 - tw - 16, H - 70), s, font=f, fill=WHITE)
 
 
+def _ground(color):
+    """The halftone field and top bar, drawn once per colour (the assembler calls a beat per frame)."""
+    if ('g', color) not in _cache:
+        g = halftone(W, H, REEL[color]); top_bar(g); _cache[('g', color)] = g
+    return _cache[('g', color)].copy()
+
+
 def beat(color, headline, art, size=104, plate=None, fy=0.3):
-    im = halftone(W, H, REEL[color]); top_bar(im)
+    im = _ground(color)
     y = highlight(im, headline, (60, 200, W - 60, H), size) + 70
     cw = 700; ch = H - 260 - y
     card(im, art, ((W - cw) // 2, y, (W + cw) // 2, y + ch), fy=fy, border=12, shadow=18)
@@ -52,7 +71,7 @@ def beat(color, headline, art, size=104, plate=None, fy=0.3):
 
 def cover_beat(color, headline, cov):
     """The full single cover, big and square (Sean 2026-11-19: "a full album cover shot somewhere in there")."""
-    im = halftone(W, H, REEL[color]); top_bar(im)
+    im = _ground(color)
     y = highlight(im, headline, (60, 200, W - 60, H), 104) + 80
     side = 900; card(im, cov, ((W - side) // 2, y, (W + side) // 2, y + side), fit='stretch', border=12, shadow=18)
     d = ImageDraw.Draw(im); f = BRIC(70)
@@ -125,23 +144,44 @@ def framed(im, s=0.82, top=190):
     bg.paste(fg, ((W - w) // 2, top), m); return bg
 
 
-frames = [
-    ('0-2 s  LoLA: "Psst. Hey." (your Reel 1 take)', beat('blue', 'PSST. HEY.', A('lola-hook.png'), 118, fy=0.25)),
-    ('2-4 s  LoLA: "Stop scrolling for one second."', beat('blue', 'STOP SCROLLING FOR ONE SECOND', A('lola-hook.png'), 104, fy=0.25)),
-    ('4-8 s  LoLA (new line): "Do you like rock? What about anime?... Hold on."', beat('pink', 'Do you like rock? What about anime?', A('lola-q.png'), 104, fy=0.2)),
-    ('8-12 s  native vertical highlight: Aoi on the chorus. Song: "Hasta la vista..."', beat('magenta', 'Hasta la vista, goodbye for now', A('aoi.png'), 96, plate=PLATE, fy=0.2)),
-    ('12-15 s  native vertical highlight: the band in the studio', beat('green', "Even if we're shaking, we're going", A('band.png'), 96, plate=PLATE, fy=0.35)),
-    ('15-18 s  the full single cover (new)', cover_beat('orange', 'New single', Image.open(COVER).convert('RGB'))),
-    ('18-27 s  radio, NOW PLAYING, Momo in the station art, English lyric captions', radio(A('momo.png'), "Kick the door open and go, we're here!")),
-    ('27-31 s  the close. LoLA: "Tune in. It\'s free. geekfon.ai" (your Reel 1 take)', close(Image.open(COVER).convert('RGB'))),
-]
-tw_, th_, pad = 270, 480, 12
-sheet = Image.new('RGB', (len(frames) * (tw_ + pad) + pad, th_ + 150), (24, 24, 28)); d = ImageDraw.Draw(sheet)
-d.text((pad, 10), 'REEL 3: Shamanic Resin, Hasta La Vista Maybe   (as it will post, in the Reel 2 frame)', font=FIG(22), fill=WHITE)
-for i, (label, im) in enumerate(frames):
-    fr = framed(im); fr.save(os.path.join(OUT, f'reel3-{i + 1}.png')); im.save(os.path.join(OUT, f'reel3-{i + 1}-full.png'))
-    x = pad + i * (tw_ + pad); sheet.paste(fr.resize((tw_, th_)), (x, 46)); yy = 46 + th_ + 10
-    for ln in wrap(d, label, FIG(16), tw_):
-        d.text((x, yy), ln, font=FIG(16), fill=(220, 220, 230)); yy += 21
-sheet.save(os.path.join(OUT, 'reel3-board.jpg'), quality=90)
-print('done', OUT)
+# one renderer per beat: art in, full 1080x1920 frame out (the assembler passes each video frame as art)
+BEATS = {
+    'psst': lambda art: beat('blue', 'PSST. HEY.', art, 118, fy=0.25),
+    'stop': lambda art: beat('blue', 'STOP SCROLLING FOR ONE SECOND', art, 104, fy=0.25),
+    'question': lambda art: beat('pink', 'Do you like rock? What about anime?', art, 104, fy=0.2),
+    'aoi': lambda art: beat('magenta', 'Hasta la vista, goodbye for now', art, 96, plate=PLATE, fy=0.2),
+    'band': lambda art: beat('green', "Even if we're shaking, we're going", art, 96, plate=PLATE, fy=0.35),
+    'band-door': lambda art: beat('green', "Kick the door open and go, we're here!", art, 96, plate=PLATE, fy=0.35),
+    'cover': lambda art: cover_beat('orange', 'New single', COVER_IM),
+    'radio': lambda art: radio(art, "Kick the door open and go, we're here!"),
+    'close': lambda art: close(COVER_IM),
+}
+STILL = {'psst': 'lola-hook.png', 'stop': 'lola-hook.png', 'question': 'lola-q.png', 'aoi': 'aoi.png', 'band': 'band.png',
+         'band-door': 'band.png', 'radio': 'momo.png'}
+post = framed
+
+if __name__ == '__main__':
+    ART_DIR, OUT, LOGO, COVER = sys.argv[1:5]
+    os.makedirs(OUT, exist_ok=True); setup(ART_DIR, LOGO, COVER)
+    labels = [
+        ('psst', '0-1 s  LoLA: "Psst. Hey." (your Reel 1 take)'),
+        ('stop', '1-3 s  LoLA: "Stop scrolling for one second."'),
+        ('question', '3-7 s  LoLA (new line): "Do you like rock? What about anime?... Hold on."'),
+        ('aoi', '7-12 s  Aoi sings the chorus. Song: "Hasta la vista..."'),
+        ('band', '12-14 s  the band: "Even if we\'re shaking, we\'re going"'),
+        ('band-door', '14-17 s  the band: "Kick the door open and go, we\'re here!"'),
+        ('cover', '17-21 s  the full single cover'),
+        ('radio', '21-25 s  radio, NOW PLAYING, Momo drumming in the station art'),
+        ('close', '25-30 s  the close. LoLA: "Tune in. It\'s free. geekfon.ai" (your Reel 1 take)'),
+    ]
+    frames = [(lab, BEATS[k](A(STILL[k]) if k in STILL else None)) for k, lab in labels]
+    tw_, th_, pad = 270, 480, 12
+    sheet = Image.new('RGB', (len(frames) * (tw_ + pad) + pad, th_ + 150), (24, 24, 28)); d = ImageDraw.Draw(sheet)
+    d.text((pad, 10), 'REEL 3: Shamanic Resin, Hasta La Vista Maybe   (as it will post, in the Reel 2 frame)', font=FIG(22), fill=WHITE)
+    for i, (label, im) in enumerate(frames):
+        fr = framed(im); fr.save(os.path.join(OUT, f'reel3-{i + 1}.png')); im.save(os.path.join(OUT, f'reel3-{i + 1}-full.png'))
+        x = pad + i * (tw_ + pad); sheet.paste(fr.resize((tw_, th_)), (x, 46)); yy = 46 + th_ + 10
+        for ln in wrap(d, label, FIG(16), tw_):
+            d.text((x, yy), ln, font=FIG(16), fill=(220, 220, 230)); yy += 21
+    sheet.save(os.path.join(OUT, 'reel3-board.jpg'), quality=90)
+    print('done', OUT)

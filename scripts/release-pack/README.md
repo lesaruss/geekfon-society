@@ -139,6 +139,27 @@ beside it, and gates.
    - Before using the song's vocal-removed stem as a bed, scan it for drop-outs where the
      original was a cappella (canon `score_bed_rule`).
    - Save the result as `pack/teaser/lola-teaser-N.mp4`.
+10b. **Launch reel (replaces the two teasers, Sean 2026-11-19).** One reel in the launch-reel
+   template (Reels 1-2: LIVE bar, halftone colour per beat, yellow captions, art in a card,
+   radio NOW PLAYING, "Tune in. It's free." close, the Reel 2 v2 82% frame). Per release, change
+   the starting colour, LoLA's outfit (the artist's tee), her new line, and the song.
+   - Copy `releases/shamanic-resin-hasta-la-vista-maybe.reel3.py`. It holds `BEATS` (one
+     renderer per beat: art in, 1080x1920 frame out) and `STILL`; run it as a CLI for the
+     stills board Sean approves before any credits.
+   - Art is drawn natively at 9:16 (nano_banana_pro 4k): LoLA x2, one member singing the chorus,
+     the band, one member for the radio card. No horizontal MV frames. Put the full single cover
+     on its own beat. A Wan start image over about 10 MB fails ("Input file is too large"):
+     send a 1440x2560 JPEG, not the 4k PNG.
+   - Wan 2.7 at 9:16 1080p: LoLA clips with her booth line as `audio_references`, then sync-3;
+     the singing clips with the song's vocal stem cut to the beat as `audio_references`.
+   - Assemble with `assemble_reel.py plan.json out.mp4`: every frame is drawn by the design
+     module with the clip frame as the art, so captions and name plates stay on top. The plan's
+     `sync` puts a song moment (the chorus) on a beat; the song runs under LoLA quietly
+     (`music_curve`), comes up for the chorus, and hands over to the instrumental stem for the
+     close so the vocal never fights her last line. Split beats on the vocal timings (Whisper on
+     the vocal stem) so each caption is the line being sung. Pilot plan: release file `reel3.assembly`.
+   - PROOF: lip closures on every b/m/p, STT on the final mix (English lines + the sung
+     lyrics), each caption against the sung line, the frames against the approved stills.
 11. **Check (PROOF).** Run `python3 build_pack.py check releases/<release>.json --out pack`.
    - It checks size, length, audio, slide count, WAV format and clipping, and the caption count.
    - Then run `python3 build_pack.py proof releases/<release>.json --out pack`. It makes

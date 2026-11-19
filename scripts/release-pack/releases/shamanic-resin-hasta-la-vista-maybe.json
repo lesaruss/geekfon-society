@@ -1,339 +1,443 @@
 {
-  "release": "shamanic-resin-hasta-la-vista-maybe",
-  "artist_slug": "shamanic-resin",
-  "artist_name": "Shamanic Resin",
-  "title": "Hasta La Vista Maybe",
-  "song_slug": "shamanic-resin-asta-la-vista-maybe",
-  "brief_id": "28924562-1b64-4744-b5d8-a49fd141dd89",
-  "type": "single",
-  "canon": [
-    "decision-asta-mv-release-after-real-dream"
-  ],
-  "sources": {
-    "song.json": "pulse_songs row, slug shamanic-resin-asta-la-vista-maybe",
-    "brief.json": "song_release_briefs row 28924562-1b64-4744-b5d8-a49fd141dd89",
-    "mv.mp4": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/hasta-la-vista-maybe-v6-full.mp4",
-    "cover.png": "geekfon-media/artists/shamanic-resin/covers/asta-la-vista-maybe-v2.png (2048 px, fishnet-free; never v1)",
-    "master.wav": "geekfon-masters/shamanic-resin/masters/shamanic-resin-asta-la-vista-maybe-1794963396825.wav (private bucket)",
-    "versions": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/: asta-freeze-full-v1.mp4, hasta-la-vista-maybe-v2..v6-full.mp4",
-    "stills": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/stills/ (11) + v3-proof-sheet.jpg, v4-proof-sheet.jpg",
-    "pitch": "geekfon-media/artists/shamanic-resin/video/pitch-2026-11/asta-video-pitch-{1-freeze,2-paint-bomb,3-lights-out,4-blank-page}.jpg",
-    "teaser": "teaser/t1.png, teaser/t2.png: the approved LoLA stills"
+ "release": "shamanic-resin-hasta-la-vista-maybe",
+ "artist_slug": "shamanic-resin",
+ "artist_name": "Shamanic Resin",
+ "title": "Hasta La Vista Maybe",
+ "song_slug": "shamanic-resin-asta-la-vista-maybe",
+ "brief_id": "28924562-1b64-4744-b5d8-a49fd141dd89",
+ "type": "single",
+ "canon": [
+  "decision-asta-mv-release-after-real-dream"
+ ],
+ "sources": {
+  "song.json": "pulse_songs row, slug shamanic-resin-asta-la-vista-maybe",
+  "brief.json": "song_release_briefs row 28924562-1b64-4744-b5d8-a49fd141dd89",
+  "mv.mp4": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/hasta-la-vista-maybe-v6-full.mp4",
+  "cover.png": "geekfon-media/artists/shamanic-resin/covers/asta-la-vista-maybe-v2.png (2048 px, fishnet-free; never v1)",
+  "master.wav": "geekfon-masters/shamanic-resin/masters/shamanic-resin-asta-la-vista-maybe-1794963396825.wav (private bucket)",
+  "versions": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/: asta-freeze-full-v1.mp4, hasta-la-vista-maybe-v2..v6-full.mp4",
+  "stills": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/stills/ (11) + v3-proof-sheet.jpg, v4-proof-sheet.jpg",
+  "pitch": "geekfon-media/artists/shamanic-resin/video/pitch-2026-11/asta-video-pitch-{1-freeze,2-paint-bomb,3-lights-out,4-blank-page}.jpg",
+  "teaser": "teaser/t1.png, teaser/t2.png: the approved LoLA stills"
+ },
+ "mv_audio_offset": 0.0,
+ "decisions": {
+  "title": {
+   "status": "approved",
+   "question": "Rename 'Asta' to 'Hasta' in the catalog before distribution?",
+   "answer": "Sean 2026-11-19: yes. Done: pulse_songs x2, radio_tracks x2, gfs_albums Album 2, two press pieces; slugs unchanged; verified live on geekfon.ai/shamanic-resin (0 Asta)."
   },
-  "mv_audio_offset": 0.0,
-  "decisions": {
-    "title": {
-      "status": "approved",
-      "question": "Rename 'Asta' to 'Hasta' in the catalog before distribution?",
-      "answer": "Sean 2026-11-19: yes. Done: pulse_songs x2, radio_tracks x2, gfs_albums Album 2, two press pieces; slugs unchanged; verified live on geekfon.ai/shamanic-resin (0 Asta)."
-    },
-    "cover_upscale": {
-      "status": "approved",
-      "method": "lanczos",
-      "question": "Upscale the v2 cover to 3000 px?",
-      "answer": "Sean 2026-11-19: yes, try the AI upscale and see. Tried (Higgsfield bytedance 4k, 2 credits, job 0c173525): it redrew the art (Momo's expression changed, outlines thinner and scratchy, noise in the whites), failing the v4 style gate. Lanczos keeps the line art; used it. Sean can still override."
-    },
-    "thumbnail": {
-      "status": "approved",
-      "question": "Which YouTube thumbnail, all in the launch-reel look: A (band in the doorway + stacked title), B (Aoi close-up + big title) or C (all four members in cards + title)?",
-      "recommendation": "C for the MV: every member, readable at list size, and no reveal, so it also works before MV day. A shows the doorway reveal (MV day only). B is the strongest single face.",
-      "files": "design.py output: yt-A.jpg, yt-B.jpg, yt-C.jpg; Reel cover reel-cover.jpg",
-      "answer": "Sean 2026-11-19: C (all four members in cards + title). Reel cover: the white-panel cover."
-    },
-    "teaser_look": {
-      "status": "approved",
-      "question": "Approve the two LoLA teaser storyboards (launch-reel look) and stills before any voice or clips are made?",
-      "recommendation": "Approve. Sean 2026-11-19: build it in the design of the launch-week reels (similar, not identical). Done: LIVE bar, colour fields with dots, yellow highlighter captions, art in black-bordered cards, name plates, AI line, all inside the safe area; LoLA from her locked references; cut-aways from before the reveal (studio, closed door, pitch boards, straining-door storyboard).",
-      "files": "teaser-1-board.jpg, teaser-2-board.jpg; stills Higgsfield e53a3d8a (teaser 1, lip highlight painted out) and 3ae9f3e8 (teaser 2)",
-      "answer": "Sean 2026-11-19: go ahead with the teasers (storyboards, stills and scripts approved)."
-    }
+  "cover_upscale": {
+   "status": "approved",
+   "method": "lanczos",
+   "question": "Upscale the v2 cover to 3000 px?",
+   "answer": "Sean 2026-11-19: yes, try the AI upscale and see. Tried (Higgsfield bytedance 4k, 2 credits, job 0c173525): it redrew the art (Momo's expression changed, outlines thinner and scratchy, noise in the whites), failing the v4 style gate. Lanczos keeps the line art; used it. Sean can still override."
   },
-  "youtube": {
-    "title": "Shamanic Resin - Hasta La Vista Maybe (Official Music Video)",
-    "description": "Four friends who used to sing with their breath held in a tiny room kick the door open. Shamanic Resin - \"Hasta La Vista Maybe\".\n\nNew album Real Dream, out now.\nThe whole GeekFon Society catalog, and the making of this video: geekfon.ai\n\n@GeekFon",
-    "tags": [
-      "Shamanic Resin",
-      "Hasta La Vista Maybe",
-      "GeekFon Society",
-      "GeekFon",
-      "anime band",
-      "K-pop rock",
-      "AI music",
-      "Real Dream"
-    ],
-    "altered_content": "Yes. YouTube only requires it for realistic content and this is animation, but canon-lola-social-seat makes AI disclosure positioning, so we label it anyway.",
-    "visibility": "Private until the MV reveal date (after Real Dream, date not set), then Public",
-    "end_screen": {
-      "from": "1:16",
-      "to": "1:29",
-      "elements": [
-        "Subscribe",
-        "Playlist: Real Dream",
-        "Video: best for viewer"
-      ],
-      "placement": "Lower half of the end card, under the 'Out now' pill. Keep the title block and the Real Dream cover clear; check in the Studio preview."
-    }
+  "thumbnail": {
+   "status": "approved",
+   "question": "Which YouTube thumbnail, all in the launch-reel look: A (band in the doorway + stacked title), B (Aoi close-up + big title) or C (all four members in cards + title)?",
+   "recommendation": "C for the MV: every member, readable at list size, and no reveal, so it also works before MV day. A shows the doorway reveal (MV day only). B is the strongest single face.",
+   "files": "design.py output: yt-A.jpg, yt-B.jpg, yt-C.jpg; Reel cover reel-cover.jpg",
+   "answer": "Sean 2026-11-19: C (all four members in cards + title). Reel cover: the white-panel cover."
   },
-  "params": {
-    "spotify_canvas": {
-      "t0": "0:43.0",
-      "t1": "0:46.8",
-      "x": 0.5,
-      "loop_fade": 0.4
-    },
-    "yt_thumbnail": {
-      "decision": "thumbnail"
-    },
-    "cut_hook_916": {
-      "t0": "0:13.0",
-      "t1": "0:20.0",
-      "xs": [
-        [
-          0,
-          0.62
-        ],
-        [
-          3,
-          0.66
-        ]
-      ]
-    },
-    "cut_reveal_916": {
-      "t0": "1:04.0",
-      "t1": "1:16.0"
-    },
-    "cut_feed_45": {
-      "t0": "0:00.0",
-      "t1": "0:28.0"
-    },
-    "cut_x_169": {
-      "t0": "0:00.0",
-      "t1": "0:30.5"
-    },
-    "cut_story_916": {
-      "t0": "0:43.0",
-      "t1": "0:57.0"
-    },
-    "member_carousel_45": {
-      "members": [
-        {
-          "slug": "aoi",
-          "name": "Aoi",
-          "role": "Vocals / Guitar",
-          "t": "0:13.5",
-          "x": 0.5
-        },
-        {
-          "slug": "momo",
-          "name": "Momo",
-          "role": "Drums",
-          "t": "0:16.5",
-          "x": 0.55
-        },
-        {
-          "slug": "vera",
-          "name": "Vera",
-          "role": "Keys",
-          "t": "0:10.0",
-          "x": 0.4
-        },
-        {
-          "slug": "ren",
-          "name": "Ren",
-          "role": "Bass",
-          "t": "0:06.0",
-          "x": 0.4
-        }
-      ]
-    },
-    "teaser_1": {
-      "script": "Hi, it's LoLA. Shamanic Resin used to sing with their breath held, in a tiny room. That's about to change. The new single is called Hasta La Vista Maybe. The door is about to open. Stay close.",
-      "script_approved": true,
-      "still_job": "e53a3d8a-582d-408e-a2a5-969c43d68461",
-      "voice_set": "gfs-hasta-teasers",
-      "voice_lines": [
-        "t1-hi",
-        "t1-change",
-        "t1-single",
-        "t1-door",
-        "t1-close"
-      ],
-      "on_camera_lines": [
-        "t1-hi",
-        "t1-single"
-      ],
-      "start_frame": "teaser/frames/t1-start-3x4.jpg",
-      "wan_jobs": {
-        "t1-hi": "515bbebc-79cf-4a48-9dde-ea10a53e60c7",
-        "t1-single": "96a7c621-5704-42c0-9b10-e1cdfef2091d"
-      },
-      "sync3_jobs": {
-        "t1-hi": "7b0a36b1-b715-4ca5-94c5-1dcd7b95144c",
-        "t1-single": "2807ca39-4ba8-4f3c-bd4d-b695ce612cb3"
-      },
-      "output": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/teasers/lola-teaser-1-v3.mp4"
-    },
-    "teaser_2": {
-      "script": "LoLA again. Weeks of work went into the Hasta La Vista Maybe video, and GeekFon members get to watch it come together first: the storyboards, the early cuts, all of it. Join at geekfon.ai and see how it was made.",
-      "script_approved": true,
-      "still_job": "3ae9f3e8-bd56-4c00-96c4-292896c6b3f9",
-      "voice_set": "gfs-hasta-teasers",
-      "voice_lines": [
-        "t2-again",
-        "t2-members",
-        "t2-boards",
-        "t2-join"
-      ],
-      "on_camera_lines": [
-        "t2-again",
-        "t2-join"
-      ],
-      "start_frame": "teaser/frames/t2-start-3x4.jpg",
-      "wan_jobs": {
-        "t2-again": "262950bb-8e9f-49e4-b4bf-cad045e20d82",
-        "t2-join": "12890bee-57da-489a-b39e-9679316e1aef"
-      },
-      "sync3_jobs": {
-        "t2-again": "2b43fb5f-ae9c-4db3-aaae-9b653d71c8bc",
-        "t2-join": "8a74116e-36e8-425a-838c-e957ec70b28a"
-      },
-      "output": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/teasers/lola-teaser-2-v3.mp4"
-    },
-    "bts_versions": {
-      "t0": "1:04.0",
-      "t1": "1:12.0",
-      "versions": [
-        {
-          "file": "asta-freeze-full-v1.mp4",
-          "label": "v1"
-        },
-        {
-          "file": "hasta-la-vista-maybe-v2-full.mp4",
-          "label": "v2"
-        },
-        {
-          "file": "hasta-la-vista-maybe-v3-full.mp4",
-          "label": "v3"
-        },
-        {
-          "file": "hasta-la-vista-maybe-v4-full.mp4",
-          "label": "v4"
-        },
-        {
-          "file": "hasta-la-vista-maybe-v5-full.mp4",
-          "label": "v5"
-        },
-        {
-          "file": "hasta-la-vista-maybe-v6-full.mp4",
-          "label": "v6 (final)"
-        }
-      ]
-    },
-    "bts_stills": {
-      "files": [
-        "stills/door-locked-da4.png",
-        "stills/door-straining-db4.png",
-        "stills/ending-757-door-burst.png",
-        "stills/ending-811-silhouettes-far.png",
-        "stills/ending-812-silhouettes-near.png",
-        "stills/ending-860-band-doorway-hardcel.png",
-        "stills/mr-russell-sting-wide-850.png",
-        "stills/mr-russell-sting-close-851.png",
-        "v3-proof-sheet.jpg",
-        "v4-proof-sheet.jpg"
-      ]
-    },
-    "reel_cover": {
-      "decision": "thumbnail"
-    }
-  },
-  "voice": {
-    "set": "gfs-hasta-teasers",
-    "source": "vegan-media/media/voice-booth/gfs-hasta-teasers/<line>/<take>.mp3",
-    "keepers_and_trims_s": {
-      "t1-hi": [
-        "t1-hi_conv-20261119121752",
-        0.32,
-        6.59
-      ],
-      "t1-change": [
-        "t1-change_conv-20261119121828",
-        1.0,
-        2.3
-      ],
-      "t1-single": [
-        "t1-single_conv-20261119121847",
-        0.58,
-        4.17
-      ],
-      "t1-door": [
-        "t1-door_conv-20261119122032",
-        0.36,
-        2.73
-      ],
-      "t1-close": [
-        "t1-close_conv-20261119122126",
-        0.42,
-        1.67
-      ],
-      "t2-again": [
-        "t2-again_conv-20261119122152",
-        1.06,
-        5.87
-      ],
-      "t2-members": [
-        "t2-members_conv-20261119122344",
-        0.5,
-        4.09
-      ],
-      "t2-boards": [
-        "t2-boards_conv-20261119122427",
-        0.79,
-        4.67
-      ],
-      "t2-join": [
-        "t2-join_conv-20261119122525",
-        0.81,
-        4.83
-      ]
-    },
-    "cleaning": "Sean 2026-11-19: clean the first and last half second. Trim to the speech (hum, blips and clicks outside the cut), 20 ms fade in, 120 ms fade out, 70 Hz high-pass, loudnorm -16 LUFS. Every trimmed line checked word for word with speech-to-text.",
-    "takes_not_used": "t1-single last take said 'was called Asta'; t1-close take 2 'cros'; t2-again take 2 'Mola'; t2-join takes 1-2 'Join us at'."
-  },
-  "teaser_mix": {
-    "bed": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/stems/instrumental.mp3",
-    "bed_start": 43.0,
-    "bed_volume": 0.16,
-    "duck_ratio": 10,
-    "duck_threshold": 0.012,
-    "bed_eq": "equalizer=f=300:t=q:w=1:g=-5,equalizer=f=3000:t=q:w=1:g=-7,",
-    "gap": 0.25,
-    "tail": [
-      1.2,
-      0.3
-    ],
-    "teaser_2_end_hold": 2.2,
-    "proof": "Lip check: 2/7 closures Wan alone, sync-3 closes every bilabial when the frames around each sound are checked (maybe 3.00-3.15 s, room 6.05-6.20 s). STT on the final mix: every word back except ElevenLabs hears 'Rezzy' for Resin and 'baby' for Maybe (teaser 2); it hears the same on the voice-only line, and Whisper hears both right, so not the mix. Loudness -15.9 / -16.4 LUFS. 17.1 s and 19.6 s."
-  },
-  "reel3": {
-    "decision": "Sean 2026-11-19: redo the Hasta trailer in the launch-reel template (same format and call to action as Reels 1-2, the Reel 2 v2 frame), new colour order starting on blue, LoLA's outfit and line new, the song as music, vertical MV highlights redrawn natively instead of horizontal clips; one reel replaces both teasers (teaser v3 files kept, retired).",
-    "script": [
-      "Psst. Hey. (Reel 1 take)",
-      "Stop scrolling for one second. (Reel 1 take)",
-      "Do you like rock? What about anime?... Hold on. (new, booth line r3-rock)",
-      "song chorus over Aoi and the band, English lyric captions",
-      "radio NOW PLAYING on Anime Radio (where Shamanic Resin plays)",
-      "Tune in. It's free. geekfon.ai (Reel 1 take); end card: Hasta La Vista Maybe by Shamanic Resin. Now on GeekFon radio. (not on DSPs yet, so not 'Out now everywhere')"
-    ],
-    "stills_jobs": {
-      "lola_hook": "2714e00c-de0e-416e-b05b-2face65cc037",
-      "lola_question": "3e5c3017-471c-45fc-b900-2a1549c98e8b",
-      "aoi": "16c71c72-f4b2-4f38-aa39-f23c0625c5f9",
-      "momo": "ac619e03-0085-4e74-809e-12cd0a123231",
-      "band": "c124fea6-85e9-4f76-955f-53b77955db7c"
-    },
-    "tee_print": "geekfon-media artists/geekfon-society/merch/prints/shamanic-resin-front-v3.png composited: 0.57 torso width, 0.14 torso widths below the collar, ink centre within 0.07% of the neckline",
-    "status": "stills and board sent to Sean; nothing animated yet",
-    "credits_so_far": 94.5
+  "teaser_look": {
+   "status": "approved",
+   "question": "Approve the two LoLA teaser storyboards (launch-reel look) and stills before any voice or clips are made?",
+   "recommendation": "Approve. Sean 2026-11-19: build it in the design of the launch-week reels (similar, not identical). Done: LIVE bar, colour fields with dots, yellow highlighter captions, art in black-bordered cards, name plates, AI line, all inside the safe area; LoLA from her locked references; cut-aways from before the reveal (studio, closed door, pitch boards, straining-door storyboard).",
+   "files": "teaser-1-board.jpg, teaser-2-board.jpg; stills Higgsfield e53a3d8a (teaser 1, lip highlight painted out) and 3ae9f3e8 (teaser 2)",
+   "answer": "Sean 2026-11-19: go ahead with the teasers (storyboards, stills and scripts approved)."
   }
+ },
+ "youtube": {
+  "title": "Shamanic Resin - Hasta La Vista Maybe (Official Music Video)",
+  "description": "Four friends who used to sing with their breath held in a tiny room kick the door open. Shamanic Resin - \"Hasta La Vista Maybe\".\n\nNew album Real Dream, out now.\nThe whole GeekFon Society catalog, and the making of this video: geekfon.ai\n\n@GeekFon",
+  "tags": [
+   "Shamanic Resin",
+   "Hasta La Vista Maybe",
+   "GeekFon Society",
+   "GeekFon",
+   "anime band",
+   "K-pop rock",
+   "AI music",
+   "Real Dream"
+  ],
+  "altered_content": "Yes. YouTube only requires it for realistic content and this is animation, but canon-lola-social-seat makes AI disclosure positioning, so we label it anyway.",
+  "visibility": "Private until the MV reveal date (after Real Dream, date not set), then Public",
+  "end_screen": {
+   "from": "1:16",
+   "to": "1:29",
+   "elements": [
+    "Subscribe",
+    "Playlist: Real Dream",
+    "Video: best for viewer"
+   ],
+   "placement": "Lower half of the end card, under the 'Out now' pill. Keep the title block and the Real Dream cover clear; check in the Studio preview."
+  }
+ },
+ "params": {
+  "spotify_canvas": {
+   "t0": "0:43.0",
+   "t1": "0:46.8",
+   "x": 0.5,
+   "loop_fade": 0.4
+  },
+  "yt_thumbnail": {
+   "decision": "thumbnail"
+  },
+  "cut_hook_916": {
+   "t0": "0:13.0",
+   "t1": "0:20.0",
+   "xs": [
+    [
+     0,
+     0.62
+    ],
+    [
+     3,
+     0.66
+    ]
+   ]
+  },
+  "cut_reveal_916": {
+   "t0": "1:04.0",
+   "t1": "1:16.0"
+  },
+  "cut_feed_45": {
+   "t0": "0:00.0",
+   "t1": "0:28.0"
+  },
+  "cut_x_169": {
+   "t0": "0:00.0",
+   "t1": "0:30.5"
+  },
+  "cut_story_916": {
+   "t0": "0:43.0",
+   "t1": "0:57.0"
+  },
+  "member_carousel_45": {
+   "members": [
+    {
+     "slug": "aoi",
+     "name": "Aoi",
+     "role": "Vocals / Guitar",
+     "t": "0:13.5",
+     "x": 0.5
+    },
+    {
+     "slug": "momo",
+     "name": "Momo",
+     "role": "Drums",
+     "t": "0:16.5",
+     "x": 0.55
+    },
+    {
+     "slug": "vera",
+     "name": "Vera",
+     "role": "Keys",
+     "t": "0:10.0",
+     "x": 0.4
+    },
+    {
+     "slug": "ren",
+     "name": "Ren",
+     "role": "Bass",
+     "t": "0:06.0",
+     "x": 0.4
+    }
+   ]
+  },
+  "teaser_1": {
+   "script": "Hi, it's LoLA. Shamanic Resin used to sing with their breath held, in a tiny room. That's about to change. The new single is called Hasta La Vista Maybe. The door is about to open. Stay close.",
+   "script_approved": true,
+   "still_job": "e53a3d8a-582d-408e-a2a5-969c43d68461",
+   "voice_set": "gfs-hasta-teasers",
+   "voice_lines": [
+    "t1-hi",
+    "t1-change",
+    "t1-single",
+    "t1-door",
+    "t1-close"
+   ],
+   "on_camera_lines": [
+    "t1-hi",
+    "t1-single"
+   ],
+   "start_frame": "teaser/frames/t1-start-3x4.jpg",
+   "wan_jobs": {
+    "t1-hi": "515bbebc-79cf-4a48-9dde-ea10a53e60c7",
+    "t1-single": "96a7c621-5704-42c0-9b10-e1cdfef2091d"
+   },
+   "sync3_jobs": {
+    "t1-hi": "7b0a36b1-b715-4ca5-94c5-1dcd7b95144c",
+    "t1-single": "2807ca39-4ba8-4f3c-bd4d-b695ce612cb3"
+   },
+   "output": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/teasers/lola-teaser-1-v3.mp4"
+  },
+  "teaser_2": {
+   "script": "LoLA again. Weeks of work went into the Hasta La Vista Maybe video, and GeekFon members get to watch it come together first: the storyboards, the early cuts, all of it. Join at geekfon.ai and see how it was made.",
+   "script_approved": true,
+   "still_job": "3ae9f3e8-bd56-4c00-96c4-292896c6b3f9",
+   "voice_set": "gfs-hasta-teasers",
+   "voice_lines": [
+    "t2-again",
+    "t2-members",
+    "t2-boards",
+    "t2-join"
+   ],
+   "on_camera_lines": [
+    "t2-again",
+    "t2-join"
+   ],
+   "start_frame": "teaser/frames/t2-start-3x4.jpg",
+   "wan_jobs": {
+    "t2-again": "262950bb-8e9f-49e4-b4bf-cad045e20d82",
+    "t2-join": "12890bee-57da-489a-b39e-9679316e1aef"
+   },
+   "sync3_jobs": {
+    "t2-again": "2b43fb5f-ae9c-4db3-aaae-9b653d71c8bc",
+    "t2-join": "8a74116e-36e8-425a-838c-e957ec70b28a"
+   },
+   "output": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/teasers/lola-teaser-2-v3.mp4"
+  },
+  "bts_versions": {
+   "t0": "1:04.0",
+   "t1": "1:12.0",
+   "versions": [
+    {
+     "file": "asta-freeze-full-v1.mp4",
+     "label": "v1"
+    },
+    {
+     "file": "hasta-la-vista-maybe-v2-full.mp4",
+     "label": "v2"
+    },
+    {
+     "file": "hasta-la-vista-maybe-v3-full.mp4",
+     "label": "v3"
+    },
+    {
+     "file": "hasta-la-vista-maybe-v4-full.mp4",
+     "label": "v4"
+    },
+    {
+     "file": "hasta-la-vista-maybe-v5-full.mp4",
+     "label": "v5"
+    },
+    {
+     "file": "hasta-la-vista-maybe-v6-full.mp4",
+     "label": "v6 (final)"
+    }
+   ]
+  },
+  "bts_stills": {
+   "files": [
+    "stills/door-locked-da4.png",
+    "stills/door-straining-db4.png",
+    "stills/ending-757-door-burst.png",
+    "stills/ending-811-silhouettes-far.png",
+    "stills/ending-812-silhouettes-near.png",
+    "stills/ending-860-band-doorway-hardcel.png",
+    "stills/mr-russell-sting-wide-850.png",
+    "stills/mr-russell-sting-close-851.png",
+    "v3-proof-sheet.jpg",
+    "v4-proof-sheet.jpg"
+   ]
+  },
+  "reel_cover": {
+   "decision": "thumbnail"
+  }
+ },
+ "voice": {
+  "set": "gfs-hasta-teasers",
+  "source": "vegan-media/media/voice-booth/gfs-hasta-teasers/<line>/<take>.mp3",
+  "keepers_and_trims_s": {
+   "t1-hi": [
+    "t1-hi_conv-20261119121752",
+    0.32,
+    6.59
+   ],
+   "t1-change": [
+    "t1-change_conv-20261119121828",
+    1.0,
+    2.3
+   ],
+   "t1-single": [
+    "t1-single_conv-20261119121847",
+    0.58,
+    4.17
+   ],
+   "t1-door": [
+    "t1-door_conv-20261119122032",
+    0.36,
+    2.73
+   ],
+   "t1-close": [
+    "t1-close_conv-20261119122126",
+    0.42,
+    1.67
+   ],
+   "t2-again": [
+    "t2-again_conv-20261119122152",
+    1.06,
+    5.87
+   ],
+   "t2-members": [
+    "t2-members_conv-20261119122344",
+    0.5,
+    4.09
+   ],
+   "t2-boards": [
+    "t2-boards_conv-20261119122427",
+    0.79,
+    4.67
+   ],
+   "t2-join": [
+    "t2-join_conv-20261119122525",
+    0.81,
+    4.83
+   ]
+  },
+  "cleaning": "Sean 2026-11-19: clean the first and last half second. Trim to the speech (hum, blips and clicks outside the cut), 20 ms fade in, 120 ms fade out, 70 Hz high-pass, loudnorm -16 LUFS. Every trimmed line checked word for word with speech-to-text.",
+  "takes_not_used": "t1-single last take said 'was called Asta'; t1-close take 2 'cros'; t2-again take 2 'Mola'; t2-join takes 1-2 'Join us at'."
+ },
+ "teaser_mix": {
+  "bed": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/stems/instrumental.mp3",
+  "bed_start": 43.0,
+  "bed_volume": 0.16,
+  "duck_ratio": 10,
+  "duck_threshold": 0.012,
+  "bed_eq": "equalizer=f=300:t=q:w=1:g=-5,equalizer=f=3000:t=q:w=1:g=-7,",
+  "gap": 0.25,
+  "tail": [
+   1.2,
+   0.3
+  ],
+  "teaser_2_end_hold": 2.2,
+  "proof": "Lip check: 2/7 closures Wan alone, sync-3 closes every bilabial when the frames around each sound are checked (maybe 3.00-3.15 s, room 6.05-6.20 s). STT on the final mix: every word back except ElevenLabs hears 'Rezzy' for Resin and 'baby' for Maybe (teaser 2); it hears the same on the voice-only line, and Whisper hears both right, so not the mix. Loudness -15.9 / -16.4 LUFS. 17.1 s and 19.6 s."
+ },
+ "reel3": {
+  "decision": "Sean 2026-11-19: redo the Hasta trailer in the launch-reel template (same format and call to action as Reels 1-2, the Reel 2 v2 frame), new colour order starting on blue, LoLA's outfit and line new, the song as music, vertical MV highlights redrawn natively instead of horizontal clips; one reel replaces both teasers (teaser v3 files kept, retired).",
+  "script": [
+   "Psst. Hey. (Reel 1 take)",
+   "Stop scrolling for one second. (Reel 1 take)",
+   "Do you like rock? What about anime?... Hold on. (new, booth line r3-rock)",
+   "song chorus over Aoi and the band, English lyric captions",
+   "radio NOW PLAYING on Anime Radio (where Shamanic Resin plays)",
+   "Tune in. It's free. geekfon.ai (Reel 1 take); end card: Hasta La Vista Maybe by Shamanic Resin. Now on GeekFon radio. (not on DSPs yet, so not 'Out now everywhere')"
+  ],
+  "stills_jobs": {
+   "lola_hook": "2714e00c-de0e-416e-b05b-2face65cc037",
+   "lola_question": "3e5c3017-471c-45fc-b900-2a1549c98e8b",
+   "aoi": "16c71c72-f4b2-4f38-aa39-f23c0625c5f9",
+   "momo": "ac619e03-0085-4e74-809e-12cd0a123231",
+   "band": "42442faf-80ce-499e-a3be-20bc41673179 (v4: Aoi standing, Vera clear; v2 32de6745 legs, v3 15bfe32e headstock over Vera)"
+  },
+  "tee_print": "geekfon-media artists/geekfon-society/merch/prints/shamanic-resin-front-v3.png composited: 0.57 torso width, 0.14 torso widths below the collar, ink centre within 0.07% of the neckline",
+  "status": "v1 rendered and stored, sent to Sean for G3",
+  "credits_so_far": 169.0,
+  "assembly": {
+   "design": "releases/shamanic-resin-hasta-la-vista-maybe.reel3.py",
+   "setup": [
+    "art/",
+    "brand/logo.png",
+    "src/cover.png"
+   ],
+   "music": "src/mv.wav (the song; mv_audio_offset 0)",
+   "instrumental": "stems/instrumental.mp3 (aligned to the song within 25 ms)",
+   "sync": {
+    "beat": 3,
+    "song": 11.26
+   },
+   "music_curve": [
+    [
+     0,
+     0.2
+    ],
+    [
+     6.9,
+     0.2
+    ],
+    [
+     7.11,
+     0.75
+    ],
+    [
+     25.0,
+     0.75
+    ],
+    [
+     25.4,
+     0.3
+    ]
+   ],
+   "instrumental_from": 24.9,
+   "duck_ratio": 8,
+   "duck_threshold": 0.012,
+   "fade_out": 1.6,
+   "beats": [
+    {
+     "render": "psst",
+     "dur": 0.8,
+     "audio": "voice/psst.wav",
+     "video": "clips/hook.mp4",
+     "video_start": 0.0
+    },
+    {
+     "render": "stop",
+     "dur": 1.94,
+     "video": "clips/hook.mp4",
+     "video_start": 0.8
+    },
+    {
+     "render": "question",
+     "audio": "voice/r3-rock.wav",
+     "pad": 0.25,
+     "video": "clips/q.mp4"
+    },
+    {
+     "render": "aoi",
+     "dur": 5.48,
+     "video": "clips/aoi.mp4",
+     "video_start": 0.06
+    },
+    {
+     "render": "band",
+     "dur": 1.64,
+     "video": "clips/band.mp4",
+     "video_start": 0.04
+    },
+    {
+     "render": "band-door",
+     "dur": 3.52,
+     "video": "clips/band.mp4",
+     "video_start": 1.68
+    },
+    {
+     "render": "cover",
+     "dur": 3.76
+    },
+    {
+     "render": "radio",
+     "dur": 3.36,
+     "video": "clips/momo.mp4",
+     "video_start": 0.3
+    },
+    {
+     "render": "close",
+     "audio": "voice/tune.wav",
+     "pad": 1.2
+    }
+   ]
+  },
+  "clips": {
+   "lola_hook": "wan 035fdb31-821a-47a8-bcdc-83f02f5a02c5 + sync-3 0989543d-999a-4e55-8559-b112c413c814",
+   "lola_question": "wan 4a3e5955-95fc-4a7f-80ad-a820737ddc95 + sync-3 0cf81b3a-a869-45fc-8e36-4c2782213600",
+   "aoi": "wan fb76c17e-f591-425a-b485-d71dae7191f3 (vocal 11.20-17.20)",
+   "band": "wan 720cb124-97d4-43b5-b5a4-2fcf59fd666f (vocal 16.70-22.70)",
+   "momo": "wan fd032ee3-36b9-413e-92c4-6165d3386e9e"
+  },
+  "output": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/reel3/reel-03-hasta-la-vista-maybe-v1.mp4 (29.87 s, -16.9 LUFS)",
+  "proof": "Lip: b in 'about' and m in 'anime' close. STT (Whisper): 'Hey stop scrolling for one second. Do you like rock? What about anime? Hold on' / the chorus lyrics on Aoi and the band / 'Tune in, it's free. geekfon.ai'. Captions match the sung lines: Aoi 7.11-12.59 chorus, band 12.59-14.23 (떨려도 가는 거야), band 14.23-17.75 (문을 박차고), radio 21.51-24.87 (문을 박차고).",
+  "credits_note": "since Sean OK 2026-11-19 (~67): band v3 4 + band v4 edit 4 + Wan 62.5 (one 15-credit Wan failed on file size, refunded) = 70.5"
+ }
 }
