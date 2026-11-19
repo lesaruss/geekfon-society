@@ -68,7 +68,7 @@ def blocked(slot, rel):
             return 'no script yet'
         if not slot['params'].get('script_approved'):
             return 'G1: script not approved by Sean'
-        return 'credits: run the Support-tour pipeline (README step 5)'
+        return 'waiting on the voice: Sean records the HQ Voices set, then README step 10'
     if slot['method'] in ('cut', 'ladder') and (slot['params'].get('t0') is None or slot['params'].get('t1') is None):
         return 'no t0/t1 in the release file'
     if slot['method'] == 'frame' and slot['params'].get('t') is None:
