@@ -87,7 +87,7 @@ def radio(art, lyric):
     bg = ImageEnhance.Brightness(bg).enhance(0.45)
     tint = grad(W, H, (120, 70, 20), (30, 60, 110), horizontal=False); im = Image.blend(bg, tint, 0.45); top_bar(im)
     d = ImageDraw.Draw(im)
-    cards = [('GeekFon', HILITE, INK, 'one-mic'), ('Anime', ANIME, WHITE, 'aoi'), ('Hip Hop', REEL['orange'], INK, 'hiphop')]
+    cards = [('GeekFon', HILITE, INK, 'cover-thumb'), ('Anime', ANIME, WHITE, 'aoi'), ('Hip Hop', REEL['orange'], INK, 'hiphop')]
     for i, (name, col, ink, thumb) in enumerate(cards):
         x = 40 + i * 340; d.rounded_rectangle((x, 192, x + 316, 440), radius=22, fill=col)
         d.text((x + 38, 222), name, font=BRIC(56), fill=ink)
@@ -154,14 +154,16 @@ BEATS = {
     'vera': lambda art: beat('red', 'Hey! Hasta la vista,', art, 104, plate=('VERA', 'Keys · Shamanic Resin'), fy=0.2),
     'ren': lambda art: beat('blue', 'goodbye for now', art, 104, plate=('REN', 'Bass · Shamanic Resin'), fy=0.2),
     'momo': lambda art: beat('green', "Even if we're shaking, we're going", art, 96, plate=('MOMO', 'Drums · Shamanic Resin'), fy=0.25),
-    # all four on one mic for "we're here!" (Sean 2026-11-19: replaces the head-on band shot)
+    # all four on one mic (v2, Sean 2026-11-19: "looks stupid"), replaced in v3 by the MV's glowing door
     'one-mic': lambda art: beat('magenta', "Kick the door open and go, we're here!", art, 96, plate=PLATE, fy=0.3),
+    # the MV's closed door, light leaking, then the burst, cropped 9:16 (Sean 2026-11-19: "create some intrigue")
+    'door': lambda art: beat('magenta', "Kick the door open and go, we're here!", art, 96, fy=0.5),
     'cover': lambda art: cover_beat('orange', 'New single', COVER_IM),
     'radio': lambda art: radio(art, "Kick the door open and go, we're here!"),
     'close': lambda art: close(COVER_IM),
 }
 STILL = {'psst': 'lola-hook.png', 'stop': 'lola-hook.png', 'question': 'lola-q.png', 'aoi': 'aoi.png', 'vera': 'vera.png',
-         'ren': 'ren.png', 'momo': 'momo.png', 'one-mic': 'one-mic.png', 'radio': 'ren.png'}
+         'ren': 'ren.png', 'momo': 'momo.png', 'one-mic': 'one-mic.png', 'door': 'door.png', 'radio': 'ren.png'}
 post = framed
 
 if __name__ == '__main__':
@@ -175,7 +177,7 @@ if __name__ == '__main__':
         ('vera', '10-11 s  Vera solo'),
         ('ren', '11-13 s  Ren solo'),
         ('momo', '13-14 s  Momo solo: "Even if we\'re shaking, we\'re going"'),
-        ('one-mic', '14-18 s  all four on one mic: "Kick the door open and go, we\'re here!"'),
+        ('door', '14-18 s  the glowing door from the MV: "Kick the door open and go, we\'re here!"'),
         ('cover', '17-21 s  the full single cover'),
         ('radio', '21-25 s  radio, NOW PLAYING, Ren in the station art'),
         ('close', '25-30 s  the close. LoLA: "Tune in. It\'s free. geekfon.ai" (your Reel 1 take)'),
