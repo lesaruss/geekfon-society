@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Designed art for Shamanic Resin - Hasta La Vista Maybe: three YouTube thumbnail
-options (A end-card family, B silhouettes, C big face) and the Reel cover, built
-with design_kit.py. Sean picks one option per slot; the pick is copied into
---src design/ for build_pack.py.
+"""Designed art for Shamanic Resin - Hasta La Vista Maybe, in the REEL LOOK of the
+GeekFon launch-week reels (design_kit.py): the two LoLA teaser storyboards (one
+frame per beat), the Reel cover, and three YouTube thumbnail options. Everything
+that matters sits inside the safe area. Nothing meant to post before MV day shows
+the doorway reveal: those pieces use studio shots.
 
 usage: python3 releases/shamanic-resin-hasta-la-vista-maybe.design.py SRC OUT LOGO
-       SRC holds stills/ (MV storyboard stills) and mv.mp4; OUT gets the options.
+  SRC: mv.mp4, asta-freeze-full-v1.mp4, stills/ (MV storyboard stills),
+       teaser/t1.png and teaser/t2.png (the approved LoLA stills, 9:16)
+  OUT: frames, boards and options (a proof copy of each with the safe area in red)
 """
 import os, subprocess, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -13,59 +16,150 @@ from design_kit import *
 
 SRC, OUT, LOGO = sys.argv[1], sys.argv[2], sys.argv[3]
 os.makedirs(OUT, exist_ok=True); set_logo(LOGO)
-S = os.path.join(SRC, 'stills') + '/'; O = OUT + '/'
-subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', '14.0', '-i', os.path.join(SRC, 'mv.mp4'), '-frames:v', '1', O + 'aoi.png'], check=True)
-W,H=1280,720
-# A: end-card family
-band=Image.open(S+'ending-860-band-doorway-hardcel.png').convert('RGB')
-a=grad(W,H,PURP,DEEP)
-AH=560; k=AH/band.height; bw=round(band.width*k); bb=band.resize((bw,AH),Image.LANCZOS)
-art=bb.crop((round(bw*0.10),0,round(bw*0.10)+880,AH))
-mk=np.minimum(np.array(fade_mask(880,AH,740,880)).astype(float), (np.tile(np.clip(np.arange(AH)/90,0,1)[:,None],(1,880))*255))
-a.paste(art,(0,H-AH),Image.fromarray(mk.astype('uint8')))
-d=ImageDraw.Draw(a)
-lockup(a,790,56,58)
-text(d,(786,160),'SHAMANIC',F8(78)); text(d,(786,244),'RESIN',F8(78))
-rainbow(d,790,345,seg=40)
-text(d,(788,372),'Hasta La',F8(62),fill=ORANGE); text(d,(788,440),'Vista Maybe',F8(62),fill=ORANGE)
-d.text((792,548),'THE DOOR IS OPEN',font=F6(24),fill=(225,215,240))
-a.save(O+'yt-A-endcard.jpg',quality=92)
+P = lambda *a: os.path.join(SRC, *a)
 
-# B: silhouettes in the light, full bleed
-sil=Image.open(S+'ending-812-silhouettes-near.png').convert('RGB')
-b=cover(sil,W,H,0.55,0.35)
-ov=Image.new('RGBA',(W,H)); od=ImageDraw.Draw(ov)
-for y in range(H):
-    t=max(0,(y-300)/420); top=max(0,(150-y)/150)
-    od.line((0,y,W,y),fill=(20,0,40,int(max(235*min(1,t)**1.3, 200*top))))
-b=Image.alpha_composite(b.convert('RGBA'),ov).convert('RGB'); d=ImageDraw.Draw(b)
-lockup(b,48,40,56)
-text(d,(48,470),'SHAMANIC RESIN',F8(92))
-rainbow(d,52,575)
-text(d,(48,600),'Hasta La Vista Maybe',F8(64),fill=ORANGE)
-b.save(O+'yt-B-silhouettes.jpg',quality=92)
 
-# C: big face, high contrast
-aoi=Image.open(O+'aoi.png').convert('RGB')
-c=grad(W,H,DEEP,PURP); face=cover(aoi,700,H,0.62,0.4)
-fm=Image.fromarray((np.tile(np.clip(np.arange(700)/160,0,1),(H,1))*255).astype('uint8')); c.paste(face,(W-700,0),fm)
-d=ImageDraw.Draw(c)
-lockup(c,48,40,56)
-text(d,(46,170),'HASTA',F8(150),fill=ORANGE); text(d,(46,320),'LA VISTA',F8(108)); text(d,(46,440),'MAYBE',F8(108))
-rainbow(d,50,575)
-text(d,(48,600),'SHAMANIC RESIN',F6(40))
-c.save(O+'yt-C-face.jpg',quality=92)
+def mv(t, path=None, src='mv.mp4'):
+    out = os.path.join(OUT, f'_{os.path.basename(src)}-{t}.png')
+    if not os.path.exists(out):
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', str(t), '-i', P(src), '-frames:v', '1', out], check=True)
+    return Image.open(out).convert('RGB')
 
-# Reel cover 1080x1920 from A's system, key content inside the 3:4 grid crop (y 240-1680) and the side margins
-rc=grad(1080,1920,PURP,DEEP,horizontal=False)
-k=1340/band.width; bb=band.resize((1340,round(band.height*k)),Image.LANCZOS)
-art=bb.crop((round(1340*0.06),0,round(1340*0.06)+1080,bb.height))
-m=Image.fromarray((np.tile(np.clip((art.height-np.arange(art.height))/200,0,1)[:,None],(1,1080))*255).astype('uint8'))
-rc.paste(art,(0,330),m)
-d=ImageDraw.Draw(rc)
-lockup(rc,300,1310,72)
-text(d,(540,1440),'SHAMANIC RESIN',F8(96),anchor='ma')
-rainbow(d,540-128,1555)
-text(d,(540,1585),'Hasta La Vista Maybe',F8(66),fill=ORANGE,anchor='ma')
-rc.save(O+'reel-cover-A.jpg',quality=92)
 
+SW, SH = 1080, 1920
+SAFE = (90, 250, 930, 1480)        # matches slots.json teaser / cut_hook_916 safe area
+TITLE = 'Hasta La Vista Maybe'
+
+
+def reel_frame(color, headline, art, kind='portrait', fx=0.5, fy=0.35, plate=None):
+    im = halftone(SW, SH, REEL[color]); l, t, r, b = SAFE
+    live_bar(im, (l, t + 10, r, t + 100))
+    y = highlight(im, headline, (l, t + 132, r, b), 80) + 34
+    foot = b - 52
+    ai_line(im, (l + r) // 2, foot)
+    room_b = foot - 30
+    if kind == 'portrait':
+        h = room_b - y; w = min(r - l - 40, int(h * 0.74)); x0 = (SW - w) // 2
+        card(im, art, (x0, y, x0 + w, room_b - 16), fx=fx, fy=fy)
+    else:  # wide MV frame
+        w = r - l - 20; h = int(w * 9 / 16); y0 = y + max(0, (room_b - y - h) // 2 - 20); x0 = l + 4
+        card(im, art, (x0, y0, x0 + w, y0 + h))
+        room_b = y0 + h
+    if plate:
+        name_plate(im, plate[0], plate[1], l + 16, room_b - 150, size=54)
+    return im
+
+
+def end_card(color, lines, art, plate, url=None):
+    im = halftone(SW, SH, REEL[color]); l, t, r, b = SAFE
+    live_bar(im, (l, t + 10, r, t + 100))
+    y = t + 140
+    for s, size in lines:
+        y = highlight(im, s, (l, y, r, b), size) + 14
+    w = r - l - 20; h = int(w * 9 / 16); y0 = y + 26
+    card(im, art, (l + 4, y0, l + 4 + w, y0 + h))
+    name_plate(im, plate[0], plate[1], l + 16, y0 + h - 110, size=50)
+    d = ImageDraw.Draw(im)
+    if url:
+        f = BRIC(62); tw = d.textlength(url, font=f); yy = y0 + h + 44
+        d.rounded_rectangle(((SW - tw) / 2 - 26, yy, (SW + tw) / 2 + 26, yy + 86), radius=18, fill=INK)
+        d.text(((SW - tw) / 2, yy + 6), url, font=f, fill=HILITE)
+    ai_line(im, (l + r) // 2, b - 52)
+    return im
+
+
+def with_safe(im, box):
+    im = im.copy(); ImageDraw.Draw(im).rectangle(box, outline=(255, 0, 0), width=4); return im
+
+
+def board(name, frames):
+    tw, th, pad = 324, 576, 16
+    sheet = Image.new('RGB', (len(frames) * (tw + pad) + pad, th + 150), (24, 24, 28)); d = ImageDraw.Draw(sheet)
+    d.text((pad, 10), f'{name.upper()}   red box = safe area: every word and face stays inside it', font=FIG(22), fill=WHITE)
+    for i, (label, im) in enumerate(frames):
+        x = pad + i * (tw + pad); sheet.paste(with_safe(im, SAFE).resize((tw, th)), (x, 46)); yy = 46 + th + 10
+        for ln in wrap(d, label, FIG(17), tw):
+            d.text((x, yy), ln, font=FIG(17), fill=(220, 220, 230)); yy += 22
+        im.save(os.path.join(OUT, f'{name}-{i + 1}.png'))
+    sheet.save(os.path.join(OUT, f'{name}-board.jpg'), quality=90)
+
+
+lola1 = Image.open(P('teaser', 't1.png')).convert('RGB')
+lola2 = Image.open(P('teaser', 't2.png')).convert('RGB')
+studio = mv(0.5); door = mv(29); straining = Image.open(P('stills', 'door-straining-db4.png')).convert('RGB')
+aoi = mv(14.0); momo = mv(16.5); vera = mv(10.0); ren = mv(6.0)
+# the four directors' pitch boards (MV pitch 2026-11), 2x2: the weeks of work, no reveal
+compare = Image.new('RGB', (1920, 1080), INK)
+for k, n in enumerate(('1-freeze', '2-paint-bomb', '3-lights-out', '4-blank-page')):
+    pb = Image.open(P('pitch', n + '.jpg')).convert('RGB').resize((950, 535))
+    compare.paste(pb, ((k % 2) * 970, (k // 2) * 545))
+
+board('teaser-1', [
+    ('0-4 s  LoLA to camera: "Hi, it\'s LoLA. Shamanic Resin used to sing with their breath held, in a tiny room."',
+     reel_frame('magenta', "Hi, it's LoLA.", lola1, fy=0.22)),
+    ('4-7 s  cut-away, frozen on the beat: the band in the tiny studio (MV 0:00). "That\'s about to change."',
+     reel_frame('orange', 'They used to sing with their breath held.', studio, kind='wide', plate=('SHAMANIC RESIN', 'Rock · GeekFon Society'))),
+    ('7-11 s  LoLA: "The new single is called Hasta La Vista Maybe."',
+     reel_frame('magenta', f'New single: {TITLE}', lola1, fy=0.22)),
+    ('11-13 s  cut-away: the closed door, light at the edges (MV 0:29). "The door is about to open."',
+     reel_frame('blue', 'The door is about to open.', door, kind='wide')),
+    ('13-15 s  end card. LoLA: "Stay close."',
+     end_card('pink', [(TITLE, 84), ('Stay close.', 64)], studio, ('SHAMANIC RESIN', 'New single · GeekFon Society'))),
+])
+board('teaser-2', [
+    ('0-4 s  LoLA to camera: "LoLA again. Weeks of work went into the Hasta La Vista Maybe video,"',
+     reel_frame('green', 'LoLA again.', lola2, fy=0.22)),
+    ('4-8 s  cut-away: the pitch boards from the four directors who pitched this video. "and GeekFon members get to watch it come together first:"',
+     reel_frame('magenta', 'Weeks of work went into this video.', compare, kind='wide')),
+    ('8-11 s  cut-away: a storyboard frame, the door straining (no reveal). "the storyboards, the early cuts, all of it."',
+     reel_frame('orange', 'Storyboards. Early cuts. All of it.', straining, kind='wide')),
+    ('11-13 s  LoLA: "Join at geekfon.ai and see how it was made."',
+     reel_frame('green', 'Members see how it was made first.', lola2, fy=0.22)),
+    ('13-15 s  end card',
+     end_card('blue', [('The making of.', 84), ('Members first.', 84)], straining, ('SHAMANIC RESIN', TITLE), url='geekfon.ai')),
+])
+
+# Reel cover for the 9:16 cuts: studio shot (no reveal), title and faces inside the 3:4 grid crop
+cover_im = halftone(SW, SH, REEL['magenta'])
+COVER_SAFE = (90, 250, 990, 1670)
+live_bar(cover_im, (90, 262, 990, 362))
+yb = highlight(cover_im, TITLE, (90, 430, 990, 1670), 118) + 70
+w = 900; h = int(w * 9 / 16); yb = max(yb, (430 + 1560 - h) // 2 + 120)
+card(cover_im, studio, (90, yb, 90 + w, yb + h))
+name_plate(cover_im, 'SHAMANIC RESIN', 'Rock · GeekFon Society', 106, yb + h - 130, size=60)
+ai_line(cover_im, 540, 1590)
+cover_im.save(os.path.join(OUT, 'reel-cover.jpg'), quality=92)
+with_safe(cover_im, COVER_SAFE).resize((405, 720)).save(os.path.join(OUT, 'reel-cover-proof.jpg'), quality=90)
+
+# YouTube thumbnails 1280x720, safe 40 px sides and top, 90 px bottom (timestamp badge)
+TW, TH = 1280, 720; TS = (40, 40, 1240, 630)
+
+
+def thumb(color):
+    return halftone(TW, TH, REEL[color])
+
+
+A = thumb('magenta'); card(A, Image.open(P('stills', 'ending-860-band-doorway-hardcel.png')).convert('RGB'), (52, 60, 712, 431 + 100), fx=0.45)
+name_plate(A, 'SHAMANIC RESIN', 'Official Music Video', 64, 470, size=46)
+highlight(A, 'Hasta La', (740, 120, 1240, 630), 104); highlight(A, 'Vista', (740, 248, 1240, 630), 104); highlight(A, 'Maybe', (740, 376, 1240, 630), 104)
+live_bar(A, (760, 520, 1220, 600), live=False)
+
+B = thumb('orange'); card(B, aoi, (640, 52, 1228, 610), fx=0.62, fy=0.35)
+for k, (s, y) in enumerate((('HASTA LA', 90), ('VISTA', 218), ('MAYBE', 346))):
+    highlight(B, s, (40, y, 640, 630), 110)
+name_plate(B, 'SHAMANIC RESIN', 'Official Music Video', 52, 488, size=44)
+
+C = thumb('blue')
+for k, (fr, x, fx) in enumerate(((aoi, 52, 0.62), (momo, 342, 0.62), (vera, 632, 0.42), (ren, 922, 0.42))):
+    card(C, fr, (x, 62, x + 270, 62 + 340), fx=fx, fy=0.3, border=8, shadow=10)
+highlight(C, TITLE, (40, 436, 1240, 630), 82)
+name_plate(C, 'SHAMANIC RESIN', 'Official Music Video', 52, 540, size=36)
+
+sheet = Image.new('RGB', (3 * 650 + 30, 520), (30, 30, 30)); sd = ImageDraw.Draw(sheet)
+for i, (k, o) in enumerate((('A', A), ('B', B), ('C', C))):
+    o.save(os.path.join(OUT, f'yt-{k}.jpg'), quality=92)
+    pr = o.copy(); ImageDraw.Draw(pr).rectangle(TS, outline=(255, 0, 0), width=3)
+    sheet.paste(pr.resize((640, 360)), (10 + i * 655, 10)); sheet.paste(o.resize((168, 94)), (10 + i * 655, 390))
+    sd.text((190 + i * 655, 420), f'{k}  (actual size in the YouTube list)', font=FIG(18), fill=WHITE)
+sheet.save(os.path.join(OUT, 'thumb-options.jpg'), quality=92)
+print('done', OUT)

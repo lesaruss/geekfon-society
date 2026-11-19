@@ -16,7 +16,9 @@
     "cover.png": "geekfon-media/artists/shamanic-resin/covers/asta-la-vista-maybe-v2.png (2048 px, fishnet-free; never v1)",
     "master.wav": "geekfon-masters/shamanic-resin/masters/shamanic-resin-asta-la-vista-maybe-1794963396825.wav (private bucket)",
     "versions": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/: asta-freeze-full-v1.mp4, hasta-la-vista-maybe-v2..v6-full.mp4",
-    "stills": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/stills/ (11) + v3-proof-sheet.jpg, v4-proof-sheet.jpg"
+    "stills": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/stills/ (11) + v3-proof-sheet.jpg, v4-proof-sheet.jpg",
+    "pitch": "geekfon-media/artists/shamanic-resin/video/pitch-2026-11/asta-video-pitch-{1-freeze,2-paint-bomb,3-lights-out,4-blank-page}.jpg",
+    "teaser": "teaser/t1.png, teaser/t2.png: the approved LoLA stills"
   },
   "mv_audio_offset": 0.0,
   "decisions": {
@@ -33,15 +35,15 @@
     },
     "thumbnail": {
       "status": "open",
-      "question": "Which YouTube thumbnail: A (end-card family, all four members), B (silhouettes in the door light) or C (Aoi close-up, big title)?",
-      "recommendation": "A. It matches the end card you approved, shows the whole band, and reads at list size. B shows the reveal moment, so only after MV day. C is the strongest click but shows one member.",
-      "files": "design.py output: yt-A-endcard.jpg, yt-B-silhouettes.jpg, yt-C-face.jpg; Reel cover reel-cover-A.jpg"
+      "question": "Which YouTube thumbnail, all in the launch-reel look: A (band in the doorway + stacked title), B (Aoi close-up + big title) or C (all four members in cards + title)?",
+      "recommendation": "C for the MV: every member, readable at list size, and no reveal, so it also works before MV day. A shows the doorway reveal (MV day only). B is the strongest single face.",
+      "files": "design.py output: yt-A.jpg, yt-B.jpg, yt-C.jpg; Reel cover reel-cover.jpg"
     },
     "teaser_look": {
       "status": "open",
-      "question": "Approve the LoLA teaser look (the two stills and the storyboards) and the designer before any audio or clips are made?",
-      "recommendation": "Approve. LoLA is drawn from her locked Support-tour references (the Roxanne video look), the cards and type are in the end-card design language (the 'your-week' design from the design team, approved on the MV end card), and the cut-aways are frozen MV frames, so the teasers match the MV. Default if Sean names a different designer: rebuild the cards in theirs, LoLA stills unchanged.",
-      "files": "teaser-1-board.jpg, teaser-2-board.jpg; stills Higgsfield jobs e53a3d8a (teaser 1, lip highlight painted out by hand) and 3ae9f3e8 (teaser 2)"
+      "question": "Approve the two LoLA teaser storyboards (launch-reel look) and stills before any voice or clips are made?",
+      "recommendation": "Approve. Sean 2026-11-19: build it in the design of the launch-week reels (similar, not identical). Done: LIVE bar, colour fields with dots, yellow highlighter captions, art in black-bordered cards, name plates, AI line, all inside the safe area; LoLA from her locked references; cut-aways from before the reveal (studio, closed door, pitch boards, straining-door storyboard).",
+      "files": "teaser-1-board.jpg, teaser-2-board.jpg; stills Higgsfield e53a3d8a (teaser 1, lip highlight painted out) and 3ae9f3e8 (teaser 2)"
     }
   },
   "youtube": {

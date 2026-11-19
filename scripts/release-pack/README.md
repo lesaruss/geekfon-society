@@ -89,12 +89,20 @@ beside it, and gates.
    - It makes every free slot that is not blocked and says why it skipped the rest.
    - `--only id,id` rebuilds just those slots.
 8. **Designed art.** Copy `releases/shamanic-resin-hasta-la-vista-maybe.design.py` for
-   the release. It uses `design_kit.py`: the end-card design language, the GeekFon lockup,
-   Montserrat, the rainbow bar and the orange title.
-   - Make three thumbnail options: one in the end-card family, one led by the art, one
-     led by a face. Check each at full size and at YouTube's 168x94 list size.
-   - Make a Reel cover in the same family, with the title and faces inside the 3:4 grid crop.
-   - Sean picks one. Copy the pick into `src/design/` (`yt-thumbnail.jpg`, `reel-cover.jpg`).
+   the release. Social pieces (thumbnails, Reel covers, teaser frames) use `design_kit.py`'s
+   **reel look**, the look of the GeekFon launch-week reels. Sean 2026-11-19: similar, not
+   identical. The look:
+   - a LIVE bar with the GeekFon Society lockup
+   - a solid colour field with a halftone dot texture, a different colour for each beat
+   - yellow highlighter captions in Bricolage Grotesque
+   - the art in a white card with a thick black border
+   - a black name plate with a yellow tag, and the "AI artists" line
+
+   Unlike the launch reels, every one of these sits inside the safe area.
+   - Make three thumbnail options and check each at full size and at YouTube's 168x94 list size.
+   - Make a Reel cover with the title and faces inside the 3:4 grid crop.
+   - Anything that posts before MV day uses shots from before the reveal.
+   - Sean picks. Copy the picks into `src/design/` (`yt-thumbnail.jpg`, `reel-cover.jpg`).
    - Never ship a raw frame as a thumbnail, and never let a platform choose a Reel cover
      (Sean 2026-11-19).
 9. **Teaser look (before credits).** Render one LoLA still per teaser with nano_banana_pro 4k
