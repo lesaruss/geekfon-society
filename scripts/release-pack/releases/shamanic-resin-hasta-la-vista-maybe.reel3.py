@@ -59,9 +59,16 @@ def _ground(color):
     return _cache[('g', color)].copy()
 
 
-def beat(color, headline, art, size=104, plate=None, fy=0.3):
+def beat(color, headline, art, size=104, plate=None, fy=0.3, lines=None):
+    """lines=N fixes the caption area at N lines (shorter captions centred in it), so the card never moves
+    between beats that share one continuous clip (Sean 2026-11-19: LoLA's intro must read as one take)."""
     im = _ground(color)
-    y = highlight(im, headline, (60, 200, W - 60, H), size) + 70
+    if lines:
+        d = ImageDraw.Draw(im); n = len(wrap(d, headline, BRIC(size), W - 120 - 2 * int(size * 0.22)))
+        highlight(im, headline, (60, 200 + (lines - n) * size * 1.18 / 2, W - 60, H), size)
+        y = int(200 + lines * size * 1.18) + 70
+    else:
+        y = highlight(im, headline, (60, 200, W - 60, H), size) + 70
     cw = 700; ch = H - 260 - y
     card(im, art, ((W - cw) // 2, y, (W + cw) // 2, y + ch), fy=fy, border=12, shadow=18)
     if plate:
@@ -146,9 +153,10 @@ def framed(im, s=0.82, top=190):
 
 # one renderer per beat: art in, full 1080x1920 frame out (the assembler passes each video frame as art)
 BEATS = {
-    'psst': lambda art: beat('blue', 'PSST. HEY.', art, 118, fy=0.25),
-    'stop': lambda art: beat('blue', 'STOP SCROLLING FOR ONE SECOND', art, 104, fy=0.25),
-    'question': lambda art: beat('pink', 'Do you like rock? What about anime?', art, 104, fy=0.2),
+    # LoLA's intro is one continuous take in one fixed card: same colour, same box, only the caption changes
+    'psst': lambda art: beat('blue', 'PSST. HEY.', art, 104, fy=0.25, lines=2),
+    'stop': lambda art: beat('blue', 'STOP SCROLLING FOR ONE SECOND', art, 104, fy=0.25, lines=2),
+    'question': lambda art: beat('blue', 'Do you like rock? What about anime?', art, 104, fy=0.25, lines=2),
     # the chorus: one solo per member (Sean 2026-11-19: Aoi half as long, then every member once)
     'aoi': lambda art: beat('magenta', 'Hasta la vista, goodbye for now', art, 96, plate=('AOI', 'Vocals / Guitar · Shamanic Resin'), fy=0.2),
     'vera': lambda art: beat('red', 'Hey! Hasta la vista,', art, 104, plate=('VERA', 'Keys · Shamanic Resin'), fy=0.2),

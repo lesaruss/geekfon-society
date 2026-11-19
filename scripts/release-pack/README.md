@@ -158,6 +158,9 @@ beside it, and gates.
      (`music_curve`), comes up for the chorus, and hands over to the instrumental stem for the
      close so the vocal never fights her last line. Split beats on the vocal timings (Whisper on
      the vocal stem) so each caption is the line being sung. Pilot plan: release file `reel3.assembly`.
+   - LoLA's intro is ONE take: chain her clips (clip 2 starts on clip 1's last frame) and keep the
+     frames sync-3 trims (`cut_off` stops at the end of the line), then join them into one file; all her
+     beats share one colour and one card (`beat(lines=2)`), so only the caption changes (Sean 2026-11-19).
    - PROOF: lip closures on every b/m/p, STT on the final mix (English lines + the sung
      lyrics), each caption against the sung line, the frames against the approved stills.
 11. **Check (PROOF).** Run `python3 build_pack.py check releases/<release>.json --out pack`.
