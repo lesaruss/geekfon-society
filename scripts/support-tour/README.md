@@ -53,6 +53,7 @@ for f in split_voice.py stitch.py captions.py lipcheck.py music_bed.sh; do curl 
 5. **Stitch.** Run `python3 stitch.py parts/cuts.json voice.mp3 stitched.mp4 c1.mp4 c2.mp4 ...`.
    - The master voice runs unbroken under the joined clips.
    - It warns about short clips, and fails if the length is off the voice.
+   - The frame is 960x1286 (3:4). Pass `--size 1080x1920` for a 9:16 release-pack teaser.
 6. **Lip sync.** Store `stitched.mp4` and `voice.mp3` (`gfs_art_imports`), then call the SQL helpers. The key never leaves the database.
    ```sql
    select gfs_lipsync_submit('<video url>', '<voice url>');   -- returns a request id

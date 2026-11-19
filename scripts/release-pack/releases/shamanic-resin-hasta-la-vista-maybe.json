@@ -1,0 +1,194 @@
+{
+  "release": "shamanic-resin-hasta-la-vista-maybe",
+  "artist_slug": "shamanic-resin",
+  "artist_name": "Shamanic Resin",
+  "title": "Hasta La Vista Maybe",
+  "song_slug": "shamanic-resin-asta-la-vista-maybe",
+  "brief_id": "28924562-1b64-4744-b5d8-a49fd141dd89",
+  "type": "single",
+  "canon": [
+    "decision-asta-mv-release-after-real-dream"
+  ],
+  "sources": {
+    "song.json": "pulse_songs row, slug shamanic-resin-asta-la-vista-maybe",
+    "brief.json": "song_release_briefs row 28924562-1b64-4744-b5d8-a49fd141dd89",
+    "mv.mp4": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/hasta-la-vista-maybe-v6-full.mp4",
+    "cover.png": "geekfon-media/artists/shamanic-resin/covers/asta-la-vista-maybe-v2.png (2048 px, fishnet-free; never v1)",
+    "master.wav": "geekfon-masters/shamanic-resin/masters/shamanic-resin-asta-la-vista-maybe-1794963396825.wav (private bucket)",
+    "versions": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/: asta-freeze-full-v1.mp4, hasta-la-vista-maybe-v2..v6-full.mp4",
+    "stills": "geekfon-media/artists/shamanic-resin/mv/asta-freeze/stills/ (11) + v3-proof-sheet.jpg, v4-proof-sheet.jpg"
+  },
+  "mv_audio_offset": 0.0,
+  "decisions": {
+    "title": {
+      "status": "open",
+      "question": "Rename 'Asta' to 'Hasta' in the catalog (pulse_songs, the remix row, radio_tracks) before distribution?",
+      "recommendation": "Yes. The MV title card, the end card and the new brief already say Hasta; the catalog is the odd one out. Slugs stay as they are so no links break."
+    },
+    "cover_upscale": {
+      "status": "open",
+      "method": "ai",
+      "question": "Upscale the v2 cover from 2048 to 3000 px for DistroKid?",
+      "recommendation": "Yes, with the Higgsfield 4K upscale, then Lanczos down to exactly 3000. Flat cost, quoted at upload. Plain Lanczos is free but softens the line art."
+    }
+  },
+  "youtube": {
+    "title": "Shamanic Resin - Hasta La Vista Maybe (Official Music Video)",
+    "description": "Four friends who used to sing with their breath held in a tiny room kick the door open. Shamanic Resin - \"Hasta La Vista Maybe\".\n\nNew album Real Dream, out now.\nThe whole GeekFon Society catalog, and the making of this video: geekfon.ai\n\n@GeekFon",
+    "tags": [
+      "Shamanic Resin",
+      "Hasta La Vista Maybe",
+      "GeekFon Society",
+      "GeekFon",
+      "anime band",
+      "K-pop rock",
+      "AI music",
+      "Real Dream"
+    ],
+    "altered_content": "Yes. YouTube only requires it for realistic content and this is animation, but canon-lola-social-seat makes AI disclosure positioning, so we label it anyway.",
+    "visibility": "Private until the MV reveal date (after Real Dream, date not set), then Public",
+    "end_screen": {
+      "from": "1:16",
+      "to": "1:29",
+      "elements": [
+        "Subscribe",
+        "Playlist: Real Dream",
+        "Video: best for viewer"
+      ],
+      "placement": "Lower half of the end card, under the 'Out now' pill. Keep the title block and the Real Dream cover clear; check in the Studio preview."
+    }
+  },
+  "params": {
+    "spotify_canvas": {
+      "t0": "0:43.0",
+      "t1": "0:46.8",
+      "x": 0.5,
+      "loop_fade": 0.4
+    },
+    "yt_thumbnail": {
+      "t": "1:13.0"
+    },
+    "cut_hook_916": {
+      "t0": "0:13.0",
+      "t1": "0:28.0",
+      "xs": [
+        [
+          0,
+          0.62
+        ],
+        [
+          3,
+          0.66
+        ],
+        [
+          7,
+          0.5
+        ],
+        [
+          12,
+          0.45
+        ]
+      ]
+    },
+    "cut_reveal_916": {
+      "t0": "1:04.0",
+      "t1": "1:16.0"
+    },
+    "cut_feed_45": {
+      "t0": "0:00.0",
+      "t1": "0:28.0"
+    },
+    "cut_x_169": {
+      "t0": "0:00.0",
+      "t1": "0:30.5"
+    },
+    "cut_story_916": {
+      "t0": "0:43.0",
+      "t1": "0:57.0"
+    },
+    "member_carousel_45": {
+      "members": [
+        {
+          "slug": "aoi",
+          "name": "Aoi",
+          "role": "Vocals / Guitar",
+          "t": "0:13.5",
+          "x": 0.5
+        },
+        {
+          "slug": "momo",
+          "name": "Momo",
+          "role": "Drums",
+          "t": "0:16.5",
+          "x": 0.55
+        },
+        {
+          "slug": "vera",
+          "name": "Vera",
+          "role": "Keys",
+          "t": "0:10.0",
+          "x": 0.4
+        },
+        {
+          "slug": "ren",
+          "name": "Ren",
+          "role": "Bass",
+          "t": "0:06.0",
+          "x": 0.4
+        }
+      ]
+    },
+    "teaser_1": {
+      "script": "Hi, it's LoLA. Shamanic Resin used to sing with their breath held, in a tiny room. That's about to change. The new single is called Hasta La Vista Maybe. The door is about to open. Stay close.",
+      "script_approved": false
+    },
+    "teaser_2": {
+      "script": "LoLA again. Weeks of work went into the Hasta La Vista Maybe video, and GeekFon members get to watch it come together first: the storyboards, the early cuts, all of it. Join at geekfon.ai and see how it was made.",
+      "script_approved": false
+    },
+    "bts_versions": {
+      "t0": "1:04.0",
+      "t1": "1:12.0",
+      "versions": [
+        {
+          "file": "asta-freeze-full-v1.mp4",
+          "label": "v1"
+        },
+        {
+          "file": "hasta-la-vista-maybe-v2-full.mp4",
+          "label": "v2"
+        },
+        {
+          "file": "hasta-la-vista-maybe-v3-full.mp4",
+          "label": "v3"
+        },
+        {
+          "file": "hasta-la-vista-maybe-v4-full.mp4",
+          "label": "v4"
+        },
+        {
+          "file": "hasta-la-vista-maybe-v5-full.mp4",
+          "label": "v5"
+        },
+        {
+          "file": "hasta-la-vista-maybe-v6-full.mp4",
+          "label": "v6 (final)"
+        }
+      ]
+    },
+    "bts_stills": {
+      "files": [
+        "stills/door-locked-da4.png",
+        "stills/door-straining-db4.png",
+        "stills/ending-757-door-burst.png",
+        "stills/ending-811-silhouettes-far.png",
+        "stills/ending-812-silhouettes-near.png",
+        "stills/ending-860-band-doorway-hardcel.png",
+        "stills/mr-russell-sting-wide-850.png",
+        "stills/mr-russell-sting-close-851.png",
+        "v3-proof-sheet.jpg",
+        "v4-proof-sheet.jpg"
+      ]
+    }
+  }
+}
