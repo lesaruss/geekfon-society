@@ -401,13 +401,14 @@
       "spec": {
         "w": 1080,
         "h": 1920,
-        "max_s": 15,
+        "max_s": 20,
         "safe": {
           "l": 90,
           "r": 150,
           "t": 250,
           "b": 440
-        }
+        },
+        "note": "15 s was a planning target; Sean's natural reads of the approved scripts ran 17-20 s on the pilot, and Reels/Shorts allow far longer. Keep under 20 s."
       },
       "credits": 19,
       "gate": "G1 Sean approves the script; voice = Sean's booth takes (HQ Voices set); G2 look PROOF on the still and storyboard approved by Sean; G3 Sean watches the final",
@@ -425,13 +426,14 @@
       "spec": {
         "w": 1080,
         "h": 1920,
-        "max_s": 15,
+        "max_s": 20,
         "safe": {
           "l": 90,
           "r": 150,
           "t": 250,
           "b": 440
-        }
+        },
+        "note": "15 s was a planning target; Sean's natural reads of the approved scripts ran 17-20 s on the pilot, and Reels/Shorts allow far longer. Keep under 20 s."
       },
       "credits": 19,
       "gate": "G1 Sean approves the script; voice = Sean's booth takes (HQ Voices set); G2 look PROOF on the still and storyboard approved by Sean; G3 Sean watches the final",

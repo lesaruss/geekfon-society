@@ -83,6 +83,10 @@ def board(name, frames, proof=False):
         for ln in wrap(d, label, FIG(17), tw):
             d.text((x, yy), ln, font=FIG(17), fill=(220, 220, 230)); yy += 22
         im.save(os.path.join(OUT, f'{name}-{i + 1}.png'))
+        if not proof:
+            import json
+            cj = os.path.join(OUT, 'cards.json'); data = json.load(open(cj)) if os.path.exists(cj) else {}
+            data[f'{name}-{i + 1}'] = im.info.get('cards', []); json.dump(data, open(cj, 'w'), indent=1)
     sheet.save(os.path.join(OUT, f'{name}-board{"-proof" if proof else ""}.jpg'), quality=90)
     if not proof:
         board(name, frames, proof=True)

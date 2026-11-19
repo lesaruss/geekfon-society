@@ -153,6 +153,9 @@ def card(im, art, box, fit='cover', fx=0.5, fy=0.5, border=10, shadow=16):
     a = cover(art, ir - il, ib - it, fx, fy) if fit == 'cover' else art.resize((ir - il, ib - it), Image.LANCZOS)
     m = Image.new('L', a.size, 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, a.width - 1, a.height - 1), radius=18, fill=255)
     im.paste(a, (il, it), m)
+    im.info.setdefault('cards', []).append((il, it, ir, ib))   # where the art sits, so a video can replace it
+    return il, it, ir, ib
+
 
 
 def name_plate(im, name, tag, x, y, size=58):

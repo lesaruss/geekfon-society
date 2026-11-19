@@ -162,7 +162,16 @@
         "t1-hi",
         "t1-single"
       ],
-      "start_frame": "teaser/frames/t1-start-3x4.jpg"
+      "start_frame": "teaser/frames/t1-start-3x4.jpg",
+      "wan_jobs": {
+        "t1-hi": "515bbebc-79cf-4a48-9dde-ea10a53e60c7",
+        "t1-single": "96a7c621-5704-42c0-9b10-e1cdfef2091d"
+      },
+      "sync3_jobs": {
+        "t1-hi": "7b0a36b1-b715-4ca5-94c5-1dcd7b95144c",
+        "t1-single": "2807ca39-4ba8-4f3c-bd4d-b695ce612cb3"
+      },
+      "output": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/teasers/lola-teaser-1-v3.mp4"
     },
     "teaser_2": {
       "script": "LoLA again. Weeks of work went into the Hasta La Vista Maybe video, and GeekFon members get to watch it come together first: the storyboards, the early cuts, all of it. Join at geekfon.ai and see how it was made.",
@@ -179,7 +188,16 @@
         "t2-again",
         "t2-join"
       ],
-      "start_frame": "teaser/frames/t2-start-3x4.jpg"
+      "start_frame": "teaser/frames/t2-start-3x4.jpg",
+      "wan_jobs": {
+        "t2-again": "262950bb-8e9f-49e4-b4bf-cad045e20d82",
+        "t2-join": "12890bee-57da-489a-b39e-9679316e1aef"
+      },
+      "sync3_jobs": {
+        "t2-again": "2b43fb5f-ae9c-4db3-aaae-9b653d71c8bc",
+        "t2-join": "8a74116e-36e8-425a-838c-e957ec70b28a"
+      },
+      "output": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/teasers/lola-teaser-2-v3.mp4"
     },
     "bts_versions": {
       "t0": "1:04.0",
@@ -228,5 +246,73 @@
     "reel_cover": {
       "decision": "thumbnail"
     }
+  },
+  "voice": {
+    "set": "gfs-hasta-teasers",
+    "source": "vegan-media/media/voice-booth/gfs-hasta-teasers/<line>/<take>.mp3",
+    "keepers_and_trims_s": {
+      "t1-hi": [
+        "t1-hi_conv-20261119121752",
+        0.32,
+        6.59
+      ],
+      "t1-change": [
+        "t1-change_conv-20261119121828",
+        1.0,
+        2.3
+      ],
+      "t1-single": [
+        "t1-single_conv-20261119121847",
+        0.58,
+        4.17
+      ],
+      "t1-door": [
+        "t1-door_conv-20261119122032",
+        0.36,
+        2.73
+      ],
+      "t1-close": [
+        "t1-close_conv-20261119122126",
+        0.42,
+        1.67
+      ],
+      "t2-again": [
+        "t2-again_conv-20261119122152",
+        1.06,
+        5.87
+      ],
+      "t2-members": [
+        "t2-members_conv-20261119122344",
+        0.5,
+        4.09
+      ],
+      "t2-boards": [
+        "t2-boards_conv-20261119122427",
+        0.79,
+        4.67
+      ],
+      "t2-join": [
+        "t2-join_conv-20261119122525",
+        0.81,
+        4.83
+      ]
+    },
+    "cleaning": "Sean 2026-11-19: clean the first and last half second. Trim to the speech (hum, blips and clicks outside the cut), 20 ms fade in, 120 ms fade out, 70 Hz high-pass, loudnorm -16 LUFS. Every trimmed line checked word for word with speech-to-text.",
+    "takes_not_used": "t1-single last take said 'was called Asta'; t1-close take 2 'cros'; t2-again take 2 'Mola'; t2-join takes 1-2 'Join us at'."
+  },
+  "teaser_mix": {
+    "bed": "geekfon-media/artists/geekfon-society/series/release-pack/hasta-la-vista-maybe/stems/instrumental.mp3",
+    "bed_start": 43.0,
+    "bed_volume": 0.16,
+    "duck_ratio": 10,
+    "duck_threshold": 0.012,
+    "bed_eq": "equalizer=f=300:t=q:w=1:g=-5,equalizer=f=3000:t=q:w=1:g=-7,",
+    "gap": 0.25,
+    "tail": [
+      1.2,
+      0.3
+    ],
+    "teaser_2_end_hold": 2.2,
+    "proof": "Lip check: 2/7 closures Wan alone, sync-3 closes every bilabial when the frames around each sound are checked (maybe 3.00-3.15 s, room 6.05-6.20 s). STT on the final mix: every word back except ElevenLabs hears 'Rezzy' for Resin and 'baby' for Maybe (teaser 2); it hears the same on the voice-only line, and Whisper hears both right, so not the mix. Loudness -15.9 / -16.4 LUFS. 17.1 s and 19.6 s."
   }
 }
