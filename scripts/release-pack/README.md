@@ -190,3 +190,18 @@ Add it to `slots.json`:
 Use an existing `method` if one fits (`cut`, `frame`, `carousel`, `announce`, `srt`, `lyrics`,
 `copy`, `ladder`, `gallery`). Otherwise add a maker in `build_slot` and a check in
 `check_slot`. Bump `version`, then update the canon record's slot list.
+
+## Song snippets (the feed, Sean 2026-11-19)
+
+Between releases the feed is filled with 30-second snippets of the catalogue, a different artist each day.
+`snippet.py spec.json out.mp4` draws one in the launch-reel look: the GeekFon top bar, the station tag, the
+song's cover with a slow push-in, NOW PLAYING, the English lyric of the line being sung, the progress bar,
+then the close ("Tune in. It's free." geekfon.ai). Music only, no credits, about 40 s to render.
+
+1. Pick the song and its best 30 seconds (usually the first chorus). Specs live in `snippets/<artist>-<song>.json`.
+2. Line times: Whisper with word timestamps on the song in the Higgsfield sandbox; one English line per sung
+   line from `pulse_songs.lyrics_en`.
+3. Render, then PROOF: every caption against the sung line, no word alone on a line, nothing outside the safe area.
+4. "Tune in. It's free." is true: the radio rotation plays every on-air song to everyone, and artist pages give
+   non-members a 30-second preview (`/api/songs/<id>/preview`). `radio_tracks.is_free_preview` is a legacy flag
+   the live site does not read; do not rely on it.
