@@ -87,7 +87,7 @@ def radio(art, lyric):
     bg = ImageEnhance.Brightness(bg).enhance(0.45)
     tint = grad(W, H, (120, 70, 20), (30, 60, 110), horizontal=False); im = Image.blend(bg, tint, 0.45); top_bar(im)
     d = ImageDraw.Draw(im)
-    cards = [('GeekFon', HILITE, INK, 'band'), ('Anime', ANIME, WHITE, 'aoi'), ('Hip Hop', REEL['orange'], INK, 'hiphop')]
+    cards = [('GeekFon', HILITE, INK, 'one-mic'), ('Anime', ANIME, WHITE, 'aoi'), ('Hip Hop', REEL['orange'], INK, 'hiphop')]
     for i, (name, col, ink, thumb) in enumerate(cards):
         x = 40 + i * 340; d.rounded_rectangle((x, 192, x + 316, 440), radius=22, fill=col)
         d.text((x + 38, 222), name, font=BRIC(56), fill=ink)
@@ -149,15 +149,19 @@ BEATS = {
     'psst': lambda art: beat('blue', 'PSST. HEY.', art, 118, fy=0.25),
     'stop': lambda art: beat('blue', 'STOP SCROLLING FOR ONE SECOND', art, 104, fy=0.25),
     'question': lambda art: beat('pink', 'Do you like rock? What about anime?', art, 104, fy=0.2),
-    'aoi': lambda art: beat('magenta', 'Hasta la vista, goodbye for now', art, 96, plate=PLATE, fy=0.2),
-    'band': lambda art: beat('green', "Even if we're shaking, we're going", art, 96, plate=PLATE, fy=0.35),
-    'band-door': lambda art: beat('green', "Kick the door open and go, we're here!", art, 96, plate=PLATE, fy=0.35),
+    # the chorus: one solo per member (Sean 2026-11-19: Aoi half as long, then every member once)
+    'aoi': lambda art: beat('magenta', 'Hasta la vista, goodbye for now', art, 96, plate=('AOI', 'Vocals / Guitar · Shamanic Resin'), fy=0.2),
+    'vera': lambda art: beat('red', 'Hey! Hasta la vista,', art, 104, plate=('VERA', 'Keys · Shamanic Resin'), fy=0.2),
+    'ren': lambda art: beat('blue', 'goodbye for now', art, 104, plate=('REN', 'Bass · Shamanic Resin'), fy=0.2),
+    'momo': lambda art: beat('green', "Even if we're shaking, we're going", art, 96, plate=('MOMO', 'Drums · Shamanic Resin'), fy=0.25),
+    # all four on one mic for "we're here!" (Sean 2026-11-19: replaces the head-on band shot)
+    'one-mic': lambda art: beat('magenta', "Kick the door open and go, we're here!", art, 96, plate=PLATE, fy=0.3),
     'cover': lambda art: cover_beat('orange', 'New single', COVER_IM),
     'radio': lambda art: radio(art, "Kick the door open and go, we're here!"),
     'close': lambda art: close(COVER_IM),
 }
-STILL = {'psst': 'lola-hook.png', 'stop': 'lola-hook.png', 'question': 'lola-q.png', 'aoi': 'aoi.png', 'band': 'band.png',
-         'band-door': 'band.png', 'radio': 'momo.png'}
+STILL = {'psst': 'lola-hook.png', 'stop': 'lola-hook.png', 'question': 'lola-q.png', 'aoi': 'aoi.png', 'vera': 'vera.png',
+         'ren': 'ren.png', 'momo': 'momo.png', 'one-mic': 'one-mic.png', 'radio': 'ren.png'}
 post = framed
 
 if __name__ == '__main__':
@@ -167,11 +171,13 @@ if __name__ == '__main__':
         ('psst', '0-1 s  LoLA: "Psst. Hey." (your Reel 1 take)'),
         ('stop', '1-3 s  LoLA: "Stop scrolling for one second."'),
         ('question', '3-7 s  LoLA (new line): "Do you like rock? What about anime?... Hold on."'),
-        ('aoi', '7-12 s  Aoi sings the chorus. Song: "Hasta la vista..."'),
-        ('band', '12-14 s  the band: "Even if we\'re shaking, we\'re going"'),
-        ('band-door', '14-17 s  the band: "Kick the door open and go, we\'re here!"'),
+        ('aoi', '7-10 s  Aoi starts the chorus: "Hasta la vista..."'),
+        ('vera', '10-11 s  Vera solo'),
+        ('ren', '11-13 s  Ren solo'),
+        ('momo', '13-14 s  Momo solo: "Even if we\'re shaking, we\'re going"'),
+        ('one-mic', '14-18 s  all four on one mic: "Kick the door open and go, we\'re here!"'),
         ('cover', '17-21 s  the full single cover'),
-        ('radio', '21-25 s  radio, NOW PLAYING, Momo drumming in the station art'),
+        ('radio', '21-25 s  radio, NOW PLAYING, Ren in the station art'),
         ('close', '25-30 s  the close. LoLA: "Tune in. It\'s free. geekfon.ai" (your Reel 1 take)'),
     ]
     frames = [(lab, BEATS[k](A(STILL[k]) if k in STILL else None)) for k, lab in labels]
