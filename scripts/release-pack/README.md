@@ -99,6 +99,10 @@ beside it, and gates.
    - a black name plate with a yellow tag, and the "AI artists" line
 
    Unlike the launch reels, every one of these sits inside the safe area.
+   - **Vertical pieces:** the safe area is a white rounded panel (`design_kit.panel`), so
+     the colour field around it reads as a frame (Sean 2026-11-19). The panel is centred,
+     with its content inset so it stays inside `spec.safe`.
+   - **Horizontal pieces** (thumbnails) keep the full colour field.
    - Make three thumbnail options and check each at full size and at YouTube's 168x94 list size.
    - Make a Reel cover with the title and faces inside the 3:4 grid crop.
    - Anything that posts before MV day uses shots from before the reveal.

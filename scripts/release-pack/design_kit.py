@@ -170,3 +170,11 @@ def ai_line(im, cx, y, size=30):
     d = ImageDraw.Draw(im); f = FIG(size); s = 'AI artists · voices performed by the founder'; tw = d.textlength(s, font=f)
     d.rounded_rectangle((cx - tw / 2 - 18, y, cx + tw / 2 + 18, y + size * 1.6), radius=10, fill=(30, 18, 40))
     d.text((cx - tw / 2, y + size * 0.25), s, font=f, fill=WHITE)
+
+
+def panel(im, box, radius=44, inset=28):
+    """Vertical pieces (Sean 2026-11-19): the safe area is a white panel, so the
+    colour field around it reads as a frame. Returns the inner content box."""
+    ImageDraw.Draw(im).rounded_rectangle(box, radius=radius, fill=WHITE)
+    l, t, r, b = box
+    return l + inset, t + inset, r - inset, b - inset

@@ -28,21 +28,22 @@ def mv(t, path=None, src='mv.mp4'):
 
 SW, SH = 1080, 1920
 SAFE = (90, 250, 930, 1480)        # matches slots.json teaser / cut_hook_916 safe area
+PANEL = (120, 250, 960, 1480)      # the white panel: centred, its content (inset 30) stays inside SAFE
 TITLE = 'Hasta La Vista Maybe'
 
 
 def reel_frame(color, headline, art, kind='portrait', fx=0.5, fy=0.35, plate=None):
-    im = halftone(SW, SH, REEL[color]); l, t, r, b = SAFE
-    live_bar(im, (l, t + 10, r, t + 100))
-    y = highlight(im, headline, (l, t + 132, r, b), 80) + 34
+    im = halftone(SW, SH, REEL[color]); l, t, r, b = panel(im, PANEL, inset=30)
+    live_bar(im, (l, t, r, t + 90))
+    y = highlight(im, headline, (l, t + 116, r, b), 76) + 30
     foot = b - 52
     ai_line(im, (l + r) // 2, foot)
     room_b = foot - 30
     if kind == 'portrait':
-        h = room_b - y; w = min(r - l - 40, int(h * 0.74)); x0 = (SW - w) // 2
+        h = room_b - y; w = min(r - l - 40, int(h * 0.74)); x0 = (l + r - w) // 2
         card(im, art, (x0, y, x0 + w, room_b - 16), fx=fx, fy=fy)
     else:  # wide MV frame
-        w = r - l - 20; h = int(w * 9 / 16); y0 = y + max(0, (room_b - y - h) // 2 - 20); x0 = l + 4
+        w = r - l - 16; h = int(w * 9 / 16); y0 = y + max(0, (room_b - y - h) // 2 - 20); x0 = l
         card(im, art, (x0, y0, x0 + w, y0 + h))
         room_b = y0 + h
     if plate:
@@ -51,19 +52,19 @@ def reel_frame(color, headline, art, kind='portrait', fx=0.5, fy=0.35, plate=Non
 
 
 def end_card(color, lines, art, plate, url=None):
-    im = halftone(SW, SH, REEL[color]); l, t, r, b = SAFE
-    live_bar(im, (l, t + 10, r, t + 100))
-    y = t + 140
+    im = halftone(SW, SH, REEL[color]); l, t, r, b = panel(im, PANEL, inset=30)
+    live_bar(im, (l, t, r, t + 90))
+    y = t + 120
     for s, size in lines:
         y = highlight(im, s, (l, y, r, b), size) + 14
-    w = r - l - 20; h = int(w * 9 / 16); y0 = y + 26
-    card(im, art, (l + 4, y0, l + 4 + w, y0 + h))
+    w = r - l - 16; h = int(w * 9 / 16); y0 = y + 26
+    card(im, art, (l, y0, l + w, y0 + h))
     name_plate(im, plate[0], plate[1], l + 16, y0 + h - 110, size=50)
     d = ImageDraw.Draw(im)
     if url:
-        f = BRIC(62); tw = d.textlength(url, font=f); yy = y0 + h + 44
-        d.rounded_rectangle(((SW - tw) / 2 - 26, yy, (SW + tw) / 2 + 26, yy + 86), radius=18, fill=INK)
-        d.text(((SW - tw) / 2, yy + 6), url, font=f, fill=HILITE)
+        f = BRIC(62); tw = d.textlength(url, font=f); yy = y0 + h + 44; cx = (l + r) / 2
+        d.rounded_rectangle((cx - tw / 2 - 26, yy, cx + tw / 2 + 26, yy + 86), radius=18, fill=INK)
+        d.text((cx - tw / 2, yy + 6), url, font=f, fill=HILITE)
     ai_line(im, (l + r) // 2, b - 52)
     return im
 
@@ -72,16 +73,19 @@ def with_safe(im, box):
     im = im.copy(); ImageDraw.Draw(im).rectangle(box, outline=(255, 0, 0), width=4); return im
 
 
-def board(name, frames):
+def board(name, frames, proof=False):
     tw, th, pad = 324, 576, 16
     sheet = Image.new('RGB', (len(frames) * (tw + pad) + pad, th + 150), (24, 24, 28)); d = ImageDraw.Draw(sheet)
-    d.text((pad, 10), f'{name.upper()}   red box = safe area: every word and face stays inside it', font=FIG(22), fill=WHITE)
+    head = 'red line = safe area' if proof else 'as it will post: the white panel is the safe area'
+    d.text((pad, 10), f'{name.upper()}   {head}', font=FIG(22), fill=WHITE)
     for i, (label, im) in enumerate(frames):
-        x = pad + i * (tw + pad); sheet.paste(with_safe(im, SAFE).resize((tw, th)), (x, 46)); yy = 46 + th + 10
+        x = pad + i * (tw + pad); sheet.paste((with_safe(im, SAFE) if proof else im).resize((tw, th)), (x, 46)); yy = 46 + th + 10
         for ln in wrap(d, label, FIG(17), tw):
             d.text((x, yy), ln, font=FIG(17), fill=(220, 220, 230)); yy += 22
         im.save(os.path.join(OUT, f'{name}-{i + 1}.png'))
-    sheet.save(os.path.join(OUT, f'{name}-board.jpg'), quality=90)
+    sheet.save(os.path.join(OUT, f'{name}-board{"-proof" if proof else ""}.jpg'), quality=90)
+    if not proof:
+        board(name, frames, proof=True)
 
 
 lola1 = Image.open(P('teaser', 't1.png')).convert('RGB')
@@ -121,14 +125,16 @@ board('teaser-2', [
 
 # Reel cover for the 9:16 cuts: studio shot (no reveal), title and faces inside the 3:4 grid crop
 cover_im = halftone(SW, SH, REEL['magenta'])
-COVER_SAFE = (90, 250, 990, 1670)
-live_bar(cover_im, (90, 262, 990, 362))
-yb = highlight(cover_im, TITLE, (90, 430, 990, 1670), 118) + 70
-w = 900; h = int(w * 9 / 16); yb = max(yb, (430 + 1560 - h) // 2 + 120)
-card(cover_im, studio, (90, yb, 90 + w, yb + h))
-name_plate(cover_im, 'SHAMANIC RESIN', 'Rock · GeekFon Society', 106, yb + h - 130, size=60)
-ai_line(cover_im, 540, 1590)
+COVER_SAFE = (90, 250, 990, 1670)  # side margins + Instagram's 3:4 grid crop
+cl, ct, cr, cb = panel(cover_im, COVER_SAFE)
+live_bar(cover_im, (cl, ct, cr, ct + 96))
+yb = highlight(cover_im, TITLE, (cl, ct + 150, cr, cb), 112) + 60
+w = cr - cl - 16; h = int(w * 9 / 16); yb = max(yb, (ct + cb - h) // 2 + 60)
+card(cover_im, studio, (cl, yb, cl + w, yb + h))
+name_plate(cover_im, 'SHAMANIC RESIN', 'Rock · GeekFon Society', cl + 14, yb + h - 130, size=58)
+ai_line(cover_im, (cl + cr) // 2, cb - 56)
 cover_im.save(os.path.join(OUT, 'reel-cover.jpg'), quality=92)
+cover_im.resize((405, 720)).save(os.path.join(OUT, 'reel-cover-preview.jpg'), quality=90)
 with_safe(cover_im, COVER_SAFE).resize((405, 720)).save(os.path.join(OUT, 'reel-cover-proof.jpg'), quality=90)
 
 # YouTube thumbnails 1280x720, safe 40 px sides and top, 90 px bottom (timestamp badge)
