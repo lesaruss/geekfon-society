@@ -34,6 +34,11 @@ export type ArtistSong = {
 
 export type PressItem = { slug: string | null; title: string; tag: string | null; date: string | null; blurb: string | null; thumb: string | null; href: string | null };
 
+/** A social post on an artist's Social tab. media is null on a locked (members-only) card. */
+export type SocialPost = { id: string; kind: "video" | "photo"; date: string | null; text: string | null; media: string | null; thumb: string | null; locked?: boolean };
+/** A music video on an album; url only reaches members, or everyone once publicAt has passed. */
+export type AlbumVideo = { id: string; title: string; poster: string | null; publicAt: string | null; url: string | null };
+
 export type GalleryTile = { id: string; title: string | null; url: string; thumb: string | null; kind: string };
 
 export type ArtistPageData = {
@@ -60,6 +65,8 @@ export type ArtistPageData = {
   homeStation: StationChip | null;
   press: PressItem[];
   gallery: { items: GalleryTile[]; lockedCount: number };
+  /** Social tab: posts everyone sees, and locked cards for what is queued (members get those in full from the access route). */
+  social: { posts: SocialPost[]; locked: SocialPost[] };
   /** The album the $11 buys today; null sells the artist's season pass (same $11 unlock). */
   album: SellAlbum | null;
   /** The artist's albums, oldest first (Sean, 2026-11-17: once there are two, Music shows one square per album, each its own $11). */
@@ -76,6 +83,8 @@ export type AlbumCard = {
   trackTarget: number;
   /** Album songs in album order (originals, then remixes). */
   songIds: string[];
+  /** The album's Videos shelf (the music video). url is null until it is public; members get it from the access route. */
+  videos: AlbumVideo[];
 };
 
 /** Stored copy uses " - " as a break; plain copy reads it as a comma (no dashes in visible text). */

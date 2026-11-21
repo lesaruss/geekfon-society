@@ -340,7 +340,8 @@ export default async function ArtistPageRoute({ params }: Props) {
     content.songAudits = content.songAudits.filter(a => announced.has(titleKey(String((a as { title?: string }).title || ""))));
   }
 
-  const depot: RosterDepot = depotData;
+  // Album video urls stay on the server (members get them from the access route).
+  const depot: RosterDepot = { ...depotData, albums: depotData.albums.map(a => ({ ...a, videos: [] })) };
   const bible: RosterBible = { free: bibleFree, locked: bibleLocked };
   const gallery: RosterGallery = { ...galleryPublic, featured: featuredGallery(content.name || slug, content, depotData.songs) };
 

@@ -18,12 +18,16 @@ import { useRosterAccess } from "@/components/roster/useRosterAccess";
 import ArtistChat from "./ArtistChat";
 import { IcPlay, IcPause, IcHeart, IcLyrics, IcArrow, IcRadio } from "./icons";
 import { IcLock, IcPin, IcChat, IcCheck } from "./artistIcons";
-import type { AlbumCard, ArtistPageData, ArtistSong, GalleryTile } from "@/lib/artistPage";
-import { useT } from "@/components/i18n/I18n";
+import type { AlbumCard, ArtistPageData, ArtistSong, GalleryTile, SocialPost } from "@/lib/artistPage";
+import { useI18n, useT } from "@/components/i18n/I18n";
 
-type Tab = "music" | "chat" | "press" | "gallery" | "about";
-const TABS: Tab[] = ["music", "chat", "press", "gallery", "about"];
-const TAB_KEYS: Record<Tab, string> = { music: "artist.tabMusic", chat: "artist.tabChat", press: "artist.tabPress", gallery: "artist.tabGallery", about: "artist.tabAbout" };
+type Tab = "music" | "chat" | "social" | "press" | "gallery" | "about";
+const TABS: Tab[] = ["music", "chat", "social", "press", "gallery", "about"];
+const TAB_KEYS: Record<Tab, string> = { music: "artist.tabMusic", chat: "artist.tabChat", social: "artist.tabSocial", press: "artist.tabPress", gallery: "artist.tabGallery", about: "artist.tabAbout" };
+type SocFilter = "all" | "videos" | "photos" | "exclusive";
+const SOC_FILTERS: SocFilter[] = ["all", "videos", "photos", "exclusive"];
+const SOC_KEYS: Record<SocFilter, string> = { all: "artist.socAll", videos: "artist.socVideos", photos: "artist.socPhotos", exclusive: "artist.socExclusive" };
+const signInHref = () => `/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "")}`;
 const PRICE = "$11";
 const LS_SAVED = "gfr-saved-artists-v1";
 
@@ -40,13 +44,22 @@ function readTab(): Tab {
 }
 
 export default function ArtistView({ initial }: { initial: ArtistPageData }) {
-  const t = useT();
+  const { t, locale } = useI18n();
   const { R, tuneTo, openLyrics, heart, openUnlock, showToast, setBaseTitle, setPageFocus } = useShell();
   const [A, setA] = useState<ArtistPageData>(initial);
   const [tab, setTab] = useState<Tab>("music");
   const [saved, setSaved] = useState(false);
   const access = useRosterAccess(A.slug);
   const supporter = access.supporter;
+  const [soc, setSoc] = useState<SocFilter>("all");
+  // One viewer for social posts and album videos: a picture or a video over the page.
+  const [viewing, setViewing] = useState<{ kind: "video" | "photo"; url: string; poster?: string | null; text?: string | null } | null>(null);
+  useEffect(() => {
+    if (!viewing) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setViewing(null); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [viewing]);
 
   useEffect(() => { setA(initial); }, [initial]);
   useEffect(() => { setBaseTitle(t("artist.pageTitle", { name: A.name })); }, [A.name, setBaseTitle, t]);
@@ -63,6 +76,8 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
   const gridAlbums: AlbumCard[] = (A.albums || []).length >= 2 ? [...A.albums].reverse() : [];
   const [openAlbum, setOpenAlbum] = useState<string | null>(null);
   const picked = gridAlbums.find(a => a.id === openAlbum) ?? null;
+  // An album video plays when it is public, or for a member (the access route sends its url).
+  const videoUrl = (albumId: string, videoId: string, pub: string | null) => pub || access.albumVideos?.[albumId]?.[videoId] || null;
   const owns = (id: string) => access.ownedAlbums === "all" || access.ownedAlbums.includes(id);
   const unlock = useCallback(() => openUnlock(A.slug, picked ? { id: picked.id, title: picked.title, inProgress: picked.inProgress } : A.album), [openUnlock, A.slug, A.album, picked]);
 
@@ -271,10 +286,79 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
           <div className="slist">{remixes.map(songRow)}</div>
         </>
       ) : null}
+      {picked && picked.videos?.length ? (
+        <>
+          <div className="shelf-h" style={{ margin: "26px 0 8px" }}><h2>{t("artist.videos")}</h2>{picked.videos.some(v => !videoUrl(picked.id, v.id, v.url)) ? <span className="tag">{t("artist.socExclusive")}</span> : null}</div>
+          <div className="vids">
+            {picked.videos.map(v => {
+              const url = videoUrl(picked.id, v.id, v.url);
+              return url ? (
+                <button key={v.id} type="button" className="vt" onClick={() => setViewing({ kind: "video", url, poster: v.poster })} aria-label={t("artist.playVideo", { title: v.title })}>
+                  {v.poster ? <img src={v.poster} alt="" loading="lazy" /> : null}
+                  <span className="vp"><IcPlay size={26} /></span>
+                  <span className="cap">{v.title}</span>
+                </button>
+              ) : (
+                <a key={v.id} className="vt lk" href={signInHref()} aria-label={t("artist.mvLockedLabel", { title: v.title })}>
+                  {v.poster ? <img src={v.poster} alt="" loading="lazy" /> : null}
+                  <span className="gl"><span className="lc"><IcLock size={18} /></span><b>{v.title}</b><span>{t("artist.mvLocked")}</span><span className="pill sm">{t("artist.socJoinCta")}</span></span>
+                </a>
+              );
+            })}
+          </div>
+          {picked.videos.some(v => !videoUrl(picked.id, v.id, v.url)) ? <p className="foot">{t("artist.mvFoot")}</p> : null}
+        </>
+      ) : null}
       </>}
       {!gridAlbums.length && originals.length ? <p className="foot">{remixes.length ? t("artist.catalogFootRemixes", { songs: t("artist.songCount", { count: originals.length }), remixes: t("artist.remixCount", { count: remixes.length }) }) : t("artist.catalogFoot", { songs: t("artist.songCount", { count: originals.length }) })}</p> : null}
     </>
   );
+
+  /* ---------- Social ---------- */
+  // Sean, 2026-11-21: Social is for everyone; All shows only what has been
+  // posted. Exclusive holds what is queued: signed-in members see it in full,
+  // everyone else a locked card and the way in. A queued post moves to All on
+  // its own once it is out (the server works it out from the clock).
+  const member = access.signedIn;
+  const queued: SocialPost[] = member && access.exclusive ? access.exclusive : A.social.locked;
+  const socDate = (d: string | null) => d ? new Date(d).toLocaleDateString(locale, { month: "short", day: "numeric" }) : "";
+  const socTile = (p: SocialPost) => {
+    if (p.locked || !p.media) return (
+      <a key={p.id} className="gi so lk" href={signInHref()} aria-label={t("artist.socLockedLabel", { name: A.name })}>
+        {p.thumb ? <img src={p.thumb} alt="" loading="lazy" /> : blurSrc.length ? <img src={blurSrc[0]} alt="" loading="lazy" /> : null}
+        <span className="gl"><span className="lc"><IcLock size={18} /></span>{t("artist.socMembersFirst")}</span>
+        {p.date ? <span className="cap">{t("artist.socPosts", { date: socDate(p.date) })}</span> : null}
+      </a>
+    );
+    return (
+      <button key={p.id} type="button" className="gi so" onClick={() => setViewing({ kind: p.kind, url: p.media!, poster: p.thumb, text: p.text })} aria-label={p.text || t("artist.openPicture")}>
+        {p.thumb ? <img src={p.thumb} alt="" loading="lazy" /> : p.kind === "video" ? <video src={`${p.media}#t=1`} preload="metadata" muted playsInline /> : null}
+        {p.kind === "video" ? <span className="vp sm"><IcPlay size={20} /></span> : null}
+        {soc === "exclusive" && p.date ? <span className="cap">{t("artist.socPosts", { date: socDate(p.date) })}</span> : p.date ? <span className="cap">{socDate(p.date)}</span> : null}
+      </button>
+    );
+  };
+  const tabSocial = () => {
+    const list = soc === "exclusive" ? queued : A.social.posts.filter(p => soc === "all" || (soc === "videos" ? p.kind === "video" : p.kind === "photo"));
+    return (
+      <>
+        <div className="days soc-f" role="group" aria-label={t("artist.tabSocial")}>
+          {SOC_FILTERS.map(f => (
+            <button key={f} type="button" className="dchip" aria-pressed={soc === f} onClick={() => setSoc(f)}>
+              {f === "exclusive" && !member ? <IcLock size={12} /> : null}{t(SOC_KEYS[f])}{f === "exclusive" && queued.length ? ` · ${queued.length}` : ""}
+            </button>
+          ))}
+        </div>
+        {soc === "exclusive" ? (
+          member
+            ? <p className="msub soc-n">{t("artist.socExclusiveMember", { name: A.name })}</p>
+            : <div className="soc-join"><IcLock /><div><b>{queued.length ? t("artist.socExclusiveJoin", { count: queued.length, name: A.name }) : t("artist.socExclusiveJoinNone", { name: A.name })}</b><span>{t("artist.socExclusiveHow")}</span></div><a className="pill" href={signInHref()}>{t("artist.socJoinCta")}</a></div>
+        ) : null}
+        {list.length ? <div className="gal">{list.map(socTile)}</div>
+          : <div className="empty"><IcChat /><span>{soc === "exclusive" ? t("artist.socQueueEmpty", { name: A.name }) : soc === "all" ? t("artist.socEmpty", { name: A.name }) : t("artist.socEmptyFilter")}</span></div>}
+      </>
+    );
+  };
 
   /* ---------- Press ---------- */
   const tabPress = () => A.press.length ? (
@@ -360,7 +444,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
     </>
   );
 
-  const body = tab === "music" ? tabMusic() : tab === "chat" ? <ArtistChat slug={A.slug} artistName={A.name} onUnlock={unlock} /> : tab === "press" ? tabPress() : tab === "gallery" ? tabGallery() : tabAbout();
+  const body = tab === "music" ? tabMusic() : tab === "chat" ? <ArtistChat slug={A.slug} artistName={A.name} onUnlock={unlock} /> : tab === "social" ? tabSocial() : tab === "press" ? tabPress() : tab === "gallery" ? tabGallery() : tabAbout();
 
   return (
     <div className="aview" style={{ "--ac": A.accent, "--ac-ink": A.ink } as React.CSSProperties}>
@@ -390,6 +474,17 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
         ))}
       </div>
       <div className="apanel" id="apanel" role="tabpanel" aria-labelledby={`atab-${tab}`}>{body}</div>
+      {viewing ? (
+        <div className="viewer" role="dialog" aria-modal="true" aria-label={t("artist.tabSocial")} onClick={() => setViewing(null)}>
+          <div className="viewer-in" onClick={e => e.stopPropagation()}>
+            {viewing.kind === "video"
+              ? <video src={viewing.url} poster={viewing.poster ?? undefined} controls autoPlay playsInline />
+              : <img src={viewing.url} alt="" />}
+            {viewing.text ? <p>{viewing.text}</p> : null}
+          </div>
+          <button type="button" className="viewer-x" onClick={() => setViewing(null)} aria-label={t("artist.close")}>×</button>
+        </div>
+      ) : null}
       {radioOn ? <span className="sr" aria-live="polite">{t(R.live ? "artist.radioPlayingSr" : "artist.radioPausedSr", { name: A.name })}</span> : null}
     </div>
   );

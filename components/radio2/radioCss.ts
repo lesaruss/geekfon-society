@@ -110,6 +110,18 @@ body{overflow:hidden}
 .gfr .card.wide .collage{inset:auto -4% -8% 38%;height:96%}
 .gfr .card.wide .collage img{width:44%}
 .gfr .card.wide .collage img:nth-child(3){width:38%;right:26%;bottom:34%}
+.gfr .os{display:grid;grid-template-columns:1fr;gap:12px}
+.gfr .os-c{position:relative;display:grid;grid-template-columns:132px minmax(0,1fr);gap:18px;align-items:center;border-radius:14px;padding:12px;overflow:hidden;color:#fff;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 62%,#111),#15142a 72%)}
+.gfr .os-c>img,.gfr .os-ph{width:132px;height:132px;border-radius:10px;object-fit:cover;box-shadow:0 8px 24px rgba(0,0,0,.45);display:block;background:rgba(255,255,255,.1)}
+.gfr .os-b{display:flex;flex-direction:column;gap:5px;min-width:0}
+.gfr .os-d{align-self:flex-start;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;background:#f2e04a;color:#151515;border-radius:999px;padding:4px 9px}
+.gfr .os-b b{font-size:24px;font-weight:900;line-height:1.1;font-family:var(--display)}
+.gfr .os-b small{color:#e4dcef;font-weight:700;font-size:13px}.gfr .os-b .os-n{opacity:.75}
+.gfr .os-a{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.gfr .os-a .p,.gfr .os-a .g{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:800;border-radius:8px;padding:7px 11px;border:0;cursor:pointer;text-decoration:none}
+.gfr .os-a .p{background:#fff;color:#151515}.gfr .os-a .g{background:rgba(255,255,255,.16);color:#fff}
+.gfr .os-a .p:hover,.gfr .os-a .g:hover{filter:brightness(.92)}
+.gfr .os-t{margin:8px 0 0;padding-left:20px;font-size:13px;color:#e4dcef}.gfr .os-t li{margin:2px 0}.gfr .os-t b{font-size:13px;font-family:inherit;color:#fff}.gfr .os-t span{opacity:.75}
 .gfr .card.coming{cursor:default;background:var(--surface-2);color:var(--text);border:1px dashed color-mix(in srgb, var(--c) 70%, transparent)}
 .gfr .card.coming:hover{transform:none;box-shadow:none}
 .gfr .card.coming .name{color:var(--c)}
@@ -328,6 +340,7 @@ body{overflow:hidden}
 
 /* ---------- Phone ---------- */
 @media (max-width:760px){
+  .gfr .os-c{grid-template-columns:96px minmax(0,1fr);gap:12px;padding:10px}.gfr .os-c>img,.gfr .os-ph{width:96px;height:96px}.gfr .os-b b{font-size:19px}
   body{overflow:auto}
   .gfr{--bar-h:64px;--tabs-h:62px;font-size:14.5px}
   .gfr .app{display:block;padding:0;height:auto;min-height:100dvh}

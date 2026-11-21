@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLiveRadio, songOf, fmtTime, FALLBACK_MAIN, type Station } from "./useLiveRadio";
-import { useArtist, useLyrics, useLyricView, lyricPreview, NEW_TALENT, stColor, stInk } from "./radioData";
+import { useArtist, useLyrics, useLyricView, lyricPreview, stColor, stInk } from "./radioData";
 import { LyricToggle } from "./LyricToggle";
 import type { RadioTrack } from "@/lib/radioSchedule";
 import { POP_CSS } from "./popCss";
@@ -155,9 +155,6 @@ export default function PopPlayer() {
               </button>
             );
           })}
-          <div className="tile coming" aria-label={t("pop.comingLabel", { name: NEW_TALENT.name })} style={{ "--c": NEW_TALENT.color, "--i": NEW_TALENT.ink } as React.CSSProperties}>
-            <span className="ring" /><span className="nm">{NEW_TALENT.name}</span><span className="tag">{t("pop.coming")}</span>
-          </div>
         </div>
 
         <div className="np">

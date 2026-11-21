@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { FanBibleModule } from "@/lib/server/bible";
 import type { GalleryItem } from "@/lib/server/gallery";
+import type { SocialPost } from "@/lib/artistPage";
 
 export type SongGrant = {
   stream: string;
@@ -29,6 +30,9 @@ export type RosterAccess = {
   // Albums this viewer owns: "all" (staff, Lifetime, Pro, artist-wide unlock) or album ids.
   ownedAlbums: string[] | "all";
   gallery?: { items: GalleryItem[]; lockedCount: number };
+  /** Members only: the queued social posts in full, and album music video urls by album id and video id. */
+  exclusive?: SocialPost[];
+  albumVideos?: Record<string, Record<string, string>>;
 };
 
 const EMPTY: RosterAccess = { loaded: false, signedIn: false, supporter: false, allArtists: false, download: false, songs: {}, downloads: {}, staff: false, ownedAlbums: [] };
@@ -58,6 +62,8 @@ export function useRosterAccess(slug: string, enabled = true): RosterAccess & { 
         staff: !!body.staff,
         ownedAlbums: body.ownedAlbums === "all" ? "all" : Array.isArray(body.ownedAlbums) ? body.ownedAlbums : [],
         gallery: body.gallery,
+        exclusive: Array.isArray(body.exclusive) ? body.exclusive : undefined,
+        albumVideos: body.albumVideos,
       });
     } catch {
       setAccess({ ...EMPTY, loaded: true });

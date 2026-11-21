@@ -101,6 +101,8 @@ export type PublicAlbum = {
   trackTarget: number;
   geekfonReleaseDate: string | null;
   tracks: { songId: string; kind: string; position: number }[];
+  /** gfs_albums.videos as stored (urls included): only the server may read these. */
+  videos: { id: string; title: string; url: string; poster: string | null; public_at: string | null }[];
 };
 
 export type DepotRow = {
@@ -300,7 +302,7 @@ export async function loadArtistDepot(artistSlug: string): Promise<{ songs: Publ
     loadArtistRows(slug, true),
     sb
       .from("gfs_albums")
-      .select("id, title, working_title, status, track_target, sort_order, geekfon_release_date, gfs_album_tracks(song_id, kind, position)")
+      .select("id, title, working_title, status, track_target, sort_order, geekfon_release_date, cover_url, videos, gfs_album_tracks(song_id, kind, position)")
       .eq("artist_slug", slug)
       .order("sort_order", { ascending: true }),
   ]);
@@ -311,7 +313,7 @@ export async function loadArtistDepot(artistSlug: string): Promise<{ songs: Publ
   const byId = new Map(songs.map(s => [s.id, s]));
   type AlbumRow = {
     id: string; title: string | null; working_title: string | null; status: string; track_target: number | null;
-    geekfon_release_date: string | null; gfs_album_tracks: { song_id: string; kind: string; position: number }[] | null;
+    geekfon_release_date: string | null; cover_url: string | null; videos: PublicAlbum["videos"] | null; gfs_album_tracks: { song_id: string; kind: string; position: number }[] | null;
   };
   const albumRows = ((albumRes.error ? [] : albumRes.data ?? []) as AlbumRow[])
     .filter(a => !rule.label || !LABEL_ARTISTS.has(slug) || rule.label.visibleAlbumIds.has(a.id));
@@ -321,9 +323,11 @@ export async function loadArtistDepot(artistSlug: string): Promise<{ songs: Publ
     status: a.status,
     out: rule.label ? rule.label.outAlbumIds.has(a.id) : a.status === "released",
     label: !!rule.label,
-    coverUrl: albumCover(a.title || a.working_title || "", a.gfs_album_tracks ?? [], byId),
+    // Its own cover when it has one (gfs_albums.cover_url, 2026-11-21), else the title track's.
+    coverUrl: sizedImage(a.cover_url, 600, "contain") ?? albumCover(a.title || a.working_title || "", a.gfs_album_tracks ?? [], byId),
     trackTarget: a.track_target ?? 7,
     geekfonReleaseDate: a.geekfon_release_date,
+    videos: Array.isArray(a.videos) ? a.videos.filter(v => v && v.id && v.url) : [],
     tracks: [...(a.gfs_album_tracks ?? [])]
       // An album can only reference songs that are live in the depot; a
       // retired song silently leaves its album rather than rendering a hole.

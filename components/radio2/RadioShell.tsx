@@ -18,7 +18,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useLiveRadio, songOf, sameSong, fmtTime, PREVIEW_SECONDS, FALLBACK_MAIN, isArtistStation, type Song, type Station, type LiveRadio } from "./useLiveRadio";
-import { useArtist, useLyrics, useLyricView, lyricPreview, NEW_TALENT, stColor, stInk, greeting } from "./radioData";
+import { useArtist, useLyrics, useLyricView, lyricPreview, stColor, stInk, greeting } from "./radioData";
 import { LyricToggle } from "./LyricToggle";
 import { LanguagePicker, useT } from "@/components/i18n/I18n";
 import { RADIO_CSS } from "./radioCss";
@@ -309,10 +309,6 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
                   </button>
                 );
               })}
-              <div className="soon" aria-label={t("shell.nameComing", { name: NEW_TALENT.name })}>
-                <span className="sw" style={{ boxShadow: `inset 0 0 0 2px ${NEW_TALENT.color}` }} />
-                <span><span className="nm">{NEW_TALENT.name}</span><span className="sub">{t("shell.coming")}</span></span>
-              </div>
             </div>
             <RailAccount me={me} />
           </nav>

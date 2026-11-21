@@ -19,6 +19,9 @@ import { viewerFromRequest, entitlementFor } from "@/lib/server/entitlements";
 import { serviceClient } from "@/lib/server/supabaseAdmin";
 import { loadFanBible } from "@/lib/server/bible";
 import { loadGallery } from "@/lib/server/gallery";
+import { loadSocial } from "@/lib/server/social";
+import { loadArtistDepot } from "@/lib/server/depot";
+import type { SocialPost } from "@/lib/artistPage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -88,6 +91,20 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
     if (url) downloads[r.id] = asDownload(url, fileName(artist, r.title));
   }
 
+  // Members (Sean, 2026-11-21: "when they click exclusive ... if they're
+  // logged in, they would see them"): any signed-in account sees the queued
+  // social posts and the album music videos before they go public.
+  const memberExtras = (async () => {
+    const [{ data: row }, depot] = await Promise.all([
+      serviceClient()!.from("gfs_artists").select("profile").eq("slug", artist).maybeSingle(),
+      loadArtistDepot(artist),
+    ]);
+    const social = await loadSocial(artist, (row?.profile as { pulse?: Parameters<typeof loadSocial>[1] } | null)?.pulse);
+    const albumVideos: Record<string, Record<string, string>> = {};
+    for (const a of depot.albums) for (const v of a.videos) (albumVideos[a.id] ??= {})[v.id] = v.url;
+    return { exclusive: social.queued as SocialPost[], albumVideos };
+  })();
+
   const [bible, gallery] = await Promise.all([
     ent.supporter ? loadFanBible(artist, { full: true }) : Promise.resolve(undefined),
     // Signed-in non-supporters get only what the page already shows; no need to re-sign.
@@ -109,6 +126,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
       ownedAlbums: ent.supporter ? (ent.albumIds ? [...ent.albumIds] : "all") : [],
       ...(bible ? { bible } : {}),
       ...(gallery ? { gallery } : {}),
+      ...(await memberExtras),
     },
     { headers: noStore }
   );

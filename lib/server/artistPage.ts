@@ -13,9 +13,10 @@
 import { serviceClient, SUPABASE_URL } from "./supabaseAdmin";
 import { loadArtistDepot, depotSlug, LABEL_ARTISTS, type PublicAlbum } from "./depot";
 import { loadGallery, featuredGallery } from "./gallery";
+import { loadSocial, lockedCard } from "./social";
 import { stationsFeaturing, listStations, inkFor, MAIN_STATION } from "./radio";
 import { ARTIST_ORDER } from "@/lib/roster";
-import { plainDashes, type ArtistPageData, type RosterArtist, type RosterData, type StationChip, type PressItem, type GalleryTile, type AlbumCard, type SellAlbum } from "@/lib/artistPage";
+import { plainDashes, type ArtistPageData, type RosterArtist, type RosterData, type StationChip, type PressItem, type GalleryTile, type AlbumCard, type SellAlbum, type AlbumVideo } from "@/lib/artistPage";
 
 type Profile = {
   name?: string; tagline?: string; bio?: string | string[]; shortBio?: string; quote?: string; genre?: string; location?: string;
@@ -76,6 +77,15 @@ export function sellableAlbum(albums: PublicAlbum[]): { id: string; title: strin
   return a ? { id: a.id, title: a.title } : null;
 }
 
+/** An album's videos as the public page may see them: the url only once public_at has passed. */
+export function publicVideos(a: PublicAlbum, member = false): AlbumVideo[] {
+  const now = Date.now();
+  return a.videos.map(v => {
+    const open = !!v.public_at && Date.parse(v.public_at) <= now;
+    return { id: v.id, title: v.title, poster: v.poster, publicAt: v.public_at, url: open || member ? v.url : null };
+  });
+}
+
 /** Albums with at least one live song, oldest first. Label-model artists
  *  (LABEL_ARTISTS, e.g. Roxanne) keep their single-album model (empty list).
  *  Note: PublicAlbum.label is true for every artist on artist pages (HQ
@@ -89,6 +99,7 @@ function albumCards(albums: PublicAlbum[], liveIds: string[], slug: string): Alb
       return {
         id: a.id, title: a.title, coverUrl: a.coverUrl, inProgress: a.status !== "released", trackTarget: a.trackTarget,
         songIds: [...t.filter(x => x.kind !== "remix"), ...t.filter(x => x.kind === "remix")].map(x => x.songId),
+        videos: publicVideos(a),
       };
     })
     .filter(a => a.songIds.length);
@@ -144,11 +155,12 @@ export async function loadArtistPage(rawSlug: string): Promise<ArtistPageData | 
   const name = row.name || p.name || slug;
   const complete = !!serviceClient();
 
-  const [depot, galleryPublic, featuring, press] = await Promise.all([
+  const [depot, galleryPublic, featuring, press, social] = await Promise.all([
     loadArtistDepot(slug),
     loadGallery(slug, "public"),
     stationsFeaturing(slug),
     pressOf(slug, p),
+    loadSocial(slug, (p as { pulse?: Parameters<typeof loadSocial>[1] }).pulse),
   ]);
 
   const accent = p.accent || FALLBACK_ACCENT;
@@ -185,6 +197,7 @@ export async function loadArtistPage(rawSlug: string): Promise<ArtistPageData | 
     homeStation: homeStation ? chip(homeStation) : null,
     press,
     gallery: { items, lockedCount: galleryPublic.lockedCount },
+    social: { posts: social.posts, locked: social.queued.map(lockedCard) },
     album: sellFor(depot.albums, depot.songs.map(x => x.id), depotSlug(slug)),
     albums: albumCards(depot.albums, depot.songs.map(x => x.id), depotSlug(slug)),
   };

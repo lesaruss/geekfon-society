@@ -7,8 +7,8 @@
 // (/api/admin/chat-room); only published lines show, and a future posted_at
 // stays hidden until then. Lines live in gfs_chat_messages (service role only).
 //
-// Who reads what (Sean, 2026-10-10, lib/chatAccess.ts): October 1 to 3 are
-// free for everyone, no sign-in. Later days are for supporters of THIS
+// Who reads what (Sean, 2026-11-21, lib/chatAccess.ts): today and the 5 days
+// before it are free for everyone, no sign-in. Later days are for supporters of THIS
 // artist (entitlementFor in lib/server/entitlements.ts: their album, or
 // Lifetime, Pro, staff). Support is per artist: a Roxanne supporter reads
 // every day on Roxanne's page and gets the locked days on Likkle Sis's page.
@@ -95,13 +95,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   }
 
   const asked = req.nextUrl.searchParams.get("day");
-  // Supporters open on the latest day, like any chat. Everyone else starts
-  // at the beginning of the story, on the first free day.
-  const firstFree = days.find(isFreeChatDay);
+  // Everyone opens on the latest day, like any chat (Sean, 2026-11-21: "they
+  // can see the current chat for today").
+  const today = nyDay(now);
+  const free = (d: string) => isFreeChatDay(d, today);
   const day = asked && /^\d{4}-\d{2}-\d{2}$/.test(asked) ? asked
-    : !g.supporter && firstFree ? firstFree
-    : (days.filter(d => d <= nyDay(now)).pop() ?? days[days.length - 1] ?? nyDay(now));
-  const locked = !g.supporter && !isFreeChatDay(day);
+    : (days.filter(d => d <= today).pop() ?? days[days.length - 1] ?? today);
+  const locked = !g.supporter && !free(day);
   const [from, to] = nyDayBounds(day);
   let q = sb.from("gfs_chat_messages")
     .select("id, from_slug, body, original, original_lang, kind, drop_title, drop_label, drop_cover, posted_at, media_url, media_kind, reactions")
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
     };
     const people: Record<string, ChatPerson> = {};
     for (const m of await loadChatCast(sb)) people[m.slug] = { name: m.name, avatar: m.avatar, accent: m.accent };
-    return NextResponse.json({ day, days, today: nyDay(now), messages: [], locked: lock, freeDays: days.filter(isFreeChatDay), supporter: false, people, staff: false, opensOn }, { headers: noStore });
+    return NextResponse.json({ day, days, today: nyDay(now), messages: [], locked: lock, freeDays: days.filter(free), supporter: false, people, staff: false, opensOn }, { headers: noStore });
   }
 
   const messages: ChatMessage[] = ((rows ?? []) as Row[]).map(r => ({
@@ -140,5 +140,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ arti
   const people: Record<string, ChatPerson> = {};
   for (const m of await loadChatCast(sb)) people[m.slug] = { name: m.name, avatar: m.avatar, accent: m.accent };
 
-  return NextResponse.json({ day, days, today: nyDay(now), messages, locked: null, freeDays: days.filter(isFreeChatDay), supporter: g.supporter, people, staff: g.staff, opensOn }, { headers: noStore });
+  return NextResponse.json({ day, days, today: nyDay(now), messages, locked: null, freeDays: days.filter(free), supporter: g.supporter, people, staff: g.staff, opensOn }, { headers: noStore });
 }

@@ -10,13 +10,14 @@ import { ArtistCard } from "./ArtistsView";
 import type { RosterArtist } from "@/lib/artistPage";
 import { useShell, songsOf, coversOf, artistHref } from "./RadioShell";
 import { fmtTime, PREVIEW_SECONDS, type Heart } from "./useLiveRadio";
-import { NEW_TALENT, stColor, stInk } from "./radioData";
+import { stColor, stInk } from "./radioData";
 import { IcPlay, IcPause, IcHeart, IcHeartSolid, IcLyrics, IcRadio, Eq } from "./icons";
-import { useT } from "@/components/i18n/I18n";
+import { useI18n } from "@/components/i18n/I18n";
+import type { OutSoon } from "@/app/api/radio/out-soon/route";
 
 export default function HomeView() {
   const S = useShell();
-  const t = useT();
+  const { t, locale } = useI18n();
   const { R, view, go, tuneTo, openPanel, openLyrics, heart, openUnlock, homeStationOf, hello } = S;
   const pv = R.preview;
   // Meet the artists (Sean, 2026-11-15 panel): the cast on the home page, one row, in the Artists page card.
@@ -27,15 +28,46 @@ export default function HomeView() {
     return () => { on = false; };
   }, []);
 
-  // New Talent as one full-width strip, not a lone card in an empty row (Sean, 2026-11-15). No button: artist submissions are not built yet.
-  const comingCard = (
-    <div key={NEW_TALENT.slug} className="card coming strip" style={{ "--c": NEW_TALENT.color, "--i": NEW_TALENT.ink } as React.CSSProperties} aria-label={t("home.comingSoonLabel", { name: NEW_TALENT.name })}>
-      <span className="ring" />
-      <span className="name">{NEW_TALENT.name}</span>
-      <span className="line">{NEW_TALENT.tagline}</span>
-      <span className="tag">{t("home.coming")}</span>
-    </div>
-  );
+  // Out soon (Sean, 2026-11-21): the next albums on the release calendar, as stacked banners. New Talent is gone from the home page.
+  const [soon, setSoon] = useState<OutSoon[]>([]);
+  const [openList, setOpenList] = useState<string | null>(null);
+  useEffect(() => {
+    let on = true;
+    fetch("/api/radio/out-soon").then(r => (r.ok ? r.json() : null)).then(d => { if (on && d?.releases) setSoon(d.releases); }).catch(() => {});
+    return () => { on = false; };
+  }, []);
+  const todayLA = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const daysTo = (d: string) => Math.round((Date.parse(`${d}T12:00:00Z`) - Date.parse(`${todayLA}T12:00:00Z`)) / 86400000);
+  const outSoon = soon.length ? (
+    <section className="shelf osoon">
+      <div className="shelf-h"><h2>{t("home.outSoon")}</h2></div>
+      <div className="os">
+        {soon.map(r => {
+          const n = daysTo(r.date);
+          const st = r.station ? R.stations.find(x => x.slug === r.station) : null;
+          const c = r.accent || (st ? stColor(st) : "#7a1020");
+          return (
+            <div key={r.key} className="os-c" style={{ "--c": c } as React.CSSProperties}>
+              {r.cover ? <img src={r.cover} alt="" /> : <span className="os-ph" />}
+              <div className="os-b">
+                <span className="os-d">{new Date(`${r.date}T12:00:00Z`).toLocaleDateString(locale, { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" })}</span>
+                <small className="os-n">{n <= 0 ? t("home.outToday") : t("home.inDays", { count: n })}</small>
+                <b>{r.title}</b>
+                <small>{r.artists.map(a => a.name).join(", ")} · {t("home.songs", { count: r.tracks.length })}</small>
+                <div className="os-a">
+                  {r.album ? <button type="button" className="p" onClick={() => openUnlock(r.album!.artistSlug, { id: r.album!.id, title: r.album!.title })}>{t("home.getEarly")}</button>
+                    : st ? <button type="button" className="p" onClick={() => tuneTo(st.slug)}><IcPlay size={16} />{t("home.playStation", { name: st.name })}</button> : null}
+                  {r.artists.length === 1 ? <Link className="g" href={artistHref(r.artists[0].slug)}>{r.artists[0].name}</Link>
+                    : <button type="button" className="g" aria-expanded={openList === r.key} onClick={() => setOpenList(openList === r.key ? null : r.key)}>{t("home.tracklist")}</button>}
+                </div>
+                {openList === r.key ? <ol className="os-t">{r.tracks.map(x => <li key={x.title}><b>{x.title}</b> <span>{x.artist}</span></li>)}</ol> : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  ) : null;
 
   // One whole sentence for translators; the bold "What is this?" sits where {what} is.
   const lede = t("home.lede").split("{what}");
@@ -61,16 +93,13 @@ export default function HomeView() {
           </button>
         </div>
       </section>
+      {outSoon}
       {cast.length ? (
         <section className="shelf meet">
           <div className="shelf-h"><h2>{t("home.meetArtists")}</h2><Link className="more" href="/roster">{t("home.showAll")}</Link></div>
           <div className="agrid">{cast.slice(0, 4).map(a => <ArtistCard key={a.slug} a={a} />)}</div>
         </section>
       ) : null}
-      <section className="shelf">
-        <div className="shelf-h"><h2>{t("home.comingToDial")}</h2></div>
-        <div className="grid">{comingCard}</div>
-      </section>
       <section className="shelf">
         <div className="shelf-h"><h2>{t("home.recentlyPlayed")}</h2></div>
         {R.recent.length ? (
@@ -112,11 +141,6 @@ export default function HomeView() {
             </div>
           );
         })}
-        <div className="srow dim">
-          <div className="art" style={{ "--c": NEW_TALENT.color } as React.CSSProperties} />
-          <div><h2>{NEW_TALENT.name} <span className="tag">{t("home.coming")}</span></h2><p>{NEW_TALENT.tagline}</p></div>
-          <div className="act" />
-        </div>
       </div>
     </>
   );
@@ -170,7 +194,7 @@ export default function HomeView() {
 /** One hearted song: a 30-second preview, the artist, the $11 unlock, the heart and the lyrics. Shared by Hearted songs and Your GeekFon. */
 export function HeartRow({ h }: { h: Heart }) {
   const { R, openLyrics, heart, openUnlock, homeStationOf, me } = useShell();
-  const t = useT();
+  const { t, locale } = useI18n();
   const pv = R.preview;
   // Unlocked already (one by one, or every artist): the full song is on the artist's page.
   const full = !!h.slug && me.state === "in" && (me.allArtists || me.unlocked.includes(h.slug));

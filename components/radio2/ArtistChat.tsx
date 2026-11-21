@@ -135,7 +135,7 @@ export default function ArtistChat({ slug, artistName, onUnlock }: { slug: strin
               <span className="sr">{t("chat.earlierDays")}</span>
               <select value={chips.includes(data.day) ? "" : data.day} onChange={e => e.target.value && load(e.target.value)} aria-label={t("chat.earlierDays")}>
                 <option value="">{t("chat.earlierDays")}</option>
-                {[...data.days].reverse().slice(3).map(d => <option key={d} value={d}>{dayLabel(t, locale, d, data.today)}</option>)}
+                {[...data.days].reverse().slice(3).map(d => <option key={d} value={d}>{!data.supporter && !data.freeDays.includes(d) ? "🔒 " : ""}{dayLabel(t, locale, d, data.today)}</option>)}
               </select>
             </label>
           ) : null}
