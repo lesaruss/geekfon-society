@@ -227,3 +227,18 @@ Held voices (vocal hold) are left out until Sean lifts the hold.
 - Talking clips (LoLA, intro beats, Sean's booth takes): "AI artists · voiced by our founder" (`AI_VOICE`).
 - Never "voices performed by the founder" on a song: the vocals are AI, and it read as if Sean sang them.
 - `restamp_footer.py in.mp4 out.mp4 [song|voice]` swaps the line on a finished video without a re-render.
+
+## Making artist previews in bulk (2026-11-21)
+
+1. Whisper each song in the Higgsfield sandbox (faster-whisper small, word timestamps,
+   `condition_on_previous_text=False`, `initial_prompt` = the start of the official lyric). Without those two
+   settings Whisper loops one phrase through a whole song on some tracks.
+2. `preview_specs.py songs.json segdir artdir outdir` matches the official lines to the words (original-language
+   text when the song is not sung in English; the caption is the English line of the same index), fills short
+   gaps, picks the run-in to the first chorus and prints a match score per song.
+3. Fast rap with a low score: Whisper the 30 s window only, primed with that window's lines, and align those
+   lines only (a repeated chorus elsewhere in the song otherwise grabs the window's words).
+4. Bands: one member per frame, cut from the group portrait (`art` entries with `box`); the cut rotates on
+   lyric changes with equal screen time.
+5. Check before it posts: held voices (vocal hold) in any section, captions that read badly as on-screen text
+   (`WINDOW_OVERRIDES`), and `lyrics_en` that is not English.

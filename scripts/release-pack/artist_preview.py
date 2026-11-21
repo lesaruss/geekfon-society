@@ -12,6 +12,7 @@ spec.json = a snippet spec (audio, cover, logo, artist, title, start, end, song_
        "color": "magenta"                        a design_kit REEL colour
        "plate_tag": "J-Pop Rock · Tokyo"         under the artist name (default: the song title)
        "art_box": [0.14, 0.02, 0.86, 0.66]       the part of each portrait to frame (fractions l, t, r, b)
+       an art entry may be {"file": "music.png", "box": [l, t, r, b]} to frame one member of a group
 """
 import json, os, subprocess, sys, tempfile
 from multiprocessing import Pool
@@ -36,13 +37,14 @@ def _ground():
 
 def _art_index(t):
     """Which portrait is up: the art list is spread over the lyric lines and cuts on a line change."""
+    # equal screen time per portrait (or band member), but the cut waits for the next lyric change
     n = len(_b['art']); lines = S['lines']
-    if n == 1 or not lines: return 0
-    per = -(-len(lines) // n)
-    i = 0
-    for k, (st, _) in enumerate(lines):
-        if t >= st - 0.08: i = k
-    return min(n - 1, i // per)
+    if n == 1: return 0
+    cut = S['start']
+    for st, _ in lines:
+        if t >= st - 0.08: cut = st
+    slot = (S['end'] - S['start']) / n
+    return min(n - 1, max(0, int((cut - S['start'] + 0.5) / slot)))
 
 
 def frame(t):
@@ -71,10 +73,14 @@ def frame(t):
 def _init(spec):
     global S
     S = spec; SN.S = spec; set_logo(S['logo'])
-    _b['art'] = [Image.open(p).convert('RGB') for p in S['art']]
-    # full-body portraits on white: frame head to thigh (frac box l, t, r, b), as the Reel 1/2 beats are framed
-    fb = S.get('art_box', [0.14, 0.02, 0.86, 0.66])
-    _b['art'] = [a.crop((int(a.width * fb[0]), int(a.height * fb[1]), int(a.width * fb[2]), int(a.height * fb[3]))) for a in _b['art']]
+    # full-body portraits on white: frame head to thigh (frac box l, t, r, b), as the Reel 1/2 beats are framed.
+    # An art entry may be {"file": ..., "box": [...]}: one member cut from a group portrait, so a band cuts
+    # member to member like the Reel 2/3 solo beats instead of shrinking the whole group into the card.
+    fb = S.get('art_box', [0.14, 0.02, 0.86, 0.66]); _b['art'] = []
+    for e in S['art']:
+        f, bx = (e['file'], e.get('box', fb)) if isinstance(e, dict) else (e, fb)
+        a = Image.open(f).convert('RGB')
+        _b['art'].append(a.crop((int(a.width * bx[0]), int(a.height * bx[1]), int(a.width * bx[2]), int(a.height * bx[3]))))
     for i, a in enumerate(_b['art']):   # keep frames cheap: the card is ~740 px wide
         if a.width > 1400: _b['art'][i] = a.resize((1400, int(a.height * 1400 / a.width)), Image.LANCZOS)
     _b['ground'] = _ground()
@@ -98,7 +104,7 @@ def main(spec_path, out):
     spec = json.load(open(spec_path)); base = os.path.dirname(os.path.abspath(spec_path))
     rel = lambda p: p if (os.path.isabs(p) or '://' in p) else os.path.join(base, p)
     for k in ('audio', 'cover', 'logo'): spec[k] = rel(spec[k])
-    spec['art'] = [rel(p) for p in spec['art']]
+    spec['art'] = [dict(e, file=rel(e['file'])) if isinstance(e, dict) else rel(e) for e in spec['art']]
     st, en, cl = spec['start'], spec['end'], spec.get('close_seconds', 3.6)
     snip = en - st; total = snip + cl
     jobs = [('art', st + i / FPS) for i in range(round(snip * FPS))] + [('close', 0)] * round(cl * FPS)
