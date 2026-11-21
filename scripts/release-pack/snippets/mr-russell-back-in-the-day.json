@@ -1,0 +1,52 @@
+{
+ "artist": "Logan Russell",
+ "title": "Back in the Day",
+ "station": "Hip Hop Radio",
+ "start": 124.0,
+ "end": 152.6,
+ "song_seconds": 209,
+ "lines": [
+  [
+   124.4,
+   "He wasn't that rich, no Super Mario"
+  ],
+  [
+   127.36,
+   "So he spent his spare time in someone else's home"
+  ],
+  [
+   131.72,
+   "Dropping bananas in Mario Kart"
+  ],
+  [
+   134.86,
+   "Flying through the cosmos while playing Star Fox"
+  ],
+  [
+   138.46,
+   "Now he's gotten older and he doesn't wanna play"
+  ],
+  [
+   141.44,
+   "Man, I wish I knew Pops back in the day"
+  ],
+  [
+   144.86,
+   "Playing on his PS3 or 360"
+  ],
+  [
+   148.08,
+   "I'd even take a Nintendo Wii"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-mr-russell-back-in-the-day.mp4",
+ "sources": {
+  "audio": "geekfon-radio-audio/mr-russell/stream/mr-russell-super-nintendo-sega-genesis-rt-935699a1-1790450854118.mp3",
+  "cover": "geekfon-media/artists/mr-russell/covers/super-nintendo-sega-genesis.png",
+  "timings": "faster-whisper small (Higgsfield sandbox) 2026-11-21; text = pulse_songs.lyrics_en"
+ }
+}

@@ -1,0 +1,60 @@
+{
+ "artist": "Shamanic Resin",
+ "title": "Tonight We're Little Elves",
+ "station": "Anime Radio",
+ "start": 29.6,
+ "end": 59.6,
+ "song_seconds": 171,
+ "lines": [
+  [
+   30.0,
+   "Eyebrows snowy white"
+  ],
+  [
+   33.0,
+   "Eyes open wide and round"
+  ],
+  [
+   36.06,
+   "Santa Claus, where are you?"
+  ],
+  [
+   39.5,
+   "Santa Claus, what are you doing?"
+  ],
+  [
+   42.7,
+   "Why did you come to our house?"
+  ],
+  [
+   45.4,
+   "Don't sneak around, just tell us"
+  ],
+  [
+   48.08,
+   "Santa Claus, over here"
+  ],
+  [
+   51.02,
+   "Santa Claus, we like you"
+  ],
+  [
+   54.26,
+   "Packing presents for the kids"
+  ],
+  [
+   57.08,
+   "We're coming with you too"
+  ]
+ ],
+ "audio": "song.mp3",
+ "cover": "cover.png",
+ "logo": "logo.png",
+ "close_seconds": 3.6,
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-shamanic-tonight-were-little-elves.mp4",
+ "sources": {
+  "audio": "geekfon-radio-audio/shamanic-resin/stream/shamanic-resin-santa-claus-7-1790441802721.mp3",
+  "cover": "geekfon-media/artists/geekfon-society/series/releases/geekfon-christmas/geekfon-christmas-cover-final-v1.jpg (album cover)",
+  "timings": "faster-whisper small (Higgsfield sandbox) 2026-11-21; sung in Korean, text = pulse_songs.lyrics_en"
+ }
+}
