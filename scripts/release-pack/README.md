@@ -209,11 +209,14 @@ then the close ("Tune in. It's free." geekfon.ai). Music only, no credits, about
 ## The feed: 80/20 (Sean 2026-11-21)
 
 80% of GeekFon Society posts are songs: "here's what you can hear on GeekFon radio", released on DSPs
-or not. 20% are promotion (LoLA teasers, release-day posts, reels). Two song looks, 30-35 s each, same close:
+or not. 20% are promotion (LoLA teasers, release-day posts, reels).
 
-- `artist_preview.py`: the artist on screen in the launch-reel look (Reels 1-2), the song from the first
-  frame, lyric captions, name plate. No LoLA, no pitch. Spec = a snippet spec plus `art`, `color`, `plate_tag`.
-- `snippet.py`: the radio screen (cover art, NOW PLAYING, progress bar).
+- **Every song post is `snippet.py`** (Sean 2026-11-21: "use the cover art for each one and do it exactly like
+  Brixton Baby, Never Broke Us and Hearts Wide Open"): the song's own cover art on the radio screen, NOW
+  PLAYING, lyric captions, progress bar, the "Tune in. It's free." close. 30-35 s.
+- `artist_preview.py` (artist portrait in the launch-reel look) is NOT the feed format. Sean rejected it
+  2026-11-21: the approved portraits repeat across songs and group crops look poor. Do not use it unless Sean
+  asks for it again.
 
 Schedule the posts that line up with a release first (release eve, release day, the release week), then fill
 the gaps. Every planned post goes into `ve_social_slots` straight away as `held` with `TO MAKE:` in
@@ -228,7 +231,7 @@ Held voices (vocal hold) are left out until Sean lifts the hold.
 - Never "voices performed by the founder" on a song: the vocals are AI, and it read as if Sean sang them.
 - `restamp_footer.py in.mp4 out.mp4 [song|voice]` swaps the line on a finished video without a re-render.
 
-## Making artist previews in bulk (2026-11-21)
+## Making song posts in bulk (2026-11-21)
 
 1. Whisper each song in the Higgsfield sandbox (faster-whisper small, word timestamps,
    `condition_on_previous_text=False`, `initial_prompt` = the start of the official lyric). Without those two
@@ -238,7 +241,6 @@ Held voices (vocal hold) are left out until Sean lifts the hold.
    gaps, picks the run-in to the first chorus and prints a match score per song.
 3. Fast rap with a low score: Whisper the 30 s window only, primed with that window's lines, and align those
    lines only (a repeated chorus elsewhere in the song otherwise grabs the window's words).
-4. Bands: one member per frame, cut from the group portrait (`art` entries with `box`); the cut rotates on
-   lyric changes with equal screen time.
+4. Render each spec with `snippet.py` (station per artist as in `snippets/`; Holiday Radio for Christmas songs).
 5. Check before it posts: held voices (vocal hold) in any section, captions that read badly as on-screen text
    (`WINDOW_OVERRIDES`), and `lyrics_en` that is not English.

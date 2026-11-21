@@ -60,6 +60,13 @@ def frame(t):
         highlight(im, line, (60, CAP_Y + (cap_h - n * size * 1.18) / 2, W - 60, H), size)
     y = int(CAP_Y + CAP_LINES * CAP_SIZE * 1.18) + 60
     ch = H - 300 - y
+    if S.get('art_mode') == 'cover':   # the song's own cover art, square, full width (Sean 2026-11-21)
+        cw = 900; cx = (W - cw) // 2; ch2 = cw; cy = y + (ch - ch2) // 2
+        k = (t - S['start']) / max(0.1, S['end'] - S['start']); z = 1.0 + 0.06 * min(1, max(0, k))
+        art = _b['art'][0]; aw, ah = art.size; cw_, chh = int(aw / z), int(ah / z); ox, oy = (aw - cw_) // 2, (ah - chh) // 2
+        card(im, art.crop((ox, oy, ox + cw_, oy + chh)), (cx, cy, cx + cw, cy + ch2), border=12, shadow=18)
+        name_plate(im, S['artist'].upper(), S.get('plate_tag') or S['title'], cx - 20, cy + ch2 - 120, size=58)
+        SN.footer(im); return im
     # slow push-in across the whole preview
     k = (t - S['start']) / max(0.1, S['end'] - S['start']); z = 1.0 + 0.08 * min(1, max(0, k))
     art = _b['art'][_art_index(t)]; aw, ah = art.size
@@ -76,6 +83,7 @@ def _init(spec):
     # full-body portraits on white: frame head to thigh (frac box l, t, r, b), as the Reel 1/2 beats are framed.
     # An art entry may be {"file": ..., "box": [...]}: one member cut from a group portrait, so a band cuts
     # member to member like the Reel 2/3 solo beats instead of shrinking the whole group into the card.
+    if S.get('art_mode') == 'cover': S['art'] = [S['cover']]; S['art_box'] = [0, 0, 1, 1]
     fb = S.get('art_box', [0.14, 0.02, 0.86, 0.66]); _b['art'] = []
     for e in S['art']:
         f, bx = (e['file'], e.get('box', fb)) if isinstance(e, dict) else (e, fb)
