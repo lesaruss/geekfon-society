@@ -104,6 +104,7 @@ const d: Dict = {
     socLockedLabel: "Um post de {name} para membros, antes de sair. Entre para ver.",
     videos: "Vídeos",
     playVideo: "Assistir {title}",
+    mvJoin: "Entre para assistir",
     mvLocked: "Membros assistem antes da estreia",
     mvLockedLabel: "{title}: para membros antes da estreia. Entre para assistir.",
     mvFoot: "O clipe é para membros até a estreia. Depois fica grátis para todos.",

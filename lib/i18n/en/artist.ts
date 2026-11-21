@@ -29,6 +29,7 @@ const artist = {
   socLockedLabel: "A post from {name} for members, before it goes out. Sign in to see it.",
   videos: "Videos",
   playVideo: "Play {title}",
+  mvJoin: "Sign in to watch",
   mvLocked: "Members watch it before it premieres",
   mvLockedLabel: "{title}: for members before it premieres. Sign in to watch.",
   mvFoot: "The music video is for members until it premieres. Then it is free for everyone.",

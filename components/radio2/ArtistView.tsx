@@ -301,7 +301,7 @@ export default function ArtistView({ initial }: { initial: ArtistPageData }) {
               ) : (
                 <a key={v.id} className="vt lk" href={signInHref()} aria-label={t("artist.mvLockedLabel", { title: v.title })}>
                   {v.poster ? <img src={v.poster} alt="" loading="lazy" /> : null}
-                  <span className="gl"><span className="lc"><IcLock size={18} /></span><b>{v.title}</b><span>{t("artist.mvLocked")}</span><span className="pill sm">{t("artist.socJoinCta")}</span></span>
+                  <span className="gl"><span className="lc"><IcLock size={18} /></span><b>{v.title}</b><span>{t("artist.mvLocked")}</span><span className="pill sm">{t("artist.mvJoin")}</span></span>
                 </a>
               );
             })}

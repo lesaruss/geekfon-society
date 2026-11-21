@@ -104,6 +104,7 @@ const d: Dict = {
     socLockedLabel: "게시 전 {name}의 멤버 전용 게시물. 로그인하면 볼 수 있어요.",
     videos: "영상",
     playVideo: "{title} 재생",
+    mvJoin: "로그인하고 보기",
     mvLocked: "멤버는 공개 전에 먼저 봐요",
     mvLockedLabel: "{title}: 공개 전 멤버 전용. 로그인하고 보기.",
     mvFoot: "뮤직비디오는 공개 전까지 멤버 전용이에요. 공개 후에는 누구나 무료로 볼 수 있어요.",

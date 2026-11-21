@@ -104,6 +104,7 @@ const d: Dict = {
     socLockedLabel: "公開前の{name}のメンバー向け投稿。ログインすると見られます。",
     videos: "動画",
     playVideo: "{title}を再生",
+    mvJoin: "ログインして見る",
     mvLocked: "メンバーはプレミア前に見られます",
     mvLockedLabel: "{title}：プレミア前はメンバー限定。ログインして見る。",
     mvFoot: "MVはプレミアまでメンバー限定です。その後は誰でも無料で見られます。",
