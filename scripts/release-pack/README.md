@@ -205,3 +205,17 @@ then the close ("Tune in. It's free." geekfon.ai). Music only, no credits, about
 4. "Tune in. It's free." is true: the radio rotation plays every on-air song to everyone, and artist pages give
    non-members a 30-second preview (`/api/songs/<id>/preview`). `radio_tracks.is_free_preview` is a legacy flag
    the live site does not read; do not rely on it.
+
+## The feed: 80/20 (Sean 2026-11-21)
+
+80% of GeekFon Society posts are songs: "here's what you can hear on GeekFon radio", released on DSPs
+or not. 20% are promotion (LoLA teasers, release-day posts, reels). Two song looks, 30-35 s each, same close:
+
+- `artist_preview.py`: the artist on screen in the launch-reel look (Reels 1-2), the song from the first
+  frame, lyric captions, name plate. No LoLA, no pitch. Spec = a snippet spec plus `art`, `color`, `plate_tag`.
+- `snippet.py`: the radio screen (cover art, NOW PLAYING, progress bar).
+
+Schedule the posts that line up with a release first (release eve, release day, the release week), then fill
+the gaps. Every planned post goes into `ve_social_slots` straight away as `held` with `TO MAKE:` in
+`manual_steps` (batch `previews-80` or `promo-20`), so the HQ social desk To-do list is the production list.
+Held voices (vocal hold) are left out until Sean lifts the hold.

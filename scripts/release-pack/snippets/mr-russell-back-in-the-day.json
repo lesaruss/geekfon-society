@@ -2,51 +2,56 @@
  "artist": "Logan Russell",
  "title": "Back in the Day",
  "station": "Hip Hop Radio",
- "start": 124.0,
- "end": 152.6,
+ "start": 13.6,
+ "end": 42.4,
  "song_seconds": 209,
  "lines": [
   [
-   124.4,
-   "He wasn't that rich, no Super Mario"
+   13.94,
+   "Super Nintendo, Super Nintendo"
   ],
   [
-   127.36,
-   "So he spent his spare time in someone else's home"
+   16.98,
+   "Sega Genesis"
   ],
   [
-   131.72,
-   "Dropping bananas in Mario Kart"
+   20.72,
+   "Super Nintendo, Super Nintendo"
   ],
   [
-   134.86,
-   "Flying through the cosmos while playing Star Fox"
+   24.5,
+   "Sega, Sega, Sega, Sega"
   ],
   [
-   138.46,
-   "Now he's gotten older and he doesn't wanna play"
+   26.08,
+   "Sega Genesis"
   ],
   [
-   141.44,
-   "Man, I wish I knew Pops back in the day"
+   27.89,
+   "Up, up, down, down, left, left, right, right"
   ],
   [
-   144.86,
-   "Playing on his PS3 or 360"
+   31.38,
+   "A, B, select, A, A, A, B, select, start"
   ],
   [
-   148.08,
-   "I'd even take a Nintendo Wii"
+   34.76,
+   "Super Nintendo, Sega Genesis"
+  ],
+  [
+   37.82,
+   "Back in the days when my dad was just a kid"
   ]
  ],
  "audio": "song.mp3",
  "cover": "cover.png",
  "logo": "logo.png",
  "close_seconds": 3.6,
- "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-mr-russell-back-in-the-day.mp4",
+ "output": "geekfon-media/artists/geekfon-society/series/social/snippets/2026-11/snippet-mr-russell-back-in-the-day-v2.mp4",
  "sources": {
   "audio": "geekfon-radio-audio/mr-russell/stream/mr-russell-super-nintendo-sega-genesis-rt-935699a1-1790450854118.mp3",
   "cover": "geekfon-media/artists/mr-russell/covers/super-nintendo-sega-genesis.png",
-  "timings": "faster-whisper small (Higgsfield sandbox) 2026-11-21; text = pulse_songs.lyrics_en"
+  "timings": "faster-whisper small (Higgsfield sandbox) 2026-11-21; text = pulse_songs.lyrics_en",
+  "note": "v2 (Sean 2026-11-21): the intro, chorus chant, cheat code and the title line, fading out under the close on 'blowin' on the cartridge'. Word timings faster-whisper small on 0:16-0:46."
  }
 }
