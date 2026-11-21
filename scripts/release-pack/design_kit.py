@@ -93,6 +93,11 @@ def lockup(im,x,y,size):
 
 
 # ---------- reel look ----------
+# AI disclosure lines (Sean 2026-11-21). Songs: the vocals are AI (Suno) from Sean's melodies, so never say
+# the founder performed them. Talking clips (LoLA, intro beats) are Sean's booth takes, so 'voiced by' is true.
+AI_SONG = 'AI artists · songs written and produced by our founder'
+AI_VOICE = 'AI artists · voiced by our founder'
+
 REEL = {'yellow': (235, 225, 44), 'magenta': (153, 39, 141), 'orange': (244, 152, 28), 'green': (123, 193, 68),
         'pink': (226, 60, 140), 'blue': (60, 170, 230), 'red': (232, 48, 42)}
 HILITE = (235, 225, 44); INK = (12, 12, 14)
@@ -169,8 +174,8 @@ def name_plate(im, name, tag, x, y, size=58):
     return x + max(tw, gw) + 2 * pad
 
 
-def ai_line(im, cx, y, size=30):
-    d = ImageDraw.Draw(im); f = FIG(size); s = 'AI artists · voices performed by the founder'; tw = d.textlength(s, font=f)
+def ai_line(im, cx, y, size=30, s=None):
+    d = ImageDraw.Draw(im); f = FIG(size); s = s or AI_SONG; tw = d.textlength(s, font=f)
     d.rounded_rectangle((cx - tw / 2 - 18, y, cx + tw / 2 + 18, y + size * 1.6), radius=10, fill=(30, 18, 40))
     d.text((cx - tw / 2, y + size * 0.25), s, font=f, fill=WHITE)
 

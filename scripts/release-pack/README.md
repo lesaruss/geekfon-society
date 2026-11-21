@@ -219,3 +219,11 @@ Schedule the posts that line up with a release first (release eve, release day, 
 the gaps. Every planned post goes into `ve_social_slots` straight away as `held` with `TO MAKE:` in
 `manual_steps` (batch `previews-80` or `promo-20`), so the HQ social desk To-do list is the production list.
 Held voices (vocal hold) are left out until Sean lifts the hold.
+
+## AI disclosure line (Sean 2026-11-21)
+
+- Song posts: "AI artists · songs written and produced by our founder" on screen, and in captions
+  "Every GeekFon artist is AI. Songs written and produced by our founder." (`design_kit.AI_SONG`)
+- Talking clips (LoLA, intro beats, Sean's booth takes): "AI artists · voiced by our founder" (`AI_VOICE`).
+- Never "voices performed by the founder" on a song: the vocals are AI, and it read as if Sean sang them.
+- `restamp_footer.py in.mp4 out.mp4 [song|voice]` swaps the line on a finished video without a re-render.

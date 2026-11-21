@@ -42,7 +42,7 @@ def top_bar(im):
 
 
 def footer(im):
-    d = ImageDraw.Draw(im); f = FIG(28); s = 'AI artists · voices performed by the founder'; tw = d.textlength(s, font=f)
+    d = ImageDraw.Draw(im); f = FIG(28); s = AI_SONG; tw = d.textlength(s, font=f)
     d.rounded_rectangle((W - 40 - tw - 32, H - 76, W - 40, H - 28), radius=10, fill=(30, 18, 40)); d.text((W - 40 - tw - 16, H - 70), s, font=f, fill=WHITE)
 
 
