@@ -296,8 +296,15 @@ def main(plan_path, out):
     for i, a in enumerate(P['audio']):
         ins += (['-ss', f"{a['ss']}"] if 'ss' in a else []) + (['-t', f"{a['dur']}"] if 'dur' in a else []) + ['-i', a['src']]
         g = f"volume={a.get('gain_db', 0)}dB"
-        for d0, d1, db in a.get('duck', []):
-            g += f",volume=enable='between(t,{d0 - a['at']:.2f},{d1 - a['at']:.2f})':volume={db}dB"
+        for dk in a.get('duck', []):
+            d0, d1, db = dk[0] - a['at'], dk[1] - a['at'], dk[2]
+            r = dk[3] if len(dk) > 3 else 0   # optional ramp: hold the duck to d1, then fade back to full over r seconds
+            if r:
+                L = 10 ** (db / 20)   # (Sean 2026-11-22: the music jumped up right on LoLA's last word; it should ease up after)
+                g += (f",volume=eval=frame:volume='if(lt(t,{d0:.2f}),1,if(lt(t,{d1:.2f}),{L:.5f},"
+                      f"if(lt(t,{d1 + r:.2f}),{L:.5f}+(1-{L:.5f})*(t-{d1:.2f})/{r},1)))'")
+            else:
+                g += f",volume=enable='between(t,{d0:.2f},{d1:.2f})':volume={db}dB"
         fo = a.get('fade_out')
         fades = 'afade=t=in:d=0.03' + (f",afade=t=out:st={a['dur'] - fo:.2f}:d={fo}" if fo and 'dur' in a else '')
         parts.append(f"[{i}:a]aresample=48000,aformat=channel_layouts=stereo,{fades},{g},adelay={int(a['at']*1000)}|{int(a['at']*1000)}[a{i}]")
