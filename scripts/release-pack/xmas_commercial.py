@@ -162,6 +162,33 @@ def card_cover(P, sh, path):
     im.convert('RGB').save(path)
 
 
+def cover_zoom_frames(P, sh, d0, fps, dur):
+    """End card that starts as the full-frame cover (matching the last frame of the morph), eases back into the
+    card position, then fades the text in. With dissolve_from, the first frames blend from that clip's last frame."""
+    W, H = P['size']; s = P['safe']; bg = tuple(sh.get('bg', [212, 20, 48])); n = int(round(dur * fps))
+    final = os.path.join(d0, 'final.png'); card_cover(P, sh, final); fin = Image.open(final).convert('RGB')
+    nt = Image.new('RGB', (W, H), bg); cx = (s['l'] + W - s['r']) // 2; cw = sh.get('cover_w', 840)
+    z = sh['zoom_from']; w0, x0, y0 = z.get('w', W), z.get('x', 0), z.get('y', (H - W) // 2)
+    x1, y1 = cx - cw // 2, s['t'] + sh.get('cover_top', 40); tz = z.get('t', 0.9)
+    cov = Image.open(P['cover']).convert('RGB')
+    last = None
+    if sh.get('dissolve_from'):
+        lf = os.path.join(d0, 'last.png')
+        run(['ffmpeg', '-v', 'error', '-y', '-sseof', '-0.05', '-i', sh['dissolve_from'], '-frames:v', '1', '-vf', f'scale={W}:{H}', lf])
+        last = Image.open(lf).convert('RGB')
+    for i in range(n):
+        t = i / fps; k = min(t / tz, 1.0); e = k * k * (3 - 2 * k)
+        w = int(round(w0 + (cw - w0) * e)); x = int(round(x0 + (x1 - x0) * e)); y = int(round(y0 + (y1 - y0) * e))
+        fr = nt.copy(); fr.paste(cov.resize((w, w), Image.LANCZOS), (x, y))
+        a = min(max((t - tz - 0.1) / 0.45, 0), 1)
+        if a > 0 and k >= 1:
+            fr = Image.blend(fr, fin, a)
+        if last is not None and t < sh.get('dissolve', 0.3):
+            fr = Image.blend(last, fr, t / sh.get('dissolve', 0.3))
+        fr.save(os.path.join(d0, f'{i:04d}.png'))
+    return n
+
+
 def bar_png(P, title, artist, path):
     """Lower-third title bar: black plate with the song in white, a yellow tag with the artist."""
     W, H = P['size']; s = P['safe']; im = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
@@ -209,6 +236,9 @@ def main(plan_path, out):
             p = os.path.join(tmp, f'c{k}.png'); Image.open(sh['image']).convert('RGB').resize((W, H), Image.LANCZOS).save(p)
             run(['ffmpeg', '-v', 'error', '-y', '-loop', '1', '-t', f'{dur}', '-i', p, '-vf',
                  f"zoompan=z='1+0.05*on/{int(dur*fps)}':d={int(dur*fps)}:s={W}x{H}:fps={fps}", '-t', f'{dur}'] + enc + [seg])
+        elif sh.get('card') == 'cover' and sh.get('zoom_from'):
+            fd = os.path.join(tmp, f'cz{k}'); os.makedirs(fd); n = cover_zoom_frames(P, sh, fd, fps, dur)
+            run(['ffmpeg', '-v', 'error', '-y', '-framerate', str(fps), '-i', os.path.join(fd, '%04d.png'), '-t', f'{dur}'] + enc + [seg])
         elif sh.get('card') == 'cover':
             p = os.path.join(tmp, f'c{k}.png'); card_cover(P, sh, p)
             src = ['-loop', '1', '-t', f'{dur}', '-i', p]
@@ -224,8 +254,20 @@ def main(plan_path, out):
             p = os.path.join(tmp, f'c{k}.png'); card_end(P, sh, p)
             run(['ffmpeg', '-v', 'error', '-y', '-loop', '1', '-t', f'{dur}', '-i', p, '-vf',
                  f"zoompan=z='1.03-0.03*on/{int(dur*fps)}':d={int(dur*fps)}:s={W}x{H}:fps={fps}", '-t', f'{dur}'] + enc + [seg])
+        elif sh.get('chain'):
+            # several clips in one shot, joined by crossfades (Sean 2026-11-22: the cut into the photo felt jumpy)
+            parts, ins = [], []
+            for j, c in enumerate(sh['chain']):
+                ins += ['-ss', f"{c.get('ss', 0)}", '-t', f"{c['dur']}", '-i', c['clip']]
+                parts.append(f"[{j}:v]scale={W}:{H}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{H},fps={fps},format=yuv420p,setpts=PTS-STARTPTS[c{j}]")
+            fc = ';'.join(parts); prev = 'c0'; acc = sh['chain'][0]['dur']
+            for j, c in enumerate(sh['chain'][1:], 1):
+                xd = c.get('xfade', 0.4); acc -= xd
+                fc += f";[{prev}][c{j}]xfade=transition=fade:duration={xd}:offset={acc:.3f}[x{j}]"; prev = f'x{j}'; acc += c['dur']
+            run(['ffmpeg', '-v', 'error', '-y'] + ins + ['-filter_complex', fc, '-map', f'[{prev}]', '-t', f'{dur}'] + enc + [seg])
         else:
-            vf = f'scale={W}:{H}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{H},fps={fps}'
+            sp = sh.get('speed', 1.0)   # >1 plays faster (Sean 2026-11-22: the dance was too slow for the song)
+            vf = (f'setpts=PTS/{sp},' if sp != 1.0 else '') + f'scale={W}:{H}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{H},fps={fps}'
             inputs = ['-ss', f"{sh.get('ss', 0)}", '-i', sh['clip']]
             if sh.get('bar'):
                 bp = os.path.join(tmp, f'bar{k}.png'); bar_png(P, sh['bar'][0], sh['bar'][1], bp)
