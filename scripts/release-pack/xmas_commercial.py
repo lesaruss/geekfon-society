@@ -149,9 +149,12 @@ def card_cover(P, sh, path):
     cx = (s['l'] + W - s['r']) // 2; cw = sh.get('cover_w', 840)
     cov = Image.open(P['cover']).convert('RGB').resize((cw, cw), Image.LANCZOS)
     y0 = s['t'] + sh.get('cover_top', 40); im.paste(cov, (cx - cw // 2, y0))
-    y = y0 + cw + 50; f = font(P['fonts']['bold'], 76)
+    y = y0 + cw + 50; maxw = W - s['l'] - s['r'] - 20
     for ln in sh.get('lines', []):
-        tw = d.textlength(ln, font=f); d.text((cx - tw / 2, y), ln, font=f, fill=WHITE); y += 92
+        f = font(P['fonts']['bold'], 76)
+        while d.textlength(ln, font=f) > maxw and f.size > 30:   # fit inside the safe width (v1 ran off the edge)
+            f = font(P['fonts']['bold'], f.size - 2)
+        tw = d.textlength(ln, font=f); d.text((cx - tw / 2, y), ln, font=f, fill=WHITE); y += int(f.size * 1.2)
     if sh.get('sub'):
         fs = font(P['fonts']['bold'], 46); tw = d.textlength(sh['sub'], font=fs)
         d.rounded_rectangle((cx - tw / 2 - 26, y + 14, cx + tw / 2 + 26, y + 14 + 72), radius=14, fill=YEL)
