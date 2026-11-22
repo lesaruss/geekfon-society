@@ -204,13 +204,25 @@ def bar_png(P, title, artist, path):
 
 
 def ai_png(P, path):
+    """AI disclosure as a footnote (Sean 2026-11-22: the boxed line read as distracting). Small, no plate, a soft
+    shadow for legibility, set 60 px below the safe zone's bottom edge (lower gets covered by the apps' captions)."""
     W, H = P['size']; s = P['safe']; im = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
-    f = font(P['fonts']['bold'], 28); tw = d.textlength(P['ai_line'], font=f); cx = (s['l'] + W - s['r']) / 2
-    # Sits on the bottom edge of the safe zone (Sean 2026-11-22: v8 sat on the end-card button); ai_lift raises it.
-    y = H - s['b'] - 46 - P.get('ai_lift', 0)
-    d.rounded_rectangle((cx - tw / 2 - 18, y, cx + tw / 2 + 18, y + 46), radius=10, fill=(30, 18, 40, 220))
-    d.text((cx - tw / 2, y + 7), P['ai_line'], font=f, fill=WHITE)
+    f = font(P['fonts']['bold'], P.get('ai_size', 24)); tw = d.textlength(P['ai_line'], font=f); cx = (s['l'] + W - s['r']) / 2
+    y = H - s['b'] + 60 - 30 - P.get('ai_lift', 0)
+    sh = Image.new('RGBA', (W, H), (0, 0, 0, 0)); ImageDraw.Draw(sh).text((cx - tw / 2 + 2, y + 2), P['ai_line'], font=f, fill=(0, 0, 0, 200))
+    im = Image.alpha_composite(im, sh.filter(ImageFilter.GaussianBlur(3))); d = ImageDraw.Draw(im)
+    d.text((cx - tw / 2, y), P['ai_line'], font=f, fill=(255, 255, 255, 230))
     im.save(path)
+
+
+def ai_enable(P):
+    """When the footnote shows (Sean 2026-11-22): the opening 3 s and the end card, not the whole time.
+    ai_show [[t0, t1], ...] overrides; by default the end card is the cover shot to the end."""
+    win = P.get('ai_show')
+    if not win:
+        cov = [sh['t0'] for sh in P['shots'] if sh.get('card') == 'cover']
+        win = [[0, 3.0]] + ([[cov[0], P['duration'] + 1]] if cov else [])
+    return '+'.join(f'between(t,{a:.2f},{b:.2f})' for a, b in win)
 
 
 def vhs_png(P, path):
@@ -285,9 +297,9 @@ def main(plan_path, out):
     if P.get('vhs', True):
         fc = (f"[0:v]noise=alls=4:allf=t,rgbashift=rh=-3:bh=3,eq=saturation=1.12:contrast=1.04[a];"
               f"color=c=gray:s={W}x{H}:r={fps},noise=alls=100:allf=t,format=yuv420p[st];"
-              f"[a][st]overlay=enable='{st}'[b];[b][1:v]overlay=0:0[c];[c][2:v]overlay=0:0,vignette=PI/6[v]")
+              f"[a][st]overlay=enable='{st}'[b];[b][1:v]overlay=0:0[c];[c][2:v]overlay=0:0:enable='{ai_enable(P)}',vignette=PI/6[v]")
     else:   # clean look (Sean 2026-11-22: the VHS cards read cheap): AI line only
-        fc = "[0:v]null[c];[c][2:v]overlay=0:0[v]"
+        fc = f"[0:v]null[c];[c][2:v]overlay=0:0:enable='{ai_enable(P)}'[v]"
     vid = os.path.join(tmp, 'vid.mp4')
     run(['ffmpeg', '-v', 'error', '-y', '-i', body, '-loop', '1', '-i', vh, '-loop', '1', '-i', ai, '-filter_complex', fc,
          '-map', '[v]', '-t', f'{T}', '-r', str(fps), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-preset', 'slow', vid])
