@@ -146,7 +146,7 @@ def card_cover(P, sh, path):
     """Clean end card (no VHS): the real album cover on its own red, with the call to action under it."""
     W, H = P['size']; s = P['safe']; bg = tuple(sh.get('bg', [212, 20, 48]))
     im = Image.new('RGBA', (W, H), bg + (255,)); d = ImageDraw.Draw(im)
-    cx = (s['l'] + W - s['r']) // 2; cw = sh.get('cover_w', 840)
+    cx = (s['l'] + W - s['r']) // 2; cw = sh.get('cover_w', 780)
     cov = Image.open(P['cover']).convert('RGB').resize((cw, cw), Image.LANCZOS)
     y0 = s['t'] + sh.get('cover_top', 40); im.paste(cov, (cx - cw // 2, y0))
     y = y0 + cw + 50; maxw = W - s['l'] - s['r'] - 20
@@ -167,7 +167,7 @@ def cover_zoom_frames(P, sh, d0, fps, dur):
     card position, then fades the text in. With dissolve_from, the first frames blend from that clip's last frame."""
     W, H = P['size']; s = P['safe']; bg = tuple(sh.get('bg', [212, 20, 48])); n = int(round(dur * fps))
     final = os.path.join(d0, 'final.png'); card_cover(P, sh, final); fin = Image.open(final).convert('RGB')
-    nt = Image.new('RGB', (W, H), bg); cx = (s['l'] + W - s['r']) // 2; cw = sh.get('cover_w', 840)
+    nt = Image.new('RGB', (W, H), bg); cx = (s['l'] + W - s['r']) // 2; cw = sh.get('cover_w', 780)
     z = sh['zoom_from']; w0, x0, y0 = z.get('w', W), z.get('x', 0), z.get('y', (H - W) // 2)
     x1, y1 = cx - cw // 2, s['t'] + sh.get('cover_top', 40); tz = z.get('t', 0.9)
     cov = Image.open(P['cover']).convert('RGB')
@@ -206,7 +206,8 @@ def bar_png(P, title, artist, path):
 def ai_png(P, path):
     W, H = P['size']; s = P['safe']; im = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     f = font(P['fonts']['bold'], 28); tw = d.textlength(P['ai_line'], font=f); cx = (s['l'] + W - s['r']) / 2
-    y = H - s['b'] - 70
+    # Sits on the bottom edge of the safe zone (Sean 2026-11-22: v8 sat on the end-card button); ai_lift raises it.
+    y = H - s['b'] - 46 - P.get('ai_lift', 0)
     d.rounded_rectangle((cx - tw / 2 - 18, y, cx + tw / 2 + 18, y + 46), radius=10, fill=(30, 18, 40, 220))
     d.text((cx - tw / 2, y + 7), P['ai_line'], font=f, fill=WHITE)
     im.save(path)
