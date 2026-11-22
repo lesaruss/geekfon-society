@@ -302,7 +302,7 @@ def main(plan_path, out):
             if r:
                 L = 10 ** (db / 20)   # (Sean 2026-11-22: the music jumped up right on LoLA's last word; it should ease up after)
                 g += (f",volume=eval=frame:volume='if(lt(t,{d0:.2f}),1,if(lt(t,{d1:.2f}),{L:.5f},"
-                      f"if(lt(t,{d1 + r:.2f}),{L:.5f}+(1-{L:.5f})*(t-{d1:.2f})/{r},1)))'")
+                      f"if(lt(t,{d1 + r:.2f}),pow(10,{db}*(1-(t-{d1:.2f})/{r})/20),1)))'")   # even in dB, so it sounds like a smooth fade up
             else:
                 g += f",volume=enable='between(t,{d0:.2f},{d1:.2f})':volume={db}dB"
         fo = a.get('fade_out')
