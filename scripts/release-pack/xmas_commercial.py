@@ -142,6 +142,23 @@ def card_end(P, sh, path):
     im.convert('RGB').save(path)
 
 
+def card_cover(P, sh, path):
+    """Clean end card (no VHS): the real album cover on its own red, with the call to action under it."""
+    W, H = P['size']; s = P['safe']; bg = tuple(sh.get('bg', [212, 20, 48]))
+    im = Image.new('RGBA', (W, H), bg + (255,)); d = ImageDraw.Draw(im)
+    cx = (s['l'] + W - s['r']) // 2; cw = sh.get('cover_w', 840)
+    cov = Image.open(P['cover']).convert('RGB').resize((cw, cw), Image.LANCZOS)
+    y0 = s['t'] + sh.get('cover_top', 40); im.paste(cov, (cx - cw // 2, y0))
+    y = y0 + cw + 50; f = font(P['fonts']['bold'], 76)
+    for ln in sh.get('lines', []):
+        tw = d.textlength(ln, font=f); d.text((cx - tw / 2, y), ln, font=f, fill=WHITE); y += 92
+    if sh.get('sub'):
+        fs = font(P['fonts']['bold'], 46); tw = d.textlength(sh['sub'], font=fs)
+        d.rounded_rectangle((cx - tw / 2 - 26, y + 14, cx + tw / 2 + 26, y + 14 + 72), radius=14, fill=YEL)
+        d.text((cx - tw / 2, y + 24), sh['sub'], font=fs, fill=INK)
+    im.convert('RGB').save(path)
+
+
 def bar_png(P, title, artist, path):
     """Lower-third title bar: black plate with the song in white, a yellow tag with the artist."""
     W, H = P['size']; s = P['safe']; im = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
@@ -185,6 +202,21 @@ def main(plan_path, out):
         elif sh.get('card') == 'logo':
             fd = os.path.join(tmp, f'logo{k}'); os.makedirs(fd); card_logo_frames(P, sh, fd, fps)
             run(['ffmpeg', '-v', 'error', '-y', '-framerate', str(fps), '-i', os.path.join(fd, '%04d.png'), '-t', f'{dur}'] + enc + [seg])
+        elif sh.get('card') == 'still':
+            p = os.path.join(tmp, f'c{k}.png'); Image.open(sh['image']).convert('RGB').resize((W, H), Image.LANCZOS).save(p)
+            run(['ffmpeg', '-v', 'error', '-y', '-loop', '1', '-t', f'{dur}', '-i', p, '-vf',
+                 f"zoompan=z='1+0.05*on/{int(dur*fps)}':d={int(dur*fps)}:s={W}x{H}:fps={fps}", '-t', f'{dur}'] + enc + [seg])
+        elif sh.get('card') == 'cover':
+            p = os.path.join(tmp, f'c{k}.png'); card_cover(P, sh, p)
+            src = ['-loop', '1', '-t', f'{dur}', '-i', p]
+            if sh.get('dissolve_from'):
+                lf = os.path.join(tmp, f'lf{k}.png')
+                run(['ffmpeg', '-v', 'error', '-y', '-sseof', '-0.05', '-i', sh['dissolve_from'], '-frames:v', '1', '-vf', f'scale={W}:{H}', lf])
+                d0 = sh.get('dissolve', 0.6)
+                run(['ffmpeg', '-v', 'error', '-y', '-loop', '1', '-t', f'{dur}', '-i', lf] + src + ['-filter_complex',
+                     f'[0:v]fps={fps},format=yuv420p[a];[1:v]fps={fps},format=yuv420p[b];[a][b]xfade=transition=fade:duration={d0}:offset=0', '-t', f'{dur}'] + enc + [seg])
+            else:
+                run(['ffmpeg', '-v', 'error', '-y'] + src + ['-vf', f'fps={fps}', '-t', f'{dur}'] + enc + [seg])
         elif sh.get('card') == 'end':
             p = os.path.join(tmp, f'c{k}.png'); card_end(P, sh, p)
             run(['ffmpeg', '-v', 'error', '-y', '-loop', '1', '-t', f'{dur}', '-i', p, '-vf',
@@ -204,9 +236,12 @@ def main(plan_path, out):
     ai = os.path.join(tmp, 'ai.png'); ai_png(P, ai); vh = os.path.join(tmp, 'vhs.png'); vhs_png(P, vh)
     st = '+'.join(f'between(t,{t-0.06:.2f},{t+0.06:.2f})' for t in P.get('statics', [])) or '0'
     # light grain only: heavy per-frame noise made a 15 s teaser 127 MB (v1)
-    fc = (f"[0:v]noise=alls=4:allf=t,rgbashift=rh=-3:bh=3,eq=saturation=1.12:contrast=1.04[a];"
-          f"color=c=gray:s={W}x{H}:r={fps},noise=alls=100:allf=t,format=yuv420p[st];"
-          f"[a][st]overlay=enable='{st}'[b];[b][1:v]overlay=0:0[c];[c][2:v]overlay=0:0,vignette=PI/6[v]")
+    if P.get('vhs', True):
+        fc = (f"[0:v]noise=alls=4:allf=t,rgbashift=rh=-3:bh=3,eq=saturation=1.12:contrast=1.04[a];"
+              f"color=c=gray:s={W}x{H}:r={fps},noise=alls=100:allf=t,format=yuv420p[st];"
+              f"[a][st]overlay=enable='{st}'[b];[b][1:v]overlay=0:0[c];[c][2:v]overlay=0:0,vignette=PI/6[v]")
+    else:   # clean look (Sean 2026-11-22: the VHS cards read cheap): AI line only
+        fc = "[0:v]null[c];[c][2:v]overlay=0:0[v]"
     vid = os.path.join(tmp, 'vid.mp4')
     run(['ffmpeg', '-v', 'error', '-y', '-i', body, '-loop', '1', '-i', vh, '-loop', '1', '-i', ai, '-filter_complex', fc,
          '-map', '[v]', '-t', f'{T}', '-r', str(fps), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-preset', 'slow', vid])
