@@ -211,7 +211,7 @@ def ai_png(P, path):
     y = H - s['b'] + 60 - 30 - P.get('ai_lift', 0)
     sh = Image.new('RGBA', (W, H), (0, 0, 0, 0)); ImageDraw.Draw(sh).text((cx - tw / 2 + 2, y + 2), P['ai_line'], font=f, fill=(0, 0, 0, 200))
     im = Image.alpha_composite(im, sh.filter(ImageFilter.GaussianBlur(3))); d = ImageDraw.Draw(im)
-    d.text((cx - tw / 2, y), P['ai_line'], font=f, fill=(255, 255, 255, 230))
+    d.text((cx - tw / 2, y), P['ai_line'], font=f, fill=(255, 255, 255, 240), stroke_width=2, stroke_fill=(20, 12, 28, 190))
     im.save(path)
 
 
