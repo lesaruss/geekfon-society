@@ -7,6 +7,7 @@
 // it (gfs_albums), else the station that plays its songs. Public.
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/server/supabaseAdmin";
+import { sized } from "@/lib/roster";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,7 +63,8 @@ export async function GET() {
       key: `${norm(first.album_title!).replace(/ /g, "-")}-${first.release_date}`,
       title: first.album_title!,
       date: first.release_date,
-      cover: rowsSorted.find(b => b.cover_url)?.cover_url ?? null,
+      // Shown at 132px at most (radioCss .os-c>img): resized, not the multi-MB master.
+      cover: sized(rowsSorted.find(b => b.cover_url)?.cover_url ?? null, 400),
       accent: solo ? who.get(solo)?.profile?.accent ?? null : null,
       artists: artistSlugs.map(s => ({ slug: s, name: who.get(s)?.name || rowsSorted.find(b => b.artist_slug === s)!.artist_name })),
       tracks: rowsSorted.map(b => ({ title: b.track_name, artist: who.get(b.artist_slug)?.name || b.artist_name })),

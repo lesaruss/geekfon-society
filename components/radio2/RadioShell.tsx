@@ -378,7 +378,7 @@ export default function RadioShell({ children }: { children: React.ReactNode }) 
                   instead of a big floating "Radio paused" bar. */}
               {pv ? <button type="button" className="rtb live-b" onClick={() => R.leavePreview(true)} aria-label={t("shell.backToLiveRadio")} title={t("shell.backToLiveRadio")}><IcRadio size={16} /><span className="t">{t("shell.backToLive")}</span></button> : null}
               <a className="rtb hide-m" href="/radio/pop" target="_blank" rel="noopener" onClick={popOut} aria-label={t("shell.popOutPlayer")} title={t("shell.popOutPlayer")}><IcPopOut size={16} /><span className="t">{t("shell.popOut")}</span></a>
-              <button type="button" className="wit" onClick={() => openPanel()}><span className="q" aria-hidden="true">?</span><span className="t">{t("shell.whatIsThis")}</span></button>
+              <button type="button" className="wit" onClick={() => openPanel()} aria-label={t("shell.whatIsThis")}><span className="q" aria-hidden="true">?</span><span className="t">{t("shell.whatIsThis")}</span></button>
               <button type="button" className="ib" onClick={() => (typeof window !== "undefined" && window.innerWidth <= 760 ? openPanel(barSong) : openLyrics())} disabled={!barSong?.songId} aria-label={t("shell.lyricsAndInfo")} title={t("shell.lyrics")}><IcLyrics /></button>
               {barSong?.songId ? (
                 <button type="button" className={"ib show-m" + (heartOn ? " hearted" : "")} onClick={() => heart(barSong)} aria-pressed={heartOn} aria-label={heartOn ? "Remove heart" : "Heart this song"}><IcHeart on={heartOn} /></button>
@@ -582,7 +582,7 @@ function LyricsOverlay({ song, onClose, onWhat, closeRef }: { song: Song; onClos
       <div className="lh">
         {song.coverUrl ? <img src={song.coverUrl} alt="" /> : null}
         <div><b>{song.title}</b><span>{song.artist}</span></div>
-        <button type="button" className="wit" onClick={onWhat}><span className="q" aria-hidden="true">?</span><span className="t">{t("shell.whatIsThis")}</span></button>
+        <button type="button" className="wit" onClick={onWhat} aria-label={t("shell.whatIsThis")}><span className="q" aria-hidden="true">?</span><span className="t">{t("shell.whatIsThis")}</span></button>
         <button type="button" className="cl" ref={closeRef} onClick={onClose} aria-label={t("shell.closeLyrics")}><IcX /></button>
       </div>
       <div className="lb">
