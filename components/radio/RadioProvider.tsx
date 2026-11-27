@@ -20,6 +20,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { usePathname } from "next/navigation";
 import { resolvePlayhead, type RadioTrack, type ResolvedPlayhead, type ScheduleOverride } from "@/lib/radioSchedule";
 import { announcePlay, onOtherTabPlay } from "@/lib/audioFocus";
+import { startListenHeartbeat, claimRadioDevice } from "@/lib/radioListen";
 
 const AUDIO_BASE = "https://fwbhwfxpncrsfhttimna.supabase.co/storage/v1/object/public/geekfon-radio-audio/";
 const RESYNC_MS = 5000;
@@ -244,6 +245,21 @@ export default function RadioProvider({ children }: { children: React.ReactNode 
     // The new GeekFon home (/) and /radio/pop run their own live player (components/radio2), so this one steps aside there.
     if (pathname === "/" || pathname?.startsWith("/radio")) stop();
   }, [pathname, stop]);
+
+  // Listener tracking v2 (Sean, 2026-11-27, lib/radioListen.ts): count real
+  // radio listening from the site-wide player too, and link an earlier
+  // anonymous listener to the account they sign in with.
+  const onAirLRef = useRef<ResolvedPlayhead | null>(null);
+  onAirLRef.current = onAir;
+  useEffect(() => {
+    if (!(mode === "radio" && playing)) return;
+    return startListenHeartbeat("mini", () => {
+      const p = onAirLRef.current;
+      const isSong = p && p.type !== "ad";
+      return { station: "main", songKey: isSong ? p.songId ?? null : null, title: isSong ? p.title : null, artist: isSong ? p.artist : null };
+    });
+  }, [mode, playing]);
+  useEffect(() => { claimRadioDevice(); }, [pathname]);
 
   const now = useMemo(() => {
     if (mode === "clip" && clip) return { title: clip.title, artist: clip.artist, slug: clip.slug, coverUrl: clip.coverUrl };

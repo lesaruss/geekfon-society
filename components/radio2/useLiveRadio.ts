@@ -21,6 +21,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolvePlayhead, type RadioTrack, type ResolvedPlayhead, type ScheduleOverride } from "@/lib/radioSchedule";
 import { announcePlay, onOtherTabPlay } from "@/lib/audioFocus";
+import { startListenHeartbeat } from "@/lib/radioListen";
 
 export type Station = { slug: string; name: string; tagline: string | null; color?: string | null; ink?: string | null; seasonal?: boolean };
 export type Song = { songId?: string; title: string; artist: string; slug?: string; coverUrl?: string | null; durationSeconds?: number };
@@ -403,15 +404,15 @@ export function useLiveRadio(opts: { syncUrl?: boolean } = {}) {
     pausePreviewAudio();
   }), [stopLive, pausePreviewAudio]);
 
-  /* ---------- listener heartbeat (anonymous, per tab) ---------- */
+  /* ---------- listener heartbeat (anonymous, per tab; v2 2026-11-27, lib/radioListen.ts) ---------- */
+  const onAirRef = useRef<ResolvedPlayhead | null>(null);
+  onAirRef.current = onAir;
   useEffect(() => {
     if (!live) return;
-    const ping = () => {
-      fetch("/api/radio/ping", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId.current }) }).catch(() => {});
-    };
-    ping();
-    const t = setInterval(ping, 20000);
-    return () => clearInterval(t);
+    return startListenHeartbeat("radio", () => {
+      const song = songOf(onAirRef.current);
+      return { station: stationRef.current, songKey: song?.songId ?? null, title: song?.title ?? null, artist: song?.artist ?? null };
+    }, sessionId.current);
   }, [live]);
 
   /* ---------- Media Session: lock screen and media keys ---------- */
