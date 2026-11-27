@@ -87,7 +87,7 @@ export function publicVideos(a: PublicAlbum, member = false): AlbumVideo[] {
 }
 
 /** Albums with at least one live song, oldest first. Label-model artists
- *  (LABEL_ARTISTS, e.g. Roxanne) keep their single-album model (empty list).
+ *  (LABEL_ARTISTS, none since 2026-11-27) keep their single-album model (empty list).
  *  Note: PublicAlbum.label is true for every artist on artist pages (HQ
  *  release state drives access for all), so it cannot be used here. */
 function albumCards(albums: PublicAlbum[], liveIds: string[], slug: string): AlbumCard[] {

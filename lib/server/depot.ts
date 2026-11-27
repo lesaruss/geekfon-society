@@ -58,7 +58,12 @@ const PUBLIC_STREAM_BASE = `${SUPABASE_URL}/storage/v1/object/public/${STREAM_BU
 export type SongAccess = "single" | "vault";
 
 // Artists whose public catalog follows the label release model (see top).
-export const LABEL_ARTISTS = new Set<string>(["roxanne"]);
+// Empty since 2026-11-27: Roxanne moved to the two-album page Shamanic Resin
+// has (Sean: "have it set up like Shamanic Resin"), Being You, Being Me (out)
+// and Stronger Together (being made, listed as coming). Access is unchanged:
+// artist pages, the stream gate and song lookups still read HQ release state
+// for every artist (pageGate). Radio now treats her like every other artist.
+export const LABEL_ARTISTS = new Set<string>([]);
 
 export type LabelState = {
   liveIds: Set<string>;         // songs out now (public singles)
