@@ -114,6 +114,8 @@ export async function buildRadioSchedule(mode: "urls" | "ids"): Promise<{ rotati
         .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id, cover_art_path, thumb_path")
         .in("source_radio_track_id", linkIds)
         .is("retired_at", null)
+        // Radio hold (Sean, 2026-11-27): a held song plays nowhere, e.g. until its cover art is done.
+        .eq("radio_hold", false)
     : { data: [] as PsRow[] };
   const byRt = new Map(((ps ?? []) as PsRow[]).map(p => [p.source_radio_track_id, p]));
 
@@ -256,6 +258,7 @@ export async function buildStationSchedule(slug: string): Promise<{ rotation: Ra
     .from("pulse_songs")
     .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id, is_remix, sort_order, cover_art_path, thumb_path")
     .is("retired_at", null)
+    .eq("radio_hold", false)
     .not("src_path", "is", null);
   q = songIds.length ? q.in("id", songIds) : q.in("primary_artist_slug", (station.artist_slugs ?? []) as string[]);
   if (!station.include_remixes) q = q.eq("is_remix", false);
@@ -376,7 +379,7 @@ export async function buildArtistSchedule(station: string): Promise<{ rotation: 
     sb.from("gfs_radio_stations").select("slug, song_ids").eq("active", true).eq("exclusive", true),
     sb.from("pulse_songs")
       .select("id, title, primary_artist_slug, src_path, duration_seconds, source_radio_track_id, is_remix, sort_order, cover_art_path, thumb_path")
-      .eq("primary_artist_slug", slug).eq("is_remix", false).is("retired_at", null).not("src_path", "is", null),
+      .eq("primary_artist_slug", slug).eq("is_remix", false).is("retired_at", null).eq("radio_hold", false).not("src_path", "is", null),
   ]);
   if (!artist) return null;
   type ArtistRow = { slug: string; name: string | null; profile: { accent?: string; tracks?: { n?: string; v?: string }[] } | null };
