@@ -91,7 +91,10 @@ export function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = 
   // HQ's Revenue page for the brand; HQ checks the owner account again on its side.
   // Same account-only gate as the rest of Tools.
   if (canSeeReleaseSchedule) {
-    base = [...base, { label: "Revenue", href: REVENUE_HREF }];
+    // Brand Desk (Sean, 2026-11-27: "get access to the brand desk on there,
+    // like we do with Vegans Explore... taking me to the HQ"): opens GeekFon's
+    // desk in HQ, which checks the owner account on its side.
+    base = [...base, { label: "Brand Desk", href: BRANDDESK_HREF }, { label: "Revenue", href: REVENUE_HREF }];
   }
   return base;
 }
@@ -102,8 +105,10 @@ export function navForTier(tier: Tier, isAdmin = false, canSeeReleaseSchedule = 
 // navigation"). The universal shell shows these under a Tools menu instead of
 // in the top nav; the public drawer lists them after the main items.
 const REVENUE_HREF = "https://hq.lesaruss.ai/revenue/brands/geekfon-society";
+const BRANDDESK_HREF = "https://hq.lesaruss.ai/new/branddesk/geekfon-society";
 
 const TOOL_HREFS = new Set([
+  BRANDDESK_HREF,
   REVENUE_HREF,
   "/dashboard/release-schedule",
   "/dashboard/radio-schedule",
