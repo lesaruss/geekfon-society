@@ -117,6 +117,7 @@ export async function GET(req: Request) {
     { data: artists },
     radioSchedule,
     ga4,
+    { count: members7d },
   ] = await Promise.all([
     admin.from("gfs_members").select("*", { count: "exact", head: true }),
     admin.from("gfs_artist_unlocks").select("amount_cents"),
@@ -130,6 +131,8 @@ export async function GET(req: Request) {
     // Same depot-built schedule every listener resolves (lib/server/radio.ts).
     buildRadioSchedule("ids"),
     fetchGA4(),
+    // New members this week, for the admin home (2026-11-27).
+    admin.from("gfs_members").select("*", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString()),
   ]);
 
   // Live radio listeners: anonymous heartbeat rows (see app/api/radio/ping/route.ts),
@@ -167,6 +170,7 @@ export async function GET(req: Request) {
   return NextResponse.json({
     analytics: {
       memberCount: memberCount ?? 0,
+      members7d: members7d ?? 0,
       unlockRevenueCents,
       unlockCount: (unlocks || []).length,
       playCount: playCount ?? 0,

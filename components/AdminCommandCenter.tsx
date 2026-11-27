@@ -1,397 +1,207 @@
 "use client";
+// The admin home (Sean, 2026-11-27: "the dashboard is unusable for me right
+// now"). Rebuilt in the November 2026 look inside AdminShell. Only true numbers:
+//   - "Unlock Revenue" is gone (the unlock model was retired 2026-09-06; money
+//     lives in HQ > Revenue, one click away);
+//   - "Total Likes" is gone (it was counting votes);
+//   - the hand-typed "1,000,000 goal" is gone;
+//   - Artist Briefs, Song Manager counts and Artist Rankings moved off the home
+//     (each has its own page in the menu).
+// What is on it: the radio right now, this week's numbers, quick actions, the
+// listener panel, newest members, what is waiting on Sean, site health.
+
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import ChangesPanel from "@/components/ChangesPanel";
 import RadioListenersPanel from "@/components/admin/RadioListenersPanel";
+import { BRANDDESK_URL, REVENUE_URL } from "@/components/admin/AdminShell";
 
-type Analytics = {
-  memberCount: number;
-  unlockRevenueCents: number;
-  unlockCount: number;
-  playCount: number;
-  plays7d: number;
-  likeCount: number;
-  likes7d: number;
-};
-type HealthRow = {
-  id: string;
-  audited_at: string;
-  functional: boolean | null;
-  visual: boolean | null;
-  performance: boolean | null;
-  accessibility: boolean | null;
-  standards: boolean | null;
-  ada_score: number | null;
-  ada_violations_critical: number | null;
-  ada_violations_serious: number | null;
-  performance_pct: number | null;
-  accessibility_pct: number | null;
-  summary: string;
-};
-type ArtistBrief = { artist_slug: string; title: string; status: string; updated_at: string };
-type NowPlaying = { type: string; path: string; title: string; artist: string; offsetSeconds: number; durationSeconds: number } | null;
-type MemberRow = { user_id: string; name: string | null; tier: string | null; created_at: string; email?: string | null };
-type RankedArtist = { slug: string; name: string; plays: number; votes: number; score: number };
+type Analytics = { memberCount: number; members7d?: number; playCount: number; plays7d: number };
+type HealthRow = { id: string; audited_at: string; performance_pct: number | null; ada_score: number | null; summary: string };
+type NowPlaying = { type: string; title: string; artist: string; coverUrl?: string | null } | null;
+type MemberRow = { user_id: string; name: string | null; email?: string | null; tier: string | null; created_at: string };
 type Ga4Snapshot = { sessions: number; users: number; pageviews: number; available: boolean };
+type Week = { listeners: number; minutes: number; converted: number; listening_now: number };
 
-const ADMIN_EMAIL = "contact@lesaruss.com";
-
-function fmtMoney(cents: number): string {
-  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
   if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins} min ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  if (hrs < 24) return `${hrs} h ago`;
+  return `${Math.floor(hrs / 24)} d ago`;
 }
-function initials(name: string | null): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+
+function greeting(): string {
+  const h = Number(new Date().toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric", hour12: false }));
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
 }
+
+const Ext = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" /></svg>
+);
 
 export default function AdminCommandCenter({ displayName }: { displayName: string }) {
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  const [health, setHealth] = useState<HealthRow[]>([]);
-  const [briefs, setBriefs] = useState<ArtistBrief[]>([]);
-  const [songManager, setSongManager] = useState<{ artistCount: number; trackCount: number } | null>(null);
+  const [health, setHealth] = useState<HealthRow | null>(null);
   const [nowPlaying, setNowPlaying] = useState<NowPlaying>(null);
-  const [radioListeners, setRadioListeners] = useState<number>(0);
   const [members, setMembers] = useState<MemberRow[]>([]);
-  const [topArtists, setTopArtists] = useState<RankedArtist[]>([]);
   const [ga4, setGa4] = useState<Ga4Snapshot | null>(null);
+  const [week, setWeek] = useState<Week | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         const headers: HeadersInit = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
-
-        const [ccRes, membersRes, rankingsRes] = await Promise.all([
+        const [cc, mem, wk] = await Promise.all([
           fetch("/api/admin/command-center", { headers }),
           fetch("/api/admin/members", { headers }),
-          supabase.from("gfs_artist_rankings").select("slug, name, plays, votes, score").order("score", { ascending: false }).limit(5),
+          fetch("/api/admin/radio-listeners?days=7", { headers }),
         ]);
-
-        if (ccRes.ok) {
-          const json = await ccRes.json();
-          setAnalytics(json.analytics);
-          setHealth(json.healthReport || []);
-          setBriefs(json.artistBriefs || []);
-          setSongManager(json.songManager);
-          setNowPlaying(json.nowPlaying);
-          setRadioListeners(json.radioListeners ?? 0);
-          setGa4(json.ga4 ?? null);
+        if (cc.ok) {
+          const j = await cc.json();
+          setAnalytics(j.analytics);
+          setHealth((j.healthReport || [])[0] ?? null);
+          setNowPlaying(j.nowPlaying);
+          setGa4(j.ga4 ?? null);
         }
-        if (membersRes.ok) {
-          const json = await membersRes.json();
-          setMembers((json.members || []).slice(0, 5));
-        }
-        if (rankingsRes.data) setTopArtists(rankingsRes.data as RankedArtist[]);
-      } catch (_) {
-        // widgets below each render their own empty state - a failed fetch here
-        // just means those show "no data yet" instead of throwing.
+        if (mem.ok) setMembers(((await mem.json()).members || []).slice(0, 6));
+        if (wk.ok) setWeek(await wk.json());
+      } catch {
+        /* each card shows its own empty state */
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  const latestHealth = health[0];
-  const draftBriefCount = briefs.filter(b => b.status === "draft").length;
+  const first = displayName.includes("@") ? "" : displayName.split(/\s+/)[0];
+  const today = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "long", day: "numeric" });
+  const dash = loading ? "…" : "0";
 
   return (
-    <>
+    <div className="ah">
       <style>{CSS}</style>
 
-      <div className="cc-welcome">
-        <div className="cc-eyebrow">Command Center</div>
-        <h1 className="cc-name">Welcome back, {displayName}</h1>
-        <div className="cc-badge"><span className="cc-badge-dot" />Super Admin</div>
-      </div>
+      <header className="ah-head">
+        <p className="ah-date">{today}</p>
+        <h1>{greeting()}{first ? `, ${first}` : ""}</h1>
+      </header>
 
-      {/* Analytics snapshot strip */}
-      <div className="cc-stats-row">
-        <div className="cc-stat-card">
-          <div className="cc-stat-label">Members</div>
-          <div className="cc-stat-val">{loading ? "…" : analytics?.memberCount ?? 0}</div>
-          <div className="cc-stat-sub">of 1,000,000 goal</div>
+      {/* The radio right now */}
+      <section className="ah-onair" aria-label="On air now">
+        {nowPlaying?.coverUrl ? <img src={nowPlaying.coverUrl} alt="" className="ah-cover" /> : <div className="ah-cover ah-cover-empty" />}
+        <div className="ah-onair-text">
+          <p className="ah-live"><span className="ah-dot" />On GeekFon Radio now</p>
+          <h2>{loading ? "…" : nowPlaying ? nowPlaying.title : "Nothing in rotation"}</h2>
+          <p className="ah-artist">{nowPlaying?.artist ?? ""}</p>
+          <p className="ah-listening">{week ? `${week.listening_now} listening right now` : ""}</p>
         </div>
-        <div className="cc-stat-card">
-          <div className="cc-stat-label">Unlock Revenue</div>
-          <div className="cc-stat-val">{loading ? "…" : fmtMoney(analytics?.unlockRevenueCents ?? 0)}</div>
-          <div className="cc-stat-sub">{analytics?.unlockCount ?? 0} unlocks</div>
+        <div className="ah-onair-actions">
+          <a href="/" target="_blank" rel="noreferrer" className="ah-btn ah-btn-primary">Listen <Ext /></a>
+          <Link href="/dashboard/radio-schedule" className="ah-btn">Radio Schedule</Link>
         </div>
-        <div className="cc-stat-card">
-          <div className="cc-stat-label">Total Plays</div>
-          <div className="cc-stat-val">{loading ? "…" : analytics?.playCount ?? 0}</div>
-          <div className="cc-stat-sub">+{analytics?.plays7d ?? 0} last 7d</div>
-        </div>
-        <div className="cc-stat-card">
-          <div className="cc-stat-label">Total Likes</div>
-          <div className="cc-stat-val">{loading ? "…" : analytics?.likeCount ?? 0}</div>
-          <div className="cc-stat-sub">+{analytics?.likes7d ?? 0} last 7d</div>
-        </div>
-      </div>
+      </section>
 
-      {/* What shipped, what is on a preview awaiting Sean, and decisions
-          waiting on him (2026-10-04). Full width, above the widgets. */}
-      <ChangesPanel />
+      {/* This week, true numbers only */}
+      <section className="ah-stats" aria-label="This week">
+        <div className="ah-stat"><b>{analytics?.memberCount ?? dash}</b><span>Members</span><small>{analytics?.members7d != null ? `+${analytics.members7d} this week` : ""}</small></div>
+        <div className="ah-stat"><b>{week?.listeners ?? dash}</b><span>Radio listeners</span><small>last 7 days</small></div>
+        <div className="ah-stat"><b>{week?.minutes ?? dash}</b><span>Minutes listened</span><small>{week ? `${week.converted} signed up after listening` : ""}</small></div>
+        <div className="ah-stat"><b>{analytics?.plays7d ?? dash}</b><span>Song plays</span><small>last 7 days, on demand</small></div>
+      </section>
 
-      {/* Who is really listening to the radio, and do they sign up (Sean, 2026-11-27). */}
+      {/* Quick actions */}
+      <section className="ah-actions" aria-label="Quick actions">
+        <Link href="/dashboard/release-schedule" className="ah-action"><b>Song Manager</b><span>Add songs, set release dates</span></Link>
+        <Link href="/dashboard/radio-schedule" className="ah-action"><b>Radio Schedule</b><span>What plays, and in what order</span></Link>
+        <Link href="/dashboard/members" className="ah-action"><b>Members</b><span>Everyone who signed up</span></Link>
+        <a href={BRANDDESK_URL} target="_blank" rel="noreferrer" className="ah-action"><b>Brand Desk <Ext /></b><span>GeekFon in HQ</span></a>
+        <a href={REVENUE_URL} target="_blank" rel="noreferrer" className="ah-action"><b>Revenue <Ext /></b><span>GeekFon money in HQ</span></a>
+        <Link href="/dashboard/outreach" className="ah-action"><b>Outreach List</b><span>Export members for email</span></Link>
+      </section>
+
       <RadioListenersPanel />
 
-      <div className="cc-grid">
-        {/* Health Report */}
-        <div className="cc-widget">
-          <div className="cc-widget-head">
-            <h3 className="cc-widget-title">Health Report</h3>
-            <a href="/dashboard/reports" className="cc-widget-link">Full reports &rarr;</a>
-          </div>
-          {loading ? (
-            <div className="cc-empty">Loading…</div>
-          ) : !latestHealth ? (
-            <div className="cc-empty">No audits run yet.</div>
-          ) : latestHealth.performance_pct == null && latestHealth.ada_score == null && latestHealth.functional === false ? (
-            <div className="cc-health-fail">
-              <div className="cc-health-fail-title">Last automated audit failed to complete</div>
-              <div className="cc-health-fail-sub">{latestHealth.summary}</div>
-              <div className="cc-health-fail-date">{timeAgo(latestHealth.audited_at)}</div>
-            </div>
-          ) : (
-            <>
-              <div className="cc-health-scores">
-                <div className="cc-health-score">
-                  <div className="cc-health-score-num">{latestHealth.performance_pct ?? "—"}</div>
-                  <div className="cc-health-score-label">Lighthouse</div>
-                </div>
-                <div className="cc-health-score">
-                  <div className="cc-health-score-num">{latestHealth.ada_score ?? "—"}</div>
-                  <div className="cc-health-score-label">ADA Score</div>
-                </div>
-              </div>
-              <div className="cc-health-chips">
-                {(["functional", "visual", "performance", "accessibility", "standards"] as const).map(k => (
-                  <span key={k} className={"cc-chip " + (latestHealth[k] === false ? "cc-chip-fail" : latestHealth[k] === true ? "cc-chip-pass" : "cc-chip-pending")}>
-                    {k}
-                  </span>
-                ))}
-              </div>
-              <div className="cc-health-fail-date">{timeAgo(latestHealth.audited_at)}</div>
-            </>
-          )}
-        </div>
-
-        {/* Artist Briefs (A&R status) */}
-        <div className="cc-widget">
-          <div className="cc-widget-head">
-            <h3 className="cc-widget-title">Artist Briefs</h3>
-            <span className="cc-widget-sub">{draftBriefCount > 0 ? `${draftBriefCount} need attention` : "all current"}</span>
-          </div>
-          {loading ? (
-            <div className="cc-empty">Loading…</div>
-          ) : briefs.length === 0 ? (
-            <div className="cc-empty">No artist briefs found.</div>
-          ) : (
-            <div className="cc-list">
-              {briefs.slice(0, 6).map(b => (
-                <a key={b.artist_slug} href={`/${b.artist_slug}`} className="cc-row">
-                  <span className="cc-row-title">{b.artist_slug.replace(/-/g, " ")}</span>
-                  <span className={"cc-chip " + (b.status === "draft" ? "cc-chip-fail" : b.status === "canon" ? "cc-chip-pass" : "cc-chip-pending")}>{b.status}</span>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Radio Now Playing */}
-        <div className="cc-widget">
-          <div className="cc-widget-head">
-            <h3 className="cc-widget-title">GeekFon Radio</h3>
-            <a href="/dashboard/radio-schedule" className="cc-widget-link">Manage rotation &rarr;</a>
-          </div>
-          {loading ? (
-            <div className="cc-empty">Loading…</div>
-          ) : !nowPlaying ? (
-            <div className="cc-empty">Nothing in rotation yet.</div>
-          ) : (
-            <>
-              <div className="cc-radio-live"><span className="cc-radio-dot" />Live now</div>
-              <div className="cc-radio-title">{nowPlaying.title}</div>
-              <div className="cc-radio-artist">{nowPlaying.artist}</div>
-              <div className="cc-radio-listeners">{radioListeners} {radioListeners === 1 ? "person" : "people"} listening now</div>
-              <a href="/radio" className="cc-widget-link" style={{ marginTop: 10, display: "inline-block" }}>Open Radio &rarr;</a>
-            </>
-          )}
-        </div>
-
-        {/* Members quick view */}
-        <div className="cc-widget">
-          <div className="cc-widget-head">
-            <h3 className="cc-widget-title">Members</h3>
-            <a href="/dashboard/members" className="cc-widget-link">View all &rarr;</a>
-          </div>
-          {loading ? (
-            <div className="cc-empty">Loading…</div>
-          ) : members.length === 0 ? (
-            <div className="cc-empty">No members yet.</div>
-          ) : (
-            <div className="cc-list">
+      <div className="ah-cols">
+        <section className="ah-card" aria-label="Newest members">
+          <div className="ah-card-head"><h2>Newest members</h2><Link href="/dashboard/members">All members</Link></div>
+          {loading ? <p className="ah-empty">Loading…</p> : members.length === 0 ? <p className="ah-empty">No members yet.</p> : (
+            <ul className="ah-list">
               {members.map(m => (
-                <a key={m.user_id} href={`/dashboard/members/${m.user_id}`} className="cc-row">
-                  <span className="cc-row-avatar">{initials(m.name)}</span>
-                  <span className="cc-row-title">{m.name || m.email || "Member"}</span>
-                  <span className="cc-row-sub">{m.tier || "passport"}</span>
-                </a>
+                <li key={m.user_id}>
+                  <Link href={`/dashboard/members/${m.user_id}`}>
+                    <span className="ah-name">{m.name || m.email || "Member"}</span>
+                    <span className="ah-meta">{timeAgo(m.created_at)}</span>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </div>
+        </section>
 
-        {/* Artist leaderboard quick view */}
-        <div className="cc-widget">
-          <div className="cc-widget-head">
-            <h3 className="cc-widget-title">Artist Rankings</h3>
-            <a href="/dashboard/top10" className="cc-widget-link">Full rankings &rarr;</a>
-          </div>
-          {loading ? (
-            <div className="cc-empty">Loading…</div>
-          ) : topArtists.length === 0 ? (
-            <div className="cc-empty">No ranking data yet.</div>
-          ) : (
-            <div className="cc-list">
-              {topArtists.map((a, i) => (
-                <div key={a.slug} className="cc-row">
-                  <span className="cc-row-rank">{i + 1}</span>
-                  <span className="cc-row-title">{a.name}</span>
-                  <span className="cc-row-sub">{a.score} pts</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Song Manager quick view */}
-        <div className="cc-widget">
-          <div className="cc-widget-head">
-            <h3 className="cc-widget-title">Song Manager</h3>
-            <a href="/dashboard/release-schedule" className="cc-widget-link">Open &rarr;</a>
-          </div>
-          {loading ? (
-            <div className="cc-empty">Loading…</div>
-          ) : (
-            <div className="cc-stats-mini">
-              <div className="cc-stat-mini">
-                <div className="cc-stat-mini-num">{songManager?.artistCount ?? 0}</div>
-                <div className="cc-stat-mini-label">Artists</div>
-              </div>
-              <div className="cc-stat-mini">
-                <div className="cc-stat-mini-num">{songManager?.trackCount ?? 0}</div>
-                <div className="cc-stat-mini-label">Tracks</div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Website Traffic (real Google Analytics) */}
-        <div className="cc-widget">
-          <div className="cc-widget-head">
-            <h3 className="cc-widget-title">Website Traffic</h3>
-            <a href="https://analytics.google.com/analytics/web/#/p547243255/reports/intelligenthome" target="_blank" rel="noreferrer" className="cc-widget-link">Open GA4 &rarr;</a>
-          </div>
-          {loading ? (
-            <div className="cc-empty">Loading…</div>
-          ) : !ga4?.available ? (
-            <div className="cc-empty">GA4 not connected yet.</div>
-          ) : (
-            <>
-              <div className="cc-stats-mini">
-                <div className="cc-stat-mini">
-                  <div className="cc-stat-mini-num">{ga4.sessions}</div>
-                  <div className="cc-stat-mini-label">Sessions</div>
-                </div>
-                <div className="cc-stat-mini">
-                  <div className="cc-stat-mini-num">{ga4.users}</div>
-                  <div className="cc-stat-mini-label">Users</div>
-                </div>
-                <div className="cc-stat-mini">
-                  <div className="cc-stat-mini-num">{ga4.pageviews}</div>
-                  <div className="cc-stat-mini-label">Views</div>
-                </div>
-              </div>
-              <div className="cc-health-fail-date" style={{ marginTop: 10 }}>Last 30 days &middot; geekfon.ai</div>
-            </>
-          )}
-        </div>
+        <section className="ah-card" aria-label="Site">
+          <div className="ah-card-head"><h2>Site</h2><Link href="/dashboard/reports">Health reports</Link></div>
+          {health ? (
+            <p className="ah-line">Last check {timeAgo(health.audited_at)}: speed {health.performance_pct ?? "not scored"}, accessibility {health.ada_score ?? "not scored"}.</p>
+          ) : <p className="ah-empty">{loading ? "Loading…" : "No health check on file."}</p>}
+          {ga4?.available ? (
+            <p className="ah-line">Last 30 days: {ga4.users} visitors, {ga4.sessions} visits, {ga4.pageviews} page views.</p>
+          ) : null}
+        </section>
       </div>
-    </>
+
+      <ChangesPanel />
+    </div>
   );
 }
 
 const CSS = `
-.cc-welcome{padding:32px 0 24px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:24px;}
-.cc-eyebrow{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.22em;color:#F69820;margin-bottom:8px;}
-.cc-name{font-size:clamp(22px,4vw,36px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff;margin:0 0 10px;}
-.cc-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:100px;padding:5px 13px;width:fit-content;}
-.cc-badge-dot{width:6px;height:6px;border-radius:50%;background:#fff;}
-.cc-badge{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.16em;color:#fff;}
-
-.cc-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
-@media(max-width:900px){.cc-stats-row{grid-template-columns:1fr 1fr;}}
-.cc-stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px 20px;}
-.cc-stat-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.35);margin-bottom:8px;}
-.cc-stat-val{font-size:24px;font-weight:900;color:#fff;letter-spacing:-.02em;line-height:1;}
-.cc-stat-sub{font-size:10px;font-weight:500;color:rgba(255,255,255,.3);margin-top:4px;}
-
-.cc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;}
-@media(max-width:900px){.cc-grid{grid-template-columns:1fr;}}
-.cc-widget{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:20px;display:flex;flex-direction:column;min-height:180px;}
-.cc-widget-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
-.cc-widget-title{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.7);margin:0;}
-.cc-widget-link{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:rgba(0,215,95,.75);text-decoration:none;}
-.cc-widget-link:hover{color:rgba(0,215,95,1);}
-.cc-widget-sub{font-size:10px;font-weight:700;color:rgba(246,152,32,.8);}
-.cc-empty{font-size:12px;color:rgba(255,255,255,.3);font-weight:500;margin:auto 0;}
-
-.cc-list{display:flex;flex-direction:column;gap:2px;}
-.cc-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);text-decoration:none;color:inherit;}
-.cc-row:last-child{border-bottom:none;}
-a.cc-row:hover{background:rgba(255,255,255,.03);}
-.cc-row-title{font-size:12px;font-weight:700;color:#fff;text-transform:capitalize;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cc-row-sub{font-size:10px;font-weight:600;color:rgba(255,255,255,.35);text-transform:capitalize;flex-shrink:0;}
-.cc-row-rank{font-size:11px;font-weight:900;color:#F69820;width:16px;flex-shrink:0;}
-.cc-row-avatar{width:22px;height:22px;border-radius:50%;background:rgba(246,152,32,.15);border:1px solid rgba(246,152,32,.3);color:#F69820;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-
-.cc-chip{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:100px;flex-shrink:0;}
-.cc-chip-pass{background:rgba(0,215,95,.12);color:rgba(0,215,95,.9);}
-.cc-chip-fail{background:rgba(239,68,68,.12);color:rgba(255,120,120,.9);}
-.cc-chip-pending{background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);}
-
-.cc-health-scores{display:flex;gap:20px;margin-bottom:12px;}
-.cc-health-score-num{font-size:26px;font-weight:900;color:#fff;line-height:1;}
-.cc-health-score-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);margin-top:4px;}
-.cc-health-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
-.cc-health-fail-title{font-size:12px;font-weight:800;color:rgba(255,120,120,.9);margin-bottom:6px;}
-.cc-health-fail-sub{font-size:11px;color:rgba(255,255,255,.45);line-height:1.5;margin-bottom:8px;}
-.cc-health-fail-date{font-size:10px;color:rgba(255,255,255,.3);font-weight:600;}
-
-.cc-radio-live{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(0,215,95,.85);margin-bottom:10px;}
-.cc-radio-dot{width:6px;height:6px;border-radius:50%;background:rgba(0,215,95,.9);animation:ccPulse 1.6s ease-in-out infinite;}
-@keyframes ccPulse{0%,100%{opacity:1;}50%{opacity:.3;}}
-.cc-radio-title{font-size:16px;font-weight:900;color:#fff;letter-spacing:-.01em;}
-.cc-radio-artist{font-size:12px;font-weight:600;color:rgba(255,255,255,.5);margin-top:2px;}
-.cc-radio-listeners{font-size:11px;font-weight:700;color:rgba(0,215,95,.75);margin-top:10px;}
-
-.cc-stats-mini{display:flex;gap:24px;margin:auto 0;}
-.cc-stat-mini-num{font-size:28px;font-weight:900;color:#fff;line-height:1;}
-.cc-stat-mini-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.35);margin-top:4px;}
+.ah{display:flex;flex-direction:column;gap:20px;max-width:1180px}
+.ah h1,.ah h2,.ah p{margin:0}
+.ah-date{font-size:13px;color:var(--muted);font-weight:600}
+.ah-head h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,4vw,40px);letter-spacing:-.025em;line-height:1.05;margin-top:4px}
+.ah-onair{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:20px;align-items:center;background:var(--surface-2);border-radius:12px;padding:16px}
+.ah-cover{width:96px;height:96px;border-radius:8px;object-fit:cover;display:block}
+.ah-cover-empty{background:var(--surface-3)}
+.ah-live{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.ah-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ahPulse 1.6s ease-in-out infinite}
+@keyframes ahPulse{50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.ah-dot{animation:none}}
+.ah-onair h2{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.015em;margin-top:6px}
+.ah-artist{color:var(--muted);font-weight:600}
+.ah-listening{font-size:13px;color:var(--faint);margin-top:6px}
+.ah-onair-actions{display:flex;flex-direction:column;gap:8px}
+.ah-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;border:1px solid var(--line);color:var(--text);white-space:nowrap}
+.ah-btn:hover{background:var(--surface-3)}
+.ah-btn-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.ah-btn-primary:hover{background:var(--accent);filter:brightness(1.08)}
+.ah-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.ah-stat{background:var(--surface-2);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:2px}
+.ah-stat b{font-family:var(--display);font-weight:800;font-size:32px;letter-spacing:-.02em;line-height:1.05}
+.ah-stat span{font-weight:700;font-size:14px}
+.ah-stat small{font-size:12.5px;color:var(--muted)}
+.ah-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ah-action{display:flex;flex-direction:column;gap:2px;padding:14px 16px;border-radius:12px;border:1px solid var(--line)}
+.ah-action:hover{background:var(--surface-2);border-color:var(--surface-3)}
+.ah-action b{display:flex;align-items:center;gap:6px;font-size:15px}
+.ah-action span{font-size:13px;color:var(--muted)}
+.ah-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ah-card{background:var(--surface-2);border-radius:12px;padding:16px 18px}
+.ah-card-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+.ah-card-head h2{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.01em}
+.ah-card-head a{font-size:13px;font-weight:700;color:var(--accent)}
+.ah-list{list-style:none;margin:0;padding:0}
+.ah-list a{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.ah-list li:last-child a{border-bottom:0}
+.ah-list a:hover .ah-name{text-decoration:underline}
+.ah-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ah-meta{font-size:13px;color:var(--muted);flex:none}
+.ah-line{font-size:14px;color:var(--muted);margin-bottom:6px}
+.ah-empty{font-size:14px;color:var(--faint)}
+@media(max-width:900px){.ah-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ah-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.ah-cols{grid-template-columns:1fr}}
+@media(max-width:560px){.ah-onair{grid-template-columns:64px minmax(0,1fr)}.ah-cover{width:64px;height:64px}.ah-onair-actions{grid-column:1/-1;flex-direction:row}.ah-actions{grid-template-columns:1fr}}
 `;
-

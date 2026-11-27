@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { DashboardContext, DashboardCtx, TIER_LABEL, ADMIN_EMAIL } from "./context";
 import SiteChrome from "@/components/SiteChrome";
 import GfsShell from "@/components/shell/GfsShell";
+import AdminShell from "@/components/admin/AdminShell";
 import { isStaffAccount, FAN_HOME } from "@/lib/postAuth";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -154,15 +155,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </div>
   );
 
+  // A plain loader, so the page no longer flashes the public header before the
+  // admin frame appears (2026-11-27).
   if (loading)
     return (
-      <SiteChrome publicOnly>
+      <>
         <style>{LAYOUT_CSS}</style>
-        <Aurora />
-        <div className="dl-loading">
+        <div className="dl-loading dl-loading-plain" aria-label="Loading">
           <div className="dl-spinner" />
         </div>
-      </SiteChrome>
+      </>
     );
 
   if (!userId)
@@ -205,6 +207,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </SiteChrome>
+    );
+
+  // The owner's admin back end in the November 2026 look (Sean, 2026-11-27):
+  // a page that scrolls, an admin menu, no window inside a window. Staff
+  // accounts and the owner's "View as" preview keep the frame below.
+  if (isAdmin && !ctx.viewAs)
+    return (
+      <DashboardContext.Provider value={ctx}>
+        <AdminShell name={displayName}>{children}</AdminShell>
+      </DashboardContext.Provider>
     );
 
   return (
@@ -252,6 +264,7 @@ const LAYOUT_CSS = `
 
 /* Loading */
 .dl-loading { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+.dl-loading-plain { min-height: 100vh; background: #09090a; }
 .dl-spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,.1); border-top-color: #F69820; border-radius: 50%; animation: dlSpin .8s linear infinite; }
 @keyframes dlSpin { to { transform: rotate(360deg) } }
 
